@@ -1,0 +1,17 @@
+         MACRO
+         DYNP1B &P,&COM
+         GBLC  &PS,&PP
+         LCLC  &P1
+         AIF   ('&P'EQ'').A
+         AIF   ('&P'(1,1) NE'(').A
+         AIF   ('&P'(K'&P,1) EQ')').B
+         MNOTE 4,'** SYNTAX ERROR &COM PARM'
+.A       DYNP1A &P,,&COM
+         AGO   .C
+.B       ANOP
+&PS      SETC  '&P'(2,K'&P-2).',,,,'
+         DYNPB
+&P1      SETC  '&PP'
+         DYNPB
+         DYNP1A &P1,&PP,&COM
+.C       MEND

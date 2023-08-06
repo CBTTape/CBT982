@@ -1,0 +1,14 @@
+         MACRO
+&L       FINDDD &ERRET=,&NRETURN=
+&L       IHBINNRA &SYSLIST(1)
+         L     R15,=V(SRCHTIOT)
+         BALR  R14,R15
+         AIF   (T'&ERRET EQ 'O').NERRET
+         LTR   R15,R15
+         BNZ   &ERRET
+.NERRET  ANOP
+         AIF   (T'&NRETURN EQ 'O').NNRET
+         LTR   R15,R15
+         BZ    &NRETURN
+.NNRET   ANOP
+         MEND

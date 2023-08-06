@@ -1,0 +1,121 @@
+JOLSAVER TITLE 'JOL EXECUTION  MONITOR SAVE AREA CONTROL'
+         LCLA  &A
+* THIS ROUTINE SETS UP THE NEXT SAVE AREA IN THE JOL SCHEDULER. R15
+* POINTS TO THE NEXT AMOUNT REQUIRED FOR A SAVE AREA,AND THIS IS
+* OBTAINED FROM A BLOCK OBTAINED DURING ASSEMBLY OF THE PROGRAM.
+         SPACE  1
+* NOTE: THE FIRST WORD OF THE SAVE AREA CONTAINS THE LENGTH OF THE
+*    THE OLD SAVE AREA (MORE THAN 72 BYTES MAY HAVE BEEN ALLOCATED,
+*    SOME AS A WORK AREA).
+         SPACE  1
+SAPHDR   DSECT                                                    J40B
+SAPNEXT  DS    A               ADDRESS OF NEXT AREA AVAILABLE     J40B
+SAPTOP   DS    A               SATOP ADDRESS OF END OF SAVE AREA  POOL
+         SPACE 2                                                  J40B
+SA       DSECT                 SAVE AREA FORMAT                   J40B
+SASAP    DS    A               ADDRESS OF POOL                    J40B
+SASIZE   DS    F               SIZE OF THIS SAVE AREA             J40B
+SARETN   DS    A               ADDRESS OF RETURN POINT            J40B
+SASA     DS    A               THE NEXT TWO POINTERS POINT HERE   J40B
+SABACK   DS    A               PREVIOUS SAVE AREA                 J40B
+SAFWD    DS    A               NEXT SAVE AREA                     J40B
+SAR14    DS    0A                                                 J40B
+SAUNSAV  DS    A               ADDRESS OF ROUTINE TO UNLINK       J40B
+SAR15    DS    A                                                  J40B
+SAR0     DS    A                                                  J40B
+SAR1     DS    A                                                  J40B
+SAR2     DS    A                                                  J40B
+SAR3     DS    A                                                  J40B
+SAR4     DS    A                                                  J40B
+SAR5     DS    A                                                  J40B
+SAR6     DS    A                                                  J40B
+SAR7     DS    A                                                  J40B
+SAR8     DS    A                                                  J40B
+SAR9     DS    A                                                  J40B
+SAR10    DS    A                                                  J40B
+SAR11    DS    A                                                  J40B
+SAR12    DS    A                                                  J40B
+         SPACE 2                                                  J40B
+JOLSAVER CSECT
+.L       AIF   (&A GT 15).E
+R&A      EQU   &A
+&A       SETA  1+&A
+         AGO   .L
+.E       ANOP
+         USING JOLSAVER,R1
+         USING SASA,R13                                           J40B
+         B     JS010                                              J40B
+         DC    C'JOLSAVER'                                        J40B
+JS010    DS    0H                                                 J40B
+*        CLC   =F'0',X'090'(R3)  DEBUGGING                        J40B
+*        BNE   JS020                                              J40B
+*        D     R0,=F'0'                                           J40B
+JS020    DS    0H                                                 J40B
+         L     R14,0(,R13)     ADDRESS SAVE AREA ADDRESS PREFIX
+         USING SA,R14          OLD SAVE AREA                      J40B
+         L     R13,SASAP       ADDRESS SA POOL
+         USING SAPHDR,R13      SA POOL HEADER                     J40B
+         L     R0,0(,R13)      ADDRESS NEW SAVE AREA
+         LA    R2,16           SPACE FOR HEADER
+         AL    R2,0(,R15)      LENGTH REQUIRED FOR NEW ONE
+         ALR   R2,R0           ADDRESS OF NEXT SA
+         C     R2,SAPTOP       WILL IT FIT ?
+         BH    JOLSAVEX        NOPE,ABEND FOR NOW
+         ST    R2,SAPNEXT      UPDATE SA POOL HEADER
+         LR    R2,R0           WE NEED TO STORE IN THE NEW SAVE AREA
+         ST    R13,SA-SA(,R2)  UPDATE SA HEADER
+         LR    R13,R2          ADDRESS OF NEW AREA
+         MVC   SARETN,SAUNSAV  ACTUAL RETURN ADDRESS IN OLD SA
+         LA    R0,JOLUNSAV
+         ST    R0,SAUNSAV      POINT TO MY ROUTINE
+         DROP  R13,R14                                            J40B
+         USING SA,R13                                             J40B
+         MVC   SASIZE,0(R15) STORE ITS LENGTH
+         ST    R13,SASA        POINTER TO HEADER
+         LA    R0,SASA-SA      HEADER LENGTH
+         ALR   R13,R0          ADDRESS SAVE AREA
+         ALR   R14,R0          ADDRESS SAVE AREA
+         ST    R14,4(,R13)     SET UP
+         ST    R13,8(,R14)     *   CHAIN
+         LM    R0,R2,20(R14)   SOMEONE PUT THESE THERE, I HOPE
+         B     4(R15)          AND BACK TO CALLING ROUTINE
+         DROP  R1
+JOLSAVEX ABEND 23,DUMP
+         DC    C'OUT OF SAVEAREA SPACE'                           J40B
+         DC    0F'0',C'USAV'
+JOLUNSAV DS    0H
+         AGO   .Z
+         ST    R13,ZAQW-*(,R14)
+         L     R13,0(,R13)     POINT TO THE HEADER
+         L     R14,0(,R13)     ADDRESS SA POOL
+         ST    R13,0(,R14)     UPDATE POINTER IN SA POOL
+         L     R13,16(,R13)    ADDRESS PREVIOUS AREA
+         L     R14,0(,R13)     ADDRESS THIS HEADER
+         ICM   R14,15,8(R14)   CALLER'S RETURN ADDRESS
+         BNZR  R14
+         L     R14,12(,R13)    CALLER'S RETURN ADDRESS
+         BR    R14
+ZAQW     DS    F
+.Z       ANOP
+         USING SASA,R13                                           J40B
+         L     R13,SASA        POINT TO THE HEADER
+         USING SA,R13                                             J40B
+         L     R14,SASAP       ADDRESS SA POOL
+         USING SAPHDR,R14                                         J40B
+*        MVC   0(4,R14),X'014'(R13) UPDATE POINTER IN SA POOL    88036
+*        ST    R13,0(,R14)     UPDATE POINTER IN SA POOL
+         ST    R2,SAR2         SAVE THE CONTENTS                  J40B
+*        LA    R0,12                                              J40B
+*        LCR   R0,R0           -12                                J40B
+*        AL    R0,SAFWD                                           J40B
+         L     R2,SASA                                            J40B
+         USING SA,R2                                              J40B
+         AL    R2,SASIZE                                          J40B
+         LA    R2,SASA-SA(,R2)                                    J40B
+         ST    R2,SAPNEXT                                         J40B
+         L     R2,SAR2                                            J40B
+         L     R14,SARETN      CALLER'S RETURN ADDRESS
+         LA    R13,SASA        POINT BACK TO THE SAVE AREA
+         BR    R14             GO THERE
+         DS    0D                                                 J40B
+         END

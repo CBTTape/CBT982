@@ -1,0 +1,36 @@
+         MACRO                                                    J50
+&L       SETBA &LINE,&COL,&STO=                                   J50
+&L       MVI   MSGBA,SBA      SET BUFFER ADDR                     J50
+         AIF   ('&LINE'(1,1) EQ  '(').LLR                         J50
+         AIF   (T'&LINE EQ 'H').LLH
+         L     R1,&LINE       LOAD LINE NUMBER                    J50
+         AGO   .COL                                               J50
+.LLH     LH    R1,&LINE       LOAD LINE NUMBER                    J50
+         AGO   .COL                                               J50
+.LLR     AIF   ('&LINE' EQ '(1)' OR '&LINE' EQ '(R1)').COL        J50
+         LR    R1,&LINE(1)   LOAD LINE NUMBER                     J50
+.COL     ANOP                                                     J50
+         AIF   ('&COL'(1,1) EQ  '(').LCR                          J50
+         AIF   (T'&COL EQ 'H').LCH
+         L     R14,&COL       LOAD COLUMN NUMBERS                 J50
+         AGO   .ECOL                                              J50
+.LCH     LH    R14,&COL       LOAD COLUMN NUMBER                  J50
+         AGO   .ECOL                                              J50
+.LCR     AIF   ('&COL' EQ '(14)' OR '&COL' EQ '(R14)').ECOL       J50
+         LR    R14,&COL(1)    LOAD COLUMN NUMBER                  J50
+.ECOL    ANOP                                                     J50
+         BCTR  R14,0          BUFFER POSITION STARTS AT ZERO
+         BCTR  R1,0           SUBTRACT 1
+         M     R0,#COLUMNS    MULTIPLY BY NUMBER IF COLUMNS
+         AR    R1,R14         R1 NOW HAS BUFFER ADDRESS
+         AIF   (T'&STO EQ 'O').NSTO
+         LA    R15,1(,R1)                                         J50
+         STH   R15,&STO                                           J50
+         LA    R7,2(,R7)                                          J50
+.NSTO    ANOP                                                     J50
+         D     R0,=F'64'      R1 NOW HAS 1ST ADDR R14 NOW HAS 2ND ADDR
+         STC   R1,MSGADDR1    STORE HIGH BYTE                 (JCS)
+         STC   R0,MSGADDR2      AND LOW BYTE                  (JCS)
+         TR    MSGADDR1(2),SDATA TRANSLATE PROPERLY           (JCS)
+         LA    R11,3(,R11)                                        J50
+         MEND                                                     J50

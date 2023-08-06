@@ -1,0 +1,18 @@
+         MACRO
+         DYNPA
+.*  DECIDES IF &ADR IS AN ADDRESS OR A NUMBER
+         GBLC  &ADR
+         GBLB  &NUM
+&NUM     SETB  1
+         LCLA  &I
+.A       ANOP
+&I       SETA  &I+1
+         AIF   ('&ADR'(&I,1) EQ'(').B
+         AIF   (&I LT K'&ADR).A
+         AIF   ('&ADR'(1,1) GE'0').D
+         AGO   .C
+.B       AIF   (&I NE 1).C
+&ADR     SETC  '0&ADR'
+.C       ANOP
+&NUM     SETB  0
+.D       MEND

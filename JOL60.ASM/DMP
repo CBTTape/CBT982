@@ -1,0 +1,74 @@
+         GENSAVE CSECT=DMP
+         LM    R2,R3,0(R1)
+*        L     R14,0(R3)       BLOCK LENGTH
+         LA    R0,DPBLKL
+         SLL   R0,16
+         ST    R0,DPBLOCK
+         LA    R0,DPLINEL
+         SLL   R0,16
+THERE    ST    R0,DPLINE
+         LA    R3,0(R2,R3)     END OF BLOCK
+         BCTR  R3,0
+         OPEN  (PRINT,OUTPUT)
+         LTR   R15,R15
+         BZ    E21LP0
+         EX    0,*
+         DC    C'COULDN''T OPEN THE DUMP DATASET'
+E21LP0   DS    0H
+         ST    R2,CALLAREA
+         UNPK  DBL(9),CALLAREA(5)
+         TR    DBL,HEX
+         MVC   DPADDR,DBL+2
+         MVC   DPCHARS,0(R2)   COPY DATA IN CHARACTERS
+         TR    DPCHARS,TRTAB   REMOVE SOME HARD-TO-PRINT DATA
+         LA    R14,DPHEX       ADDRESS FOR HEX DATA
+         LA    R1,2
+E21LP1   DS    0H
+         LA    R0,4            4 SEGMENTS
+E21LP2   DS    0H
+         MVC   WORK(4),0(R2)
+         UNPK  DBL(9),WORK     CONVERT SOME TO HEX
+         TR    DBL,HEX
+         MVC   0(8,R14),DBL    INTO THE PRINT LINE
+         LA    R14,9(,R14)     NEXT FOR OUTPUT
+         LA    R2,4(,R2)       NEXT FOR INPUT
+         BCT   R0,E21LP2
+         LA    R14,1(,R14)    AN EXTRA SKIP IN PAGE CENTRE
+         BCT   R1,E21LP1
+         L     R1,=A(S23DECB)
+         WRITE S23DECB,SF,PRINT,DPBLOCK
+         CHECK S23DECB
+         CLR   R2,R3           Q... ANY MORE?
+         BNH   E21LP0          A... YES
+         CLOSE  PRINT
+         L     R13,4(,R13)
+         LM    R14,R12,12(R13)
+         SLR   R15,R15
+         BR    R14
+PRINT    DCB   DDNAME=SYSPRINT,LRECL=L'DPDATA,BLKSIZE=DPBLKL,RECFM=VAB,.
+               DSORG=PS,MACRF=W
+         DC    0D'0',CL32'DUMP BLOCK'
+DPBLOCK  DS    F
+DPLINE   DS    F
+DPDATA   DS    0CL121
+         DC    5C' '
+DPADDR   DC    CL6' '
+         DC    2C' '
+DPHEX    DC    CL75' '
+DPCHARS  DC    CL32' '
+DPLINEL  EQU   *-DPLINE
+DPBLKL   EQU   *-DPBLOCK
+DBL      DS    D
+         DS    C
+WORK     DC    0CL5' ',4C' ',X'04'
+CALLAREA DS    F
+TRTAB    DC    256AL1(*-TRTAB) ALL THINGS TO ALL THINGS
+         ORG   TRTAB
+         DC    64X'40'         FIX THE FIRST ONES
+         ORG   TRTAB+C'9'+1
+         DC    6C' '           AND THE LAST ONES
+         ORG
+         ORG   *-240
+HEX      DS    0CL256,240C
+         DC    C'0123456789ABCDEF'
+         END

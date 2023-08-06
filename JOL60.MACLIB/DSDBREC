@@ -1,0 +1,8 @@
+         MACRO
+&L       DSDBREC
+DSDBREC  DSECT                                                    J40C
+DSDBRECL DS    H                                                  J50
+DSDBJUNK DS    CL28
+DSDBDSNM DS    CL44
+DSDBINFO DS    (256-44)C' '
+         MEND

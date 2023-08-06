@@ -1,0 +1,146 @@
+     IF:PROC;
+           PUT    PAGE DATA;
+           DO  J=1 TO STACKNO;
+           IF X(J)='&' THEN
+               DO; PUT DATA(X)SKIP(3);
+                   X(J)=X(J)||X(J+1);
+                   DO I=J+1 TO STACKNO -1;
+                       X(I)=X(I+1);
+                   END;
+                   PUT DATA(X)SKIP(3);
+                   J=J+1;
+                   STACKNO=STACKNO-1;
+               END;
+           END;
+           PUT SKIP(5) DATA;
+           DO J=1 TO STACKNO;
+               IF X(J)='.'
+               THEN DO;
+                   X(J-1)=X(J-1)||'.'||X(J+1);
+                   DO I=J TO STACKNO -2;
+                       X(I)=X(I+2);
+                   END;
+                   STACKNO=STACKNO-2;
+                   PUT SKIP(5) DATA;
+               END;
+           END;
+     /* NOW WE SHOULD HAVE SOMETHING LIKE
+           IF X.DSN = &SYMBOL  ETC
+     */
+     /* NOW IN AN IF STATEMENT (WHICH INCIDENTLY FOR THIS
+           IMPLEMENTATION MUST BE IF X=Y THEN IF ... THEN IF ETC)
+           THERE ARE 5 CASES X 5.
+     CASE 1 A  IF &SYMBOL = &SYMBOL
+            B  IF &SYMBOL = NUMBER
+            C  IF &SYMBOL = ALPHA LIT
+            D  IF &SYMBOL = IDENT.LOCN
+            E  IF &SYMBOL = RETNCODE
+     CASE 2 A  IF INDENT.LOCN = IDENT.LOCN
+            B  IF INDENT.LOCN = &SYMBOL
+            C  IF INDENT.LOCN = NUMBER
+            D  IF INDENT.LOCN = ALPHA LIT
+            E  IF INDENT.LOCN = RETN CODE
+     CASE 3 A  IF RETNCODE = RETNCODE
+            B  IF RETNCODE = NUMBER
+            C  IF RETNCODE = ALPHA LIT
+            D  IF RETNCODE = &SYMBOL
+            E  IF RETNCODE = INDENT.LOCN
+     CASE 4 A  IF NUMBER = NUMBER
+            B  IF NUMBER = ALPHA LIT
+            C  IF NUMBER = &SYMBOL
+            D  IF NUMBER = INDENT.LOCN
+            E  IF NUMBER = RETNCODE
+     CASE 5 A  IF ALPHALIT = ALPHALIT
+            B  IF ALPHALIT = NUMBER
+            C  IF ALPHALIT = &SYMBOL
+            D  IF ALPHALIT = INDENT.LOCN
+            E  IF ALPHALIT = RETNCODE
+     NOW YOU SAY THESE LAST CASES ARE UNLIKELY.
+           VERY TRUE BUT WHAT WE WILL DO IS TO DO THIS IF COMMAND
+               VERY SLOWLY AND ASSIGN THE VALUES TO ANY &SYMBOL
+               OR INDENT.LOCN BEFORE WE ACTUALLY DO THE IF COMMAND
+     BUT BEFORE WE DO THIS WE MUST FIND THE END OF THE IF COMMAND
+           AND THEN DETERMINE IF ANY RETURN CODE TESTING IS USED
+           WITHIN AN ASSIGNMENT(THAT,SENOR,IS NOT LEGAL)           */
+     /*  FIND END OF IF */
+     /* NOW AN IF STATEMENT MAY BE :-
+           IF <LOCN> <OPERATOR> <LOCN> THEN <COMMAND>
+       OR  IF <LOCN> <OPERATOR> <LOCN> <COMMAND>
+       **
+           IE THE 'THEN' MAY NOT BE PRESENT                    */
+           DO  ENDIF=1 TO STACKNO;
+               IF X(ENDIF)='IF'
+               THEN DO;
+                   IF X(ENDIF+4)='THEN'
+                   &  X(ENDIF+5)='IF'
+                   THEN DO;
+                       ENDIF=ENDIF+5;
+                   END;
+                   ELSE IF X(ENDIF+4)='IF'
+                   THEN DO;
+                       ENDIF=ENDIF+4;
+                   END;
+                   ELSE DO;
+                       ENDIF=ENDIF+4;
+                       GO TO ENDLOOP;
+                   END;
+               END;
+           END;
+           PUT SKIP EDIT('CANNOT FIND END OF IF')(A);
+           PUT DATA;
+    /*     RETURN;         *****************/
+     ENDLOOP:PUT SKIP DATA(ENDIF);
+     /* NOW WE WILL GO THRU AND ASSIGN VALUES TO ANY SYMBOLIC PARAS
+        OR INDENT.LOCNS WE FIND */
+           DO I=1 TO ENDIF;
+               IF SUBSTR(X(I),1,1)='&'
+               THEN X(I)=ABSVAL(X(I));
+               ELSE IF INDEX(X(I),'.')¬=0
+               THEN X(I)=IDVAL(X(I));
+           END;
+           PUT SKIP(2) DATA;
+     /* NOW FINALLY SEE IF ANY RETURNCODE PROCESSING.
+        IF SO SET SWITCH SO NO ASSIGNMENTS CAN BE DONE */
+           DO I=1 TO ENDIF;
+               IF VERIFY(X(I),'0123456789')¬=0
+               THEN GO TO OK;
+               IF SUBSTR(X(I),1,1)='&' THEN GO TO OK;
+               IF SUBSTR(X(I),1,1)=''''THEN GO TO OK;
+               RETNCODE='1'B;
+     OK:   END;
+     /* NOW LETS HAVE A GO AT THE IF STMT */
+           TRUE='0'B;
+           DO  I=2 TO ENDIF;   /* 2 TO SKIP 'IF' IN X(1) */
+               IF VERIFY(X(I),'0123456789')=0
+               |  VERIFY(X(I+2),'0123456789')=0
+               THEN DO; /*HERE ONE OR BOTH NUMERIC */
+                   BEGIN;
+                       ON CONVERSION BEGIN;
+                           PUT SKIP EDIT('CONVERSION ERROR X(I)=',X(I),
+                          'X(2)=',X(2))(A);
+                           GO TO FALSE;
+                       END;
+                       NO1=X(I);
+                       NO2=X(I+2);
+                       IF X(I+1)='=' & NO1=NO2 THEN GO TO NOSOK;
+                       IF X(I+1)='>' & NO1>NO2 THEN GO TO NOSOK;
+                       IF X(I+1)='<' & NO1<NO2 THEN GO TO NOSOK;
+                       IF X(I+1)='¬=' & NO1¬=NO2 THEN GO TO NOSOK;
+                       IF X(I+1)='¬>' & NO1¬>NO2 THEN GO TO NOSOK;
+                       IF X(I+1)='¬<' & NO1¬<NO2 THEN GO TO NOSOK;
+                       PUT SKIP EDIT('INVALID OPERATOR')(A);
+                   END;
+               END;
+     /* NEITHER NUMERIC THEREFORE NOW SEE IF ANY ARE RETURN CODES */
+               IF SUBSTR(X(I),1,1)=''''
+               |  SUBSTR(X(I+2),1,1)=''''
+               THEN DO;
+               END;
+           END;
+     ABSVAL:PROC RETURNS CHAR(20);
+       RETURN('ABSVAL');
+     END;
+     IDVAL :PROC RETURNS CHAR(20);
+      RETURN('IDVAL');
+     END;
+     EOJ:  END;

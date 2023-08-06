@@ -1,0 +1,174 @@
+         MACRO
+&NAME    JOLERR &STMT=STMT,&RETURN=,&RC=
+.* THIS MACRO WILL PUT INTO A LOCATION A STRING OF CHARACTERS
+.* THE STRING MAY BE IN A BUFFER OR JOL MAY ITSELF CONTROL
+.* THE WHERE-ABOUTS OF THE ERROR MESSAGE.
+.*
+.* SYSLIST(1) IS TAKEN TO BE THE ERROR SEVERITY AND ALSO THE
+.* ERROR NUMBER.
+         GBLC  &TYPE              CHECK IF IN SCHEDULER           87150
+         LCLA  &LITPOSN,&LITLEN,&LEN,&NUMCNT
+         LCLA  &LENGTH,&THIS,&NOVAR,&POSN,&L,&K,&STMTLEN
+         LCLB  &B,&COMP                                           88036
+         LCLC  &CSECT,&ERRNO
+         LCLC  &JOLERR,&CHAR1
+         LCLC  &CSECTNO                                           74303
+         LCLC  &MODNAME,&C                                        88036
+         LCLA  &MASK(4),&VREG                                     88036
+&COMP    SETB  (T'JOLCOM NE 'U')                                  88036
+&VREG    SETA  &COMP+(1-&COMP)*15                                 88036
+&MASK(1) SETA  1               ONE BYTE LONG                      88036
+&MASK(2) SETA  3               TWO BYTES LONG                     88036
+&MASK(3) SETA  7               THREE BYTES LONG                   88036
+&MASK(4) SETA  15              FOUR BYTES LONG                    88036
+&STMTLEN SETA  4
+&CSECT   SETC  '&SYSECT'(3,1)
+&CSECTNO SETC  '&SYSECT'(4,2)
+&ERRNO   SETC  '&SYSLIST(1)'(2,K'&SYSLIST(1)-1)
+&CHAR1   SETC  '&SYSLIST(1)'(1,1)
+&MODNAME SETC  'UJS13EP'.'&CHAR1'                                 88036
+         SPACE 2
+***********************************************************************
+&THIS    SETA  2
+&NUMCNT  SETA  1
+         AIF   (T'&NAME EQ 'O').NUMLUP                            88036
+&NAME    DS    0H                                                 88036
+.NUMLUP  ANOP
+         AIF   (&THIS GT N'&SYSLIST).REALST   REAL START
+         AIF   ('&SYSLIST(&THIS)'(1,1) EQ '#').IGNR
+         AIF   ('&SYSLIST(&THIS)'(1,1) EQ '''').IGNR
+         AIF   (T'&SYSLIST(&THIS) EQ 'C').IGNR
+&LEN     SETA  L'&SYSLIST(&THIS)
+         AIF   (T'&SYSLIST(&THIS) EQ 'P').DEC
+         AIF   (T'&SYSLIST(&THIS) EQ 'H').HALF
+         AIF   (T'&SYSLIST(&THIS) EQ 'Y').HALF A Y CON IS LINE AN A CON
+         AIF   (T'&SYSLIST(&THIS) EQ 'F').FULL
+         AIF   (T'&SYSLIST(&THIS) EQ 'X').BIT
+         AIF   (T'&SYSLIST(&THIS) EQ 'R').XPLACO  EXPLICT LENGTH A
+         AIF   (T'&SYSLIST(&THIS) EQ 'G').XPLFCO   OR F CONSTANTS
+&C       SETC  T'&SYSLIST(&THIS)                                  88036
+         MNOTE 4,'UNKNOWN DATA TYPE, &C, FOR &SYSLIST(&THIS)'
+         MNOTE *,'CHARACTER DATA ASSUMED'                         88036
+         AGO   .IGNR           ASSUME IT'S CHAR                   88036
+.HALF    LH    1,&SYSLIST(&THIS)
+         AGO   .CONV         CONVERT TO CHAR
+.FULL    L     1,&SYSLIST(&THIS)  LOAD THE NUMBER IN R1
+         AGO .CONV             CONVERT TO CHAR
+.BIT     ANOP
+.XPLACO  ANOP
+.XPLFCO  ANOP
+         AIF   (&LEN GT 4).WOOPS                                  88036
+         SLR   R1,R1                                              88036
+         ICM   R1,&MASK(&LEN),&SYSLIST(&THIS) LOAD UNALIGNED NMBR 88036
+.* HERE WE HAVE AN EXPLICTLY DECLARED ITEM,THEREFORE IT MAY NOT
+.*   BE ALIGNED. DEPENDING ON THE LENGTH,WE SHALL DO DIFFERENT
+.*   THINGS
+         AGO   .CONV                                              88036
+.*       AIF   (&LEN EQ 1).IC                                     88036
+.*       AIF   (&LEN EQ 2).ICBY2                                  88036
+.*       AIF   (&LEN EQ 3).MVC3                                   88036
+.*       AIF   (&LEN EQ 4).MVC4                                   88036
+.WOOPS   ANOP                                                     88036
+         MNOTE 12,'LENGTH FOR BINARY NUMBER NOT SUPPORTED.L=&LEN'
+         MEXIT
+.*.IC    ANOP
+.*       SR    R1,R1           CLEAR REGISTER 1
+.*       IC    R1,&SYSLIST(&THIS) LOAD 1 BYTE NUMBER
+.*       AGO   .CONV           CONVERT TO CHARACTER
+.*.ICBY2 ANOP
+.*       MVC   CALLAREA+8(2),&SYSLIST(&THIS) SHIFT
+.*       LH    R1,CALLAREA+8   LOAD NUMBER
+.*.MVC3  MVI   CALLAREA+8,0    ZERO FIRST BYTE
+.*       MVC   CALLAREA+9(3),&SYSLIST(&THIS) SHIFT
+.*       L     R1,CALLAREA+8   LOAD NUMBER
+.*       AGO   .CONV           CONVERT TO CHARACTER
+.*.MVC4  ANOP
+.*       MVC   CALLAREA+8(4),&SYSLIST(&THIS) SHIFT
+.*       L     R1,CALLAREA+8   LOAD NUMBER
+.*       AGO   .CONV           CONVERT TO CHARACTER
+.DEC     ANOP                                                     J40B
+         UNPK  ERRNUM&NUMCNT,&SYSLIST(&THIS)
+         AGO   .OI                                                J40B
+.CONV    ANOP
+         CVD   R1,DBL        CONVERT TO PACKED
+         UNPK  ERRNUM&NUMCNT,DBL
+.OI      ANOP                                                     J40B
+         OI    ERRNUM&NUMCNT+4,C'0' FIX UP LAST CHARACTER
+&NUMCNT  SETA  &NUMCNT+1
+.IGNR    ANOP
+&THIS    SETA  &THIS+1
+         AGO   .NUMLUP
+.REALST  ANOP
+         AIF   (NOT &COMP).BALR                                  88036
+         BAL   14,&MODNAME      BRANCH AND LINK TO ERROR ROUTINE
+         AGO   .NOBALR                                           88036
+.BALR    ANOP                                                    88036
+&B       SETB  (T'S23ER EQ 'U' )                                 88036
+&C       SETC  (&B)'=V(UJS23ER)'.(1-&B)'S23ER'                   88036
+.*       L     R15,=V(UJS23ER)                                   88036
+         L     R15,&C          LOAD THE ERROR ROUTINE'S ADDRESS  88036
+         BALR  R14,R15           AND CALL IT                     88036
+.NOBALR  ANOP                                                    88036
+&JOLERR  SETC  'ER&CSECT&CSECTNO&ERRNO'   SET  UP NAME FOR X REF 74303
+&JOLERR  DC    C'&CSECT',AL1(&CSECTNO,&CHAR1,&ERRNO),S(&STMT)
+E&SYSNDX EQU   &JOLERR
+&THIS    SETA  2
+&NUMCNT  SETA  1
+.LUP4    ANOP
+         AIF   (&THIS GT N'&SYSLIST).END
+         AIF   ('&SYSLIST(&THIS)'(1,1) EQ '#').VAR2
+         AIF   ('&SYSLIST(&THIS)'(1,1) EQ '''').LIT2
+         AIF   (T'&SYSLIST(&THIS) EQ 'H').NUMC
+         AIF   (T'&SYSLIST(&THIS) EQ 'P').NUMC
+         AIF   (T'&SYSLIST(&THIS) EQ 'F').NUMC
+         AIF   (T'&SYSLIST(&THIS) EQ 'X').NUMC
+         AIF   (T'&SYSLIST(&THIS) EQ 'R').NUMC    EXPLICT LENGTH A
+         AIF   (T'&SYSLIST(&THIS) EQ 'G').NUMC     OR F CONSTANTS
+.* HERE IT SHOULD BE A CHAR VARIABLE
+         AGO   .CHAR9
+.NUMC    ANOP
+         MVC   0(5,1),ERRNUM&NUMCNT SHIFT CONVERTED NUMBER
+&NUMCNT  SETA  &NUMCNT+1
+         AGO   .ADD3
+.CHAR9   ANOP
+&L       SETA  L'&SYSLIST(&THIS)
+         MVC   0(&L,1),&SYSLIST(&THIS) FIXED CHAR STRING
+         AGO   .ADD3
+.LIT2    ANOP
+.* NOW LOOK FOR DOUBLE QUOTES IN STRING TO CALCULATE THE CORRECT
+.*   LENGTH
+&LITPOSN SETA  2             START AFTER 1ST QUOTE
+&LITLEN  SETA  K'&SYSLIST(&THIS)
+&LITLEN  SETA  &LITLEN-2
+.TQUOTE2 AIF   ('&SYSLIST(&THIS)'(&LITPOSN,2) NE '''''').NOTDBL2
+&LITPOSN SETA  &LITPOSN+1
+&LITLEN  SETA  &LITLEN-1
+.NOTDBL2 ANOP
+&LITPOSN SETA  &LITPOSN+1
+         AIF   (&LITPOSN LT K'&SYSLIST(&THIS)).TQUOTE2
+&K       SETA  &LITLEN
+         MVC   0(&K,1),=C&SYSLIST(&THIS) MOVE LITERAL STRING
+&POSN    SETA  &POSN+&K
+         AGO   .ADD3
+.VAR2    ANOP
+.*       AIF   ('&TYPE' EQ 'SCHED').USE15
+         LA    &VREG,&SYSLIST(&THIS) LOAD ADDRESS OF THE VARYING STRING
+.*       AGO   .ADD3
+.*SE15   LA    15,&SYSLIST(&THIS) LOAD ADDRESS OF THE VARYING STRING
+.ADD3    ANOP
+&THIS    SETA  &THIS+1
+         AGO   .LUP4
+.END     DC    H'0'                             END LIST
+         AIF   (T'&RETURN EQ 'O').NORET                           J40B
+         B     &RETURN                                            J40B
+         SPACE 1                                                  J40B
+         AGO   .FINAL                                             J40B
+.NORET   ANOP                                                     J40B
+         AIF   (T'&RC EQ 'O').NORC                                J40B
+         JOLRETN RC=&RC         GIV UP, IT DIDN'T WORK
+         SPACE 1                                                  J40B
+.NORC    ANOP                                                     J40B
+.FINAL   ANOP                                                     J40B
+***********************************************************************
+         SPACE 2
+         MEND

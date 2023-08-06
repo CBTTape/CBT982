@@ -1,0 +1,23 @@
+//CLARKEU JOB  (SETUP),
+//             'BUILD A USERCAT',
+//             MSGCLASS=X,
+//             MSGLEVEL=(1,1),
+//             CLASS=A,
+//             REGION=1024K
+//*********************************************************************
+//*
+//* TAKEN FROM MVS0140 OF HERCULES SETUP - JAN 2010 - CLEM CLARKE
+//*
+//* NAME: SYS1.SETUP.CNTL(MVS0140)
+//*
+//* DESC: CREATE A USER CATALOG
+//*
+//*********************************************************************
+//CLEANUP EXEC PGM=IDCAMS
+//SYSPRINT DD  SYSOUT=*
+//MVSCAT   DD  UNIT=3380,VOL=SER=JOL60,DISP=SHR
+//SYSIN    DD  *
+ DELETE (JOLDIST.UCAT.MVS)  FORCE PURGE  USERCATALOG
+ DELETE (JOLDIST) ALIAS
+ DELETE (JOLDEV)  ALIAS
+

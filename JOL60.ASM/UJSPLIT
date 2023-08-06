@@ -1,0 +1,84 @@
+           TITLE 'JOL SUBROUTINES'                                74303
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974,1975
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+         COPY JOLCOM
+           TITLE 'SPLIT STATEMENT INTO TOKENS:CALL UJCTKN'
+           JOLSAVE CSECT=UJC50SPL  NEW CSECT  3 NOV 74 *********
+           ORG UJC50SPL
+UJSPLIT    EQU *
+           ENTRY UJSPLIT
+           ORG
+* THIS IS A NEW CSECT AND IS CALLED WHEN-EVER IT IS REQUIRED TO
+*  SPLIT A STATEMENT INTO TOKENS. UJCTKN IS CALLED TO ACTUALLY DO
+*  THE JOB.
+* PREVIOUSLY, UJCTKN USED TO BE CALLED DIRECTLY,BUT AS IT IS USED
+*  BY PROGRAMS OTHER THAN JOL, IT CANNOT BE ALTERED TO GIVE ERROR
+*  MESSAGES, AND RATHER THAN THE VARIOUS PARTS OF JOL TESTING IT'S
+*  RETURN CODE, AND ISSUING SPACE CONSUMMING ERROR MESSAGES, THIS
+*  MODULE IS CALLED INSTEAD AND DOES IT ALL.
+*
+***NOTE*** THE NAME IS UJC50. THIS IS BECAUSE THE DOCUMENTATION
+*   HAS TOKEN ERROR MESSAGES FOR C50,AND I DO NOT INTEND TO
+*   SET UP A NEW ERROR MESSAGE MANUAL JUST YET,SO THE SAME
+*   ERROR NUMBER WILL BE USED FOR NOW.
+*
+* ON WITH THE JOB.
+           USING TKNX,R3                                          74303
+           ST  R3,CALLAREA     ADDRESS OF TKNX STORED (R3 ALWAYS
+*                              POINTS TO TKNX).
+           LR  R1,R2           R2 ALWAYS POINTS TO JOLCOM,OR
+*                              CALLAREA
+           L   R15,=V(UJCTKN)
+           BALR R14,R15        AND AWAY.
+           LR  R8,R15          SAVE RETURN CODE
+           B   UJSPLX(R15)
+UJSPLX     B   UJSPL0          RETURN 0,NO ERROR MESSAGE
+           B   UJSPL4          STATEMENT TOO LONG
+           B   UJSPL8          TOO MANY SYMBOLS IN STATEMENT
+           B   UJSPL12         A SYMBOL TOO LONG
+           B   UJSPL16         INVALID LITERAL STRING
+           SPACE 1
+UJSPLRET   EQU *
+UJSPL0     LR  R15,R8          LOAD 15 WITH UJCTKN RETURN CODE
+           JOLRETN RC=(15)     RETURN NOW
+           SPACE 1
+UJSPL4   JOLERR 401,'STATEMENT TOO LONG, GREATER THAN 2048 BYTES'  DASD
+           B   UJSPLRET        RETURN
+           SPACE 1
+UJSPL8 JOLERR 402,'TOO MANY TOKENS(SYMBOLS), GREATER THAN 512 TOKENS' D
+           B   UJSPLRET
+           SPACE 1
+UJSPL12    GETTKN TKNNO         SYMBOL TOO LONG,GET IT
+           MVI #TKN+1,50       SET LENGTH SHORTER
+         JOLERR 403,'SYMBOL STARTING ''',#TKN,''' TOO LONG, GREATER THA*
+               N 253 BYTES'                                        DASD
+           B   UJSPLRET        RETURN
+           SPACE 1
+UJSPL16    GETTKN TKNNO        GET OFFENDING LITERAL STRING
+           CLI #TKN+1,50
+           BL  *+8
+           MVI #TKN+1,50       SET LENGTH TO 50
+         JOLERR 404,'LITERAL STRING STARTING ',#TKN,                   *
+               'HAS NO ENDING QUOTE'
+           B   UJSPLRET        RETURN
+           SPACE 1
+           LTORG
+         END

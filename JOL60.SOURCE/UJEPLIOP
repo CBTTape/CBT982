@@ -1,0 +1,97 @@
+//CLARKEB  JOB (0000,0000),CVC,MSGCLASS=X,NOTIFY=CLARKE
+//PLI     EXEC PGM=JMG000,PARM='OBJECT,NODECK',REGION=500K
+//SYSLIN    DD DSN=&&OBJECT,UNIT=SYSSQ,SPACE=(80,(250,100)),
+//             DISP=(MOD,PASS)
+//SYSUT1    DD DSN=&&SYSUT1,UNIT=SYSDA,SPACE=(1024,(60,60),,CONTIG)
+//SYSPRINT  DD SYSOUT=*,DCB=(RECFM=VBA,LRECL=125,BLKSIZE=629)
+ USELIOP:PROC OPTIONS(MAIN);
+ DCL
+     PARM                 CHAR(100) VAR,
+     ANS                  CHAR(100) VAR,
+     I                    FIXED BIN(15),
+     PLIRETC              BUILTIN,
+     UJPLIOP              EXTERNAL ENTRY(CHAR(*) VAR)
+                          OPTIONS(ASM);
+ CALL UJPLIOP('MACRO;');
+ CALL UJPLIOP('END;');
+     I=99;
+     CALL UJPLIOP('SET X='ÝÝ I ÝÝ ';');
+   /*
+ DO  I = 1 TO 200;
+     CALL UJPLIOP('%X='ÝÝ I ÝÝ ';');
+ END;
+   */
+ CALL UJPLIOP('LISTSYMS;');
+ CALL PLIRETC(0);
+ END;
+//LKED    EXEC PGM=JQAL,PARM='XREF,LIST',COND=(9,LT,PLI),REGION=384K
+//SYSLIB    DD DSN=SYS1.PLIBASE,DISP=SHR
+//          DD DSN=CLARKE.JOL40.LOAD,DISP=SHR
+//SYSLMOD   DD DSN=CLARKE.JOL40.LOAD(USEPLIOP),DISP=SHR
+//SYSUT1    DD DSN=&&SYSUT1,UNIT=SYSDA,SPACE=(1024,(200,20))
+//SYSPRINT  DD SYSOUT=*
+//SYSLIN    DD DSN=&&OBJECT,UNIT=SYSSQ,DISP=(OLD,DELETE)
+MEMBER NAME  UJU98EX1
+         GENSAVE CSECT=UJU98EX1
+***********************************************************************
+* THIS SUBROUTINE IS CALLED BY THE JOL SCHEDULER FOLLOWING THE        *
+* EXECUTION OF A USER PROGRAM.                                        *
+*                                                                     *
+* THIS PROGRAM CAN FIDDLE WITH THE RETURN CODE PROVIDED BY THE        *
+* APPLICATION PROGRAM TO CHANGE THE WAY JOL HANDLES RETURN-CODE       *
+* PROCESSING.                                                         *
+*                                                                     *
+* THIS SAMPLE ASSUMES RETURN CODES ARE ISSUED IN MULTIPLES OF 10,     *
+* STARTING FROM 10. IT CONVERTS 10 TO 0, 20 TO 4, 30 TO 8, ETC.       *
+*                                                                     *
+* THIS FACILITY IS OF BENEFIT TO THOSE CONVERTING FROM OSIV/X8 TO F4, *
+* OR RUNNING A MIXED ENVIRONMENT BECAUSE IT ALLOWS THE RETURN-CODE    *
+* CONVENTIONS OF ONE SYSTEM TO BE APPLIED TO THE OTHER.               *
+*                                                                     *
+* DO BE AWARE THAT WITH THIS FACILITY IN PLACE, THE RETURN-CODES      *
+* REPORTED BY JOL AS BEING RETURNED BY THE APPLICATION ARE IN FACT    *
+* THOSE WHICH ARE RETURNED BY THIS USER EXIT FOLLOWING ITS            *
+* DELIBERATIONS                                                       *
+*                                                                     *
+* THIS USER EXIT MAY BASE ITS DECISION ON THE FOLLOWING ITEMS OF      *
+* INFORMATION:                                                        *
+*   JOB NAME                                                          *
+*   PROGRAM NAME                                                      *
+*   PROGRAM'S PARAMETERS                                              *
+*   THE CONDITION-CODE ACTUALLY RETURNED BY THE PROGRAM               *
+*   THE SSI ASSOCIATED WITH THE PROGRAM ( REFER TO THE LINKAGE EDITOR
+*         MANUAL ABOUT HOW TO PROVIDE SYSTEM STATUS INFORMATION)      *
+*                                                                     *
+*   ANY OTHER INFORMATION YOUR PROGRAM CAN FIND FOR ITSELF.           *
+*                                                                     *
+* YOU CAN USE THE SSI TO DIFFERENTIATE BETWEEN DIFFERENT VERSIONS     *
+* OF THE PROGRAM: PRODUCTION/TEST, OR USE IT TO STORE THE VERSION-DATE*
+*                                                                     *
+* THE OSIV/F4 UTILITY KDJBR14 ALWAYS PROVIDES A RETURN-CODE OF ZERO.  *
+* BY EXAMINING ITS PARAMETERS (WHICH KDJBR14 INGORES), YOU CAN CAUSE  *
+* JOL TO PROCESS AS IF IT HAD RETURNED 0, 4, 5 OR ANY OTHER VALID     *
+* RETURN-CODE.                                                        *
+***********************************************************************
+         L     R3,0(,R1)
+         USING U98PARM,R3
+         LH    R15,U98CC
+         LTR   R15,R15              IF RC=0, LEAVE IT ALONE
+         BZ    DONE
+         LA    R1,IGNORETB          SEARCH THIS TABLE            88036
+LOOP     CLC   U98PGM,0(R1)         IF IT'S FOUND,               88036
+         BE    DONE                 IGNORE IT                    88036
+         LA    R1,8(,R1)            ADDRESS THE NEXT             88036
+         CLC   0(8,R1),=8X'00'      END OF TABLE?                88036
+         BNE   LOOP                 NO                           88036
+         SLR   R14,R14              WASN"T IN THE TABLE: PROCESS IT
+*                                           ORIG  NEW ORIG  NEW
+         D     R14,=F'10'      DIVIDE BY 10   10    1   20    2
+         BCTR  R15,0           MINUS 1        10    0   20    1
+         SLL   R15,2           TIMES 4        10    0   20    4
+DONE     GENRETN RC=(15)
+         DS    0D                                                88036
+IGNORETB DC    C'KEQEFT01'                                       88036
+         DC    XL8'0'                                            88036
+U98PARM  DSECT
+         COPY  UJU98PRM                                          88036
+         END

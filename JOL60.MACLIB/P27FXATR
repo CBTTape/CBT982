@@ -1,0 +1,14 @@
+         MACRO
+&NAME    P27FXATR  &P1
+&NAME    DS    0H
+         CLI   VIDSA,0          Does this Terminal take colors ?  J51
+         BE    #&SYSNDX         No, so ignore colours, attributes J51
+         LH    R1,#DEFTXTA             GET CURRENT LENGTH OF STRING
+         LA    R1,3(R1)                ADD 3 FOR COLOR RESET
+         STH   R1,#DEFTXTA             RESET
+         LA    R1,DEFTXTA-3(R1)        POINT TO END OF STRING
+         MVC   0(1,R1),VIDSA           Fujitsu OR IBM Set Attribute
+         MVI   1(R1),X'41'             SET attribute
+         MVI   2(R1),&P1               SET THE attribute
+#&SYSNDX DS    0H
+         MEND                                                     J50

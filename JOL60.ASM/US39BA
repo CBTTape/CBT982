@@ -1,0 +1,233 @@
+US39BA   TITLE ' BSAM PUT ROUTINE'
+US39BA   CSECT
+*    THIS IS THE PUT ROUTINE FOR BSAM
+*
+           SPACE 2
+* ON ENTRY TO THIS ROUTINE R1 POINTS TO THE DCB AND R0 TO THE DATA
+*    FURTHERMORE,THE #OPEN MACRO WILL HAVE CAUSED US39AA TO BE
+*          EXECUTED.
+*          US39AA WILL HAVE OPENED THE FILE AND ALLOCATED BUFFERS
+*              AND SET ASIDE AN AREA WITH DECBS AND
+*              A SAVE AREA
+*    THE STORE FORMAT IS A DESCRIBED WITH THE CNTRL DSECT
+*          AT THE END OF THIS LISTING.HOWEVER IT IS NOT CLEAR
+*          FROM THAT LIST THAT THERE IS A LIST OF DECB ADDRESSES
+*          WHICH ARE RECYCLED AS NECESSARY
+           SPACE 2
+*    THE DECB ADDRESS WORD HAS BYTE 0 AS AN INDICATOR
+*          X'00' MEANS BUFFER READY TO USE
+*          X'10' MEANS BUFFER IS BEING FILLED
+*          X'F0' MEANS BUFFER IS FILLED
+*          X'FF' MEANS BUFFER IS FILLED AND WRITTEN
+R0         EQU 0
+R1         EQU 1
+R2         EQU 2
+R3         EQU 3
+R4         EQU 4
+R5         EQU 5
+R6         EQU 6
+R7         EQU 7
+R8         EQU 8
+R9         EQU 9
+R10        EQU 10
+R11        EQU 11
+R12        EQU 12
+R13        EQU 13
+R14        EQU 14
+R15        EQU 15
+           EJECT
+* LET'S GO
+          SAVE (14,12),,*
+           LR  R11,R15
+           USING US39BA,R11
+           USING IHADCB,R1
+           TM  DCBOFLGS,X'10'
+           BO  FILEOPEN
+           LA  R15,4           ERROR,LATER WE MIGHT OPEN IT
+          LM 14,12,12(13)
+           BR  14
+FILEOPEN   LR  R2,R0
+           LR  R3,R1
+           DROP R1
+           USING IHADCB,R3
+           L   R4,88(3)        PICK ADDR OF AN USED AREA IN A QSAM
+*                              DCB INTO WHICH WE HAVE STORED
+*                              THE ADDRESS OF DSECT CNTRL
+           USING CNTRL,R4
+           LA  R1,SAVEAREA
+           ST  R13,4(R1)
+           ST  R1,8(R13)
+           LR  R13,R1
+           SPACE 3
+* SEE IF THE RECORD GIVEN US WILL FIT IN THE CURRENT BUFFER
+           TM  DCBRECFM,B'11000000'    RECFM'U' ?
+           BO   U
+           BZ   U
+           TM  DCBRECFM,B'01000000'    RECFM'V' ?
+           BO  V
+* FIXED HERE
+           CLC AMNTLEFT+2(2),=F'0'
+          BNE MOVEFXD
+           BAL R12,GETBUF
+MOVEFXD    EQU *
+           LH  R9,DCBLRECL
+MUV        BCTR R9,0
+           L R1,POSNNOW
+           EX  R9,MUVREC
+           LA  R9,1(,R9)
+           LCR R8,R9
+          LR  R12,R9
+          A   R9,POSNNOW
+          ST  R9,POSNNOW
+           A   R8,AMNTLEFT
+           ST  R8,AMNTLEFT
+           L   R6,CURRENT
+           USING DECBOVLY,R6
+          LR  R9,R12
+           AH  R9,DECLNGTH     RESET DECB LENGTH
+           STH R9,DECLNGTH
+           TM  DCBRECFM,B'01000000'  RECFM V (HERE IT MUST BE VB)
+           BZ  RETN0
+           L   R12,DECAREA     GET ADDR OF START OF BUFFER
+          MVC 0(2,R12),DECLNGTH         SET BLKSIZE FOR VB
+           XC  2(2,R12),2(R12) CLEAR NEXT 2 BYTES
+RETN0      SR  R15,R15
+RETN       L   R13,SAVEAREA+4
+           RETURN (14,12),T,RC=(15)
+V          EQU *
+           TM  DCBRECFM,B'00010000'    VB OR JUST V
+           BZ  U               JUST V,TREAT AS U
+GETLEN     CLC DCBLRECL,0(R2)  COMPARE LRECL TO FIRST 2 BYTES OF
+*                              RECORD
+           BNL VBOK
+          WTO 'RECORD>LRECL',ROUTCDE=(2,11)
+           L  R1,=XL4'80000010'
+           SVC 13
+VBOK      LH    R9,0(,R2) GET RECORD LENGTH
+          SPACE 2
+           C   R9,AMNTLEFT
+           BL  MUV
+           BAL R12,GETBUF
+           L   R12,POSNNOW
+          LA   R12,4(,R12)    +4 FOR BLOCK LENGHTH
+           ST  R12,POSNNOW
+           L   R12,AMNTLEFT
+           SH  R12,=H'4'
+           ST  R12,AMNTLEFT
+          L   R6,CURRENT
+          USING DECBOVLY,R6
+          MVC DECLNGTH,=H'4'      SET BLKSIZE FOR VB FILES
+          B VBOK          PICK UP LENGHTH OF RECORD,GO TO MUV
+U          BAL R12,GETBUF
+           LH  R9,DCBLRECL
+           B  MUV
+           EJECT
+GETBUF   DS    0H
+           MVC DCBPUT+1(3),REALRTN+1      OS REQUIRES THE ADDRESS
+*                                         OF THE ROUTINE IT PUT
+*                                         THERE AND NOT THIS ROUTINE'S
+*                                         ADDRESS (SUCH SADNESS)
+           CLI DCBBUFNO,X'01'  1 BUFFER ?
+           BNE MULTIBUF
+         CLI   DECBFLG,0       Q... BEEN HERE BEFORE?
+         BE    RESET           A... NO: DO NOT WRITE
+           L   R6,CURRENT
+*          WRITE (R6),SF,(R3),MF=E
+* NOW WRITE THE BLOCK  ******REPLACES 'WRITE' MACRO**************
+          LA  R1,0(R6)     DECB ADDR TO R1
+           MVI 5(R1),X'20'     SET TYPE FIELD
+           L  R15,REALRTN      WRITE ADDR MOVED IN #OPEN
+           BALR R14,R15
+*          CHECK (R6)
+*  CHECK *******REPLACES THE 'CHECK' MACRO ******
+           LR  R1,R6
+           L   R15,DCBCHECK
+           BALR R14,R15
+          B RESET     SET POSNNOW ETC
+           SPACE 3
+MULTIBUF   EQU *
+* NOW CYCLE DECB ADDRESSES
+         CLI   DECBFLG,X'00'  HAS THIS BLOCK BEEN USED AT ALL YET
+          BE RESET   DONT BOTHER RECYCLYING
+         MVI   DECBFLG,X'F0'   ELSE SIGNAL BLOCK FILLED BUT NOT OP
+           SR  R6,R6
+           IC  R6,DCBBUFNO     GET BUFNO
+          BCTR R6,0
+           SLL R6,2            * BY 4
+           LR  R7,R6           SAVE FOR NOW
+           L   R0,CURRENT(R6)  GET LAST DECB ADDRESS
+MINUS4     SH  R6,=H'4'
+          BM RECYLED
+           L   R1,CURRENT(R6)
+           ST  R1,CURRENT+4(R6)
+           B   MINUS4
+RECYLED    EQU *
+           ST  R0,CURRENT
+* R7 IS THE INDEX REG TO LAST DECB ADDR
+*  WE HAVE TO CHECK TO SEE IF IT HAS BEEN WRITTEN YET
+           LA  R1,CURRENT(R7)
+           CLI 0(R1),X'F0'     FILLED,BUT NOT YET WRITTEN ?
+           BNE CHECK           BUFFER NOT USED,OR IT HAS BEEN FILLED
+*                              AND WRITTEN
+* HERE WE HAVE TO WRITE OUT ALL THE DECBS FROM POSN 2 TO END OF
+*    DECB CHAIN
+           LA  R5,4            2ND DECB INDEX
+WRITENXT   L   R9,CURRENT(R5)  GET ADDR DECB
+*          WRITE (9),SF,(3),MF=E
+* NOW WRITE THE BLOCK  ******REPLACES 'WRITE' MACRO**************
+           LR  R1,R9           DECB ADDR TO R1
+           MVI 5(R1),X'20'     SET TYPE FIELD
+           L  R15,REALRTN      WRITE ADDR MOVED IN #OPEN
+           BALR R14,R15
+          LA R9,CURRENT(R5)
+           MVI 0(R9),X'FF'     SIGNAL WRITTEN
+           LA  R5,4(,R5)
+           CR  R5,R7
+           BH  ALLGONE
+           B   WRITENXT
+ALLGONE  DS    0H
+CHECK    DS    0H
+* MUST CHECK THIS BLOCK BEFORE WE CAN USE IT
+*    SEE FIRST IF IT HAS BEEN USED
+           CLI DECBFLG,X'00'
+           BE  RESET           HAS'NT GONE YET
+           L   R6,CURRENT
+*          CHECK (R6)
+*  CHECK *******REPLACES THE 'CHECK' MACRO ******
+          LA  R1,0(R6)     DECB ADDR TO R1
+           L   R15,DCBCHECK
+           BALR R14,R15
+RESET    DS    0H
+          L   R6,CURRENT
+           USING DECBOVLY,R6
+          XC POSNNOW,POSNNOW        CLEAR IT
+          XC DECLNGTH,DECLNGTH       CLEAR AMOUNT TO BE WRITTEN
+          MVC POSNNOW+1(3),DECAREA+1
+          MVI POSNNOW,0    CLEAR HIGH ORDER BYTE
+          MVC AMNTLEFT+2(2),DCBBLKSI
+           MVI DECBFLG,X'10'   SIGNAL BLOCK IN USE
+           MVC DCBPUT+1(3),=AL3(US39BA)   POP OUR OWN ADDR IN PUT AREA
+          BR    R12
+MUVREC     MVC 0(0,R1),0(R2)
+DECBOVLY   DSECT
+DECBDECB   DS  1F              ECB
+DECTYPE    DS  CL2
+           ORG DECTYPE
+DECPTR     DS  CL2
+           ORG
+DECLNGTH   DS  1H              LENGTH OF DATA
+DECDCBAD   DS  A
+DECAREA    DS  A
+DECIOBPT   DS  A
+DECNEXT    DS  A
+CNTRL      DSECT
+LENGTH    DS 1F
+POSNNOW    DS  1F              NEXT POSN IN BUFFER
+AMNTLEFT   DS  1F              AMOUNT LEFT IN BUFFER
+REALRTN    DS  1F              ADDR OF REAL'PUT' ROUTINE
+SAVEAREA   DS  18F
+CURRENT   DS    0F
+DECBFLG    DS  CL1             FLAGS FOR DECB
+DECBADDR   DS  AL3             ADDR OF DECB
+           DCBD DSORG=PS
+      END

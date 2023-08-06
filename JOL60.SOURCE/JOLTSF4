@@ -1,0 +1,594 @@
+         MACRO
+&NAME    JOLTSF4                                                       .
+               &ALIAS=,        ALIASES FOR THE COMMAND                 .
+               &CAT=YES,       SEARCH THE CATALOG                      .
+               &CMDLIB='JOL40.CMDLIB', SYSTEM MACLIB                   .
+               &C1=,           DEFAULT CARD1                           .
+               &C2=,           DEFAULT CARD2                           .
+               &C3=,           DEFAULT CARD3                           .
+               &C4=,           DEFAULT CARD4                           .
+               &DC='//SYSUDUMP DD  SYSOUT=X', DEFAULT DUMPCARD         .
+               &DYNAMIC=NO,    DEFAULT IS JCL GENERATE                 .
+               &FLAG=0,        DEFAULT FOR FLAG IS 0                   .
+               &GENCB=YES,     EXPAND ALL OS MAPPING MACROES           .
+               &INCLIB=JOL,    USER INCLUDE LIBRARY                    .
+               &JCL=,          DEFAULT JCL DATASET                     .
+               &JCLBLK=4080,   DEFAULT JCL BLOCK SIZE                  .
+               &JLOAD=,        JOL LOAD LIBRARIES                      .
+               &LET=(8,PROMPT), SUBMIT JCL EVEN IF ERRORS OCCURRED*    .
+               &LIST=,         SYSOUT CLASS FOR COMPILED LISTINGS      .
+               &OS=,           NAME OF OPERATING SYSTEM                .
+               &PCOM=YES,      PRINT COMMENTS                          .
+               &PGM=$JOLCP40,  NAME OF JOL COMPILER                    .
+               &PEXPAND=NO,    PRINT EXPANDED JOL MACROS               .
+               &PJCL=NO,       DO NOT PRINT JCL                        .
+               &PINCLUD=YES,   PRINT "INCLUDED" JOL                    .
+               &PMACRO=NO,     DO NOT LIST MACROES                     .
+               &POPT=NO,       DO NOT PRINT JOL OPTIONS                .
+               &PRINT=JOL,     DEFAULT PRINT FILE (JOL.LIST)           .
+               &PREFOUT=USERPREFIX, USER CURRENT PREFIX FOR PRINT,JCL  .
+               &PRTBLK=4080,   DEFAULT PRINT FILE BLOCK SIZE           .
+               &SUB=NO,        DON'T AUTOMATICALLY SUBMIT JCL          .
+               &SYMS=,         STRING OF CHARACTERS TO PASS TO JOL     .
+               &SYNCHK=NO,     NO SYNTAX CHECKING (CREATE AND EXECUTE) .
+               &TERM=YES,      DEFAULT FOR TERM IS TERM                .
+               &TEST=NO,       USE LET PROCESSING ONLY IF ERRORS       .
+               &TSO=NO,        DEFAULT IS JCL GENERATE                 .
+               &UNITJCL=SYSDA, UNIT NAME FOR THE GENERATED JCL         .
+               &UNITWRK=VIO,   UNIT NAME FOR $$JWRK1 AND $$JWRK2       .
+               &VSAMCAT=YES    YES IF VSAM CATALOGS ARE IN USE         .
+
+.* A NOTE TO THE UNSUSPECTING MAINTENANCE PROGRAMMER
+.* THE RULES FOR FINDING DATASET ALLOCATIONS ON MVS AND OSIV/F4
+.*   TCBJSCB POINTS TO JSCB
+.*   JSCDSABQ POINTS TO QDB
+.*   QDBFELMP POINTS TO FIRST DSAB
+.*   QDBLELMP POINTS TO LAST DSAB
+.*   DSABFCHN POINTS TO THE NEXT DSAB
+.*   DSABBCHN POINTS TO THE PREVIOUS DSAB
+.*   DSABTIOT POINTS TO THE TIOT ENTRY
+.*   TIOT+C POINTS TO JFCB IN SWA (NOTE 3 BYTES FROM +C, NOT 4)
+.*
+.*   WHY ALL THIS BOTHER?
+.*
+.*    DSAB CONTAINS USEFUL FLAGS SUCH AS IN-USE ATTRIBUTE ETC
+.*
+.*  TO FIND THE JOB ACCOUNTING INFO
+.*   1) FIND CURRENT TCB
+.*   2) LOAD JSCB ADDRESS FROM TCBJSCB
+.*   3) LOAD JCT ADDRESS FROM JSCBJCT
+.*   4) LOAD ACT ADDRESS FROM JCT+X'38'
+.*   5) ACT+X'1E' CONTAINS NUMBER OF ACCOUNTING FIELDS
+.*   6) ACCOUNTING FIELDS START AT ACT+X'20'
+.*      THESE HAVE THE FOLLOWING FORMAT:
+.*     A) FIRST BYTE IS THE LENGTH EXCLUSIVE OF THIS BYTE
+.*     B) SECOND BYTE IS THE FIRST IN THE STRING
+.*
+.*   7) ACT FOR STEP IS FOUND VIA TCBJSCB, JSCBSCT, SCT+X'30'
+.*
+.*
+.* ABOUT THE MACRO KEYWORDS:
+.*
+.* ALIAS       SPECIFIES THE ALTERNATIVE NAMES FOR THE GENERATED
+.*               COMMAND PROCESSOR. THESE ARE ESTABLISHED WITH THE
+.*               LINKAGE EDITOR ALIAS STATEMENT, GENERATED DURING
+.*               THIS ASSEMBLY. IF THIS COMMAND PROCESSOR IS
+.*               RE-LINKED LATER, YOU WILL NEED TO SUPPLY YOUR OWN
+.*               ALIAS STATEMENTS.
+.*
+.* CMDLIB      SPECIFIES THE DEFAULT LIBRARIES TO BE ASSOCIATED WITH
+.*               THE COMMAND PROCESSOR'S MACLIB KEYWORD
+.*
+.* DYNAMIC     SPECIFIES THAT JOL USES THE DYNAMIC ALLOCATION ROUTINES
+.*               INSTEAD OF JCL.
+.*
+.* INCLIB      SPECIFIES THE DEFAULT LIBRARIES TO BE ASSOCIATED WITH
+.*               THE COMMAND PROCESSOR'S INCLUDE KEYWORD
+.*
+.* JCL         SPECIFIES THE DEFAULT DATASET NAME FOR THE GENERATED
+.*              JCL. IF OMITTED, THE JCL IS WRITTEN TO A TEMPORARY
+.*              DATASET AND CANNOT BE ACCESSED (EASILY) BY THE
+.*              TERMINAL USER. IF IT IS SPECIFIED THE JCL CANNOT
+.*              BE WRITTEN TO A TEMPORARY DATASET.
+.*
+.* JLOAD       SPECIFIES THE JOL LOAD LIBRARIES. THIS CANNOT BE
+.*              OVER-RIDDEN AT EXECUTION TIME.
+.*
+.* LET         SPECIFIES WHETHER OR NOT THE LET COMPILER OPTION IS TO
+.*              BE SELECTED BY DEFAULT. IF THE COMPILER RETURNS A
+.*                RETURN CODE GREATER THAN THE VALUE SPECIFIED BY
+.*                THIS KEYWORD, HE  IS ASKED WHETHER THE JOB SHOULD BE
+.*                 SUBMITTED. HOWEVER, IF SUBMIT IS SPECIFIED, THE
+.*                 QUESTION IS NOT ASKED, AND THE JOB IS SUBMITTED.
+.*
+.* LIST        SPECIFIES THE DEFAULT SYSOUT CLASS FOR JOL COMPILER
+.*              MESSAGES FOR WHEN THE TERMINAL USER SELECTS THE
+.*              LIST OPTION.
+.*
+.* OS          SPECIFIES THE VERSION OF OS FOR WHICH THE COMMAND
+.*              PROCESSOR IS BEING GENERATED. THIS IS USED DURING
+.*              ASSEMBLY TO SELECT PARTICULAR MAPPING MACROES.
+.*             VALID SPECIFICATIONS ARE MVS AND OSIV/F4.
+.*
+.* PEXPAND     SPECIFIES WHETHER OR NOT THE PEXPAND OPTION SHOULD
+.*              BE SELECTED BY DEFAULT.
+.*
+.* PGM         NAMES THE JOL COMPILER.
+.*
+.* PINCLUD     SPECIFIES WHETHER OR NOT THE PINCLUDE OPTION SHOULD
+.*              BE SELECTED BY DEFAULT.
+.*
+.* PMACRO      SPECIFIES WHETHER OR NOT THE PMACRO OPTION SHOULD BE
+.*               SELECTED BY DEFAULT.
+.*
+.* PRINT       SPECIFIES THE DEFAULT PRINT DATASET FOR THE JOL COMPILER
+.*              MESSAGES.
+.*             IT MAY NAME A DATASET OR BE AN ASTERISK (TO THE
+.*              TERMINAL).
+.*             IF PRINT='NULLFILE' IS SPECIFIED, THEN NOPRINT IS
+.*              THE DEFAULT PRINT KEYWORD
+.*
+.* SUB         SPECIFIES WHETHER OR NOT THE LET COMPILER OPTION IS TO
+.*               BE SELECTED BY DEFAULT. JCL GENERATED WILL BE
+.*              SUBMITTED WITHOUT ASKING THE TERMINAL USER, EVEN IF
+.*               ERRORS ARE DETECTED BY THE JOL COMPILER. THIS OPTION
+.*               FORCES THE USE OF THE LET OPTION.
+.*
+.* SYMS        SPECIFIES THE DEFAULT VALUE FOR THE COMMAND PROCESSOR'S
+.*              SYMS KEYWORD.
+.*
+.* SYSDA       SPECIFIES THE UNIT NAME TO BE USED FOR TEMPORARY
+.*              DATASET ALLOCATIONS
+.*
+.* TERM        SPECIFIES WHETHER OR NOT THE TERMINAL OPTION SHOULD
+.*              BE SELECTED BY DEFAULT.
+.*
+.* TEST        SPECIFIES WHETHER OR NOT THE TEST OPTION SHOULD BE
+.*              SELECTED BY DEFAULT
+.*             THE TEST OPTION RESULTS IN THE JOL COMMAND ALWAYS ASKING
+.*              WHETHER TO SUBMIT THE JCL GENERATED BY THE JOL COMPILER
+.*
+.* TSO         SPECIFIES THAT JOL USES THE DYNAMIC ALLOCATION ROUTINES
+.*               AND RUNS THE JOB DIRECTLY UNDER TSO.
+.*
+.* VSAMCAT     SPECIFIES WHETHER VSAM USER CALALOGUES ARE IN USE IN THE
+.*               SYSTEM. IF "VSAMCAT=NO" IS SPECIFIED WHEN VSAM
+.*               CATALOGUES ARE TO BE USED TO LOCATE USER DATASETS,
+.*               THE DATASET QUALIFY ROUTINE IS LIKELY NOT TO RESOLVE
+.*               DATASET NAMES CORRECTLY.
+.*             IF VSAM CATALOGUES  ARE NOT IN USE, THE DATASET
+.*             QUALIFY ROUTINE CAN CORRECTLY RESOLVE SOME DATASET NAMES
+.*              WHICH IT CANNOT OTHERWISE RESOLVE.
+.*
+.* VALID VALUES FOR TERM, PINCLUD, TEST, PMACRO, PEXPAND, AND VSAMCAT
+.*   ARE "YES" AND "NO".
+.* LET MAY BE  USED TO SPECIFY "YES", "NO", OR A NUMERIC VALUE.
+.*
+.*  IF ANY KEYWORDS ARE INCORRECTLY SPECIFIED, EDITING CONTINUES
+.*    BUT THE MACRO WILL NOT EXPAND.
+.*
+.* BE WARNED.
+.*
+.*
+.*
+         ACTR  400000        SEEMS TO REQUIRE MORE THAN THE DEFAULT
+         GBLB  &UJT
+         LCLA  &A,&A2
+         LCLA  &LETVAL
+         LCLB  &B,&B1          FLAG
+         LCLB  &ERR            ERROR FLAG
+         LCLB  &MVSXA,&MVS,&F4,&X8
+         LCLC  &LETPR
+         LCLC  &C,&CX,&WRKUNIT,&SOUT
+         LCLC  &PE,&PI,&PM,&LT,&SB,&TST
+         LCLC  &FL,&CT,&PJ,&PO,&PC,&SYNT
+         LCLC  &OSTYPE
+         LCLC  &TITLE
+&LETPR   SETC  'PROMPT'            DEFAULT FOR SECOND LET SUBFIELD
+&TITLE   SETC  'JOL/TSO INTERFACE       '
+.*AME    TITLE '&TITLE MAINLINE CODE'
+         AIF   ('&TEST' EQ 'YES' OR '&TEST' EQ 'NO').TS010
+&ERR     SETB  1
+         MNOTE 12,'INVALID TEST VALUE &TEST'
+.TS010   ANOP
+         AIF   ('&PINCLUD' EQ 'YES' OR '&PINCLUD' EQ 'NO').TS020
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR PINCLUD &PINCLUD'
+.TS020   ANOP
+         AIF   ('&PMACRO' EQ 'YES' OR '&PMACRO' EQ 'NO').TS030
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR PMACRO &PMACRO'
+.TS030   ANOP
+         AIF   ('&PEXPAND' EQ 'YES' OR '&PEXPAND' EQ 'NO').TS035
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR PEXPAND &PEXPAND'
+.TS035   ANOP
+         AIF   ('&TERM' EQ 'YES' OR '&TERM' EQ 'NO').TS040
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR TERM &TERM'
+.TS040   ANOP
+         AIF   (K'&UNITJCL LT 9).TS045 IF LT 9 CHARS, THEN OKAY
+&ERR     SETB  1
+         MNOTE 12,'INVALID UNIT NAME:-UNITJCL=&UNITJCL'
+.TS045   ANOP
+         AIF   (K'&UNITWRK LT 9).TS050 IF LT 9 CHARS, THEN OKAY
+&ERR     SETB  1
+         MNOTE 12,'INVALID UNIT NAME:-UNITWRK=&UNITWRK'
+.TS050   ANOP
+         AIF   (K'&NAME GT 3 AND K'&NAME LT 9).TS060
+&ERR     SETB  1
+         MNOTE 12,'INVALID PROGRAM NAME &NAME'
+.TS060   ANOP
+         AIF   (K'&LIST EQ 1).TS070
+&SOUT    SETC  'A'
+         AIF   (K'&LIST EQ 0).TS090
+&ERR     SETB  1
+         MNOTE 12,'INVALID SYSOUT CLASS &LIST: TOO LONG'
+         AGO   .TS090
+.TS070   ANOP
+&SOUT    SETC  '&LIST'
+         AIF   ('&LIST' LT 'A' OR '&LIST' GT '9').TS080
+         AIF   ('&LIST' GT 'I' AND '&LIST' LT 'J').TS080
+         AIF   ('&LIST' GT 'R' AND '&LIST' LT 'S').TS080
+         AIF   ('&LIST' GT 'Z' AND '&LIST' LT '0').TS080
+         AGO   .TS090
+.TS080   ANOP
+         MNOTE 12,'INVALID SYSOUT CLASS &LIST: IT MAY NOT BE PRINTABLE'
+&ERR     SETB  1
+.TS090   ANOP
+         MNOTE *,'OS "&OS."'                                     88036
+         AIF   (K'&OS LT 2).TS095
+&OSTYPE  SETC  '&OS'
+         AIF   ('&OS'(1,1) NE '''').TS092
+&OSTYPE  SETC  '&OS'(2,K'&OS-2)
+.TS092   ANOP
+&X8      SETB  ('&OSTYPE' EQ 'OSIV/X8')
+&F4      SETB  ('&OSTYPE' EQ 'OSIV/F4')
+&MVSXA   SETB  ('&OSTYPE' EQ 'MVS/XA')
+&MVS     SETB  ('&OSTYPE' EQ 'MVS' OR &MVS)
+         AIF   (&F4 OR &MVS OR &X8).TS100
+         AIF   (T'&OS EQ 'O').TS095
+         MNOTE 4,'F4 &F4'                                        88036
+         MNOTE 4,'X8 &X8'                                        88036
+         MNOTE 4,'MVS &MVS'                                      88036
+         MNOTE 4,'OS "&OS."'                                     88036
+         MNOTE 12,'OS=&OSTYPE IS INCORRECT: IT MUST BE OSIV/F4, OSIV/X8.
+                OR MVS'
+&ERR     SETB  1
+         AGO   .TS100
+.TS095   ANOP
+         MNOTE 12,'OS MUST BE SPECIFIED AS OSIV/F4, OSIV/X8 OR MVS'
+&ERR     SETB  1
+.TS100   ANOP
+         AIF   ('&LET' EQ 'YES' OR '&LET' EQ 'NO').TS110
+&C       SETC  T'&LET(1)
+.*  MNOTE 16,'LETTYPE= &C'
+         AIF   (T'&LET(1) EQ 'N').TS105
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR LET &LET'
+         AGO   .TS110
+.TS105   ANOP
+&LETVAL  SETA  &LET(1)
+         AIF   (N'&LET EQ 1).TS110
+         AIF   ('&LET(2)' EQ 'PROMPT' OR '&LET(2)' EQ 'NOPROMPT').TS106
+         MNOTE 12,'INVALID VALUE FOR LET SUBPARAMETER &LET(2)'
+&ERR     SETB  1
+         AGO   .TS110
+.TS106   ANOP
+&LETPR   SETC  '&LET(2)'
+.TS110   ANOP
+         AIF   ('&SUB' EQ 'YES' OR '&SUB' EQ 'NO').TS120
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR SUB &SUB'
+.TS120   ANOP
+         AIF   ('&CAT' EQ 'YES' OR '&CAT' EQ 'NO').TS130
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR CAT &CAT'
+.TS130   ANOP
+         AIF   ('&PJCL' EQ 'YES' OR '&PJCL' EQ 'NO').TS140
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR PJCL &PJCL'
+.TS140   ANOP
+         AIF   ('&POPT' EQ 'YES' OR '&POPT' EQ 'NO').TS150
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR POPT &POPT'
+.TS150   ANOP
+         AIF   ('&PCOM' EQ 'YES' OR '&PCOM' EQ 'NO').TS160
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR PCOM &PCOM'
+.TS160   ANOP
+         AIF   ('&FLAG' GE '0' AND '&FLAG' LE '5').TS170
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR FLAG &FLAG'
+.TS170   ANOP
+         AIF   ('&SYNCHK' EQ 'YES' OR '&SYNCHK' EQ 'NO').TS180
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR SYNCHK &SYNCHK'
+.TS180   ANOP
+         AIF   ('&VSAMCAT' EQ 'YES' OR '&VSAMCAT' EQ 'NO').TS190
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR VSAMCAT &VSAMCAT'
+.TS190   ANOP
+         AIF   ('&PREFOUT' EQ 'USERPREFIX').TS200
+         AIF   ('&PREFOUT' EQ 'USERID').TS200
+         AIF   ('&PREFOUT' EQ 'SYSUID').TS200
+         AIF   ('&PREFOUT' EQ 'SYSPREF').TS200
+         MNOTE 12,'INVALID VALUE FOR PREFOUT KEYWORD &PREFOUT'
+&ERR     SETB  1
+.TS200   ANOP
+         AIF   ('&DYNAMIC' EQ 'YES' OR '&DYNAMIC' EQ 'NO').TS205
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR DYNAMIC &DYNAMIC'
+.TS205   ANOP
+         AIF   ('&TSO' EQ 'YES' OR '&TSO' EQ 'NO').TS210
+&ERR     SETB  1
+         MNOTE 12,'INVALID VALUE FOR TSO &TSO'
+.TS210   ANOP
+         AIF   (&ERR).END
+&B       SETB  ('&SYNCHK' EQ 'NO')
+&SYNT    SETC  (&B)'NO'.'SYNTAX'
+&B       SETB  ('&PINCLUD' EQ 'NO')
+&PI      SETC  (&B)'N'.'PINCLUDE'
+&B       SETB  ('&CAT' EQ 'NO')
+&CT      SETC  (&B)'N'.'CAT'
+&B       SETB  ('&PJCL' EQ 'NO')
+&PJ      SETC  (&B)'N'.'PJCL'
+&B       SETB  ('&PCOM' EQ 'NO')
+&PC      SETC  (&B)'N'.'PCOMM'
+&B       SETB  ('&POPT' EQ 'NO')
+&PO      SETC  (&B)'N'.'POPT'
+&FL      SETC  '&FLAG'
+&B       SETB  ('&PEXPAND' EQ 'NO')
+&PE      SETC  (&B)'N'.'PEXPAND'
+&B       SETB  ('&PMACRO' EQ 'NO')
+&PM      SETC  (&B)'N'.'PMACRO'
+&B       SETB  ('&SUB' EQ 'NO')
+&SB      SETC  (&B)'N'.'SUB'
+&B       SETB  ('&LET' EQ 'NO')
+&LT      SETC  (&B)'N'.'LET'
+&B       SETB  ('&TEST' EQ 'NO')
+&TST     SETC  (&B)'N'.'TEST'
+&WRKUNIT SETC  '&UNITWRK        '(1,8)
+&A       SETA  0
+         AIF   (N'&JLOAD EQ 0).NJLOAD
+UJTLOAD  CSECT
+&A       SETA  0
+.JLOOP   ANOP
+&A       SETA  &A+1
+&B       SETB  (&A EQ N'&JLOAD)
+&B1      SETB  ('&JLOAD(&A)'(1,1) EQ '''')
+&C       SETC  (1-&B)'A(*+4)'.(&B)'X''FF000000'''
+         DC    A(UJT&A),Y(L'UJT&A),B'1&B1.00000000000000',4A(0),&C
+         AIF   (NOT &B).JLOOP
+&A       SETA  0
+.JLOOP2  ANOP
+&A       SETA  &A+1
+&B1      SETB  ('&JLOAD(&A)'(1,1) EQ '''')
+&C       SETC  '&JLOAD(&A)'(1+&B1,K'&JLOAD(&A)-(2*&B1))
+UJT&A    DC    C'&C'
+         AIF   (&A LT N'&JLOAD).JLOOP2
+.NJLOAD  ANOP
+         AIF   (N'&CMDLIB EQ 0).NCMDDS
+UJTCMDL  CSECT
+&A       SETA  0
+.CMDLOOP ANOP
+&A       SETA  &A+1
+&B       SETB  (&A EQ N'&CMDLIB)
+&B1      SETB  ('&CMDLIB(&A)'(1,1) EQ '''')
+&C       SETC  (1-&B)'A(*+4)'.(&B)'X''FF000000'''
+         DC    A(CMD&A),Y(L'CMD&A),B'1&B1.00000000000000',4A(0),&C
+         AIF   (NOT &B).CMDLOOP
+&A       SETA  0
+.CMLOOP2 ANOP
+&A       SETA  &A+1
+&B1      SETB  ('&CMDLIB(&A)'(1,1) EQ '''')
+&C       SETC  '&CMDLIB(&A)'(1+&B1,K'&CMDLIB(&A)-(2*&B1))
+CMD&A    DC    C'&C'
+         AIF   (&A LT N'&CMDLIB).CMLOOP2
+.NCMDDS  ANOP
+         AIF   (N'&INCLIB EQ 0).NINCLDS
+UJTINCL  CSECT
+&A       SETA  0
+.INCLOOP ANOP
+&A       SETA  &A+1
+&B       SETB  (&A EQ N'&INCLIB)
+&B1      SETB  ('&INCLIB(&A)'(1,1) EQ '''')
+&C       SETC  (1-&B)'A(*+4)'.(&B)'X''FF000000'''
+         DC    A(INC&A),Y(L'INC&A),B'1&B1.00000000000000',4A(0),&C
+         AIF   (NOT &B).INCLOOP
+&A       SETA  0
+.INLOOP2 ANOP
+&A       SETA  &A+1
+&B1      SETB  ('&INCLIB(&A)'(1,1) EQ '''')
+&C       SETC  '&INCLIB(&A)'(1+&B1,K'&INCLIB(&A)-(2*&B1))
+INC&A    DC    C'&C'
+         AIF   (&A LT N'&INCLIB).INLOOP2
+.NINCLDS ANOP
+         TITLE '&TITLE PARAMETER DESCRIPTIONS'
+         AIF   (&UJT).NXT
+         EXTRN UJTVC01
+.NXT     ANOP
+UJTPARM  KEQPARM DSECT=KEQPARMD
+DSNAME   KEQPOSIT  DSTHING,PROMPT='Input dataset name',                .
+               HELP='Name of dataset containing the input to the Jol co.
+               mpiler',                                                .
+               VALIDCK=UJTVC01
+INCLUDE  KEQKEYWD  DEFAULT='INCLUDE'
+         KEQNAME   'INCLUDE',SUBFLD=INCLIST,                           .
+               ALIAS=('LIBRARY','JOLSRCE')
+CMDLIB   KEQKEYWD  DEFAULT='CMDLIB'
+         KEQNAME   'MACLIB',SUBFLD=CMDLIST,                            .
+               ALIAS='CMDLIB'
+PINCLUDE KEQKEYWD  DEFAULT='&PI'
+         KEQNAME   'PINCLUDE'
+         KEQNAME   'NPINCLUDE',ALIAS='NOPINCLUDE'
+         AIF   (&FLAG EQ 0).JFL0
+JFLAG    KEQKEYWD  DEFAULT='FLAG&FL'
+         AGO   .JFL
+.JFL0    ANOP
+JFLAG    KEQKEYWD
+.JFL     ANOP
+         KEQNAME   'FLAG0',ALIAS='F0'
+         KEQNAME   'FLAG1',ALIAS='F1'
+         KEQNAME   'FLAG2',ALIAS='F2'
+         KEQNAME   'FLAG3',ALIAS='F3'
+         KEQNAME   'FLAG4',ALIAS='F4'
+         KEQNAME   'FLAG5',ALIAS='F5'
+CAT      KEQKEYWD  DEFAULT='&CT'
+         KEQNAME   'CATALOGUE'
+         KEQNAME   'NCATALOGUE',ALIAS='NOCATALOGUE'
+DYNAMIC  KEQKEYWD
+         KEQNAME   'DYNAMIC'
+PJCL     KEQKEYWD  DEFAULT='&PJ'
+         KEQNAME   'PJCL'
+         KEQNAME   'NPJCL',ALIAS='NOPJCL'
+POPT     KEQKEYWD  DEFAULT='&PO'
+         KEQNAME   'POPTIONS'
+         KEQNAME   'NPOPTIONS',ALIAS='NOPOPTIONS'
+PCOMM    KEQKEYWD  DEFAULT='&PC'
+         KEQNAME   'PCOMM'
+         KEQNAME   'NPCOMM',ALIAS='NOPCOMM'
+PMACRO   KEQKEYWD  DEFAULT='&PM'
+         KEQNAME   'PMACRO'
+         KEQNAME   'NPMACRO',ALIAS='NOPMACRO'
+EXPAND   KEQKEYWD  DEFAULT='&PE'
+         KEQNAME   'PEXPAND'
+         KEQNAME   'NPEXPAND',ALIAS='NOPEXPAND'
+         AIF   ('&LET' EQ 'YES' OR '&LET' EQ 'NO').NNLET
+LET      KEQKEYWD DEFAULT='LET'
+         AGO   .NUMLET
+.NNLET   ANOP
+LET      KEQKEYWD  DEFAULT='&LT'
+.NUMLET  ANOP
+         KEQNAME   'LET',SUBFLD=LETSF
+         KEQNAME   'NLET',ALIAS='NOLET'
+SYNT     KEQKEYWD  DEFAULT='&SYNT'
+         KEQNAME   'SYNTAXCHECK'
+         KEQNAME   'NSYNTAXCHECK',ALIAS='NOSYNTAXCHECK'
+SUB      KEQKEYWD  DEFAULT='&SB'
+         KEQNAME   'SUBMIT'
+         KEQNAME   'NSUBMIT',ALIAS='NOSUBMIT'
+TEST     KEQKEYWD  DEFAULT='&TST'
+         KEQNAME   'TEST'
+         KEQNAME   'NTEST',ALIAS='NOTEST'
+         AIF   ('&TSO' EQ 'YES').RUNNOW
+TSO      KEQKEYWD
+         AGO   .KEQTSO
+.RUNNOW  ANOP
+TSO      KEQKEYWD DEFAULT='ONLINE'
+.KEQTSO  ANOP
+         KEQNAME   'ONLINE',ALIAS='TSO'
+         KEQNAME   'BATCH',ALIAS=('NOTSO','NTSO')
+         AIF   ('&PRINT' NE '''NULLFILE''').XYX
+LIST     KEQKEYWD  DEFAULT='NOPRINT'
+         AGO   .XYXA
+.XYX     ANOP
+LIST     KEQKEYWD  DEFAULT='PRINT(&PRINT)'
+.XYXA    ANOP
+         KEQNAME   'LIST',SUBFLD=LSTCLS
+         KEQNAME   'NPRINT',ALIAS=('NOLIST','NOPRINT','NLIST')
+         KEQNAME   'PRINT',SUBFLD=PNAME
+         AIF   (T'&JCL EQ 'O').NJCL020
+JCL      KEQKEYWD  DEFAULT='JCL(&JCL)'
+         KEQNAME   'JCL',SUBFLD=JNAME
+         AGO   .NJCL025
+.NJCL020 ANOP
+JCL      KEQKEYWD  DEFAULT='JCL'
+         KEQNAME   'JCL'
+.NJCL025 ANOP
+         KEQNAME   'NJCL',ALIAS='NOJCL'
+JOLLIB   KEQKEYWD
+         KEQNAME   'JOLLOAD',SUBFLD=JOLLIBL,                           .
+               ALIAS=('JLOAD','LOADLIB')
+TERMINAL KEQKEYWD  DEFAULT='TERMINAL'
+         KEQNAME   'TERMINAL'
+         KEQNAME   'NOTERMINAL',ALIAS='NTERMINAL'
+&C       SETC  'NODUMPCARD'
+         AIF   (K'&DC EQ 0).NDC
+&C       SETC  ''''''.'&DC'(2,K'&DC-2).''''''
+&C       SETC  'DUMPCARD('.'&C'.')'
+.NDC     ANOP
+DC       KEQKEYWD  DEFAULT='&C'
+         KEQNAME   'DUMPCARD',SUBFLD=DCTXT,ALIAS='DC'
+         KEQNAME   'NODUMPCARD',ALIAS='NDC'
+&C       SETC  'NOCARD1'
+         AIF   (K'&C1 EQ 0).NC1
+&C       SETC  'CARD1('.''''''.'&C1'(2,K'&C1-2).''''''.')'
+.NC1     ANOP
+C1       KEQKEYWD  DEFAULT='&C'
+         KEQNAME   'CARD1',SUBFLD=C1TXT,ALIAS='C1'
+         KEQNAME   'NOCARD1',ALIAS='NC1'
+&C       SETC  'NOCARD2'
+         AIF   (K'&C2 EQ 0).NC2
+&C       SETC  'CARD2('.''''''.'&C2'(2,K'&C2-2).''''''.')'
+.NC2     ANOP
+C2       KEQKEYWD  DEFAULT='&C'
+         KEQNAME   'CARD2',SUBFLD=C2TXT,ALIAS='C2'
+         KEQNAME   'NOCARD2',ALIAS='NC2'
+&C       SETC  'NOCARD3'
+         AIF   (K'&C3 EQ 0).NC3
+&C       SETC  'CARD3('.''''''.'&C3'(2,K'&C3-2).''''''.')'
+.NC3     ANOP
+C3       KEQKEYWD  DEFAULT='&C'
+         KEQNAME   'CARD3',SUBFLD=C3TXT,ALIAS='C3'
+         KEQNAME   'NOCARD3',ALIAS='NC3'
+&C       SETC  'NOCARD4'
+         AIF   (K'&C4 EQ 0).NC4
+&C       SETC  'CARD4('.''''''.'&C4'(2,K'&C4-2).''''''.')'
+.NC4     ANOP
+C4       KEQKEYWD  DEFAULT='&C'
+         KEQNAME   'CARD4',SUBFLD=C4TXT,ALIAS='C4'
+         KEQNAME   'NOCARD4',ALIAS='NC4'
+&C       SETC  ''
+         AIF   (K'&SYMS EQ 0).NSYMS
+&C       SETC  ''''''.'&SYMS'(2,K'&SYMS-2).''''''
+.NSYMS   ANOP
+SYMS     KEQKEYWD  DEFAULT='SYMS(&C)'
+         KEQNAME   'SYMS',SUBFLD=SYMTXT
+INCLIST  KEQSUBF
+INCLDS   KEQPOSIT  DSNAME,LIST
+CMDLIST  KEQSUBF
+CMDDS    KEQPOSIT  DSNAME,LIST
+JOLLIBL  KEQSUBF
+JOLLDDS  KEQPOSIT  DSNAME,LIST
+LSTCLS   KEQSUBF
+PRTCLASS KEQIDENT  'SYSOUT CLASS',DEFAULT='&SOUT',MAXLNTH=1
+PNAME    KEQSUBF
+PRTNAME  KEQPOSIT  DSTHING,PROMPT='Name of print data set',            .
+               VALIDCK=UJTVC01
+         AIF   (T'&JCL EQ 'O').NJCL030
+JNAME    KEQSUBF
+JCLDS    KEQPOSIT   DSNAME,PROMPT='Name of dataset to receive the gener.
+               ated JCL'
+.NJCL030 ANOP
+DCTXT    KEQSUBF
+DCDATA   KEQPOSIT QSTRING,PROMPT='Dump card for Jol-generated jobs'
+C1TXT    KEQSUBF
+C1DATA   KEQPOSIT QSTRING,PROMPT='CARD1 for Jol-generated jobs'
+C2TXT    KEQSUBF
+C2DATA   KEQPOSIT QSTRING,PROMPT='CARD2 for Jol-generated jobs'
+C3TXT    KEQSUBF
+C3DATA   KEQPOSIT QSTRING,PROMPT='CARD3 for Jol-generated jobs'
+C4TXT    KEQSUBF
+C4DATA   KEQPOSIT QSTRING,PROMPT='CARD4 for Jol-generated jobs'
+SYMTXT   KEQSUBF
+SYMDATA  KEQPOSIT  QSTRING,PROMPT='List of Jol symbols'
+LETSF    KEQSUBF
+LETVAL   KEQIDENT                                                      .
+               'Maximum satisfactory return code from the Jol compiler'.
+               ,INTEG,                                                 .
+               MAXLNTH=2,                                              .
+               FIRST=NUMERIC,                                          .
+               OTHER=NUMERIC,                                          .
+               DEFAULT='&LETVAL',                                      .
+               HELP=('If the return code from the Jol compiler is great.
+               er than the value you provide, I will ask whether to sub.
+               mit your job')
+LETPRPT  KEQKEYWD  DEFAULT='&LETPR'
+         KEQNAME   'PROMPT'
+         KEQNAME   'NOPROMPT',ALIAS='NPROMPT'
+         KEQENDP
+.END     AIF   (&UJT).REALLY END
+         END
+&SYSECT  CSECT
+.REALLY  MEND

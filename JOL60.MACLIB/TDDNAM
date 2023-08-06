@@ -1,0 +1,20 @@
+         MACRO
+         TDDNAM
+.* THIS MACRO TEST IF THE DDNAME REQESTED EXISTS AND TYPES A
+.* MESSAGE IF IT DOES NOT AND SETS A REGISTER (10) ¬=0
+         LA    R9,&SYSLIST(1)
+.*       DEVTYPE DCBDDNAM,CALLAREA
+         LA    R1,DCBDDNAM                                        87150
+         L     R15,=V(SRCHTIOT)         SEARCH FOR NAME IN R1     87150
+         BALR  R14,R15                                            87150
+         LTR   R15,R15
+         BZ    #&SYSNDX
+         WTO   'JOL COMPILER HAS NO &SYSLIST(2) DDCARD',ROUTCDE=(2,11)
+         L     R1,APRINTLN    LOAD PRINT BUFFER ADDRESS
+         MVC   5(36,R1),=C'JOL COMPILER HAS NO          DDCARD'
+         MVC   25(8,R1),DCBDDNAM MOVE IN DDNAME FOR ERROR MESSAGE
+         MVC   0(4,R1),=AL2(45,0) SET RECORD LENGTH FOR JOLPRINT
+.*       JOLPRINT CAN'T USE THIS IN UJI00MN                         J60
+         LA    R10,4           SET NON ZERO ERROR CODE
+#&SYSNDX EQU *
+         MEND

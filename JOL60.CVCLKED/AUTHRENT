@@ -1,0 +1,5 @@
+          INCLUDE  OBJ($JOLMN35)
+          NAME $MONIT35(R)
+           INCLUDE OBJ($JOLCP35)
+           ALIAS   $JOLCP35
+           NAME JOLCOMP(R)

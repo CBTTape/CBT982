@@ -1,0 +1,8 @@
+DELAY    CSECT
+         LR    12,15
+         USING DELAY,12
+         STIMER WAIT,BINTVL==A(100*10)
+         SLR   15,15
+         LA    15,4
+         SVC   3
+         END

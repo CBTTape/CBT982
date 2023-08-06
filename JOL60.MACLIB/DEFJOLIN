@@ -1,0 +1,77 @@
+         MACRO
+         DEFJOLIN
+.*       DEFJOLIN &TYPE=P
+         GBLC  &TYPE                                              J51
+         JOLINST                                                       *
+               (ALLOC,ALLOCATE,15ALL),                                 *
+               (BLACK,68BLA),                                     J51  *
+               (BLUE,68BLU),                                      J51  *
+               (BRIGHT,68BRI),                                    J51  *
+               (CALL,56CAL),                                      87150*
+               (CATALOGUE,CATALOG,CATLG,05CAT),                   J53  *
+               (CD$,CHDIR$,17CD),                                 J51  *
+               (CLS,CLRSCR,27CLS),                                J51  *
+               (CYAN,68CYA),                                      J51  *
+               (DBFADD,05ADD),                                    J50  *
+               (DBFDEL,05DEL),                                    J50  *
+               (DBFFIND,05DBF),                                   J50  *
+               (DBFUPD,05UPD),                                    J50  *
+               (CLOSE,CLOSFILE,15CLS),                            85338*
+               (DCL,DECLARE,DEFINE,02DCL),                             *
+               (DEQ,DEQUEUE,26DEQ),                               85338*
+               (DELETE,09DEL),                                         *
+               (DISPLAY,11DIS),                                        *
+               (DO,20DO),                                              *
+               (DS,03DS),                                              *
+               (END,21END),                                            *
+               (EDIT,25ED),                                       75128*
+               (ELSE,55ELS),                                      75128*
+               (ENQ,ENQUEUE,26ENQ),                               85338*
+               (EOF,37EOF),                                       76200*
+               (EXIT,47EXI),                                      81180*
+               (FREEFILE,17FRE),                                  85338*
+               (GETDIR,17GDR),                                    J51  *
+               (GETFILE,18GET),                                   81190*
+               (GETFIRST,171ST),                                  J51  *
+               (GETNEXT,17NXT),                                   J51  *
+               (GETTIME,93DTE),                                   87080*
+               (GOTO,46GO),                                       J51  *
+               (GREEN,68GRE),                                     J51  *
+               (IF,04IF),                                              *
+               (INCLUDE,INCL,54INC),                              76200*
+               (JOB,01JOB),                                            *
+               (JOBLIB,01LIB),                                    87150*
+               (*,JOLOPT,95INI),                                  82300*
+               (KEEP,07KEE),                                           *
+               (LABEL,45LAB),                                     81180*
+               (LISTSYM,LISTSYMS,31LST),                          87150*
+               (MAGENTA,68MAG),                                   J51  *
+               (MD$,MKDIR$,17MD),                                 J51  *
+               (OPEN,OPENFILE,17OPN),                             81190*
+               (OPCNTL,35CNT),                                    75128*
+               (PANEL,27PNL),                                     81180*
+               (POPUP,27POP),                                     J51  *
+               (PRINTSYM,31PRN),                                  87150*
+               (PROG,02PGM),                                           *
+               (PUTFILE,19PUT),                                   81190*
+               (READ,READFILE,60REA),                                  *
+               (RED,68RED),                                       J51  *
+               (REDO,46RED),                                      81180*
+               (RETURN,23RTN),                                         *
+               (RUN,24RUN),                                            *
+               (SCRATCH,08SCR),                                        *
+               (SET,98SET),                                       75128*
+               (SIGNAL,SIG,12SIG),                                     *
+               (STARTAT,36ST),                                    75128*
+               (STOP,13STP),                                      76200*
+               (STOPAT,13AT),                                     76200*
+               (TYPE,10TYP),                                           *
+               (UNCAT,UNCATALOGUE,UNCATALOG,UNCATLG,06UNC),            *
+               (WHITE,68WHI),                                     J51  *
+               (WRITE,?,61WRI),                                        *
+               (YELLOW,68YEL)                                     J51
+*              TYPE=&TYPE
+          MEND
+*              (ALWAYS,22ALW),                                        *
+*              (SHOWDIR,17DIR),                                   J51 *
+*              (SHOWDSN,17DSN),                                   J51 *

@@ -1,0 +1,109 @@
+//CLARKEP JOB (R777),CLARKE,MSGCLASS=X,NOTIFY=CLARKE
+//ASM1 PROC
+//ASM EXEC PGM=ASMBLR,PARM='NODECK,OBJ,XREF(SHORT),LIST,TERM,TEST'
+//SYSLIB   DD  DSN=SYS1.MACLIB,DISP=SHR,DCB=BLKSIZE=19040
+//*        DD  DSN=SYS1.AMODGEN,DISP=SHR
+//         DD  DSN=CLARKE.JOL50.MACLIB,DISP=SHR
+//         DD  DSN=CLARKE.JOL40.MACLIB,DISP=SHR
+//         DD  DSN=CLARKE.JOL51.ASM,DISP=SHR
+//         DD  DSN=CLARKE.JOL40.ASM,DISP=SHR
+//         DD  DSN=CLARKE.VSAM.ASM,DISP=SHR
+//SYSUT1   DD  DSN=&&SYSUT1,SPACE=(CYL,(5,5)),UNIT=SYSDA
+//SYSUT2   DD  DSN=&&SYSUT2,SPACE=(CYL,(5,5)),UNIT=SYSDA
+//SYSUT3   DD  DSN=&&SYSUT3,SPACE=(CYL,(5,5)),UNIT=SYSDA
+//SYSGO DD DSN=CLARKE.JOL40.OBJ(&MEM),DISP=OLD
+//SYSTERM  DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//*YSIN DD DSN=CLARKE.JOL51.ASM(&MEM),DISP=SHR
+//  PEND
+//S1 EXEC ASM1,MEM=READPDS
+         GENSAVE CSECT=READPDS
+         L     R15,4(,R1)        RETURN ADDRESS POINTER           J52
+         ST    R15,MUSTRETN                                       J52
+*        L     R14,0(R1)         Point to Parameters              J52
+         L     R14,0(R1)         DDNAME POINTER                   J52
+         LA    R15,DIRECT
+         USING IHADCB,R15
+         MVC   DCBDDNAM,0(R14)   SHIFT DDNAME IN                  J52
+         LA    R4,MEMSCVC+8      Note +8                          J52
+         L     R1,MUSTRETN                                        J52
+         ST    R4,0(R1)          RETURNED INFORMATION ADDRESS     J52
+         OPEN  (DIRECT,INPUT)
+         LA    R15,DIRECT
+         TM    DCBOFLGS,DCBOFOPN
+         BNO   NOTPMESS          CANT OPEN
+         DROP  R15
+* GET STORAGE FOR TABLE
+         L     R0,MEMDATL
+*        LA    R0,L'MEMSCVC
+*        LR    R9,R0
+*        GETMAIN R,LV=(0)
+*        ST    R1,MEMTABLE
+         LR    R9,R0
+         LA    R1,MEMSCVC
+         ST    R1,PRESENT
+         LA    R3,0(R9,R1)       GET END OF TABLE ADDRESS
+         ST    R3,ENDTABLE
+         SLR   R4,R4             ZERO FIRST MEM TABLE
+         ST    R4,0(R1)
+         LA    R4,8(R1)          POINT TO 1ST MEMBER
+         USING MEMDSECT,R4
+         SLR   R5,R5             INIT MEM COUNT TO 0
+* READ MEMBER NAMES
+GETDIR   GET   DIRECT,DATA       READ MEMBER BLOCK INTO DATA
+         CLC   DATA,HALF12       SEE IF BLOCK IS UNUSED
+         BL    EOMEMS            YES
+         LA    R9,DATA+2         -> 1ST MEMBER DIRECTORY
+         SLR   R7,R7             ZERO REGISTER 7 FOR INSERT
+         ICM   R7,3,DATA         INSERT LENGTH USED BY THIS BLOCK
+         LA    R7,DATA-1(R7)     LOAD LAST USED BYTE OF BLOCK
+UNBLOCK  DS    0H
+         MVC   MEMNTTR,0(R9)     PUT NAME AND TTR IN TABLE
+         MVC   CFIELD,11(R9)     PUT C FIELD IN TABLE
+         CLI   MEMBER,X'FF'      SEE IF LAST MEMBER
+         BE    EOMEMS
+         IC    R6,CFIELD
+         SLL   R6,27
+         SRL   R6,26             GOT LENGTH OF USER DATA
+         LA    R6,12(R6)         ADD STANDARD ENTRY LENGTH
+         LA    R4,MEMSECTN       POINT TO NEXT ENTRY
+         LA    R5,1(R5)          INC NUMBER OF MEMBERS IN TABLE
+         C     R4,ENDTABLE       TOO MANY MEMBERS?
+         BL    NEXTENTR
+         WTO   'TOO MANY MEMBERS '
+         B     EOMEMS                                             J52
+         FIX   'JOLERR'
+NEXTENTR DS    0H
+         BXLE  R9,R6,UNBLOCK     DO NEXT BLOCK
+         B     GETDIR                                             J52
+MUSTRETN DS    A                 ADDRESS OF RETN AREA
+EOMEMS   DS    0H
+         CLOSE DIRECT
+         L     R14,4(R13)     GET SAVE AREA ADDRESS
+         ST    R0,20(,R14)    Set R0 for JOLRETN
+         ST    R5,24(,R14)    AND R1 (COUNT OF MEMBERS)
+         GENRETN RC=0                                             J52
+NOTPMESS WTO   'CANNOT OPEN FILE '                                J52
+         GENRETN RC=16                                            J52
+         DC    H'0'
+HALF12   DC    H'12'
+HEXFF    DC    X'FF'
+MEMTABLE DS    A
+ENDTABLE DS    A
+PRESENT  DS    A
+DATA     DS    CL256
+         PRINT NOGEN
+DIRECT   DCB   DDNAME=DIRECT,DSORG=PS,MACRF=(GM),RECFM=U,BLKSIZE=256,  *
+               EODAD=EOMEMS
+MEMDATL  DC    A(MEMDATEN-MEMSCVC)
+MEMSCVC  DS    (400)CL12
+MEMDATEN DC    A(*)
+MEMDSECT       DSECT
+MEMNTTR  DS    CL11
+         ORG   MEMNTTR
+MEMBER   DS    CL8
+MEMTTR   DS    CL3
+CFIELD   DS    CL1
+MEMSECTN EQU   *
+         DCBD  DSORG=DS,DEVD=DA                                  J52
+         END

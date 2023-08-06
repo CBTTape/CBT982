@@ -1,0 +1,1001 @@
+<html>
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta name=Generator content="Microsoft Word 10 (filtered)">
+<title>Compile Time Facilities</title>
+
+<style>
+<!--
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:"Times New Roman";}
+h1
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	font-weight:normal;}
+h2
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	font-weight:normal;}
+h3
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	font-weight:normal;}
+ /* Page Definitions */
+ @page Section1
+	{size:612.0pt 792.0pt;
+	margin:72.0pt 90.0pt 72.0pt 90.0pt;}
+div.Section1
+	{page:Section1;}
+ /* List Definitions */
+ ol
+	{margin-bottom:0cm;}
+ul
+	{margin-bottom:0cm;}
+-->
+</style>
+
+</head>
+
+<body lang=EN-US style='text-justify-trim:punctuation'>
+
+<div class=Section1>
+
+<table class=MsoNormalTable border=0 cellspacing=0 cellpadding=0
+ style='margin-left:5.4pt;border-collapse:collapse'>
+ <tr>
+  <td width=601 colspan=2 valign=top style='width:450.75pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h1 align=right style='margin-bottom:6.0pt;text-align:right'><b><u><span
+  style='font-size:18.0pt;font-family:Arial'>Compile Time Facilities</span></u></b></h1>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>Jol
+  offers a relatively unique facility - that of altering Jol code in a <i>programmed
+  </i>manner.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>Compile
+  Time Facilities are performed by the Preprocessor.  The Preprocessor allows
+  program Source Text to be altered through the use of Symbolic Variables, and
+  it invokes Macros and expands the Macro text.  The expanded Source Text is
+  then read by the main Jol Compiler and instructions are produced to execute
+  the job.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>For
+  example, if the day of the week is Friday, you can include code to run only
+  on Fridays.  You can also read data sets such as machine schedules to see
+  which of your programs should run.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>Most of
+  the facilities mentioned here make use of <i>Symbolic Variables.</i></span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:6.0pt'><b><i><span style='font-family:Arial'>Symbolic
+  Variables</span></i></b></h2>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>A
+  symbolic variable is a special variable, and you identify it by placing a <b>%
+  </b>in front of its name.  It contains a character string of up to 253
+  characters which may be used to replace various parts of a JOL program during
+  the preprocessor phase of the compile.  When a statement is found with any
+  symbolic variables as part of the text, they are replaced by the current
+  value of the symbolic variables.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt;
+  font-family:Arial'>Symbolic variables contain <i>text </i>and this text can
+  be used in replacement statements, as well as other statements described
+  later.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt;
+  font-family:Arial'>For example,</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:43.2pt;margin-bottom:.0001pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%X='TEST MESSAGE';</span></b></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>...</span></b></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>DISPLAY '%X';</span></b></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:21.6pt;margin-bottom:.0001pt'><span style='font-size:10.0pt;
+  font-family:Arial'>is equivalent to writing</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:43.2pt;margin-bottom:.0001pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>DISPLAY 'TEST MESSAGE';</span></b></p>
+  <p class=MsoNormal style='margin-top:6.0pt'><i><span style='font-size:10.0pt;
+  font-family:Arial'>Explanation: </span></i><span style='font-size:10.0pt;
+  font-family:Arial'>Jol found the symbolic variable <b>%X </b>and replaced the
+  characters <b>%X </b>with the text contained in the <i>variable %X.</i></span></p>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt;
+  font-family:Arial'>Symbolic Variables can be:</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>tested,</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>changed,</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>added,
+  subtracted, multiplied, divided and concatenated to other variables or
+  literals.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:6.0pt'><b><i><span style='font-family:Arial'>Compilation
+  Phases</span></i></b></h2>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>It is
+  important to realize that a Jol compilation is really done in three separate
+  steps:</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt'>1.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>The <b>Preprocessor</b>
+  or <b>Macro</b> phase.  The output from this stage is <i>text</i>, or Jol
+  statements.  These Jol statements then are read by:-</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt'>2.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>The <b>Compile</b>
+  phase.  The compile phase does syntax checking and creates tables which are
+  read by:-</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt'>3.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>The <b>Generate</b>
+  phase.  The generate phase either creates special instructions so that Jol
+  can execute your program under TSO, or it creates JCL so that the job can run
+  in background.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt;
+  font-family:Arial'>It is during the <i>Preprocessor or Macro </i>phase that
+  you can alter selected parts of your program.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:6.0pt'><b><i><span style='font-family:Arial'>Facilities</span></i></b></h2>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>The Jol
+  Preprocessor allows Program Source Text to be altered before it is compiled
+  and executed.  You can:-</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Define
+  Symbolic Variables and initialize them.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Test the
+  current contents of Symbolic Variables.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Change the
+  values in the Symbolic Variables.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Perform
+  Arithmetic and String operations on Symbolic Variables.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Replace text
+  with Symbolic Variables.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Replace text <i>in
+  card image files </i>with Symbolic Variables.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Save and
+  Restore Symbolic Variables from disk data sets.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Modify, alter
+  and or insert program statements.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Indicate which
+  sections of the Source Program are to be compiled.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Allocate, read
+  and write data sets.  The data read can then modify the program as above.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Unconditionally
+  or conditionally <b>INCLUDE</b> Jol Statements or card image files from
+  libraries.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Use Macros,
+  with or without Parameters, to generate statements.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Conditional
+  Compilations based on the values of Symbolic Variables.</span></p>
+  <p class=MsoNormal style='margin-top:3.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>User written
+  Assembler, Cobol or PL/I code to be executed and generate Jol statements.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt;
+  font-family:Arial'>You can freely intermix preprocessor and macro statements
+  with the rest of your instructions.  Preprocessor and macro command
+  statements are executed when they are encountered in the source text.</span></p>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:6.0pt'><b><i><span style='font-family:Arial'>Preprocessor
+  Operation</span></i></b></h2>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>The
+  preprocessor does as much processing as it can before it produces code to run
+  at execution time - it is usually faster to do as much processing as possible
+  in the <i>Preprocessor phase</i>.  Jol does this for you as automatically as
+  possible.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt;
+  font-family:Arial'>With the above in mind, Jol will attempt to reduce the
+  number of <i>execution </i>statements to an absolute minimum.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt;
+  font-family:Arial'>Therefore, when the preprocessor reads a statement, it
+  does the following:-</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>If the
+  statement follows a <b><i>false </i>IF statement</b>, the statement (or group
+  of statements) is ignored.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><i><span style='font-size:10.0pt;font-family:Arial'>Execution
+  statements </span></i><span style='font-size:10.0pt;font-family:Arial'>such
+  as a <b>RUN, CATALOG</b> or similiar statement, are copied out to a file that
+  is later read by the main compiler pass of Jol.  Such a statement is then
+  executed at <i>run time.</i></span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:52.8pt;margin-bottom:.0001pt;text-indent:-31.2pt'><i><span
+  style='font-size:10.0pt;font-family:Arial'>Note: </span></i><span
+  style='font-size:10.0pt;font-family:Arial'>        If the statement about to passed
+  to execution a Macro instruction, the <b>Macro</b> processor will be given
+  control to interpret the <b>Macro</b> statements.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.15pt;margin-bottom:.0001pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><i><span style='font-size:10.0pt;font-family:Arial'>Preprocessor
+  statements </span></i><span style='font-size:10.0pt;font-family:Arial'>such
+  as:-</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:39.3pt;margin-bottom:.0001pt;text-indent:-17.7pt'><span
+  style='font-size:10.0pt;font-family:Arial'>-   A symbolic variable
+  declaration or assignment statement.</span></p>
+  <p class=MsoNormal style='margin-left:39.3pt;text-indent:-17.7pt'><span
+  style='font-size:10.0pt;font-family:Arial'>-   An <b>IF, DO, END, ELSE,
+  SIGNAL ERROR</b> or a <b>STOP</b> instruction.</span></p>
+  <p class=MsoNormal style='margin-left:39.3pt;text-indent:-17.7pt'><span
+  style='font-size:10.0pt;font-family:Arial'>-   A <b>Macro</b> instruction.</span></p>
+  <p class=MsoNormal style='margin-left:39.3pt;text-indent:-17.7pt'><span
+  style='font-size:10.0pt;font-family:Arial'>-   A <b>READ, WRITE or PANEL</b>
+  instruction.</span></p>
+  <p class=MsoNormal style='margin-left:39.3pt;text-indent:-17.7pt'><span
+  style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>are <i>interpreted immediately</i>.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:6.0pt'><b><i><span style='font-family:Arial'>Preprocessor
+  Replacement</span></i></b></h2>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>In all
+  cases, before either executing a statement as a preprocessor statement or
+  passing it to the compiler phase, symbolic variable replacement takes place. 
+  Text replacement takes place whenever a <b>%</b> symbol is found. The<b>%</b>
+  symbol and the associated identifier are replaced with the current value of
+  the named symbolic variable.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>In Jol,
+  symbolic variable replacement stops when the next special character or blank
+  is found in the text, and if two symbolic variable names are found without an
+  intervening special character or blank, the replacement results in one
+  composite symbolic being formed.  If <b>%NO</b> contained a <b>1</b> and <b>%VAR</b>
+  contained <b>'A'</b> then <b>%VAR%NO</b> would be changed to <b>A1.</b></span></p>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h3 style='margin-top:6.0pt;margin-right:0cm;margin-bottom:4.0pt;margin-left:
+  0cm'><b><span style='font-family:Arial'>Examples</span></b></h3>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><b><span style='font-family:Arial'>Example 1.</span></b></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>If a
+  program contained the following statements:</span></p>
+  <p class=MsoNormal><b><span style='font-family:Arial'>&nbsp;</span></b></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;border:solid windowtext 1.0pt;
+  padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>1   <b>%UNIT='TAPE';</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>2   <b>DCL DATASET1 DATA SET UNIT %UNIT;</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>3   <b>IF (%UNIT='DISK' | %UNIT='DISC')</b></span></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>&amp; %SPACE=' '</span></b></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>4   <b>THEN %SPACE ='SPACE=10,2 CYLS';</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>5   <b>DCL DATASET2 DS UNIT %UNIT %SPACE;</b></span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>then the
+  output from the preprocessor would be:-</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;border:solid windowtext 1.0pt;
+  padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>2   <b>DCL DATASET1 DATA SET UNIT TAPE;</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>5   <b>DCL DATASET2 DS UNIT</b> <b><u>TAPE</u>;</b></span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>However,
+  if <b>statement 1</b> had been <b>%UNIT='DISK'</b> then the output example
+  would have been:-</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;border:solid windowtext 1.0pt;
+  padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>2   <b>DCL DATASET1 DATA SET UNIT DISK;</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>5   <b>DCL DATASET2 DS UNIT</b> <b><u>DISK SPACE=10,2 CYLS</u>;</b></span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><b><span style='font-family:Arial'>&nbsp;</span></b></p>
+  <p class=MsoNormal><b><span style='font-family:Arial'>Example 2.</span></b></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>If a
+  program contained the following statements:</span></p>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;border:solid windowtext 1.0pt;
+  padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>1</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>   <b>%START = 'STEP2';</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>2</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>   <b>IF %START='STEP2' THEN</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>3</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>   <b>DO;</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>4</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>               <b>DCL X DATA SET NAME TEST.INPUT (0);</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>5</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>               <b>DISPLAY RESTARTING AT STEP2';</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>6</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>   <b>END;</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>7</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>   <b>DCL X DATA SET TEST.INPUT(+1) VB 750,800 TAPE;</b></span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>then the
+  output from the preprocessor would be:-</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;border:solid windowtext 1.0pt;
+  padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>4</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>   <b>DCL X DATA SET NAME TEST.INPUT(0);</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>5</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>   <b>DISPLAY 'RESTARTING AT STEP2';</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>7</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>   <b>DCL X DATA SET TEST.INPUT (+1) VB 750,800 TAPE;</b></span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><b><span style='font-size:10.0pt;font-family:Arial'>Statement
+  4</span></b><span style='font-size:10.0pt;font-family:Arial'> would set the <b>NAME</b>
+  of the data set to be <b>TEST.INPUT(0)</b> and <b>statement 7</b> would
+  supply the <b>UNIT</b> and Record Format information for the data set.  This
+  is a Jol override, and the name <b>TEST.INPUT(+1)</b> would be ignored, and
+  when the data set identifier <b>X</b> was referenced, generation <b>(0)</b>,
+  that is the latest generation, would be accessed.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:6.0pt'><b><i><span style='font-family:Arial'>Symbolic
+  Parameters and Variables</span></i></b></h2>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>Symbolic
+  Variables are often used to change program execute parameters.  For example,
+  suppose that a program required a parameter with the current day.  By using
+  the Jol symbolic variable <b>%DAY</b>, the program will automatically have
+  the correct day passed to it through the program parameter field. For
+  example:</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>RUN PROGRAM1 'DAY=%DAY';</span></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>will
+  execute <b>PROGRAM1</b> with a parameter of <b>'DAY=MONDAY' </b>or <b>'DAY=TUESDAY'</b>
+  and so on.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>Other
+  user defined symbolic variables may be set up, for example <b>%TEST='YES'</b>. 
+  Whenever the symbol <b>%TEST</b> is found, it will be replaced by <b>'YES'</b>,
+  or whatever the symbolic variable <b>%TEST</b> currently contains.  This
+  means that <b>%TEST</b> need only be changed in one place in the Jol program,
+  and Jol will effectively change it whenever it is used.</span></p>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:6.0pt'><b><i><span style='font-family:Arial'>Testing
+  Symbolic Variables and Arithmetic</span></i></b></h2>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>Jol
+  allows testing of symbolic variables, and arithmetic to be performed on
+  them.  For example:</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>IF %RANGE&lt;10 | %RANGE&gt;100</span></b></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>THEN STOP 'RANGE=%RANGE:- INVALID';</span></b></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:21.6pt;margin-bottom:.0001pt;text-indent:-21.6pt'><span
+  style='font-size:10.0pt;font-family:Arial'>&#61623;     The <b>IF</b>
+  instruction tests that <b>%RANGE</b> contains a value between <b>10</b> and <b>100</b>.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:21.6pt;margin-bottom:.0001pt;text-indent:-21.6pt'><span
+  style='font-size:10.0pt;font-family:Arial'>&#61623;     If the variable <b>%RANGE</b>
+  is not within <b>10</b> and <b>100</b>, the <b>STOP</b> is executed and will
+  terminate the Compile.  That means that the job will not execute.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt;
+  font-family:Arial'>&#61623;     Otherwise, the next instruction is executed.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:11.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:6.0pt;page-break-after:avoid'><b><i><span
+  style='font-family:Arial'>Defining a Symbolic Variable</span></i></b></h2>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>The <b>Symbolic
+  Variable Definition</b> follows this form:-</span></p>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:14.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;border:solid windowtext 1.0pt;
+  padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:34.8pt'><span style='font-size:10.0pt;
+  font-family:Arial'>   <b>{</b> <b>DECLARE | DCL | DEFINE }</b></span></p>
+  <p class=MsoNormal style='margin-left:34.8pt'><span style='font-size:10.0pt;
+  font-family:Arial'>             <i>%name[,%name ...]</i>   <i>options  </i>;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><i><span style='font-size:10.0pt;
+  font-family:Arial'>where options are:</span></i></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>            </span></p>
+  <p class=MsoNormal style='text-indent:34.8pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'> INIT</span></b><span style='font-size:10.0pt;font-family:
+  Arial'> <b>[ ( ]</b><i> </i>    <b>{</b> <i>constant | ‘character string' </i><b>} 
+  </b><i> </i><b>[ ) ]</b></span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:39.3pt;text-indent:-4.5pt'><b><span
+  style='font-size:10.0pt;font-family:Arial'>EXTERNAL | EXT </span></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal align=center style='text-align:center'><b><span
+  style='font-size:10.0pt;font-family:Arial'>Figure 6. Defining Symbolic
+  Variables</span></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><b><span style='font-size:10.0pt;font-family:Arial'>Symbolic
+  Variable Names</span></b><span style='font-size:10.0pt;font-family:Arial'>
+  are recognized in the text by the % preceding the name in the source text.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h3 style='margin-top:6.0pt;margin-right:0cm;margin-bottom:4.0pt;margin-left:
+  0cm'><b><span style='font-family:Arial'>Notes</span></b></h3>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.4pt;margin-bottom:.0001pt;text-indent:-14.4pt'><span
+  style='font-size:10.0pt'>1.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>If a value has
+  been previously <b>ASSIGNED</b> to a Symbolic Variable, the declaration is
+  ignored (an assignment being an implicit declaration), thus allowing the
+  declare to set default values in the symbolic variable which may be
+  overridden.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.4pt;margin-bottom:.0001pt;text-indent:-14.4pt'><span
+  style='font-size:10.0pt'>2.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>The maximum
+  length of the value is <b>253</b> characters.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.4pt;margin-bottom:.0001pt;text-indent:-14.4pt'><span
+  style='font-size:10.0pt'>3.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>When <b>EXTERNAL</b>
+  or <b>EXT</b> is used inside a Macro Definition, the symbolic name is
+  available when the Macro terminates.  In main line code, <b>EXTERNAL</b> has
+  no effect.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:14.4pt;margin-bottom:.0001pt;text-indent:-14.4pt'><span
+  style='font-size:10.0pt'>4.<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>If a symbolic
+  variable has been previously defined, the Declaration statement is ignored. 
+  This allows default values to be set.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:6.0pt'><b><i><span style='font-family:Arial'>Examples</span></i></b></h2>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt;
+  font-family:Arial'>1.    <b>DCL %A INIT '';</b></span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:21.6pt;margin-bottom:.0001pt'><span style='font-size:10.0pt;
+  font-family:Arial'>Defines <b>%A</b> and initializes it to null.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt;
+  font-family:Arial'>2.    <b>DCL %B, %C, %D INIT 'EXT';</b></span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:21.6pt;margin-bottom:.0001pt'><span style='font-size:10.0pt;
+  font-family:Arial'>Defines <b>%B,%C</b> and <b>%D</b> and initializes them to
+  <b>'EXT'</b>.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt;
+  font-family:Arial'>3.    <b>DCL %GENNO INIT '(0)';</b></span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:21.6pt;margin-bottom:.0001pt'><span style='font-size:10.0pt;
+  font-family:Arial'>Defines <b>%GENNO</b> and initializes it to <b>'(0)'</b>.</span></p>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+</table>
+
+<b><i><span style='font-size:12.0pt;font-family:Arial'><br clear=all
+style='page-break-before:always'>
+</span></i></b>
+
+<p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+
+<table class=MsoNormalTable border=0 cellspacing=0 cellpadding=0
+ style='margin-left:5.4pt;border-collapse:collapse'>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:6.0pt'><b><i><span style='font-family:Arial'>Automatically
+  Initialized Symbolic Variables</span></i></b></h2>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>Jol
+  initializes certain symbolic variables at startup time.  These variables are
+  described below:</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;border:solid windowtext 1.0pt;
+  padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>Variable               Explanation</span></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%SYSDATE</span></b><span style='font-size:10.0pt;
+  font-family:Arial'>           The current date in Julian format e.g. <b>86290</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%DAY</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>                    <b>MONDAY</b>, <b>TUESDAY</b>, etc.</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%MONTH</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>               <b>JANUARY</b>, <b>FEBRUARY</b>, etc.</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%MONTHNO</span></b><span style='font-size:10.0pt;
+  font-family:Arial'>          <b>01, 02</b> Through <b>12</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%DAYNO</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>               <b>01</b> through <b>31</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%YEAR</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>                  <b>1987, 1988</b>, etc.</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%HOURS</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>               <b>0</b> through <b>23</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%MINS</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>                  <b>0</b> through <b>59</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%SECS</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>                  <b>0</b> through <b>59</b></span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%SYSUID</span></b><span style='font-size:10.0pt;
+  font-family:Arial'>              System user identification</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%SYSPREF</span></b><span style='font-size:10.0pt;
+  font-family:Arial'>           Dataset Prefix or Current Directory</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%SYSPFK</span></b><span style='font-size:10.0pt;
+  font-family:Arial'>             Program function key number<b> </b>from <b>PANEL</b>s</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%SYSTEM</span></b><span style='font-size:10.0pt;
+  font-family:Arial'>             <b>MVS, DOS, VM</b>, <b>PC, UNIX </b>etc.</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%SPOOL</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>               <b>HASP, ASP</b>, <b>JES1</b>, <b>JES2</b>, <b>JES3</b>,
+  or Blank</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>%TSOCLASS         </span></b><span style='font-size:10.0pt;
+  font-family:Arial'>Contains the <b>SYSOUT </b>class used by TSO to</span></p>
+  <p class=MsoNormal style='margin-left:111.3pt'><span style='font-size:10.0pt;
+  font-family:Arial'>retrieve output from a background job</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal align=center style='text-align:center'><b><span
+  style='font-size:10.0pt;font-family:Arial'>Figure 7. Startup Time Symbolic
+  Variables</span></b><span style='font-size:10.0pt;font-family:Arial'>.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>These
+  variables are initialized once and can then be used with the Jol logic
+  statements to control events and functions.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:6.0pt'><b><i><span style='font-family:Arial'>Using Jol's
+  Calendar</span></i></b></h2>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>The
+  symbolic variables above can be used in <b>IF</b> statements, or in simple
+  replacement statements.  The following two examples use the preinitialized
+  examples to examine the date.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>1     <b>IF
+  %DAY='FRIDAY'</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>THEN DO ;</span></b></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>RUN WEEKLY ;</span></b><span style='font-size:10.0pt;
+  font-family:Arial'> /*Program Weekly*/</span></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>PRINT FILEA ;</span></b></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>END ;</span></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>This code could be part of a daily procedure.  Only on a
+  Friday would the program '<b>WEEKLY</b>' be executed and '<b>FILEA</b>' be
+  printed.</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>2     <b>IF
+  %DAYNO &gt; 25</b></span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>&amp; %MONTH='JUNE'</span></b></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>&amp; %DAY='FRIDAY'</span></b></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>THEN DO ;</span></b></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>SUBMIT YEARLY ;</span></b><span style='font-size:10.0pt;
+  font-family:Arial'>      /*SUBMIT JOB YEARLY*/</span></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>TYPE 'JOB YEARLY SUBMITTED TO RUN' ;</span></b></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>END ;</span></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt;
+  font-family:Arial'>In this example, if the day is Friday and the day of the
+  month is greater than 25 and the month is June, then the job 'Yearly' is
+  submitted and a message is placed on the operator console.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:6.0pt'><b><i><span style='font-family:Arial'>Special
+  Symbolic Variables for Macros</span></i></b></h2>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>In
+  addition, the following Symbolic Variables are automatically initialized and
+  changed during the compile.  They are of particular interest to someone
+  writing Jol Macros.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>These,
+  and their contents, are:-</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;border:solid windowtext 1.0pt;
+  padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><b><u><span style='font-size:
+  10.0pt;font-family:Arial'>Variable_                          Explanation</span></u></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:129.6pt;text-indent:-108.0pt'><b><span
+  style='font-size:10.0pt;font-family:Arial'>%SYSLABEL</span></b><span
+  style='font-size:10.0pt;font-family:Arial'>                 The label on the
+  statement invoking the macro.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:129.6pt;margin-bottom:.0001pt;text-indent:-108.0pt'><b><span
+  style='font-size:10.0pt;font-family:Arial'>%SYSMACNM</span></b><span
+  style='font-size:10.0pt;font-family:Arial'>               The name of the
+  macro called ... useful when you have one macro doing several related
+  functions and each is stored as an <b>ALIAS</b>.  You can have this to
+  determine which &quot;entry point&quot; the macro was called at.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:129.6pt;margin-bottom:.0001pt;text-indent:-108.0pt'><b><span
+  style='font-size:10.0pt;font-family:Arial'>%SYSNLIST</span></b><span
+  style='font-size:10.0pt;font-family:Arial'>                  The number of <b>%LIST</b>
+  (non-keyword) items found on the invoking statement.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:129.6pt;margin-bottom:.0001pt;text-indent:-108.0pt'><b><span
+  style='font-size:10.0pt;font-family:Arial'>%SYSLEVEL</span></b><span
+  style='font-size:10.0pt;font-family:Arial'>                 The current level
+  of the macro.  If a macro invokes another macro it will be set at 2; in the
+  mainline code it is set at 0; and in the first macro invocation it will be
+  set at 1.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:129.6pt;margin-bottom:.0001pt;text-indent:-108.0pt'><b><span
+  style='font-size:10.0pt;font-family:Arial'>%SYSSTMT</span></b><span
+  style='font-size:10.0pt;font-family:Arial'>                  This variable is
+  set at 0001 - 9999, and is altered every time a new statement is read.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  0cm;margin-left:129.6pt;margin-bottom:.0001pt;text-indent:-129.6pt'><span
+  style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:129.6pt;text-indent:-129.6pt'><span
+  style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal align=center style='text-align:center'><b><span
+  style='font-size:10.0pt;font-family:Arial'>Figure 8.</span></b><span
+  style='font-size:10.0pt;font-family:Arial'> <b>Special Macro Symbolic
+  Variables</b></span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>When an
+  instruction is found that is not one of Jol's own, control is given to a
+  Macro.  It will examine any parameters and produce the necessary Jol code to
+  perform the function required.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>For
+  example:</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>COPY</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>             <b>'SYS1.MACLIB (CALL)'</b></span></p>
+  <p class=MsoNormal style='margin-left:64.8pt'><b><span style='font-size:10.0pt;
+  font-family:Arial'>TO</span></b><span style='font-size:10.0pt;font-family:
+  Arial'>          <b>'TEST.MACLIB (CALL)' ;</b></span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>will
+  transfer control to the <b>COPY</b> Macro, which will generate a program to
+  perform the <b>COPY</b>.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+</table>
+
+<p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+
+<p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+
+</div>
+
+</body>
+
+</html>

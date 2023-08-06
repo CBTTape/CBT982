@@ -1,0 +1,78 @@
+         MACRO
+&L       CPUCHK &OP,                                                   .
+               &ERRET=,          ERROR RETURN                          .
+               &NRETURN=,        NORMAL RETURN                    J50  .
+               &CKSERR=,         CHECKSUM ERROR RETURN            J50  .
+               &NOTABLE=,        NO-TABLE ERROR RETURN            J50  .
+               &EXPIRED=,        LICENSE EXPIRED                  J50  .
+               &NOPCCA=,         CAN'T FIND PCCA                  J50  .
+               &SDATE=,          ADDRESS OF TODAY'S DATE IN BINARY     .
+               &DEMO=,           IT SEEMS TO BE A DEMO INSTALLATION    .
+               &FLAG=,           THE FLAG TO SET TO SAY WE'VE CHECKED  .
+               &PCCA=X'220'      ADDRESS OF PCCA                  J50
+         LCLC  &LP,&LP20,&STID,&NSTID                             J50
+         LCLC  &LP90,&C                                           J50
+         LCLA  &A                                                 J50
+         LCLB  &TSO                                               J50
+&TSO     SETB  ('&SYSECT'(1,3) EQ 'UJT')                          J50
+&A       SETA  &SYSNDX                                            J50
+&LP      SETC  'KCP'.'&A'.'A'                                     J50
+&LP20    SETC  'KCP'.'&A'.'B'                                     J50
+&C       SETC  'KCP'.'&A'.'C'                                     J50
+&STID    SETC  (1-&TSO)'&C'.(&TSO)'&NOPCCA'                       J50
+&NSTID   SETC  'KCP'.'&A'.'D'                                     J50
+&LP90    SETC  'KCP'.'&A'.'E'                                     J50
+&L       STM   R2,R12,28(R13)                                     J50
+         L     R15,&PCCA                                          J50
+         AIF   (T'&FLAG EQ 'U').NF                                J50
+         AIF   (T'&FLAG EQ 'O').NF                                J50
+         XI    &FLAG,X'80'                                        J50
+.NF      ANOP                                                     J50
+         CLC   =C'PCCA',0(R15)                                    J50
+         BNE   &STID                                              J50
+         PACK  DBL,6(10,R15)                                      J50
+         B     &NSTID                                             J50
+         AIF   (&TSO).TSO                                         J50
+&STID    DS    0H                                                 J50
+         STIDP DBL                                                J50
+         MVO   CALLAREA,DBL+1(5)                                  J50
+         OI    CALLAREA+3,15                                      J50
+         ZAP   DBL,CALLAREA                                       J50
+.TSO     ANOP                                                     J50
+&NSTID   DS    0H                                                 J50
+         CVB   R0,DBL                                             J50
+         LCR   R0,R0                                              J50
+         ICM   R1,15,=V(UJEAUTAB)                                 J50
+         BZ    &NOTABLE                                           J50
+         LM    R14,R15,4(R1)                                      J50
+         L     R1,0(,R1)                                          J50
+         SLR   R7,R7                                              J50
+&LP      CL    R0,0(,R1)                                          J50
+         BNE   &LP20                                              J50
+         SLR   R0,R0                                              J50
+         ST    R1,24(,R13)                                        J50
+&LP20    DS    0H                                                 J50
+         SLR   R6,R6                                              J50
+         SLDL  R6,7              MOVE HIGH BIT OF 7 INTO LOW BIT OF 6
+         OR    R7,R6             MASK LOW BIT OF 6 INTO REGISTER7
+         X     R7,0(,R1)                                          J50
+         SLR   R6,R6                                              J50
+         SLDL  R6,7              MOVE HIGH BIT OF 7 INTO LOW BIT OF 6
+         OR    R7,R6             MASK LOW BIT OF 6 INTO REGISTER 7
+         X     R7,4(,R1)                                          J50
+         BXLE  R1,R14,&LP                                         J50
+         AIF   (T'CKSUM1 EQ 'U').NC                               J50
+         ST    R7,CKSUM1                                          J50
+.NC      ANOP                                                     J50
+         LR    R15,R7                                             J50
+         LM    R2,R12,28(R13)                                     J50
+         LTR   R0,R0                                              J50
+         BNZ   &ERRET                                             J50
+         X     R15,0(,R1)        CHECK CHECKSUM                   J50
+         L     R1,24(,R13)       RELOAD MATCHIND CPU ENTRY ADDRESS J50
+         BNZ   &CKSERR           EXIT IF TABLE IS CORRUPTED       J50
+         L     R0,&SDATE         LOAD START DATE                  J50
+         A     R0,4(,R1)         SUBTRACT LICENSE EXPIRY DATE     J50
+         BP    &EXPIRED          IF RESULT EXCEEDS 0, IT'S EXPIREDJ50
+         B     &NRETURN                                           J50
+         MEND                                                     J50

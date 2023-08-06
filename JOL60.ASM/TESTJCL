@@ -1,0 +1,5 @@
+       GENSAVE CSECT=TESTJCL
+       DEVTYPE =CL8'JCL',ANS
+       GENRETN  RC=(15)
+ANS    DS  10F
+       END

@@ -1,0 +1,45 @@
+         MACRO
+&L       JOLOPEN &FUNC=OPEN,&MF=I
+         LCLA  &N,&A
+         LCLC  &DCB,&OPT
+         AIF   (T'&L EQ 'O').NL
+&L       DS    0H
+.NL      ANOP
+         AIF   ('&MF' NE '(E,(1))' AND '&MF' NE '(E,(R1))').MFOK
+         AIF   (N'&SYSLIST(1) LT 3).MFOK
+         MNOTE 12,'THIS EXECUTE FORM IS NOT PERMITTED'
+         MEXIT
+.MFOK    ANOP
+         AIF   ('&MF(1)' NE 'E').NOTE
+         AIF   (T'&MF(2) EQ 'O').NOTE
+         AIF   ('&MF(2)'(1,1) EQ '(').EREG
+         OI    &MF(2),X'80'       MARK END OF LIST
+         AGO   .NOTE
+.EREG    OI    0&MF(2),X'80'      MARK END OF LIST
+.NOTE    ANOP
+         AIF   ('&FUNC' EQ 'OPEN' OR '&FUNC' EQ 'CLOSE').FUNCOK
+      MNOTE 12,'THE ONLY VALID VALUES FOR "FUNC" ARE "OPEN" AND "CLOSE''
+         MEXIT
+.FUNCOK  ANOP
+&A       SETA  N'&SYSLIST(1)
+&N       SETA  1
+.LP      AIF   (&N GT &A).NLOOP   WAS GE
+&DCB     SETC  '&SYSLIST(1,&N)'
+&OPT     SETC  ''
+         AIF   (T'&SYSLIST(1,&N+1) EQ 'O').NOPT
+&OPT     SETC  '&SYSLIST(1,&N+1)'    COPY OPTIONS
+.NOPT    ANOP
+         AIF   ('&FUNC' EQ 'CLOSE').CLOSE
+         OPEN  (&DCB,&OPT),MF=&MF   OPEN THE FILE
+         AGO   .INCR  GO AND INCREMENT THE COUNTER
+.CLOSE   CLOSE (&DCB,&OPT),MF=&MF   CLOSE THE FILE
+.INCR    ANOP
+&N       SETA  &N+2
+         AGO   .LP
+.NLOOP   AIF   ('&MF(1)' NE 'E').END
+         AIF   ('&FUNC' EQ 'CLOSE').CLOS
+         OPEN   MF=&MF
+         AGO   .END
+.CLOS    ANOP
+         CLOSE  MF=&MF
+.END     MEND

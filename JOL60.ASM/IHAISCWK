@@ -1,0 +1,160 @@
+         MACRO
+         IHAISCWK &DSECT=YES
+***********************************************************************
+*                                                                     *
+*                            READER WORK AREA                         *
+*                                                                     *
+*   RELEASE 3     OS/VS1     10/9/72     LEVEL=2                      *
+*                                                                     *
+***********************************************************************
+.*D189000,441000-448000,469000,476000                            X02932
+.*C588000                                                         M4928
+         AIF   ('&DSECT' EQ 'NO').NODSECT
+IHAISCWK DSECT
+.NODSECT ANOP
+         DS    0D
+TESTAREA DS    D                       AREA USED FOR MISC TESTING IN
+*        IEFVMB AND IEFVMC
+TESTBYTE EQU   TESTAREA+3              TEST JLM RETURN CODES    XL03120
+WORKAREA EQU   TESTAREA                EQUATE USED BY IEFVMC
+ODSRPL   DS    10F                     SPACE FOR ODS RPL
+EDSRPL   DS    6F                      SPACE FOR EDS RPL
+CDSRPL   DS    6F                      SPACE FOR CDS RPL
+RPLS     DS    20F                     SPACE FOR PUT RPL
+JCLRCB   DS    CL120                   SPACE FOR JCL SPOOL LRCB
+PRCLRCB  DS    CL120                   SPACE FOR PROC SPOOL LRCB
+SILRCB   DS    CL120                   SPACE FOR SYSIN SPOOL LRCB
+WKAJLM   EQU   SILRCB                  USE LRCB FOR JLM WKA     XL03120
+PROCDIRC DS    CL120                   IN/LINE PROC DIRECTORY
+JMRS     DS    CL176                   SPACE FOR JMR
+QMGRPTRS DS    6F                      JOB LIST/QMGR PARMS      XL03120
+TTRLDER  EQU   QMGRPTRS+0              FIELD FOR DER TTRL       XL03120
+TTRLJMR  EQU   QMGRPTRS+4              FIELD FOR JMR TTRL       XL03120
+TTRLRTBL EQU   QMGRPTRS+8              FIELD FOR ROUTE TBL TTRL XL03120
+TTRLSCD  EQU   QMGRPTRS+12             FIELD FOR SCD TTRL       XL03120
+TTRLJACT EQU   QMGRPTRS+16             FIELD FOR JACT TTRL      XL03120
+QMGLNGH  EQU   *-QMGRPTRS              LENGTH OF EXTERNAL PARMS XL03120
+TIOTP    DS    A                       PTR TO ISC'S TIOT
+STAEPRMS DS    2F                      STAE PARMS
+BASE     DS    A                       BASE FOR IEFVMB
+BASE1    DS    A                       BASE FOR IEFVMC
+BASE2    DS    A                       PTR TO VMC RETURN VECTOR TABLE
+READBUF  DS    CL80                    BUFFER TO HOLD LOGICAL RECORDS
+*                                      FROM INPUT DEVICE
+SPECAREA DS    F                       USED WHEN SPECIAL BUFFER IN USE
+PROCSTMT DS    F                       PTR TO PROC STMNT
+PRCDECB1 DS    0CL20                   DECB1 FOR PROCLIB
+         DS    CL8                     DECB INTERNALS
+         DS    CL4                     PROC DCB ADDRESS
+PRCBUF1  DS    F                       PROCLIB BUFFER 1
+         DS    CL4                     DECB INTERNALS
+PROCNAME DS    CL8                      FIELD FOR PROCNAME
+NEXTPROC DS    F                       PTR TO NEXT SPACE IN PROC DIRECT
+VERBPTR  DS    F                       PTR TO CURRENT VERB
+OPNDPTR  DS    F                       OPERAND FIELD BEGIN PTR
+ENDOPND  DS    F                       OPERAND FIELD END PTR
+PRCBFLN  DS    F                       PROCLIB BUFFER LENGTH
+*                                      INPUT DEVICE DCB
+RDERACB  DS    0D
+         IFGACB DSECT=NO
+RDERRPL  DS    CL76                    SPACE FOR RDER RPL
+RDEREXLS EXLST EODAD=EODAD1,SYNAD=SYNAD1
+SYNAD1   EQU   0                       CONSTANT TO ASSEMBLE INNER MACRO
+EODAD1   EQU   0                       CONSTANT TO ASSEMBLE INNER MACRO
+PROCDCB  DCB   DDNAME=IEFPDSI,DSORG=PO,MACRF=(R),LRECL=80
+PRCEOFLN DS    F                       LENGTH OF TRUNCATED BUFFER
+GENSTMTB DS    CL80                    SPECIAL BUFFER
+DSNAME   EQU   GENSTMTB                TEMPORARY SPOOL DSNAME THIS DD
+SYSINCT  EQU   GENSTMTB+8              COUNT OF DATA RECORDS THIS DD
+SAVEAREA DS    18F
+IEEPWA   DS    A                       IEEPSN W/A PTR
+ENQLNGTH DS    F                       ENQ LIST LENGTH
+ENQPTR   DS    A                       PTR TO ENQ LIST IN SQS
+JOBNUMP DS    F                       PTR TO JESCT JOB NO FIELD
+SPECEXV  DS    F                       SPECIAL (IEEPSN) EXIT
+COMMPL   DS    F                       PTR TO COMMAND PARAMETER LIST
+UCBNAMP  DS    F                       PTR TO UCB DEVICE NAME (EBCDIC)
+PRFSCAN  DS    F                       BUFFER PTR FOR PROFILE
+DER      IEFDER DSECT=NO
+DER      EQU   DERDSKAD
+         IEFJLPA DSECT=NO                                       XL03120
+PRFLNGH  DS    H                       PROFILE LENGTH COUNTER   XL03120
+NAMLEN   DS    H                       LENGTH OF NAME
+COMDAUTH DS    H                       COMMAND AUTHORITY FOR ISC
+DATAEND  DS    XL2                     DELIMETER FIELD CURRENTLY IN USE
+ISCMPRTY DS    XL1                     MAXIMUM PRTY ALLOWED USER X02050
+STATSWTA DS    XL1
+STARTJOB EQU   X'80'                   BEGIN PROCESSING AT USER GIVEN
+*                                      JOB NAME
+FLUSH    EQU   X'40'                   FLUSH ALL SYSIN
+QOPEN    EQU   X'20'                   JOBQ OPEN
+JCLDATA  EQU   X'10'                   JCL DATA WITHIN SYSIN ALLOWED
+INPROC   EQU   X'08'                   IN-LINE PROC BEING PROCESSED
+HOLD     EQU   X'04'                    MUST PUT JOB ON HOLD QUEUE
+HOLDALL  EQU   X'02'                   TYPRUN=HOLD MODE         XL03120
+EXECONT  EQU   X'01'                   EXEC CONTINUATION BYPASS SW
+STATSWTB DS    XL1
+SPLRTN   EQU   X'80'                   RETURNING FROM SPOOL
+NPROFILE EQU   X'40'                   NEED PROFILE KEYWORD     XL03120
+NTYPRUN  EQU   X'20'                    NEED TYPRUN INFO
+NCLASS   EQU   X'10'                   NEED CLASS INFO
+NPRTY    EQU   X'08'                   NEED PRTY INFO
+NDLM     EQU   X'04'                   NEED DLM INFO
+QUOTE    EQU   X'02'                   IN QUOTE SWITCH
+SPECEX   EQU   X'01'                   HAVE SPECIAL(IEEPSN) EXIT
+STATSWTC DS    XL1
+CMCONTEX EQU   X'80'                   COMMENT CONTINUATION EXPECTED
+*                                      ON NEXT STATEMENT
+OPCONTEX EQU   X'40'                   OPERAND CONTINUATION EXPECTED
+*                                      ON NEXT STATEMENT
+CMCONT   EQU   X'20'                   COMMENT CONT'D FROM LAST STMNT
+OPCONT   EQU   X'10'                   OPERAND CONT'D FROM LAST STMNT
+JCL      EQU   X'08'                   HAVE JCL STMNT
+COMMENT  EQU   X'04'                   A COMMENT STMNT(//*)
+NULL     EQU   X'02'                   A NULL STMNT(//)
+INVALID  EQU   X'01'                   INVALID FORMAT ON JCL STMNT(NO
+*                                      OPERAND)
+STATSWTD DS    XL1
+ATOPND   EQU   X'80'                   SEARCHING FOR STMNT OPERAND
+GENSTMT  EQU   X'40'                   CURRENT RECORD IS GENERATED STM
+DDSW     EQU   X'20'                   SPOOL SW
+JOBCONT  EQU   X'10'                   JOB CARD TO BE CONT'D
+WTRSTRT  EQU   X'08'                   ALLOW ONLY WTR TO START
+PROCBUF1 EQU   X'04'                   NEED READ FROM PROCLIB INTO BUF1
+PRCTIME1 EQU   X'02'                   FIRST READ FOR PROCLIB
+RDREOF   EQU   X'01'                   RDR INPUT EOF SW
+STATSWTE DS    XL1                     SWITCH E(USED FOR STAE PROCESS)
+RETRY    EQU   X'80'                   TASK IN RETRY
+ODSJL    EQU   X'40'                   JL DS OPEN
+ODSPL    EQU   X'20'                   PL DS OPEN
+CDS      EQU   X'10'                   CDS TO BE DONE
+ODSSI    EQU   X'08'                   SI DS OPEN
+RECUR    EQU   X'04'                   RECURSIVE ABEND SW
+DEL      EQU   X'02'                   CYL DELETE TO BE DONE
+SMFEX    EQU   X'01'                   SMF EXIT TO BE TAKEN
+STATSWTF DS    XL1
+RDROPEN  EQU   X'80'                   RDR DCB OPEN
+PRCOPEN  EQU   X'40'                   PROC DCB OPEN
+DSINTG   EQU   X'20'                   DS INTEGRITY DONE
+PRCSPOOL EQU   X'10'                   PROCEDURES ARE TO BE SPOOLED.
+WTRSTRTS EQU   X'08'                   SPOOL ALLOW WRITER TO START
+INTSTRTQ EQU   X'04'                   QUEUE ALLOW INIT TO START
+RTRDR    EQU   X'02'                   REMOTE INPUT DEVICE       X02050
+EXTDSTRT EQU   X'01'                   ALLOW EXTEND PGM TO STRT XL03120
+STATSWTG DS    XL1
+RETPROFL EQU   X'80'                   PROFILE ID RETURNED      XL03120
+RETPRTY  EQU   X'40'                   PRIORITY RETURNED        XL03120
+PAREN    EQU   X'20'                   IN PAREN STRING          XL03120
+PRFQUOTE EQU   X'10'                   IN QUOTE STRING          XL03120
+MORESCAN EQU   X'08'                   CONTINUE PROFILE SCAN    XL03120
+ENDSCAN  EQU   X'04'                   END PROFILE SCAN         XL03120
+STOPMDFY EQU   X'02'                   STOP/MDFY FROM JOB PROC  XL03120
+WAITQMGR EQU   X'01'                   RETURN TO QMGR WAIT      XL03120
+ERRMSG   DS    CL1                     ERROR MSG SLOT
+DPRTY    DS    CL1                     DEFAULT PRIORITY
+COMDISP  DS    CL1                     COMMAND DISPOSITION FOR ISC
+CONSOLID DS    CL1                     CONSOLE ID FOR WTO'S
+STATSWTH DS    XL1                                              XL03932
+SMFCNCL  EQU   X'80'                   SMF CANCEL               XL03932
+ISCWKEND DS    F                       END OF WORKAREA          XA01330
+         MEND

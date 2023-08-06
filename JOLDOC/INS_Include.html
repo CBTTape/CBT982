@@ -1,0 +1,324 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Include</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>INCLUDE</u></font><font size="5"><u><span
+ style="font-weight: normal;"> </span></u></font><u>- </u><font
+ size="5"><i><u><span style="font-weight: normal;">Immediate Instruction</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">INCLUDE </span>instruction copies Jol
+source text from the member specified in the Jol Include Library.&nbsp;
+The source text is compiled as though it was part of the <span
+ style="font-style: italic;">original input</span> to the Compiler.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <div style="margin-left: 80px;"><span style="font-weight: bold;"><br>
+INCLUDE </span><span style="font-style: italic;">member-name</span> ;<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;">or<br>
+      </div>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">INCLUDE&nbsp;
+
+
+      </span><span style="font-style: italic;">'dsname'</span><br>
+      <br>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Including Instructions or Source Text</h4>
+      </td>
+      <td align="left" valign="top">
+      <p>Typically, Jol code is stored in a library called the <span
+ style="font-weight: bold;">INCLUDE</span> library. The <span
+ style="font-weight: bold;">INCLUDE</span> instruction can instruct Jol
+to read the statements from the library.<br>
+      <br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">Once a procedure has been tested
+and debugged, you can store it in a library called the <span
+ style="font-weight: bold;">INCLUDE</span> library.&nbsp; The <span
+ style="font-weight: bold;">INCLUDE instruction</span> may then be used
+to instruct Jol to read the statements from the library, instead of
+reading cards.&nbsp; New procedures may be stored in the library with
+the <span style="font-weight: bold;">STORPROC </span>command and
+updated with the <span style="font-weight: bold;">UPDATE </span>command,
+or
+
+      <span style="font-weight: bold;">SPF/TSO </span>or similar may
+be
+used.<br>
+      <br>
+Using the <span style="font-weight: bold;">INCLUDE</span> instruction
+to include Jol source instructions or text avoids:<br>
+      <br>
+&middot; &nbsp;&nbsp;&nbsp; Writing the same often-used code more than
+once.<br>
+      <br>
+&middot; &nbsp;&nbsp;&nbsp; Keypunching and handling the punched cards
+for that code.<br>
+      <br>
+&middot; &nbsp;&nbsp;&nbsp; Errors due to accidental dropping and
+mis-sequencing of the cards.<br>
+      <br>
+The library in which you store your Jol source statements is called the
+      <span style="font-weight: bold;">INCLUDE</span> library (or
+libraries).&nbsp; The library contains individually named members;
+these can contain any allowable Jol statements, even card image files
+(DCL name *).<br>
+      <br>
+The<span style="font-weight: bold;"> INCLUDE</span> instruction copies
+the instructions from the specified member into the Jol input stream,
+thus replacing the<span style="font-weight: bold;"> INCLUDE </span>statement.&nbsp;
+The
+statement(s)
+that replaced the <span style="font-weight: bold;">INCLUDE</span>
+statement is then processed as though it was an original part of the
+input stream.<br>
+      <br>
+Applications of this facility include the storage of complete
+production job procedures and the storage of common procedures such as
+those used to invoke utility programs. Any instructions or card files
+that are liable to frequent change need not be stored in the
+member.&nbsp; Instead, you can code declarations before the <span
+ style="font-weight: bold;">INCLUD</span>E and place any additional
+instructions after it.&nbsp; Instructions inside the <span
+ style="font-weight: bold;">INCLUDE</span>d member may freely refer to
+definitions made outside of it, and later instructions may refer to
+definitions made inside the <span style="font-weight: bold;">INCLUDE</span>ed
+member.<br>
+      <br>
+The <span style="font-weight: bold;">INCLUDE</span> member statement
+may be used to conveniently include a series of data set
+definitions.&nbsp; This allows the installation to set up various
+members of the library with data set definitions, and anyone who wants
+to run part of that set of programs need only include the data set
+definition member, thus saving repetitive coding of his data
+sets.&nbsp; Example three below explains this in more detail.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">
+      <h4>Card Image Data in INCLUDEd Text</h4>
+      </td>
+      <td style="vertical-align: top;">Data cards can be <span
+ style="font-weight: bold;">INCLUDE</span>d in the text together with
+other text.&nbsp; You can even replace parts (or all) of these data
+cards with the current values contained in Symbolic Variables.&nbsp;
+See the <span style="font-weight: bold;">Card File Declaration&nbsp; </span>for
+more
+information.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+        <li><span style="font-weight: normal;">The copied or <span
+ style="font-weight: bold;">INCLUDE</span>d text is inserted
+immediately after the <span style="font-weight: bold;">INCLUDE</span>
+instruction.&nbsp; Included Source Text may contain any Jol Macro
+Instructions or <span style="font-style: italic;">card image files</span>.</span></li>
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">INCLUDE</span>d text may <span
+ style="font-weight: bold;">INCLUDE</span> other members, up to a
+nesting level of twelve.&nbsp; That is, an included member may include
+another member, and that member may include another member, and so on
+up to a level of twelve (12) concurrent <span
+ style="font-weight: bold;">INCLUDES</span>.</span></li>
+        <li><span style="font-weight: normal;"><span
+ style="font-style: italic;">Card Image Data</span> may be stored in
+text members for inclusion; these cards (perhaps utility control
+statements) <span style="font-style: italic;">may have variable data
+changed by using the symbolic parameter facilit</span>y.</span></li>
+        <li><span style="font-weight: normal;">The member name to be
+included may be defined by a symbolic parameter.&nbsp; For example:</span></li>
+      </ol>
+      <div style="margin-left: 80px; font-weight: bold;"><span
+ style="font-weight: normal;"><span style="font-weight: bold;">INCLUDE <span
+ style="font-style: italic;">%DAY</span></span>;<br>
+      <br>
+      </span></div>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">will<span
+ style="font-weight: bold;"> INCLUDE</span> member <span
+ style="font-weight: bold;">MONDAY</span> or <span
+ style="font-weight: bold;">TUESDAY</span>, etc.</span></div>
+      <ol start="5">
+        <li><span style="font-weight: normal;">Member names must be
+eight characters or less, and must commence with an alphabetic or
+national ($, @ or #) character.</span></li>
+        <li><span style="font-weight: normal;">Your installation may
+have several libraries concatenated to each other.&nbsp; When you <span
+ style="font-weight: bold;">INCLUDE</span> a member, each library is
+searched in the order in which they are concatenated.&nbsp; This means
+that if two or more libraries contain identically named members, the
+first member found by the specified name will be the one to be included.</span></li>
+        <li><span style="font-weight: normal;">After the instructions
+in the included member have been analyzed, the instructions following
+the <span style="font-weight: bold;">INCLUDE</span> are analyzed.</span></li>
+        <li><span style="font-weight: normal;">Users with <span
+ style="font-weight: bold;">TSO</span> can use the <span
+ style="font-weight: bold;">TSO EDIT</span> Command or <span
+ style="font-weight: bold;">SPF</span> to store and update members or
+procedures in the <span style="font-weight: bold;">INCLUDE</span>
+library.</span></li>
+        <li><span style="font-weight: normal;">The files may ve Fixed
+or Variable Blocked files.<br>
+          </span></li>
+      </ol>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      <span style="font-weight: normal;"><span
+ style="font-weight: bold;">1.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; I</span><span
+ style="font-weight: bold;">NCLUDE SALES;</span><span
+ style="font-style: italic; font-weight: bold;"><br>
+      <br>
+      </span></span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+
+
+      <span style="font-weight: bold;">INCLUDE</span> instruction
+directs that the libraries are to be searched for the <span
+ style="font-weight: bold;">SALES</span> member.&nbsp; The text (Jol
+source statements) is then interpreted by Jol as though the contents of
+the <span style="font-weight: bold;">INCLUDE</span>d member <span
+ style="font-weight: bold;">SALES </span>had been placed where the <span
+ style="font-weight: bold;">INCLUDE </span>instruction had been.</span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">After
+the
+instructions
+in <span style="font-weight: bold;">SALES </span>have
+been interpreted, the instruction following the <span
+ style="font-weight: bold;">INCLUDE </span>will be interpreted.</span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      <span style="font-weight: bold;">2 &nbsp; &nbsp; &nbsp;&nbsp; IF
+%DAY = 'MONDAY'</span><br style="font-weight: bold;">
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">THEN INCLUDE STARTWK;</span></span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">Jol
+automatically
+initializes
+      <span style="font-weight: bold;">%DAY</span>
+to the current day.&nbsp; <span style="font-weight: bold;">%DAY</span>
+is tested; if it is <span style="font-weight: bold;">MONDAY</span>
+then the <span style="font-weight: bold;">INCLUDE</span> instruction
+is activated and the instructions in member <span
+ style="font-weight: bold;">STARTWK</span> will be analyzed.</span><br>
+      <span style="font-weight: normal;"></span><br>
+      <span style="font-weight: normal;">If the day is not <span
+ style="font-weight: bold;">MONDAY</span>, the <span
+ style="font-weight: bold;">INCLUDE</span> instruction will be ignored.</span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      <span style="font-weight: bold;">3 &nbsp; &nbsp; &nbsp; INCLUDE
+PAYSYS;</span><br style="font-weight: bold;">
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">RUN VALIDATE;</span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: normal;"><span
+ style="font-weight: bold;">LIST OUTPUT1;</span></span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+
+
+      <span style="font-weight: bold;">PAYSYS </span>member is <span
+ style="font-weight: bold;">INCLUDE</span>d.&nbsp; In this example, <span
+ style="font-weight: bold;">PAYSYS </span>contains all the program and
+data set definitions that a group of programmers are working on.&nbsp;
+This programmer wishes to test a program called <span
+ style="font-weight: bold;">VALIDATE</span>, and then list its
+output.&nbsp; Instead of each programmer having separate procedures for
+their part of the system, all the common elements are coded and stored
+in member <span style="font-weight: bold;">PAYSYS</span>.&nbsp;
+Whenever any programmer in the group wishes to test his or her program,
+he includes the common elements and then places his instructions after
+the <span style="font-weight: bold;">INCLUDE</span>.</span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">In
+this
+example,
+the programmer includes the common elements, then <span
+ style="font-weight: bold;">RUN</span>'s the program <span
+ style="font-weight: bold;">VALIDATE</span> and <span
+ style="font-weight: bold;">LIST</span>s its output.</span><br>
+      <span style="font-weight: normal;"></span></div>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

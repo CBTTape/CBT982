@@ -1,0 +1,91 @@
+           MACRO                                                        #PRN0100
+&NAME      #PRINT &TYPE=EDIT,&SKIP=1                                    #PRN0200
+           LCLA &LITLEN,&LITPOSN                                        #PRN0300
+           LCLA &NOSKIP                                                 #PRN0400
+           LCLA &NOPARMS,&THIS,&PLEN,&PCOUNT,&PINT                      #PRN0500
+           LCLC &PTYPE,&PCHAR1                                          #PRN0600
+&NAME      L   15,=V(US37AA)                   CONTROL ROUTINE          #PRN0700
+           BALR   14,15                                                 #PRN0800
+           AIF ('&SKIP' EQ 'PAGE').PAGE                                 #PRN0900
+&NOSKIP    SETA &SKIP                                                   #PRN1000
+.SKIPX     AIF (&NOSKIP EQ 0).TDATA                                     #PRN1100
+           AIF (&NOSKIP EQ 1).SKIP1                                     #PRN1200
+           AIF (&NOSKIP EQ 2).SKIP2                                     #PRN1300
+           AIF (&NOSKIP EQ 3).SKIP3                                     #PRN1400
+           MVI 0(1),C'-'       SKIP 3 LINES                             #PRN1500
+&NOSKIP    SETA &NOSKIP-1                                               #PRN1600
+           AGO .SKIPX                                                   #PRN1700
+.PAGE      MVI 0(1),C'1'       SKIP TO A NEW PAGE                       #PRN1800
+           AGO .TDATA                                                   #PRN1900
+.SKIP1     ANOP                                                         #PRN2000
+           MVI 0(1),C' '       SKIP TO NEW LINE                         #PRN2100
+           AGO .TDATA                                                   #PRN2200
+.SKIP2     ANOP                                                         #PRN2300
+           MVI 0(1),C'0'       SKIP 2 LINES                             #PRN2400
+           AGO .TDATA                                                   #PRN2500
+.SKIP3     ANOP                                                         #PRN2600
+           MVI 0(1),C'-'       SKIP 3 LINES                             #PRN2700
+.TDATA     AIF ('&TYPE' EQ 'EDIT').START                                #PRN2800
+           AIF ('&TYPE' EQ 'DATA').START                                #PRN2900
+           MNOTE 4,'TYPE FIELD IN PRINT MACRO IS INVALID'               #PRN3000
+.START     ANOP                                                         #PRN3100
+&NOPARMS   SETA N'&SYSLIST                                              #PRN3200
+&THIS      SETA 1                                                       #PRN3300
+           AIF (&NOPARMS EQ 0).NONE                                     #PRN3400
+.*   NOW TO DECODE THE PARAMETERS                                       #PRN3500
+.WHAT      ANOP                                                         #PRN3600
+&PCHAR1    SETC '&SYSLIST(&THIS)'(1,1)                                  #PRN3700
+&PCOUNT    SETA K'&SYSLIST(&THIS)                                       #PRN3800
+           AIF ('&PCHAR1' EQ '''').ALPHLIT                              #PRN3900
+&PTYPE     SETC T'&SYSLIST(&THIS)                                       #PRN4000
+&PLEN      SETA L'&SYSLIST(&THIS)                                       #PRN4100
+           AIF ('&TYPE' EQ 'DATA').PUTNME                               #PRN4200
+           AGO .TEST                                                    #PRN4300
+.PUTNME    ANOP                                                         #PRN4400
+&PCOUNT SETA &PCOUNT+1                                                  #PRN4500
+           MVC 0(&PCOUNT,1),=C'&SYSLIST(&THIS)='                        #PRN4600
+.TEST      ANOP                                                         #PRN4700
+           AIF ('&PCHAR1' EQ '#').VARCHAR                               #PRN4800
+           AIF ('&PTYPE' EQ 'H').HALFWD                                 #PRN4900
+           AIF ('&PTYPE' EQ 'F').FULLWD                                 #PRN5000
+           AIF ('&PTYPE' EQ 'C').CHAR                                   #PRN5100
+           AIF ('&PTYPE' EQ 'P').PACKED                                 #PRN5200
+           MNOTE 8,'UNKNOWN DATA TYPE &SYSLIST(&THIS)'                  #PRN5300
+           AGO     .NEXT                                                #PRN5400
+.ALPHLIT   ANOP                                                         #PRN5500
+.* NOW LOOK FOR DOUBLE QUOTES IN STRING TO CALCULATE THE CORRECT        #PRN5600
+.*   LENGTH                                                             #PRN5700
+&LITPOSN   SETA 2                              START AFTER 1ST QOTE     #PRN5800
+&LITLEN    SETA K'&SYSLIST(&THIS)                                       #PRN5900
+&LITLEN    SETA &LITLEN-2                                               #PRN6000
+.TQUOTE1   AIF ('&SYSLIST(&THIS)'(&LITPOSN,2) NE '''''').NOTDBL1        #PRN6100
+&LITPOSN   SETA &LITPOSN+1                                              #PRN6200
+&LITLEN    SETA &LITLEN-1                                               #PRN6300
+.NOTDBL1   ANOP                                                         #PRN6400
+&LITPOSN   SETA &LITPOSN+1                                              #PRN6500
+           AIF (&LITPOSN LT K'&SYSLIST(&THIS)).TQUOTE1                  #PRN6600
+&PCOUNT    SETA &LITLEN                                                 #PRN6700
+           MVC 0(&PCOUNT,1),=C&SYSLIST(&THIS)                           #PRN6800
+           AGO .NEXT                                                    #PRN6900
+.CHAR      ANOP                                                         #PRN7000
+           MVC 0(&PLEN,1),&SYSLIST(&THIS)                               #PRN7100
+           AGO .NEXT                                                    #PRN7200
+.VARCHAR   ANOP                                                         #PRN7300
+           LA  1,&SYSLIST(&THIS)                                        #PRN7400
+           AGO .NEXT                                                    #PRN7500
+.HALFWD    ANOP                                                         #PRN7600
+           LH  1,&SYSLIST(&THIS)                                        #PRN7700
+           AGO  .NEXT                                                   #PRN7800
+.FULLWD    ANOP                                                         #PRN7900
+           L  1,&SYSLIST(&THIS)                                         #PRN8000
+           AGO .NEXT                                                    #PRN8100
+.PACKED    ANOP                                                         #PRN8200
+           UNPK 0(15,1),&SYSLIST(&THIS)                                 #PRN8300
+           AGO .NEXT                                                    #PRN8400
+.NEXT      AIF (&THIS EQ &NOPARMS).END                                  #PRN8500
+&THIS      SETA &THIS+1                                                 #PRN8600
+           AGO .WHAT                                                    #PRN8700
+.END       ANOP                                                         #PRN8800
+.NONE      ANOP                                                         #PRN8900
+           DC H'0'                                                      #PRN9000
+      MEND                                                              #PRN9100

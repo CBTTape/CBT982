@@ -1,0 +1,11 @@
+         MACRO
+         DYNPB
+.*  SEPARATES PARAMS FROM &PS - NEXT PARAM TO &PP
+         GBLC  &PP,&PS
+         LCLA  &I
+.A       ANOP
+&I       SETA  &I+1
+         AIF   ('&PS'(&I,1) NE',').A
+&PP      SETC  '&PS'(1,&I-1)            NEXT PARAM
+&PS      SETC  '&PS'(&I+1,K'&PS-&I)    REMOVE FROM STRING
+         MEND

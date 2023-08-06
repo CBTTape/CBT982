@@ -1,0 +1,1092 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=windows-1252">
+  <meta name="Generator" content="Microsoft Word 10 (filtered)">
+  <title>Declaring Programs</title>
+  <style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:Wingdings;
+	panose-1:5 0 0 0 0 0 0 0 0 0;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:"Times New Roman";}
+h1
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	font-weight:normal;}
+h2
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	font-weight:normal;}
+h3
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	font-weight:normal;}
+@page Section1
+	{size:612.0pt 792.0pt;
+	margin:72.0pt 90.0pt 72.0pt 90.0pt;}
+div.Section1
+	{page:Section1;}
+ /* List Definitions */
+ ol
+	{margin-bottom:0cm;}
+ul
+	{margin-bottom:0cm;}
+-->
+  </style>
+</head>
+<body style="" lang="EN-US">
+<div class="Section1">
+<table class="MsoNormalTable"
+ style="margin-left: 5.4pt; border-collapse: collapse;" border="0"
+ cellpadding="0" cellspacing="0">
+  <tbody>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span style="font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2" style="padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal" style="text-align: right;" align="right"><b><u><span
+ style="font-size: 18pt; font-family: Arial;">Declaring Programs</span></u></b></p>
+      <p class="MsoNormal" style="text-align: right;" align="right"><b><span
+ style="font-size: 18pt; font-family: Arial;">&nbsp;</span></b></p>
+      <p class="MsoNormal"><b><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></b></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <h3 style="margin-bottom: 3pt; page-break-after: avoid;"><b><span
+ style="font-size: 11pt; font-family: Arial;">Purpose</span></b></h3>
+      </td>
+      <td colspan="2" style="padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">Before executing a
+program, you must tell the system what input and output data sets it
+uses, how much storage it needs, the expected execution time, which
+library contains the program, and so on.&nbsp; The specified program
+must be a member of a temporary library, the system library, or a
+private library.The program declaration allows you to specify these
+details and when you use the <b>RUN</b> instruction later, the program
+is loaded and all the options specified will be activated, and any
+specified data sets will be made available to the program.</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span style="font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2"
+ style="border: 1pt solid windowtext; padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">[</span></b><i><span
+ style="font-size: 10pt; font-family: Arial;">label </span></i><span
+ style="font-size: 10pt; font-family: Arial;">:<b>]</b></span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 57.3pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">{&nbsp; DECLARE&nbsp; } </span></b></p>
+      <p class="MsoNormal" style="margin-left: 57.3pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">{&nbsp;
+DEFINE&nbsp;&nbsp;&nbsp;&nbsp; }</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> &nbsp;&nbsp; <i>program-name</i>
+      <b>PROG</b>&nbsp; <i>options</i>;</span></p>
+      <p class="MsoNormal" style="margin-left: 57.3pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">{&nbsp;
+DCL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></b></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><b><i><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></i></b></p>
+      </td>
+      <td colspan="2" style="padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <h2 style="margin-bottom: 3pt; page-break-after: avoid;"><b><i><span
+ style="font-size: 11pt; font-family: Arial;">Specifying the Filenames
+and Their Usage for a Program</span></i></b></h2>
+      </td>
+      <td colspan="2" style="padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">Under <b>OS</b>, you <b>READ</b>
+or <b>WRITE</b> to <i>filenames</i> or <b>DDNAMES</b> in your
+program.&nbsp; These <b>DDNAMES</b> are then connected or bound to
+Data Sets, Printers, Card Readers and so forth at the Job Control or
+Command (Jol or TSO) level.&nbsp; This allows a great amount of
+flexibility because your program can be written with Device
+Independence in mind; your program can read or write a Disk, Tape, or
+Card Data Set with no changes.</span></p>
+      <p class="MsoNormal">&nbsp;</p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">Filenames and their
+actions are described in the following manner:</span></p>
+      <p class="MsoNormal">&nbsp;</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span style="font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2"
+ style="border: 1pt solid windowtext; padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp; <b>{&nbsp;
+      </b><i>filename&nbsp;&nbsp; </i><b>}</b><i>&nbsp;&nbsp;
+&nbsp;&nbsp; </i><u>action</u>&nbsp;&nbsp; <b>{</b>&nbsp; <i>dsid&nbsp;&nbsp;
+
+&nbsp; </i><b>}&nbsp;&nbsp;&nbsp;&nbsp; [</b><i>&nbsp; </i>(&nbsp;&nbsp;
+      <i>member&nbsp;&nbsp;&nbsp; </i>) <b>]</b></span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp; <b>{</b>&nbsp;
+      <i>ddname&nbsp;&nbsp;&nbsp; </i><b>}</b><i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      </i><b>{</b> <i>dsname </i><b>}&nbsp;&nbsp;&nbsp;&nbsp; [</b><i>&nbsp;
+      </i>( <i>generation&nbsp; </i>) <b>]</b><i> </i></span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+[&nbsp; </b><sub>| |</sub><b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+{&nbsp;&nbsp;&nbsp; </b><i>dsid</i><b>&nbsp;&nbsp; }&nbsp; ]</b></span></p>
+      <p class="MsoNormal"><b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+[&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+{ </span></b><i><span style="font-size: 10pt; font-family: Arial;">dsname</span></i><b><span
+ style="font-size: 10pt; font-family: Arial;"> }&nbsp; ]</span></b></p>
+      <p class="MsoNormal">&nbsp;</p>
+      <p class="MsoNormal" style="margin-left: 133.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">[</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> <b>{</b> <b>UNITAFF</b>
+      <b>} ]</b> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>{</b>&nbsp;
+      <i>filename&nbsp; </i><b>}</b></span></p>
+      <p class="MsoNormal" style="margin-left: 133.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">[</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> <b>{</b> <b>UNITREF</b>
+      <b>} ]</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>{</b>&nbsp;
+      <i>ddname&nbsp;&nbsp; </i><b>}</b></span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><i><span
+ style="font-size: 10pt; font-family: Arial;">where <u>action</u></span></i><span
+ style="font-size: 10pt; font-family: Arial;"> may be</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 108pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">{&nbsp;
+READS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp;&nbsp;
+&nbsp; &nbsp;&nbsp;&nbsp; }</span></b></p>
+      <p class="MsoNormal" style="margin-left: 108pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">{&nbsp;
+WRITES&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp; }</span></b></p>
+      <p class="MsoNormal" style="margin-left: 108pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">{&nbsp;
+UPDATES&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp; }</span></b></p>
+      <p class="MsoNormal" style="margin-left: 108pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">{&nbsp; MODS |
+EXTENDS&nbsp;&nbsp; }</span></b></p>
+      <p class="MsoNormal" style="margin-left: 108pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">{&nbsp; USES |
+REWRITES&nbsp; }</span></b></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><span
+ style="font-size: 10pt; font-family: Arial;">or</span></p>
+      <p class="MsoNormal" style="margin-left: 108pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>{</b>&nbsp; <b>READ&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+}</b></span></p>
+      <p class="MsoNormal" style="margin-left: 108pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>{</b>&nbsp; <b>WRITE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+}</b></span></p>
+      <p class="MsoNormal" style="margin-left: 86.4pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">MAY</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>{</b>&nbsp; <b>UPDATE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+}</b></span></p>
+      <p class="MsoNormal" style="margin-left: 108pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>{</b>&nbsp; <b>MOD
+| EXTEND&nbsp;&nbsp; }</b></span></p>
+      <p class="MsoNormal" style="margin-left: 108pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>{</b>&nbsp; <b>USE
+| UPDATE&nbsp;&nbsp; }</b></span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span style="font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2" style="padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"><span style="font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><b><i><span
+ style="font-size: 11pt; font-family: Arial;">Note</span></i></b></p>
+      <p class="MsoNormal"><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2" style="padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Symbol;">·</span><span
+ style="font-size: 7pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
+ style="font-size: 10pt; font-family: Arial;">READS</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> is the same as <b>DISP=SHR</b></span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Symbol;">·</span><span
+ style="font-size: 7pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
+ style="font-size: 10pt; font-family: Arial;">WRITES</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> is the same as <b>DISP=NEW</b></span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Symbol;">·</span><span
+ style="font-size: 7pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
+ style="font-size: 10pt; font-family: Arial;">UPDATES</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> is the same as <b>DISP=OLD</b></span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Symbol;">·</span><span
+ style="font-size: 7pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
+ style="font-size: 10pt; font-family: Arial;">MODS</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> or <b>ADDS</b> is the
+same as <b>DISP=MOD</b></span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Symbol;">·</span><span
+ style="font-size: 7pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
+ style="font-size: 10pt; font-family: Arial;">USES</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> creates a data set if
+such is non-existent or uses an old data set if currently present on
+the system.</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Symbol;">·</span><span
+ style="font-size: 7pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span><b><span
+ style="font-size: 10pt; font-family: Arial;">MAY</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> indicates that the
+volume is to be mounted only when and if the data set is opened by the
+program.</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span style="font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2" style="padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <h2 style="margin-bottom: 3pt; page-break-after: avoid;"><b><i><span
+ style="font-size: 11pt; font-family: Arial;">Other Optional Parameters
+on the Program Declare</span></i></b></h2>
+      </td>
+      <td
+ style="border: 1pt solid windowtext; padding: 0cm 5.4pt; width: 278.7pt;"
+ valign="top" width="372">
+      <p class="MsoNormal" style="margin-top: 6pt;"><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+Optional Parameters</span></p>
+      </td>
+      <td
+ style="border-style: solid solid none none; border-color: windowtext windowtext -moz-use-text-color -moz-use-text-color; border-width: 1pt 1pt medium medium; padding: 0cm 5.4pt; width: 59.25pt;"
+ valign="top" width="79">
+      <p class="MsoNormal" style="margin-top: 6pt;"><span
+ style="font-size: 11pt; font-family: Arial;">Default</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span style="font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td
+ style="border-style: none solid solid; border-color: -moz-use-text-color windowtext windowtext; border-width: medium 1pt 1pt; padding: 0cm 5.4pt; width: 278.7pt;"
+ valign="top" width="372">
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">ACCT</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp; [=]&nbsp; <i>acct </i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      </span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.3pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">EXTERNAL |
+EXT&nbsp;&nbsp; </span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">LIB</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [=]&nbsp;&nbsp; <b>{</b>
+library-data-set-name <b>}</b></span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      <b>{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </b>dsid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      <b>}</b></span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">LIKE</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [=] &nbsp;&nbsp; <i>pgmid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      </i></span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 106.8pt; text-indent: -85.2pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">NODYNAMS</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> [=] <i>max-dynamic-allocations</i></span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.3pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">{</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;<b>SIZE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+}</b>&nbsp;&nbsp;&nbsp;&nbsp; [=] <i>n</i> &nbsp;<b>{
+K&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</b></span></p>
+      <p class="MsoNormal" style="margin-left: 21.3pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">{</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;<b>REGION }</b>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>{</b>
+      <b>BYTES&nbsp; }</b></span></p>
+      <p class="MsoNormal" style="margin-left: 75.3pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span><b><span
+ style="font-size: 10pt; font-family: Arial;"><br>
+{</span></b><i><span style="font-size: 10pt; font-family: Arial;">
+elapsed,cpu </span></i><b><span
+ style="font-size: 10pt; font-family: Arial;">}</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></p>
+      <p class="MsoNormal"><b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+TIME</span></b><span style="font-size: 10pt; font-family: Arial;"> [<b>=</b>]&nbsp;
+&nbsp;&nbsp; <b>{</b> <i>cpu,elapsed </i><b>}&nbsp;&nbsp; { MINUTES
+| MINS | M}</b></span></p>
+      <p class="MsoNormal"><b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+&nbsp;&nbsp;&nbsp;&nbsp; { </span></b><i><span
+ style="font-size: 10pt; font-family: Arial;">elapsed&nbsp;&nbsp;
+&nbsp; &nbsp; </span></i><b><span
+ style="font-size: 10pt; font-family: Arial;">}</span></b><i><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp; </span></i><b><span
+ style="font-size: 10pt; font-family: Arial;">{ SECONDS | SECS | S }</span></b></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">or<b>&nbsp;&nbsp;&nbsp; </b></span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">NOTIMING</span></b></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">VIRTUAL | REAL</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> &nbsp;&nbsp; <b>VIRTUAL</b></span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td
+ style="border-style: solid solid solid none; border-color: windowtext windowtext windowtext -moz-use-text-color; border-width: 1pt 1pt 1pt medium; padding: 0cm 5.4pt; width: 59.25pt;"
+ valign="top" width="79">
+      <p class="MsoNormal"><i><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></i></p>
+      <p class="MsoNormal"><i><span
+ style="font-size: 10pt; font-family: Arial;">step-acct</span></i></p>
+      <p class="MsoNormal"><i><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></i></p>
+      <p class="MsoNormal"><i><span
+ style="font-size: 10pt; font-family: Arial;">-</span></i></p>
+      <p class="MsoNormal"><i><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></i></p>
+      <p class="MsoNormal"><i><span
+ style="font-size: 10pt; font-family: Arial;">-</span></i></p>
+      <p class="MsoNormal"><i><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></i></p>
+      <p class="MsoNormal"><i><span
+ style="font-size: 10pt; font-family: Arial;">-</span></i></p>
+      <p class="MsoNormal"><i><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></i></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">0</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">s<i>tep</i>-<i>region </i></span></p>
+      <p class="MsoNormal"><i><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></i></p>
+      <p class="MsoNormal"><i><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></i></p>
+      <p class="MsoNormal"><i><span
+ style="font-size: 10pt; font-family: Arial;">remainder of Job Time</span></i></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span style="font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2" style="padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <h3 style="margin-bottom: 3pt;"><b><span
+ style="font-size: 11pt; font-family: Arial;">Notes</span></b></h3>
+      <p class="MsoNormal"><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2" style="padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">1. The <i>label </i>need
+only be coded if there are two programs to be executed of the same name
+using different <b>DSIDs</b> or Data Sets.&nbsp; The '<i>label</i>' is
+      <b>RUN</b>, not the pgmid specified in the Declare.</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">2. The LIB keyword is not
+required if a Dsname of the form <i>x.y </i>is used.&nbsp; For
+example:</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 34.8pt; text-indent: -4.5pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 40.5pt; text-indent: -4.5pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">LIB = SYS1.LINKLIB</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> is equivalent to coding <b>SYS1.LINKLIB</b></span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">3. The <b>SIZE</b> or <b>REGION</b>
+keyword is not required if <b>K</b> or <b>BYTES</b> is used.&nbsp;
+For example:</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 50.15pt; text-indent: -14.15pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SIZE = 60K</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> is equivalent to <b>60K</b></span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">4.&nbsp; The <b>TIME</b>
+keyword is not required if a qualifier such as <b>M</b> is used.&nbsp;
+For example:</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 50.15pt; text-indent: -14.15pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">TIME=5,2MINS</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> is equivalent to <b>5,2MINS</b></span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 50.15pt; text-indent: -14.15pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">NOTIMING</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> is equivalent to <b>TIME=1440</b>
+in <b>JCL</b>.</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">5.&nbsp; LIKE</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> merges a previously
+defined Program Declare with the current declare.&nbsp; All non-defined
+items are copied from the old Declare.</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">6.&nbsp; EXTERNAL</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> or <b>EXT</b> allows a
+Declaration in a Macro to be used outside the Macro.</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">7.&nbsp; To assist in
+Restart situations, Jol automatically resets generation numbers.&nbsp;
+For example, when Jol finds the first reference to a data set is (+1),
+it will subtract one from <i>all</i> generations of that data set
+until the lowest reference is (+0).&nbsp; Jol will perform similar
+processing for output data sets, and reduce the generation number until
+the lowest is (+1).</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">8.&nbsp; Generation</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> data sets may be
+considered as a 'stack' of data sets.&nbsp; The stack may be referenced
+in its <b>entirety</b>, or you may refer to elements within the stack <b>relatively</b>
+or <b>absolutely</b>.</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <ul style="margin-top: 0cm;" type="disc">
+        <li class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">The top element or data
+set is referred to by coding <b>(0)</b> after the data set name.</span></li>
+      </ul>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -11.15pt;">&nbsp;</p>
+      <ul style="margin-top: 0cm;" type="disc">
+        <li class="MsoNormal"><span style="font-size: 7pt;">&nbsp;</span><span
+ style="font-size: 10pt; font-family: Arial;">A lower element or data
+set may be referred to by coding <b>(-<i>nn</i>)</b> after the data
+set name, for example <b>PAYROLL.MASTER(-2)</b>.</span></li>
+      </ul>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -11.15pt;">&nbsp;</p>
+      <ul style="margin-top: 0cm;" type="disc">
+        <li class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">New elements or data sets
+are added to the stack by coding <b>(+<i>nn</i>)</b> after the data
+set name.&nbsp; To make permanent additions to the stack, the data set <b>must</b>
+be <b>CATALOG</b>ed (see <b>CATALOG</b> instruction).</span></li>
+      </ul>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -11.15pt;">&nbsp;</p>
+      <ul style="margin-top: 0cm;" type="disc">
+        <li class="MsoNormal"><b><span
+ style="font-size: 10pt; font-family: Arial;">Specific</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> or <b>absolute</b>
+elements can be referred to by coding <b>(<i>nn</i>)</b> after the
+data set set name.</span></li>
+      </ul>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -11.15pt;">&nbsp;</p>
+      <ul style="margin-top: 0cm;" type="disc">
+        <li class="MsoNormal"><b><span
+ style="font-size: 10pt; font-family: Arial;">All</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> elements may be read
+consequectively by coding the generation data set name without
+specifying either a relative or absolute element number.</span></li>
+      </ul>
+      <p class="MsoNormal"
+ style="margin-left: 14.15pt; text-indent: -11.15pt;">&nbsp;</p>
+      <ul style="margin-top: 0cm;" type="disc">
+        <li class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">You may code relative
+and/or specific elements on either <b>or both</b> the program <b>and</b>
+the data set declare statements.&nbsp; The element numbers you specify
+are <b>arithmetically</b> added or subtracted to give either a
+relative or absolute element number.</span></li>
+      </ul>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 12.3pt;"><span
+ style="font-size: 10pt; font-family: Arial;">The table on the
+following page shows the results when element numbers are coded on
+program and data set declares.</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2"
+ style="border: 1pt solid windowtext; padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 172.35pt; text-indent: -163pt;"><span
+ style="font-size: 10pt; font-family: Arial;">1&nbsp; <b>DCL GDG DATA
+SET PAYROL.MASTER;</b></span></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 172.35pt; text-indent: -5cm;"><span
+ style="font-size: 10pt; font-family: Arial;">In Program
+Declare&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+Result</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.35pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; all
+elements</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.35pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG(0)</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; latest element</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.35pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG(-1)</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; second generation</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.35pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG(4)</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; absolute generation 4.</span></p>
+      <p class="MsoNormal" style="margin-left: 43.2pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2"
+ style="border-style: none solid solid; border-color: -moz-use-text-color windowtext windowtext; border-width: medium 1pt 1pt; padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 43.1pt; text-indent: -33.75pt;"><span
+ style="font-size: 10pt; font-family: Arial;">2&nbsp;&nbsp; <b>DCL GDG
+DATA SET PAYROL.MASTER(0);</b></span></p>
+      <p class="MsoNormal"
+ style="margin-left: 40.9pt; text-indent: -40.9pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><span
+ style="font-size: 10pt; font-family: Arial;">In Program
+Declare&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+Result</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; top
+element, or latest</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG(0)</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; as above</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG(-1)</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; second generation</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG(4)</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; absolute generation 4.</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 40.9pt; text-indent: -40.9pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span style="font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2"
+ style="border-style: none solid solid; border-color: -moz-use-text-color windowtext windowtext; border-width: medium 1pt 1pt; padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 43.2pt; text-indent: -43.2pt;"><span
+ style="font-size: 10pt; font-family: Arial;">3&nbsp;&nbsp; <b>DCL GDG
+DATA SET PAYROL.MASTER(-1);</b></span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><span
+ style="font-size: 10pt; font-family: Arial;">In Program
+Declare&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+Result</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; second
+generation</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG(0)</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; as above</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG(-1)</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>third (-2)</b> generation</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG(4)</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>error,</b> but absolute
+generation 4 used.</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span style="font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2"
+ style="border-style: none solid solid; border-color: -moz-use-text-color windowtext windowtext; border-width: medium 1pt 1pt; padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 43.1pt; text-indent: -43.1pt;"><span
+ style="font-size: 10pt; font-family: Arial;">4&nbsp;&nbsp; <b>DCL GDG
+DATA SET PAYROL.MASTER(6);</b></span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><span
+ style="font-size: 10pt; font-family: Arial;">In Program
+Declare&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+Result</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; generation
+      <b>6</b></span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG(0)</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; as above</span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.4pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG(-1)</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; generation <b>5</b></span></p>
+      <p class="MsoNormal"
+ style="margin: 3pt 0cm 0.0001pt 172.35pt; text-indent: -5cm;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1 READS GDG(4)</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>error,</b> but absolute
+generation 4 used.</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span style="font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2" style="padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"
+ style="margin-left: 2.3pt; text-indent: -2.3pt;">&nbsp;</p>
+      <p class="MsoNormal"
+ style="margin-left: 2.3pt; text-indent: -2.3pt;"><span
+ style="font-size: 10pt; font-family: Arial;">In other words, Jol
+performs arithmetic on the two numbers, thus easing coding for restarts.</span></p>
+      <p class="MsoNormal">&nbsp;</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <h3 style="margin-bottom: 3pt; page-break-after: avoid;"><b><span
+ style="font-size: 11pt; font-family: Arial;">Examples of Program
+Declarations</span></b></h3>
+      <p class="MsoNormal"><i><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></i></p>
+      <p class="MsoNormal"><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2" style="padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">1 &nbsp;&nbsp;&nbsp; <b>DECLARE
+IEFBR14 PROG 8K;</b></span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">IEFBR14</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> is declared as a
+program.&nbsp; Only one option is specified - it is to have a maximum
+storage of 8,000 bytes.&nbsp; A <b>RUN IEFBR14</b> instruction is
+necessary before the program is actually executed.</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal"><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+      <td colspan="2" style="padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">2 &nbsp;&nbsp;&nbsp; <b>DECLARE
+PRINT PROG 60K</b></span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">INPUT
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;READS&nbsp;&nbsp;&nbsp;&nbsp;
+TEST.DATA (0)</span></b></p>
+      <p class="MsoNormal" style="margin-left: 179.5pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">|| TEST.DATA (-1)</span></b></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">PRINTER&nbsp;&nbsp; WRITES</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp; &nbsp; <b>PRINTER;</b></span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt; font-family: Arial;">The program <b>PRINT</b>
+uses the internal file <b>INPUT</b> to read data.&nbsp; In this case, <b>INPUT</b>
+will read two concatenated data sets, <b>TEST.DATA(0)</b> and <b>TEST.DATA(-1)</b>.&nbsp;
+Jol will search the catalog and resolve the generations of zero and
+minus one before allowing the job to start executing.</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">3
+&nbsp;&nbsp;&nbsp;&nbsp; <b>DCL</b>&nbsp; &nbsp;&nbsp;&nbsp;<b>VALIDATE
+PROG</b></span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">LIB</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>SALES.LIB</b></span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SIZE</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>250K</b></span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">TRANSIN&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+READS</span></b><span style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>CARDS</b></span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">TRANSOUT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+WRITES</span></b><span style="font-size: 10pt; font-family: Arial;">&nbsp;
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>EDITEDT</b></span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">LIST&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+WRITES</span></b><span style="font-size: 10pt; font-family: Arial;">&nbsp;
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>PRINTER;</b></span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><i><span
+ style="font-size: 10pt; font-family: Arial;">other instructions</span></i></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">RUN VALIDATE;</span></b></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><span
+ style="font-size: 10pt; font-family: Arial;">Program <b>VALIDATE</b>
+is declared.&nbsp; The LIB parameter specifies that it is in the <b>SALES.LIB</b>
+library, and the <b>SIZE</b> parameter indicates that a maximum of
+250K bytes are to be allocated to it. </span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><span
+ style="font-size: 10pt; font-family: Arial;">File <b>TRANSIN</b> is
+to <b>READ</b> the <b>CARDS DSID</b>, file <b>TRANSOUT</b> will
+write the <b>EDITEDT DSID</b> and the <b>LIST</b> file will write to
+the <b>PRINTER DSID</b>.</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><span
+ style="font-size: 10pt; font-family: Arial;">Sometime later, the <b>RUN
+VALIDATE</b> instruction will cause the program to start
+executing.&nbsp; At this time all the required data sets are allocated
+for it.</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">4
+&nbsp;&nbsp;&nbsp;&nbsp; <b>DCL</b>&nbsp; &nbsp;&nbsp;&nbsp; <b>IEBGENER</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <b>PROG</b>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>60 K</b>&nbsp;
+      <b>SYS1.LINKLIB</b></span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT1</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <b>READS</b>&nbsp; &nbsp;&nbsp;&nbsp; <b>'INPUT.MASTER(0)'</b></span></p>
+      <p class="MsoNormal" style="margin-left: 194.4pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">|| 'TRANS.ACTION.FILE'</span></b></p>
+      <p class="MsoNormal" style="margin-left: 194.4pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">UNITAFF SYSUT1</span></b></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSUT2</span></b><span
+ style="font-size: 10pt; font-family: Arial;">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <b>WRITES</b> &nbsp;&nbsp; <b>OUTPUT</b></span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSPRINT</span></b><span
+ style="font-size: 10pt; font-family: Arial;">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>WRITES</b>
+&nbsp;&nbsp; <b>PRINTER</b></span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSIN</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <b>READS</b>&nbsp; &nbsp;&nbsp; <b>'SYS1.CONTROL(DUMMY)';</b></span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><span
+ style="font-size: 10pt; font-family: Arial;">Program <b>IEBGENER</b>
+is defined to Jol.&nbsp; When it is executed, it will be loaded from
+library <b>SYS1.LINKLIB,</b> and allocated <b>60K</b> bytes of
+storage to execute in.</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><span
+ style="font-size: 10pt; font-family: Arial;">File <b>SYSUT1</b> will
+read <b>'INPUT.MASTER(0)'</b> first, and then <b>'TRANS.ACTION.FILE'</b>.&nbsp;
+These two files will be copied to the Data set Identifier (<b>DSID</b>)
+      <b>OUTPUT</b>, which will be defined before the <b>RUN IEBGENER</b>
+instruction. Notice that <b>'TRANS.ACTION.FILE'</b> has a <b>UNITAFF</b>
+specified to <b>SYSUT1</b>.&nbsp; This means that the same unit
+(usually a Tape device) will be used for both files.</span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">SYSPRINT</span></b><span
+ style="font-size: 10pt; font-family: Arial;"> and <b>SYSIN</b> are
+files also required by the utility; <b>SYSPRINT</b> will write to a
+printer, and <b>SYSIN</b> will read data set <b>'SYS1.CONTROL'</b>
+member <b>DUMMY</b>.</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal"
+ style="margin-left: 23.55pt; text-indent: -23.55pt;"><span
+ style="font-size: 10pt; font-family: Arial;">5 &nbsp;&nbsp;&nbsp; <b>DCL</b>&nbsp;
+
+&nbsp;&nbsp;&nbsp; <b>XYZ PROG
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PROG</b></span></p>
+      <p class="MsoNormal" style="margin-left: 66.1pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">IN01</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp; <b>READS</b>&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>B(+1) ||
+C(10)</b></span></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt; font-family: Arial;">IN02</span></b><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; <b>READS</b>&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>D UNITAFF A;</b></span></p>
+      <p class="MsoNormal"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><span
+ style="font-size: 10pt; font-family: Arial;">When program <b>XYZ</b>
+is run, file <b>IN01</b> will read the <b>(+1)</b> generation of the
+data set defined by the <b>DSID B</b>, then it will read the tenth <b>(10)</b>
+generation of the data set defined by <b>DSID C</b>.&nbsp; When the
+end of the file used by <b>IN01</b> is reached, file <b>IN02</b> is
+opened and the data referenced by <b>D</b> is used.&nbsp; Because <b>UNITAFF</b>
+was specified, the data set referred to by <b>D</b> will be mounted on
+the same unit as was used by file <b>IN01</b>.</span></p>
+      <p class="MsoNormal" style="margin-left: 21.6pt;"><span
+ style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3" rowspan="1"
+ style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top" width="150">
+      <p class="MsoNormal"><span
+ style="font-size: 11pt; font-family: Arial;">&nbsp;</span></p>
+      <p style="font-weight: bold; text-align: center;"
+ class="MsoNormal"><span style="font-size: 10pt; font-family: Arial;">&nbsp;---000---</span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="MsoNormal"><span style="font-size: 10pt; font-family: Arial;">&nbsp;</span></p>
+</div>
+</body>
+</html>

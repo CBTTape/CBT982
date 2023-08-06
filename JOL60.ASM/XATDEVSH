@@ -1,0 +1,97 @@
+//T92CVCX JOB (R777),'LONS 8TH',MSGCLASS=X,NOTIFY=T92CVC,
+// CLASS=A,USER=????????,PASSWORD=????????
+//*MAIN LINES=999
+//ASM EXEC PGM=ASMBLR,PARM='NODECK,OBJ,XREF(SHORT),LIST,TEST,TERM'
+//SYSLIB   DD  DSN=SYS1.MACLIB,DISP=SHR,DCB=BLKSIZE=19040
+//         DD  DSN=SYS1.AMODGEN,DISP=SHR
+//         DD  DSN=T41.JOLXA.MACLIB,DISP=SHR
+//SYSUT1   DD  DSN=&&SYSUT1,SPACE=(CYL,(2,2)),UNIT=SYSDA
+//SYSUT2   DD  DSN=&&SYSUT2,SPACE=(CYL,(2,2)),UNIT=SYSDA
+//SYSUT3   DD  DSN=&&SYSUT3,SPACE=(CYL,(2,2)),UNIT=SYSDA
+//SYSGO DD DSN=&&OBJ,DISP=(,PASS),SPACE=(TRK,(1,1)),UNIT=VIO
+//SYSTERM  DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+          GENSAVE CSECT=UJE
+          CALL UJEDEVNM
+D DC H'0'
+DDUNIT   DC  CL8'SYSFF'
+SCTUTYPE DC  XL4'FFFFFFFF'
+     TITLE 'UJEDEVNM:SEARCH DEVNAMET'                              DASD
+          GENSAVE CSECT=UJEDEVNM                                   DASD
+*******************************************************************DASD
+*  SEARCH THE SYSTEMS DEVICE NAME TABLE TO OBTAIN THE             *DASD
+*  THE DEVICE TYPE NEEDED FOR A CAMLST FOR A SCRATCH              *DASD
+*  OR  KEEP                                                       *DASD
+*                                                                 *DASD
+*  SEARCH ARGUMENT = DDUNIT IN INSTRUCT FILE                      *DASD
+*  DEVNAMET FORMAT                                                *DASD
+*  EACH ENTRY IS 12 BYTES                                         *DASD
+*  BYTES 1-8 = UNIT NAME  ECT '3330-1' OR 'TAPE'                  *DASD
+*  BYTES 9-12 = CODE    X'3070200D'                               *DASD
+*                                                                 *DASD
+*******************************************************************DASD
+*                                                                 *DASD
+* CHECK IF XA, IF SO USE THE XA ROUTINES INSTEAD OF DEVNAMET
+         L     R14,16        GET CVT ADDRESS POINTER
+??       L     R14,0(R14)    GET CVT ADDRESS
+         TM    116(R14),X'80' XA?
+         BNO   EDVNXA        NO -> OUT
+*
+* XA HERE ....
+*
+**********************************************************
+*                                                        *
+*                                                        *
+*         X A   SUPPORT                                  *
+*                                                        *
+*                                                        *
+**********************************************************
+         SPACE 3
+         MVC   DEVUNIT,DDUNIT   COPY INTO GOTTEN STORAGE
+         MVC   ADEVATTR,=A(0)   SET UP NO RETURN OF ATTRIBUTES
+* PREPARE TO SET UP MAIN PARAMETER ADDRESSES
+         LA    R14,DEVUNIT
+         LA    R15,DEVFLAGS
+         STM   R14,R15,DEV4UVP  STORE ADDRESSES FOR IEFAB4UV
+         LA    R1,DEV4UVP       GET ADDRESS OF PARAMETERS
+         LINK  EP=IEFEB4UV      LINK TO THE ROUTINE
+         LTR   R15,R15          IS IT A UNIT NAME?
+         BNZ   EDVDEAD          NO, RETURN AN ERROR CODE
+         MVC   SCTUTYPE,DEVTYPE MOVE IN THE DEVICE TYPE
+         GENRETN RC=0
+DEVFLAGS DC    B'0000001000000000' FLAGS FOR IEFAB4UV (FUNCTION 6)
+*
+* VS1 OR MVS AT THIS POINT
+*
+EDVNXA    LOAD EP=DEVNAMET   LOAD THE KNOW IT ALL                  DASD
+          LTR  R1,R0         GET ADDRESS OF HIM                    DASD
+          BZ   EDVDEAD       SORRY                                 DASD
+          L    R15,0(R1)     LOAD NUMBER OF ENTRIES IN TABLE       DASD
+          MH   R15,=H'12'    MULT BY TABLE ENTRRY SIZE             DASD
+          LA   R1,4(R1)      ADD 4 TO START ADDRESS OF TABLE       DASD
+          AR   R15,R1        CALC ENDD OF TABLE                    DASD
+          LA   R14,12        INCREMENT                             DASD
+          CLC  DDUNIT,0(R1)  HOPE ITS HERE                         DASD
+          BE   EDVALIVE      GO DO THE SCRATCH NOW                 DASD
+          BXLE R1,R14,*-10   ROUND ROBIN                           DASD
+EDVDEAD   GENRETN RC=4                                             DASD
+EDVALIVE  EQU  *                                                   DASD
+          MVC  SCTUTYPE,8(R1) MOVE IN THE DEVICE TYPE              DASD
+          GENRETN RC=0                                             DASD
+* THE FOLLOWING AREAS ARE USED AS PARAMETERS TO IEFAB4UV
+DEV4UVP  DS    A               MUST POINT TO UNIT PARAMETER BLOCK
+ADEVFLG  DS    A               MUST POINT TO FLAGS HALFWORD
+         SPACE 3
+DEVUNIT  DS    CL8             UNIT NAME MOVED HERE
+DEVTYPE  DS    F               SET TO DEVTYPE BY IEFEB4UV
+ADEVATTR DS    A               ADDRESS OF ATTRIB AREA (SET TO 0)
+         LTORG                                                     DASD
+           END
+//LKED    EXEC PGM=IEWL,PARM='TEST,XREF,LIST',REGION=512K
+//SYSLIB1   DD DSN=T41.JOLXA.OBJ,DISP=OLD
+//SYSLIB2   DD DSN=T41.JOLXA.LOAD,DISP=SHR
+//SYSLIB    DD DSN=T41.JOLXA.LOAD,DISP=SHR
+//SYSLMOD   DD DSN=T41.JOLXA.LOAD(XATDEVSH),DISP=SHR
+//SYSUT1    DD DSN=&&SYSUT1,UNIT=SYSDA,SPACE=(CYL,(2,2))
+//SYSPRINT  DD SYSOUT=*
+//SYSLIN    DD DSN=&&OBJ,DISP=OLD

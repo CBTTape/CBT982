@@ -1,0 +1,14 @@
+         MACRO
+&NAME    BLDL  &DCB,&LIST,&DUMMY=
+.*       BLDL                           COPYRIGHT   FUJITSU   1984
+         AIF   ('&DCB' EQ '').E1
+         AIF   ('&LIST' EQ '').E2
+&NAME    SYSINNRA &DCB,&LIST                LOAD REG 1 AND REG 0
+         LA    1,0(1)                       CLEAR HIGH ORDER BYTE
+         SVC   18                           LINK TO BLDL ROUTINE
+         MEXIT
+.E1      SYSERMAC 6                     DCB ADDR MISSING
+         AIF   ('&LIST' EQ '').E2
+         MEXIT
+.E2      SYSERMAC 34                    LIST ADDR MISSING
+         MEND

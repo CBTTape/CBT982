@@ -1,0 +1,10 @@
+         MACRO                                                    J52
+         TERMTYPE
+* Fujitsu machines only.  If run on IBM, Register 15 is set ¬0    J52
+         CNOP  0,4                                                J52
+         SR    R1,R1                                              J52
+         LA    R0,2                                               J52
+         SLL   R0,24                                              J52
+         LNR   R0,R0                                              J52
+         SVC   94                                                 J52
+         MEND

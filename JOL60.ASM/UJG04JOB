@@ -1,0 +1,142 @@
+RACF       TITLE 'UJG04JOB:PROPOGATE RACF PARAMETERS TO NEW JOB'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1982
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+          EJECT
+         MACRO
+&L       KDJJACT
+         MEND
+         SPACE
+         PRINT OFF SUPPRESS JOLCOM
+         COPY  JOLCOM
+         PRINT ON
+         EXTRN UJG01JOB    ENSURE  UJG01JOB WILL BE REQUIRED
+         JOLSAVE CSECT=UJG04JOB
+         SPACE 2
+*        FIND  OUT WHETHER THE JCL FILE IS BEING WRITTEN TO THE
+*         INTERNAL READER
+         SPACE 2
+         USING FLC,0
+         USING JOLCOM,R2
+         USING JOBDETS,R10
+         L     R10,AJOBDETS        ADDRESS JOB BITS
+         L     R3,FLCTOLD          MY TCB ADDRESS
+         L     R3,TCBJSCB-TCB(,R3) MY JSCB
+         L     R3,JSCSCT-IEZJSCB(,R3) STEP CONTROL TABLE
+         USING INSMSCT-16,R3       MY BASE REGISTER FOR THE SIOT
+         ICM   R4,7,SCTLSIOT       AT FIRST THE LAST SIOT
+         ICM   R3,7,SCTFSIOT       AT LAST THE FIRST SIOT|||
+         DROP  R3
+         SPACE
+         LA    R3,0(,R3)           CLEAR HIGH BYTE
+         LA    R4,0(,R4)           CLEAR HIGH BYTE
+         USING INDMSIOT-16,R3      MY BASE REGISTER FOR THE SIOT
+G04NSIOT DS    0H
+         CLC   =CL8'$$JCL',SCTDDNAM Q... THE JCL FILE?
+         BE    G04JCLF             A... YES
+         CR    R3,R4               Q... LAST?
+         BE    G04G01              A... YES
+         ICM   R3,7,SCTPSIOT       ADDRESS NEXT SIOT, IF ANY
+         BNZ   G04NSIOT            GO FOR THE NEXT
+         B     G04G01              NO MORE: FOR TO G01JOB
+G04JCLF  DS    0H                  FOUND SIOT FOR JCL FILE
+         CLC   =C'INTRDR  ',SCTOUTNM Q... INTERNAL READER
+         BNE   G04G01              NO MORE: FOR TO G01JOB
+         SPACE 2
+*       THE JCL IS GOING TO AN INTERNAL READER: NOW FIND THE RACF STUFF
+         SPACE 1
+         DROP  R3
+         L     R3,FLCAOLD          ADDRESS MY ASCB
+         L     R3,ASCEXTNT-ASCB(,R3) ASCB EXTENSION
+         L     R3,ASCXSENV-ASCBX(,R3) RACF STUFF, I HOPE
+         LA    R3,0(,R3)           ENSURE BYTE 0 IS 0
+         LTR   R3,R3               Q... ANYTHING THERE?
+         BZ    G04G01              A... NO, GENERATE THE JOB CARD
+         USING ACEE,R3
+         ICM   R9,7,ACEEIEP+1      ADDRESS INSTALLATION FIELD
+         BZ    G04G01              SKIP IF ABSENT
+         TM    ACEEFLG1,ACEERACF   Q... RACF DEFINED?
+         BZ    G04G01              A... NO: SKIP THE RACF BITS
+         CLI   ACEEUSRL,0          Q... USER-ID PRESENT?
+         BE    G04G01              A... NO: IGNORE RACF STUFF????
+         SPACE 2
+*        IT SEEMS THAT THERE IS SOME WORK TO DO
+         SPACE 2
+         IFNULL JOBUSER,G04NOUSR
+         IFVALUE JOBPASS1,G04NOPW1
+         CALL  UJG05PWD            GET PASSWORD
+G04NOPW1 DS    0H                  USER+PASSWORD TO GO
+         B     G04G01             IF HE CODED GROUP, USE IT:
+*                                  IF HE DID NOT, LET RACF FIND DEFAULT
+         SPACE
+G04NOUSR DS    0H                  USER NOT CODED
+         IFVALUE JOBPASS1,G04FAIL
+         BAL   R14,G04USER         GET USER-ID
+         CALL  UJG05PWD            GET CURRENT PASSWORD
+         IFVALUE JOBGRP,G04GRP
+         BAL   R14,G04GROUP
+G04GRP   DS    0H
+G04G01   DS    0H                  GO TO UJG01JOB
+         SPACE 2
+*        I AM NOT SURE WHETHER G01 REQUIRES R1, BUT TO BE SURE...
+         L     R1,4(,R13)
+         L     R1,24(,R1)          CONTENTS AT ENTRY
+         CALL  UJG01JOB
+         JOLRETN
+G04FAIL  DS    0H
+         JOLERR 404,'YOUR RACF USER-ID IS REQUIRED IF A PASSWORD IS SUPP
+               PLIED'
+         JOLRETN RC=16
+         SPACE 3
+G04USER  DS    0H
+         SLR   R15,R15             AND PUT THIS ONE IN
+         IC    R15,ACEEUSRL
+         BCTR  R15,0
+         EX    R15,*+4
+         MVC   JOBUSER(0),ACEEUSRI
+         BR    R14
+         SPACE 3
+G04GROUP DS    0H
+         SLR   R15,R15             AND PUT THIS ONE IN
+         ICM   R15,1,ACEEGRPL      Q... GROUP PRESENT?
+         BZR   R14                 A... NO: DO NOT COPY IT
+         BCTR  R15,0
+         EX    R15,*+4
+         MVC   JOBGRP(0),ACEEGRPN  THE GROUP NAME
+         BR    R14
+         SPACE 3
+*
+         DC     100S(*)
+         TITLE 'ADDRESS SPACE CONTROL BLOCK'
+         KAAASCB
+         TITLE 'FIXED LOW CORE'
+         KAAFLC
+         TITLE 'JOB CONTROL TABLE'
+         KDJAJCTB  LIST=YES,DSECT=YES
+         TITLE 'STEP CONTROL TABLE'
+         KDJASCTB  LIST=YES,DSECT=YES
+         TITLE 'STEP INPUT/OUTPUT TABLE'
+         KDJASIOT  LIST=YES,DSECT=YES
+         TITLE 'TASK CONTROL BLOCK'
+         KAATCB
+         TITLE 'JOB-STEP CONTROL BLOCK'
+         KDJJSCB
+         TITLE 'RACF STUFF'
+         KDSACEE
+         END   UJG04JOB

@@ -1,0 +1,23 @@
+          JOLDEF SYSTEM=OSIV/F4,CPUTYPE=F200,                          *
+               JOBREGN=,PRTY=,CLASS=,ELAP=,                            *
+               SYSDEFS=(,,,10,10,T),  10,10 TRACKS DEFAULT SYSOUT      *
+               DUMP=,                                                  *
+               TSOCLAS=Q,                                              *
+               OUTDEFS=(,,,5,2,T),                                     *
+               DEFTAPE=SYSDA,DEFDISK=SYSDA,                            *
+               OWNER='C C S - J O L  ****   V I C T O R I A N   R A I L*
+                W A Y S                                        ***'
+           DEFUNIT P3350=(F493,DA,SYSDA,DA,SYSSQ,DA,                   *
+               TSTORE,DA,STORAGE,DA,WORK,DA,DISK,DA,                   *
+               3350,DA,DA,DA),                                         *
+               T24003=(TAPE,MT,MT,MT,T6250,MT,3400-6,MT)
+* CLEM WOT ABOUT GETTING THINGS RIGHT
+           SWAPUNIT (2400-3,MT,2400-2,MT,2400-1,MT,                    *
+               3400-3,MT,3400-2,MT,3400-1,MT,                          *
+               3400,MT,2400,MT,TAPE,MT,                                *
+               3400-5,MT,3400-6,MT,                                    *
+               3400-4,MT,                                              *
+               3330,DA,3350,DA,3340,DA,                                *
+               MASS,F479V,                                             *
+               3330V,F479V)
+             JOLEND

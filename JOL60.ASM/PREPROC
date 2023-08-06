@@ -1,0 +1,15 @@
+PREPROC  TITLE 'JOL PREPROCESSOR PHASE'
+*        PUNCH  ' ALIAS UJP00MN'
+         EXTRN  PREPSUBS    FOR THE LINKAGE EDITOR
+         COPY   JOLCOM
+         COPY   UJP00MN
+         LTORG
+         COPY   UJP02DCL
+         LTORG
+         COPY   UJP04IF
+         LTORG
+         COPY   UJP25ED
+         LTORG
+         COPY  UJP50RD
+         LTORG
+         END

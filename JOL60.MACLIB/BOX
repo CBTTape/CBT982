@@ -1,0 +1,23 @@
+         MACRO
+         BOX
+.* THE FOLLOWING TYPE OF CODE WILL PRODUCE A BOX WITH COMMENTS IN IT
+.*       BOX 'THIS SECTION OF CODE WILL DO THE DSORG PARAMETER'
+.*
+         AIF ('&SYSLIST(2)' NE 'TITLE').NOTITLE
+         TITLE '&SYSLIST(1)'
+         AGO .BOX
+.NOTITLE AIF ('&SYSLIST(2)' NE 'EJECT').NOEJECT
+         EJECT
+         AGO .BOX
+.NOEJECT AIF ('&SYSLIST(2)' EQ '').SPC
+         MNOTE 0,'BOX MACRO DOESN''T RECOGNIZE %SYSLIST(2):-IGNORED'
+.SPC     SPACE 2
+.BOX     ANOP
+***********************************************************************
+*                                                                     *
+*                                                                     *
+      MNOTE &SYSLIST(1)
+*                                                                     *
+*                                                                     *
+***********************************************************************
+         MEND

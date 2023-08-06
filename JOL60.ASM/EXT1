@@ -1,0 +1,40 @@
+         TITLE '&TITLE SAMPLE USER EXIT FOR JOL PARAMETERS'
+&C       SETC  '&PRE'.'EXT1'
+&C       CSECT
+         STM   R14,R12,12(R13)     SAVE REGISTERS
+         XC    16(4,R13),16(R13)   INDICATE NO DATA (RC=0)
+         USING &PRE.EXT1,R15       DECLARE BASE REGISTER
+&C       SETC  (&MVS)'PSA'.(1-&MVS)'FLC'                         88036
+         USING &C,0                                              88036
+         L     R02,0(0,R01)        LOAD  REPLY ADDRESS
+         MVI   2(R02),C' '
+         MVC   3(255,R02),2(R02)   SET THE AREA TO BLANKS
+*        L     R03,CVTPTR
+*        L     R03,0(0,R03)        TCB WORDS
+         L     R03,PSATOLD         MY TCB ADDRESS
+         USING TCB,R03
+         L     R04,TCBJSCB          JSCB ADDRESS
+         USING IEZJSCB,R04
+         ICM   R05,7,JSCACCTA                                    88036
+         BZ    EXT90           NO DATA THERE                     88036
+         SPACE 4                                                 88036
+*  THESE FOLLOWING INSTRUCTIONS ARE UNTESTED ON X8               88036
+         SPACE 4                                                 88036
+*        L     R05,JSCBJCT         JCT: LOAD JSCBSCT FOR SCT
+         ICM   R06,7,X'038'(R05)   ACT FOR THE JOB
+         CLC   =H'0',X'02E'(R06)   ANY ACCOUNTING DATA?
+         BE    EXT90               A... NO
+         CLI   X'030'(R06),8       Q... FIRST FIELD 8 CHARS?
+         BNE   EXT90               A... NO
+         MVC   2(22,R02),=C'SYSACCT=1111 ROOM=2222' SET UP BASIC DATA
+         MVC   10(4,R02),X'031'(R06) COPY ACCOUNTING FIELDS
+         MVC   20(4,R02),X'035'(R06)
+         LA    R00,22              SET LENGTH
+         STH   R00,0(0,R02)
+         LA    R15,4               INDICATE DATA RETURNED
+         ST    R15,16(0,R13)
+         MVI   19(R13),4          RC=4: PROCEED WITH CALL, SYMS PASSED
+EXT90    LM    R14,R12,12(R13)     RESTORE REGISTERS
+         BR    R14                 EXIT
+         SPACE 2
+         LTORG

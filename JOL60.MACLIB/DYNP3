@@ -1,0 +1,35 @@
+         MACRO
+         DYNP3 &P,&OPT,&KEY,&NUMOK=
+.*  CODES OPTION TYPE PARAMS (AND OPTION/NUMBER)
+         GBLA  &K,&T,&S
+         GBLC  &R,&B,&ADR
+         GBLB  &NUM
+         AIF   ('&P'EQ'').E        NOT SPECIFIED
+         LCLC  &C,&D
+&ADR     SETC  '&P'
+         DYNPA
+         AIF   (NOT &NUM).A
+         AIF   ('&NUMOK'EQ'OK').E
+&C       SETC  '&KEY'(2,K'&KEY-2)
+         MNOTE 8,'** &P NOT VALID FOR &OPT(1)&C'
+         AGO   .E
+.A       AIF   ('&P'EQ'&OPT(2)').E    IGNORE IF OTHER OPT
+&T       SETA  &T+1
+         AIF   ('&P'EQ'&OPT(1)').D            IS OPTION CODE
+&D       SETC  '&OPT(1)'(1,1)             1ST LETTER OF OPTION CODE
+&C       SETC  ' IS CODE CHAR FOR '
+D&R&S    LA    1,TU&R&T         POINTER TO TU
+         CLI   &ADR,C'&D'&B&D&C&OPT(1)
+         BE    *+6
+         SR    1,1                     ZERO POINTER
+         LCLA  &I
+&I       SETA  4*(&T-1)
+         ST    1,TUPL&R+&I             STORE POINTER
+&S       SETA  &S+1
+         B     D&R&S
+.D       ANOP
+&C       SETC  '&KEY'(2,K'&KEY-2)
+TU&R&T   DC    AL2(&K,0)&B&OPT(1)&C
+.E       ANOP
+&K       SETA  &K+1
+         MEND

@@ -1,0 +1,333 @@
+         PRINT OFF
+         COPY  JOLCOM
+         PRINT ON,DATA
+         TITLE 'INITIALISE BINARY SEARCH TABLE FOR PREPROCESSOR'
+         JOLSAVE CSECT=CIDINIT
+         LH    R0,MAXIDS      MAXIMUM NUMBER OF IDENTS ALLOWED    87150
+         MH    R0,=Y(15*2)    15 LEVELS * TWO BYTES FOR POINTERS  87150
+         A     R0,=A(TABSIZE) ADD THE CONTROL SECTION OF THE TABLE87150
+         ST    R0,LIDCNTL     SAVE LENGTH FOR FREE-MAIN LATER     75128
+         GETMAIN R,LV=(0)                                         75128
+         ST    R1,AIDCNTL     SAVE POSITION FOR FREE-MAIN LATER   75128
+* NOW INITIALISE THE TABLES
+         USING TABLCNTL,R1
+         XC    TABLCNTL(TABSIZE),TABLCNTL                         87150
+         MVC   NOIDS,=H'1'
+         MVC   #POWER2,=H'1'
+         MVC   #ITEMS,=H'1'
+         L     R15,AIDTBL                                         87150
+         USING IDTABLE,R15
+         MVC   IDNAME,=XL8'FFFFFFFFFFFFFFFF'
+         MVC   IDADDR,=A(0)
+         DROP  R15
+         LA    R15,12          SIZE OF IDENTIFIER NAME AND ADDRESS
+         MH    R15,MAXIDS
+         A     R15,AIDTBL
+         MVC   0(2,R15),ZERO   INIT TO A NULL VALUE
+         LA    R15,2(R15)
+         ST    R15,ANEXTID
+         LH    R15,MAXIDS
+         AR    R15,R15
+         LA    R15,BINOFFS-2(R15) GET ADDRESS OF LAST ENTRY IN
+*                             OFFSET TABLE FOR LEVEL 0
+         MVC   0(2,R15),=H'0'
+* NOW SET THE CURRENT OFFSET ADDRESS
+         ST    R15,ACUROFFS
+* 1ST IDENTIFIER NAME NOW HAS HEX FF'S
+         LA    R6,15          MAX LEVELS
+         LH    R0,MAXIDS
+         AR    R0,R0          DOUBLE IT
+         LA    R15,BINOFFS
+         LA    R14,ABINOFFS   GET ADDRESS OF LEVEL(0) CONTROL TABLE
+M00IDIN ST     R15,0(R14)
+         AR    R15,R0
+         LA    R14,4(R14)     POINT TO NEXT HOLE
+         BCT   R6,M00IDIN     NO, CONTINUE
+         JOLRETN
+         JOLSAVE CSECT=CIDFREE
+         L     R1,AIDCNTL     FREE IDENTIFIER BINARY SEARCH TABLE 87150
+         L     R0,LIDCNTL                                         87150
+         FREEMAIN R,LV=(0),A=(1)                                  87150
+         JOLRETN
+         DROP
+         TITLE 'INSERT IDENTIFIER VARIABLE IN BINARY SEARCH TABLE'
+         USING JOLCOM,R2
+UJC02INS JOLSAVE BASE=12
+         L     R1,0(R1)        INSERT POINT
+         LH    R8,0(R1)        INSERT POINT
+*        ST    R8,CALLAREA
+*        JOLERR 101,'P02 INSERTING ',IDENTIFIER,' AT ',CALLAREA
+         L     R3,AIDCNTL
+         USING TABLCNTL,R3     TELL IEUASM
+         LH    R1,#ITEMS       CURRENT NUMBER OF SYMBOLS
+         LA    R1,1(R1)        INCREMENT
+         STH   R1,#ITEMS       RESET IN TABLE
+         LH    R1,NOIDS        CURRENT NUMBER OF SYMBOLS
+         LR    R6,R1
+         LH    R0,#POWER2      NEAREST POWER OF 2
+         CLR   R0,R1
+         BH    NODOUBL
+         ALR   R0,R0           NEED NEXT POWER OF TWO
+         STH   R0,#POWER2
+NODOUBL  DS    0H
+         L     R10,ACUROFFS    ADDRESS OFFSET TABLE
+         LH    R9,NOIDS        NUMBER OF ITEMS
+         SH    R8,=H'1'
+         BP    MUSTMUV         NOT GOING IN AT STACK TOP
+         SH    R10,=H'2'       TWO OFF STACK-TOP
+         ST    R10,ACUROFFS    STORE NEW ADDRESS
+*        JOLERR 102,'P02 ON STACK TOP '
+         LR    R15,R10
+         B     STOROFF         STORE OFFSET AND LEAVE
+MUSTMUV  LA    R9,0(R8,R8)
+         LR    R11,R9          COPIED FOR MVCL
+         LR    R8,R10
+         SH    R8,=H'2'
+         ST    R8,ACUROFFS     NEW ADDRESS
+         LA    R15,0(R8,R9)    TOP+LENGTH IS THE PLACE
+         MVCL  R8,R10          MOVEITALONG
+STOROFF  LH    R14,NOIDS       MOVE OFFSET INTO TABLE
+         BCTR  R14,0
+         MH    R14,=H'20'
+         STH   R14,0(,R15)     ADDRESS OF NEW ENTRY
+         JOLRETN
+         LTORG
+         DC    30S(*)
+         DROP
+         TITLE 'SEARCH BINARY TABLE FOR IDENTIFIER SYMBOL'
+         USING JOLCOM,R2
+UJCFID   CSECT
+         STM   R3,R10,12(R13)
+         LR    R9,R15
+         LR    R10,R1          GET ADDRESS OF VARAIBLE WE ARE FINDING
+         USING UJCFID,R9
+         USING JOLCOM,R2       THIS POINTS AT JOL COMMON
+         L     R3,AIDCNTL      ADDRESS MAIN ATBLE
+         USING TABLCNTL,R3     TELL IEUASM
+         LH    R6,#ITEMS       LOAD NUMBER OF SYMBOLS
+         L     R4,ACUROFFS     OFFSET TABLE
+         L     R5,AIDTBL       UNORDERED SYMBOL TABLE
+*
+         LH    R1,#POWER2      LOAD POWER-OF-TWO NUMBER INFO
+         SRL   R1,1            MID-POINT
+         LTR   R0,R1           COPY, TEST FOR ZERO
+         BZ    ISFIRST         FIRST TIME, GO INITIALISE
+LOOP     SRL   R0,1            DIVIDE AGAIN
+         CLR   R1,R6           TOO HIGH?
+         BH    TOOHIGH         YEAH
+         LR    R3,R1
+         BCTR  R3,0            SUBTRACT ONE
+         ALR   R3,R3           TIME TWO
+         LH    R15,0(R4,R3)    LOAD OFFSET OF ENTRY
+         ALR   R15,R5          GET ADDRESS OF ACTUAL SYMBOL
+         CLC   0(8,R15),0(R10) Q... IS THIS THE ONE I WANT?
+         BE    FOUND           A... YES, IT IS.
+         BH    TOOHIGH
+TOOLOW   ALR   R1,R0           LOOK UP
+         B     TESTEND
+TOOHIGH  SR    R1,R0
+TESTEND  LTR   R0,R0
+         BNZ   LOOP
+NOTFOUND CLC   0(8,R15),0(R10)
+         BH    SUBONE
+ISFIRST  LA    R1,1(,R1)       THE PLACE TO INSERT
+         B     RETRN
+SUBONE   DS    0H
+*        BCTR  R1,0
+RETRN    LA    R15,4
+         B     DONE
+FOUND    LR    R0,R15          SAVE THE ADDRESS POINTER TO IDNAME
+*                              FOR THE CALLER
+         SLR   R15,R15
+DONE     DS    0H
+         LM    R3,R10,12(R13)
+         BR    R14
+         LTORG
+         DC    30S(*)
+         DROP
+         TITLE 'COPY OFFSET TABLE UP A LEVEL FOR NEW MACRO'
+*UJC19CTB COPIES THE OFFSET TABLE SO THAT IT CAN BE RESTORED WHEN
+* A MACRO 'END' STATEMENT IS F OUND.
+*        AND VALUE OR TO PRINT ONLY SELECTED ONES.
+         USING JOLCOM,R2
+         JOLSAVE CSECT=UJC19CTB
+         L     R10,AIDCNTL             R10 POINTS TO ORDERED TABLE
+         USING TABLCNTL,R10
+         L     R3,ACUROFFS
+         LH    R4,#ITEMS
+         LH    R5,#POWER2
+         LH    R6,NOIDS
+         LH    R1,LEVEL        LEVEL HAS BEEN INCREMENTED IN 'P53MAC'
+         SLL   R1,1            MULT BY TWO
+         STH   R4,#LEVITEM(R1) SAVE CURRENT NO. OF ITEMS
+         STH   R5,#LEVPOW2(R1) SAVE #POWER2
+         STH   R6,OLDNOSYM(R1) SAVE OLD NO OF SYMS
+         SLL   R1,1            MULT BY TWO
+         ST    R3,ALEVOFFS(R1) SAVE CURRENT OFFSET ADDRESS
+         AH    R3,MAXIDS
+         AH    R3,MAXIDS
+         ST    R3,ACUROFFS
+         L     R8,ABINOFFS(R1) GET THE ADDRESS OF WHERE WE WANT TO
+*                              COPY THE TABLE
+         L     R6,ABINOFFS-4(R1) GET THE FROM ADDRESS OF THE TABLE.
+         LH    R7,MAXIDS
+         SLL   R7,1            MULT BY TWO
+         LR    R9,R7
+         MVCL  R8,R6           SHIFT THE TABLE
+         JOLRETN
+         LTORG
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DROP
+         TITLE 'RESTORE OFFSET TABLE WHEN MACRO END FOUND'
+         USING JOLCOM,R2
+         JOLSAVE CSECT=UJC19RSM
+*UJC19RSM RESTORES THE OFFSET TABLE AFTER A MACRO END IS FOUND.
+* IT THEN INSERTS ANY GLOBAL ITEMS THAT MAY HAVE BEEN DECLARED
+* IN A MACRO.
+*NOTE THAT 'LEVEL' HAS BEEN DECREMENTED WHEN THIS ROUTINE GETS
+* CONTROL, AND THAT ALL THE ITEMS WITH LEVEL GREATER THAN THE
+* CURRENT LEVEL HAVE BEEN DELETED FROM THE UNORDERED IDENTIFIER TABLE
+*THIS ROUTINE MUST THEN INSERT ANY EXTRA ITEMS IN THE ORDERED
+* OFFSET TABLE .
+         L     R10,AIDCNTL             R10 POINTS TO ORDERED TABLE
+         USING TABLCNTL,R10
+         LH    R1,LEVEL        LEVEL HAS BEEN DECREMENTED IN 'P00MN'
+         SLL   R1,1            MULT BY TWO
+         LH    R4,#LEVITEM+2(R1) GET PREVIOUS CURRENT NO. OF ITEMS
+         STH   R4,#ITEMS
+         LH    R5,#LEVPOW2+2(R1) GET PREVIOUS #POWER2
+         STH   R5,#POWER2
+* NOTE *** R7 IS USED BELOW TO  CALCULATE HOW MANY WERE INSERTED
+         LH    R7,OLDNOSYM+2(R1) GET PREVIOUS 'NOIDS'
+* NOTE *** R7 IS USED BELOW
+         SLL   R1,1            MULT BY TWO
+         L     R3,ALEVOFFS+4(R1) SAVE CURRENT OFFSET ADDRESS
+         ST    R3,ACUROFFS
+*NOW WE MUST INSERT ANY GLOBAL ITEMS THAT WERE DECLARED IN THE
+* MACRO INTO THE TABLE.
+*WE KNOW THAT THE 'NOIDS' HAS THE CURRENT NUMBER OF IDENTIFIERS,
+* AND THAT 'OLDNOSYM' CONTAINS THE NUMBER OF IDENTIFIERS BEFORE THE
+* MACRO WAS CALLED.
+*BY A SIMPLE SUBTRACT, WE KNOW HOW MANY WE HAVE TO INSERT IN THE
+* ORDERED TABLE.
+         LH    R6,NOIDS
+         SR    R6,R7
+         BNP   P19RET          NONE TO INSERT, SO LEAVE
+* R6 CONTAINS THE NUMBER TO INSERT
+*NOTE THAT THE INSERT ROUTINE  USES 'NOIDS' AS THE SYMBOL TO INSERT
+* SO WE MUST CONSTANTLY RESET  IT BEFORE CALLING 'P02INS'.
+         LH    R1,#ITEMS
+*        ST    R1,CALLAREA
+*        JOLERR 102,'BEFORE STARTING, #ITEMS=',CALLAREA
+*        JOLERR 103,'BEFORE STARTING, NOIDS=',NOIDS
+         LH    R8,NOIDS        SAVE IT TILL WE END THE INSERTS
+P19L2    STH   R7,NOIDS
+         LR    R9,R7           GET READY TO CALCULATE STARTING POINT
+         MH    R9,=Y(20)       POINT TO OFFSET
+         A     R9,AIDTBL               R5 POINTS TO IDENTIFIER TABLE
+         USING IDTABLE,R9
+*        JOLERR 104,'FINDING : NOIDS=',NOIDS,' SYM=',IDNAME
+*        MVC   IDENTIFIER,IDNAME ******************* TESTS ONLY
+         FINDID  IDNAME        SEE IF WE CAN FIND IT.
+         LTR   R15,R15         DID WE?
+         BZ    P19ERRX         ERROR
+         STH   R1,CALLAREA+12
+         LH    R1,NOIDS
+         LA    R1,1(R1)
+         STH   R1,NOIDS
+         $CALL UJC02INS,(CALLAREA+12) INSERT IT.
+P19INCR  LA    R7,1(R7)        POINT TO NEXT ITEM TO BE INSERTED
+         CR    R7,R8           DONE THEM ALL?
+         BL    P19L2           CONTINUE
+P19RET2  STH   R8,NOIDS        RESTORE NOIDS
+         DROP  R10
+P19RET   JOLRETN
+P19ERRX  JOLERR 410,'IDENTIFIER ''',IDNAME,''' IS ALREADY         IN TH*
+               E ORDERED IDENTIFIER TABLE'
+         B     P19INCR
+         LTORG
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DROP
+         TITLE 'LIST IDENTIFIER VARIABLES IN ORDER'
+*UJC31LST LISTS IDENTIFIER VARIABLES AND THEIR LEVEL,LENGTH & VALUE
+* MODIFIED TO EITHER PRINT ALL IDENTIFIER VARIABLES AND THEIR LEVEL,
+* LENGTH AND VALUE OR TO PRINT ONLY SELECTED ONES.
+         USING JOLCOM,R2
+         JOLSAVE CSECT=UJC31LST
+         USING TKNX,R3
+         CLEAR WORK
+         CLC   TKNNO,=H'1'             LISTID ALONE ?
+         BE    TKNSCAN                 YES GO AHEAD
+         MVC   TKNCURR,=H'2'           PREPARE TO GET FIRST VARIABLE.
+NEXTTKN  GETTKN TKNCURR                GET FIRST SYMBOL NAME
+         STH   R1,TKNCURR
+         CLI   TKN,C','
+         BE    NEXTTKN
+         FINDID TKN                    FIND IDENTIFIER
+         LTR   R15,R15
+         BNZ   NOTFND
+         LR    R4,R0
+         BAL   R9,OPSYM
+         B     TEND
+NOTFND   DS    0H
+         JOLERR 101,'SYMBOL ''',#TKN,''' NOT IN SYMBOL TABLE'
+TEND     CLC   TKNCURR,TKNNO           ALL DONE ?
+         BH    P31DONE
+         B     NEXTTKN
+TKNSCAN  DS    0H              PRINT ENTIRE IDENTIFIER TABLE
+         L     R5,AIDTBL               R5 POINTS TO IDENTIFIER TABLE
+         USING IDTABLE,R5
+         L     R10,AIDCNTL             R10 POINTS TO ORDERED TABLE
+         USING TABLCNTL,R10
+         LH    R6,#ITEMS
+         BCTR  R6,0            LAST ENTRY IS THE X'FF', IGNORE IT
+         L     R10,ACUROFFS
+         DROP  R10
+NEXTENT  LH    R5,0(R10)       LOAD OFFSET TO IDNAME
+         A     R5,AIDTBL       POINT TO APPROPRIATE ENTRY
+         BAL   R9,OPSYM
+         LA    R10,2(R10)      LOOK AT NEXT ENTRY
+         BCT   R6,NEXTENT      LOOPS TILL ALL DONE
+         JOLRETN
+OPSYM    LA    R8,WORK                 ADDRESS OF PRINT BUFFER
+         MVC   5(8,R8),IDNAME          MOVE IN IDENTIFIER NAME
+         MVC   14(1,R8),IDLEVEL       MOVE IN LEVEL OF IDENTIFIER
+         OI    14(R8),C'0'             SET SIGN TO X'F' FOR PRINTING
+         L     R15,IDADDR
+         MVC   DBL(2),0(R15)           MOVE LENGTH OF IDENTIFIER
+         LH    R1,DBL                  PUT IT IN R1
+         CVD   R1,DBL                  CONVERT IT TO DECIMAL
+         UNPK  17(3,R8),DBL            UNPACK 3 BYTES
+         OI    19(R8),C'0'             SET SIGN TO X'F' FOR PRINTING
+         S     R1,=F'1'
+         BM    NOVALUE                 -> IF A NULL VALUE
+         CH    R1,=H'120'              MAX LENGTC FOR PRINTING
+         BL    *+8                     -> IF LESS THEN MAX LENGTH
+         LA    R1,120                  SET IT TO 120
+         EX    R1,MVC                  MOVE VALUE INTO PRINT LINE
+NOVALUE  LA    R1,22(R1)               LENGTH OF OUTPUT LINE
+         LR    R0,R1           LENGTH
+         LA    R1,WORK
+         SVC   93
+         BR    R9                      RETURN FOR NEXT IDNAME
+P31DONE  JOLRETN
+MVC      MVC   21(*-*,R8),2(R15)       SUBJECT OF EXECUTE
+         LTORG
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         END

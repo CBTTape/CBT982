@@ -1,0 +1,48 @@
+         MACRO                                                          STOR0010
+&NAME    JOLSTOR &ERR,&REC,&SEND,&MAXVAL                                STOR0020
+.* THIS MACRO REPLACES THE OLD UJCSTOR MACRO. 4 NOV 1974.               STOR0030
+.* THE REASONS ARE :-                                                   STOR0040
+.*   1. SAVE ABOUT 3-4K                                                 STOR0050
+.*   2. TEST IF AN ITEM IS NUMERIC,AND STORE NUMERIC IF RECEIVING       STOR0060
+.*         FIELD IS NUMERIC,AS WELL AS TESTING FOR MAX VALUES.          STOR0070
+.*   3. STARTING TO THINK OF TSO,AND IF WE CAN CATCH THE ERRORS         STOR0080
+.*         EARLIER,WE CAN CORRECT THEM AS SOON AS THEY OCCUR.           STOR0090
+           LCLA &LSEND,&LERRMSS,&NUMVAL,&LREC                           STOR0100
+           LCLC &TYPE                                                   STOR0110
+.* NOW THE PARAMETERS TO BE GENERATED ARE AS FOLLOWS:-                  STOR0120
+.*             S(RECEIVE AREA),S(SEND AREA)                             STOR0130
+.*             AL1(L'ERROR TEXT,L'RECEIVE,L'SEND)                       STOR0140
+.*             C'T'RECEIVE'                                             STOR0150
+.*             H'MAX NUMERIC VALUE,OR X'FFFF' OR 0'                     STOR0160
+.*             C'ERROR MESSAGE TEXT'                                    STOR0170
+.* NOTE:IF THE INPUT IS A VARYING STRING,L'SEND WILL BE 0               STOR0180
+&NAME      L   15,=V(UJS10STR) LOAD STORE ROUTINE ADDRESS               STOR0190
+         BALR  14,15    BRANCH AND LINK (IT WILL CALC RETURN ADDR)      STOR0200
+&LSEND   SETA  0                                                        STOR0210
+         AIF   ('&SEND'(1,1) EQ '#').VAR                                STOR0220
+&LSEND   SETA  L'&SEND                                                  STOR0230
+.VAR     ANOP                                                           STOR0240
+&NUMVAL  SETA  0                                                        STOR0250
+         AIF   ('&MAXVAL' EQ '').NONUM                                  STOR0260
+         AIF   ('&MAXVAL' EQ 'NUM' OR '&MAXVAL' EQ 'NUMERIC').MAX       STOR0270
+&NUMVAL  SETA  &MAXVAL          USE NUMBER PROVIDED BY MACRO USER       STOR0280
+         AGO   .GETTYPE                                                 STOR0290
+.MAX     ANOP                                                           STOR0300
+&NUMVAL  SETA  32767                                                    STOR0310
+.GETTYPE ANOP                                                           STOR0320
+.NONUM   ANOP                                                           STOR0330
+&TYPE    SETC  T'&REC                                                   STOR0340
+         AIF   ('&TYPE' EQ 'H' OR '&TYPE' EQ 'F' OR '&TYPE' EQ 'G'     *STOR0350
+               OR '&TYPE' EQ 'B' OR '&TYPE' EQ 'C').TYPEOK              STOR0360
+         AIF   ('&TYPE' EQ 'R').TYPEOK                            75128 STOR0370
+         MNOTE 16,'TYPE RECEIVE AREA &TYPE UNKNOWN FOR &REC'            STOR0380
+.TYPEOK  AIF   ('&TYPE' EQ 'C').NUMOK                                   STOR0390
+         AIF   (L'&REC LT 3).NUMOK                                      STOR0400
+         MNOTE 0,'LENGTH RECEIVE GREATER THAN 2'                  SOCO  STOR0410
+.NUMOK   ANOP                                                           STOR0420
+.* GENERATE THE PARAMETERS NOW.                                         STOR0430
+&LREC    SETA  L'&REC                                                   STOR0440
+&LERRMSS SETA  K'&ERR-2                                                 STOR0450
+         DC    S(&REC,&SEND),AL1(&LERRMSS,&LREC,&LSEND),C'&TYPE',H'&NUM*STOR0460
+               VAL',C&ERR                                               STOR0470
+         MEND                                                           STOR0480

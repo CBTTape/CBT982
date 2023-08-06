@@ -1,0 +1,326 @@
+UJP26GOO TITLE 'ENQUE/DEQUEUE ON NAMES SPECIFIED BY USER'
+***  ENQUE/DEQUE OR ENQ/DEQ JOL INSTRUCTION FOR ENQUING     ***********
+*          ON DATA SETS OR ANY RESOURCE                               *
+*                                                                     *
+*    MODIFIED FROM US26ENQ BY MIKE STRAHAN, SHELL OIL, MELBOURNE.     *
+*                                                                     *
+*                                                                     *
+*    FUNCTION:                                                        *
+*                                                                     *
+*         TO ISSUE AN ENQUE OR DEQUE ON MAJOR AND MINOR NAMES AS      *
+*         SPECIFIED BY THE USER.
+*                                                                     *
+*         THIS IS A COMPILER INSTRUCTION, NOT EXECUTION.              *
+*                                                                     *
+*         ALTHOUGH REALLY DESIGNED FOR SAVESYMS, IT IS APPLICABLE     *
+*         TO MANY MANY FUNCTIONS.                                     *
+*                                                                     *
+*    LINKAGE:                                                         *
+*                                                                     *
+*         INVOKED BY ENQUE MAJOR-NAME,MINOR-NAME {OPTIONS}            *
+*                                                                     *
+*           WHERE OPTIONS ARE:-                                       *
+*                                                                     *
+*              SYSTEM ¦ STEP                                          *
+*              -------                                                *
+*              TEST ¦ USE ¦ HAVE ¦ CHNG                               *
+*              WAIT ¦ NOTIFY
+*              ----                                                   *
+*                                                                     *
+*         ON ENTRY, REGISTERS CONTAIN STANDARD JOL REGISTER VALUES.   *
+*                                                                     *
+*         ON RETURN, %LASTCC IS SET TO :-                             *
+*         REGISTER 15 CONTAINS A RETURN CODE :                        *
+*         FOR ENTRY POINT US26ENQ                                     *
+*                                                                     *
+*         RC = 0   CONTROL OF RESOURCE HAS BEEN ASSIGNED.             *
+*                                                                     *
+*         RC = 4   APPLICABLE ONLY FOR BACKGROUND TASKS.              *
+*                  CONTROL OF THE RESOURCE HAS BEEN ASSIGNED,         *
+*                  BUT THE TASK WAITED FOR THE RESOURCE TO            *
+*                  BECOME AVAILABLE.                                  *
+*                  THE OPERATOR WAS INFORMED THAT THE TASK WAITED     *
+*                  AND THAT PROCESSING SUBSEQUENTLY CONTINUED.        *
+*                                                                     *
+*         RC = 8   A PREVIOUS REQUEST FOR THE RESOURCE HAS BEEN       *
+*                  MADE. THIS REQUEST IS IGNORED.                     *
+*                                                                     *
+*         RC = 12  APPLICABLE ONLY TO FOREGROUND TASKS.               *
+*                  CONTROL OF THE RESOURCE WAS NOT ASSIGNED           *
+*                  BECAUSE THE TASK WOULD HAVE WAITED FOR CONTROL     *
+*                  OF THE RESOURCE.                                   *
+*                  THE FOREGROUND USER WAS INFORMED THAT THE          *
+*                  RESOURCE WAS NOT IMMEDIATELY AVAILABLE.            *
+* NOTE:            IT IS UP TO THE MODULE INVOKING US26ENQ TO         *
+* *****            DECIDE WHAT ACTION IS TO BE TAKEN.                 *
+*                                                                     *
+*                                                                     *
+*         FOR ENTRY POINT US26DEQ                                     *
+*                                                                     *
+*         RC = 0   CONTROL OF THE RESOURCE HAS BEEN RELEASED.         *
+*                                                                     *
+*         RC = 4   APPLICABLE ONLY TO BACKGROUND TASKS.               *
+*                  CONTROL OF THE RESOURCE IS NOT RELEASED AS THE     *
+*                  TASK IS CURRENTLY WAITING FOR CONTROL OF THE       *
+*                  RESOURCE.                                          *
+*                                                                     *
+*         RC = 8   TASK HAS NO REQUESTS FOR CONTROL OF THE RESOURCE.  *
+*                                                                     *
+*                                                                     *
+*    MODULE ATTRIBUTES:                                               *
+*                                                                     *
+*         RE-ENTERABLE.                                               *
+*                                                                     *
+***********************************************************************
+         GBLC  &JOLOS
+         $UJEPARM
+         PRINT OFF
+         COPY  JOLCOM
+         PRINT ON
+         SPACE
+P26WORK  DSECT
+SAVE     DS    18F                 SAVE AREA
+LTIMESUP EQU   X'20'               LENGTH OF STIMER EXIT ROUTINE
+*                                  SHOULD = EXITLNTH
+TIMESUP  DS    0F                  STIMER EXIT ROUTINE
+         ORG   *+LTIMESUP
+WAITBIT  DS    X'0'                NOT 0 IF WE ARE TO WAIT
+TSOIND   DS    X'0'                NOT 0 IF WE ARE UNDER TSO
+EXENQ    ENQ   (,,E,0,SYSTEM),RET=HAVE,MF=L
+WTOID    DS    F                   USED TO ISSUE A 'DOM'
+MSGAREA  DS    0F                  TPUT/WTO MESSAGE SPACE
+         DS    F                   FOR SVC 35 RECORD LENGTH ETC
+MSJOBNAM DS    CL8                 JOBNAME (FROM TIOT = TIOTNJOB)
+MSWAITFR DC    C'WAITING FOR:-'
+QNAME    DS    CL8                 MAJOR NAME COPIED HERE
+MINORNM  DS    CL60                MINOR NAME COPIED HERE
+         DS    2F                  FOR SVC 35 DESCRIPTION/RTE CDES
+OPNFRMD  DS    CL1                 FLAG SHOWING THAT STIMER EXIT
+*                                  WAS ENTERED
+LNTHWRK  EQU   *-P26WORK           LENGTH OF WORK AREA
+*R7       EQU   7                   PARAMETER ADDRESS -> DDNAME
+*R8       EQU   8                   STORES RETURN CODE DURING EXECUTION
+*R9       EQU   9                   IF 0 THEN THIS IS NOT A TSO TASK
+*                                   IF 1 THEN THIS IS A TSO TASK
+*R10      EQU   10                  POINTS TO WORK AREA
+*R11      EQU   11                  BASE REGISTER FOR BULK OF PROGRAM
+*   EQUATES FOR FIELDS IN SYSTEM CONTROL BLOCKS
+         SPACE 1
+TCBTSFLG EQU   148                 OFFSET OF FLAGS INTO TCB
+TIOCNJOB EQU   0                   OFFSET OF JOBNAME INTO TIOT
+TIOEDDNM EQU   28                  OFFSET OF DDNAME IN TIOT(1ST ENTRY)
+UCBNAME  EQU   13                  OFFSET FOR UCBNAME WITHIN UCB
+         SPACE 3
+         JOLSAVE CSECT=UJP26ENQ,SIZE=LNTHWRK
+         USING P26WORK,R13
+         LR    R10,R13             SET TO POINT TO WORK AREA
+         DROP  R13
+         USING P26WORK,R10
+         SR    R8,R8               CLEAR RETURN CODES
+         $CALL UJP26REL
+         LTR   R15,R15
+         BZ    P26STRT
+         JOLRETN RC=16
+*    DO THE ENQUEUE ON REQUIRED RESOURCES
+         SPACE 1
+P26STRT  MVC   EXENQ(ENQLNTH),ENQ  SET UP LIST
+         ENQ   (QNAME,WORK-1,,0),MF=(E,EXENQ)  TRY RET = USE
+         LTR   R15,R15             ENQ'D OK?
+         BNZ   P26ENBAD            NO, FIND OUT THE ERROR
+ENQRET   JOLRETN                   ,RETURN A 0
+P26ENBAD IC    R8,3(R15)           PICK UP ENQ RETURN CODE
+         CH    R8,=H'8'            WHAT HAPPENED?
+         BE    ENQRET              ALREADY HAD IT
+         BL    ENQRET4             ENQ RETURNED A FOUR.
+* HERE WE HAVE AN ERROR
+         MVC   #WORK(4),=X'0002F1F6' SET UP RC=16
+         $CALL UJP85ASN
+         JOLRETN RC=(8)
+         SPACE 1
+*   MUST BE RETURN CODE = 4
+*   WE WOULD HAVE HAD TO WAIT FOR OUR ENQUEUE TO BE PROCESSED
+         SPACE 1
+ENQRET4  CLI   WAITBIT,X'0'        DO WE WANT TO WAIT?
+         BNE   P26WAIT
+         MVC   #WORK(4),=X'0001F4' SET UP RC=4
+         $CALL UJP85ASN
+RETURN   JOLRETN RC=(8)
+         SPACE  3
+P26WAIT  CLI   TSOIND,X'0'         ARE WE RUNNING UNDER TSO?
+         BE    P26BATCH            NO, SO DO BATCH THINGS
+         JOLERR 103,'WAITING FOR ''',QNAME,'/',#WORK,''''
+*        B     P26HAVE
+         SPACE 1
+*   FOR BACKGROUND TASKS WE WILL ENQUEUE WITH RET=HAVE BUT WITH THE
+*   INTERVAL TIMER RUNNING. IF WE WAIT FOR MORE THAN 2 MINUTES THE
+*   OPERATOR WILL BE INFORMED THAT WE ARE WAITING. WHEN WE KICK OFF
+*   THE OPERATOR WILL BE INFORMED THAT WE HAVE RESUMED PROCESSING.
+         SPACE 1
+P26BATCH MVC   TIMESUP(EXITLNTH),TIMERXIT  SET UP TIMER EXIT CODE IN
+*                                          WORKING STORAGE
+         MVI   OPNFRMD,X'80'       CLEAR WTO1 ISSUED FLAG
+         WTO   MF=(E,MSGAREA)      TELL THE OPERATOR WE ARE WAITING
+         ST    R1,WTOID            STORE MESSAGE ID FOR DOM
+         B     NOTIMER             DON'T WANT A TIMER (TEST)
+         STIMER REAL,TIMESUP,BINTVL=TWOMINS  START ELAPSED TIMER TO
+*              RUN FOR 2 MINUTES SO THAT WE CAN SEE HOW LONG WE HAVE
+*              BEEN WAITING FOR OUR ENQUEUE TO BE PROCESSED.
+NOTIMER  ENQ   ,RET=HAVE,MF=(E,EXENQ)  TRY ENQ WITH RET=HAVE
+         LR    R6,R15              SAVE ENQ RETURN CODE, IF ANY
+         TTIMER CANCEL             REMOVE STIMER IF STILL ACTIVE
+         TM    OPNFRMD,X'80'       WAS WTO1 ISSUED?
+         BZ    NOTMADE             NO SET RETURN CDE AND RETURN TO USER
+         SPACE 1
+*   TELL OPERATOR THAT WE ARE RUNNING AGAIN
+         AIF   ('&JOLOS' EQ 'X8').X8010
+         L     R1,WTOID
+         DOM   MSG=(1)               DELETE OPERATOR MESSAGE
+.X8010   SPACE 1
+         MVC   CALLAREA(8),MSJOBNAM  SAVE JOBNAME TEMPORARILY
+         MVC   MSGAREA(LNTHWTO2),WTO2
+         MVC   MSJOBNAM,CALLAREA
+         WTO   MF=(E,MSGAREA)
+         SPACE 1
+*   ALL MESSAGES HAVE BEEN OUTPUT TO THE OPERATOR
+*   INVESTIGATE RETURN CODE FROM ENQ
+         SPACE 1
+NOTMADE  EQU   *
+         LTR   R6,R6               ANY RETURN CODE FROM ENQ?
+         BZ    SETRC4              NO, SET RETCODE =4 'COS WE WAITED
+         IC    R8,3(R6)            WHAT HAPPENED?
+         C     R8,=F'8'
+         BE    RETURN              ALREADY HAD IT(?!)
+         BH    SETRC16             DON'T KNOW WHAT HAPPENED
+SETRC4   LA    R8,4                SET RETURN CODE = 4
+         B     RETURN
+         SPACE 3
+*   RETURN CODE FROM FIRST ENQ WAS = 4 AND WE ARE RUNNING UNDER TSO
+         SPACE 1
+SETRC12  LA    R8,12               SET RETURN CODE = 12
+         B     RETURN
+SETRC16  LA    R8,16               SET RETURN CODE = 16
+         B     RETURN
+         SPACE 3
+*    STIMER EXIT ROUTINE - HANDLES LONG ENQUEUE WAITS
+         SPACE 1
+         USING TIMESUP,R15
+TIMERXIT SAVE  (14,12)
+         MVI   OPNFRMD,X'80'       SET STIMER EXIT ENTERED FLAG
+         LR    R8,R15
+         DROP  R15
+         USING TIMESUP,R8
+         WTO   MF=(E,MSGAREA)      TELL THE OPERATOR WE ARE WAITING
+         ST    R1,WTOID            STORE MESSAGE ID FOR DOM
+         RETURN (14,12)
+EXITLNTH EQU   *-TIMERXIT
+         DROP  R8
+         JOLRETN
+*    CONSTANTS
+         SPACE 1
+ENQ      ENQ   (,,E,0,SYSTEM),RET=USE,MF=L
+         ORG   *-4
+ENQLNTH  EQU   *-ENQ
+TWOMINS  DC    F'12000'            TIMER INTERVAL OF 2 MINUTES
+WTO2     WTO   'XXXXXXXX:CONTINUES',                                   *
+               ROUTCDE=(2),DESC=(7),MF=L
+LNTHWTO2 EQU   *-WTO2
+         SPACE 1
+         LTORG
+         SPACE 3
+         JOLSAVE CSECT=UJP26DEQ,SIZE=LNTHWRK
+         USING P26WORK,R13
+         LR    R10,R13             SET TO POINT TO WORK AREA
+         DROP  R13
+         USING P26WORK,R10
+         $CALL UJP26REL
+         MVC   EXENQ(DEQLNTH),DEQ  SET UP DEQ PARAMETERS
+         DEQ   (QNAME,WORK-1,0),MF=(E,EXENQ)  TRY RET = USE
+         LTR   R15,R15
+         BZ    DEQRET0
+         JOLRETN RC=4
+DEQRET0  JOLRETN
+DEQ      DEQ   (,,0,SYSTEM),RET=HAVE,MF=L
+         ORG   *-4
+DEQLNTH  EQU   *-DEQ               LENGTH OF DEQ LIST
+         LTORG
+         SPACE 3
+         JOLSAVE CSECT=UJP26REL,BASE=12
+         SPACE 2
+         MVC   ICOMMAND,=CL8'MACRO'
+         MVC   SYMBOLIC,=CL8'LASTCC'
+         MVC   #WORK(3),=X'0001F0' SET UP RC=0
+         $CALL UJP85ASN
+         MVC   MSGAREA(LNTHWTO1),WTO1  SET UP WTO TEXT AND CODE
+*                                      IN MESSAGE WORK LOCATION
+         MVI   WAITBIT,X'1'
+         MVI   TSOIND,X'0'         CLEAR TSO INDICATOR
+         IFOS  =X8,P26X8                                          88020
+         L     R15,16
+         L     R15,0(R15)
+         L     R15,4(R15)          GET TCB ADDRESS VIA THE CVT
+         L     R14,12(R15)         GET TIOT ADDRESS FROM TCB
+         MVC   MSJOBNAM,TIOCNJOB(R14) STORE JOB/TASK NAME
+         B     P26NX8
+P26X8    DS    0H                                                 88020
+*    IS THIS A TSO TASK?
+         BNE   NOTSO                                              88020
+         L     R14,X'2EC'     THIS IS FLCTOLD ON X8 SYSTEMS       88020
+         L     R14,12(,R14)   THIS POINTS TO THE JSCB             88020
+         L     R15,0(,R14)    AND NOW THE CSCB                    88020
+         MVC   MSJOBNAM,X'058'(R15) THE JOB NAME                  88020
+*        MVC   MSJOBNAM,X'090'(R15)                               88020
+P26NX8   DS    0H                                                 88020
+         CLI   IFTSO,C'T'                                         88020
+         MVI   TSOIND,X'1'         SET TSO TASK FLAG ON
+         MVI   WAITBIT,X'0'        DEFAULT NOWAIT UNDER TSO
+         MVI   WAITBIT,X'1'        ************************
+NOTSO    DS    0H
+         SPACE 2
+*    FIND THE RESOURCES WE WANT TO ENQ ON
+         SPACE 1
+         GETTKN  2                 GET THE MAJOR QNAME
+         MVC   QNAME,TKN
+         GETTKN  3                 GET THE SLASH (/)
+         CLI   TKN,C'/'
+         BE    P26SLASH
+P26BAD   JOLERR 301,'ENQUEUE/DEQUEUE:- INVALID PARAMETERS'
+         JOLERR 302,'MUST BE:- MAJOR-NAME/MINOR-NAME'
+         MVC   #WORK(3),=X'0001F4' SET UP RC=4
+         $CALL UJP85ASN
+         JOLRETN RC=4
+P26SLASH DS    0H
+         GETTKN  4                 GET THE SLASH (/)
+         BAL   R14,DROPQUOT
+         MVC   #WORK(L'TKN),#TKN
+         MVC   MINORNM(50),WORK    FOR ERROR MESSAGES
+         CLC   =C'   ',TKN
+         BE    P26BAD
+         GETTKN  5
+         CLI   TKN,C' '
+         BE    LEAVWAIT
+         CLC   =C'NOWAIT',TKN
+         BNE   TWAIT
+         MVI   WAITBIT,X'0'
+         B     LEAVWAIT
+TWAIT    CLC   =C'WAIT',TKN
+         BNE   WAITERR
+         MVI   WAITBIT,X'1'
+         B     LEAVWAIT
+WAITERR  JOLERR 306,'WAIT OR NOWAIT EXPECTED, NOT ''',#TKN,''''
+         MVI   WAITBIT,X'1'
+LEAVWAIT DS    0H
+         CLI   WAITBIT,X'0'
+         BE    WAITRET
+         CLI   TSOIND,X'0'
+         BE    WAITRET
+         B     WAITRET                                    ******
+         JOLERR 307,'WAIT NULLIFIED UNDER TSO/TSS'
+         MVI   WAITBIT,X'0'
+WAITRET  JOLRETN
+         LTORG
+WTO1     WTO   'XXXXXXXX:WAITING FOR:-                                 *
+                                   ',ROUTCDE=(2),DESC=(7),MF=L
+LNTHWTO1 EQU   *-WTO1
+         SPACE 3
+         LTORG
+         END

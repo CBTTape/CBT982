@@ -1,0 +1,15 @@
+         MACRO                                                    J50
+&L       NEXTADDR &LEN
+         LCLA  &A                                                 J50
+         LCLB  &B                                                 J50
+&B       SETB  (T'&LEN NE 'O')                                    J50
+&A       SETA  4+&B                                               J50
+&L       DS    0H
+.*       LA    R11,&A.(,R11)     POINT AT NEXT SBA
+         AIF   (T'&LEN EQ 'O').NOL                                J50
+         AH    R11,&LEN
+.NOL     ANOP                                                     J50
+.*       CLI   P28SF,SFE                                          J50
+.*       BNE   *+8                                                J50
+.*       LA    R11,1(,R11)                                        J50
+         MEND                                                     J50

@@ -1,0 +1,535 @@
+DAM      TITLE 'DYNAMIC ACCESS METHOD OPEN PROCESSING'
+         LCLA  &A
+         LCLB  &B
+         LCLC  &C
+         SPACE 3
+DAM      CSECT
+.LP      ANOP
+&B       SETB  (&A LT 10)
+&C       SETC  'R'.(&B)'0'.'&A'
+&C       EQU   &A
+&A       SETA  &A+1
+         AIF   (&A LT 16).LP
+         ENTRY DAMOPEN
+DAMOPEN  B     THERE-*(,R15)
+         DC    AL1(THERE-*-1)
+         DC    C'DYNAMIC ACCESS METHOD &SYSDATE &SYSTIME'
+THERE    DS    0H
+         STM   R14,R12,12(R13)
+         XC    16(4,R13),16(R13) CLEAR PROSPECTIVE RETURN CODE
+         LR    R12,R15
+         USING DAM,R12
+*        SPEAK 'DAM OPEN'                                        88036
+         LM    R00,R01,20(R13)                                   88036
+         LR    R03,R01         SAVE ADDRESS OF PARAMETER LIST
+OPN010   L     R02,0(,R03)     ADDRESS FIRST DAM FILE AREA
+         LA    R03,4(,R03)     ADDRESS THE NEXT ENTRY IN THE LIST
+         USING DAMCB,R02
+         MVC   DAMFIND(LVECTOR1),VECTAB1
+         MVC   DAMEODAD+4(LVECTOR2),VECTAB2
+         STCM  R02,8,DAMFLG1   STORE OPEN FLAGS
+         NI    DAMFLG1,X'7F'   TURN OFF HIGH BIT
+         LH    R00,DAMMSIZE    NUMBER OF MEMBER TABLE ENTRIES
+         MH    R00,ENTLEN
+         AL    R00,DAMBUFSZ    PLUS SIZE OF REQUIRED BUFFER
+         GETMAIN R,LV=(0)
+         LR    R00,R01
+         ST    R00,DAMMBRS     STORE MEMBER TABLE ADDRESS
+         ST    R00,DAMCMNM     STORE CURRENT MEMBER ENTRY ADDRESS
+         LH    R01,DAMMSIZE    NUMBER OF MEMBER TABLE ENTRIES
+         MH    R01,ENTLEN
+         SLR   R15,R15
+         MVCL  R00,R14         CLEAR THE MEMBER TABLE
+         ST    R00,DAMBUFFR    STORE BUFFER ADDRESS
+         ST    R00,DAMCMEM     STORE CURRENT DATA ADDRESS
+         ST    R00,DAMCREC     STORE CURRENT RECORD ADDRESS
+         ST    R00,DAMLREC     STORE LAST RECORD ADDRESS
+         ST    R00,DAMHWM      NEXT AVAILABLE LOCATION FOR NEW DATA
+         L     R01,DAMBUFSZ
+         MVCL  R00,R14         CLEAR THE BUFFER
+         ST    R00,DAMEOS      STORE END OF STORAGE ADDRESS
+         FIX   'WE WILL DO THE REST OF THE OPEN PROCESSING LATER'
+         LTR   R02,R02         TEST FLAG BIT FOR END OF LIST
+         BP    OPN010          GO AND DO THE NEXT ONE
+         LM    R14,R12,12(R13)
+         BR    R14
+         DROP  R12,R02
+         TITLE 'LOAD SELECTED MEMBERS FROM A PDS INTO A DYNAMIC FILE'
+LOAD     DS    0H
+*  PARAMETERS
+*    (1)       ADDRESS OF PARAMETER LIST:
+*        00    ADDRESS OF DAMCB
+*        04    ADDRESS OF DDNAME
+*        08    ADDRESS OF MEMBER LIST
+         SPACE
+*  RETURNS
+*        0     ALL DONE
+*        4     ONE OR MORE ERRORS
+         USING DAMCB,R03
+         LA    R15,4           NOT IMPLEMENTED JUST YET
+         BR    R14
+         DROP  R03
+         TITLE 'STORE UPDATED MEMBERS FROM A DYNAMIC FILE INTO A PDS'
+STORE    DS    0H
+*  PARAMETERS
+*    (1)       ADDRESS OF PARAMETER LIST:
+*        00    ADDRESS OF DAMCB
+*        04    ADDRESS OF DDNAME
+*  RETURNS
+*        0     ALL DONE
+*        4     ONE OR MORE ERRORS
+         USING DAMCB,R03
+         LA    R15,4           NOT IMPLEMENTED JUST YET
+         BR    R14
+         DROP  R03
+         SPACE 4
+VECTAB1  DC    0D'0'
+         DC    A(FIND)
+         DC    A(CLOSE)
+         DC    A(STOW)
+         DC    A(WRITE)
+         DC    A(READ)
+LVECTOR1 EQU   *-VECTAB1
+VECTAB2  DS    0F
+         DC    A(POINT)
+         DC    A(NOTE)
+         DC    A(BLDL)
+         DC    A(LOAD)
+         DC    A(STORE)
+         DC    A(EXTEND)
+         DC    A(UPDATE)
+LVECTOR2 EQU   *-VECTAB2
+ENTLEN   DC    Y(DAMTNXT-DAMMT) LENGTH OF AN ENTRY
+         TITLE 'FIND A MEMBER'
+FIND     DS    0H
+*  PARAMETERS
+*        (0)   ADDRESS OF MEMBER NAME
+*        (1)   ADDRESS OF DAMCB
+         SPACE
+*  RETURNS
+*        (15)  0      FOUND IT
+*                     DAMCB IS READY TO PROCESS THE MEMBER
+*              4      DIDN'T FIND IT
+         STM   R14,R12,12(R13)
+         USING FIND,R15
+*        SPEAK 'DAM FIND'                                        88036
+         LM    R14,R12,12(R13)                                   88036
+         XC    16(4,R13),16(R13) CLEAR PROSPECTIVE RETURN CODE
+         USING DAMCB,R01
+         USING DAMMT,R03
+         LR    R02,R00         USE A REGISTER THAT CAN ADDRESS THINGS
+         L     R03,DAMMBRS     ADDRESS MEMBER TABLE
+FND010   DS    0H
+         CLC   0(8,R02),DAMTNAM IS THIS IT?
+         BE    FND030
+         CLI   DAMTNXT,X'00'   END OF TABLE?
+         BE    FND020          YES
+         LA    R03,DAMTNXT     ADDRESS THE NEXT ENTRY
+         B     FND010
+FND020   DS    0H
+         MVI   19(R13),4       SET RETURN CODE TO SHOW NOT FOUND
+         B     FND040          NOT FOUND, LEAVE ADDRESS FIELD ALONE
+FND030   DS    0H
+         MVC   DAMCREC,DAMTADD COPY MEMBER ADDRESS
+         MVC   DAMLREC,DAMTADD COPY MEMBER ADDRESS
+         MVC   DAMCMEM,DAMTADD COPY MEMBER ADDRESS
+         ST    R03,DAMCMNM     STORE CURRENT MEMBER ENTRY ADDRESS
+FND040   LM    R14,R12,12(R13) THAT'S IT
+         BR    R14
+         DROP  R15,R01,R03
+         TITLE 'CLOSE FILES'
+CLOSE    DS    0H
+         STM   R14,R12,12(R13)
+         XC    16(4,R13),16(R13) CLEAR PROSPECTIVE RETURN CODE
+         LR    R12,R15
+         USING DAM,R12
+*        SPEAK 'DAM CLOSE'                                       88036
+         LM    R00,R01,20(R13)                                   88036
+         LR    R03,R01         SAVE ADDRESS OF PARAMETER LIST
+CLS010   L     R02,0(,R03)     ADDRESS FIRST DAM FILE AREA
+         USING DAMCB,R02
+         LH    R00,DAMMSIZE    NUMBER OF MEMBER TABLE ENTRIES
+         MH    R00,ENTLEN
+         AL    R00,DAMBUFSZ    PLUS SIZE OF REQUIRED BUFFER
+         L     R01,DAMMBRS     LOAD AREA ADDRESS
+         FREEMAIN R,LV=(0),A=(1)
+         MVC   4(4,R02),AERROR
+         MVC   8(LVECTOR1-4,R02),4(R02) CLEAR VECTOR POINTERS
+         MVC   DAMBLDL,DAMFIND
+         LTR   R02,R02         TEST FLAG BIT FOR END OF LIST
+         BM    CLS010          GO AND DO THE NEXT ONE
+         LM    R14,R12,12(R13) THAT'S IT
+         BR    R14
+         DROP  R02,R12
+         TITLE 'STOW A MEMBER'
+STOW     DS    0H
+*  PARAMETERS
+*        (0)   ADDRESS OF MEMBER NAME
+*        (1)   ADDRESS OF DAMCB
+         SPACE
+*  RETURNS
+*        (15)  0      STOWED IT
+*              4      ALREADY EXISTS
+*              12     MEMBER TABLE FULL
+         STM   R14,R12,12(R13)
+         USING STOW,R15
+*        SPEAK 'DAM STOW'                                        88036
+         LM    R14,R12,12(R13)                                   88036
+         XC    16(4,R13),16(R13) CLEAR PROSPECTIVE RETURN CODE
+         USING DAMCB,R01
+         USING DAMMT,R03
+         LR    R02,R00         USE A REGISTER THAT CAN ADDRESS THINGS
+         L     R03,DAMMBRS     ADDRESS MEMBER TABLE
+         CLI   DAMTNAM,X'00'   ANY IN THE TABLE?
+         BE    STO030          NOPE: DON'T SEARCH IT
+STO010   CLC   0(8,R02),DAMTNAM   IS THIS IT?
+         BE    STO020          IT'S ALREADY THERE!
+         CLI   DAMTNXT,X'00'   END OF TABLE?
+         LA    R03,DAMTNXT     ADDRESS THE NEXT ENTRY
+         BE    STO030          YES, WE CAN ADD IT
+         B     STO010
+STO020   MVI   19(R13),4       SET RETURN CODE TO SHOW ALREADY THERE
+         B     STO080
+STO030   DS    0H
+         LA    R04,DAMTNXT     ADDRESS THE NEXT ENTRY
+         CL    R04,DAMBUFFR
+         BH    STO050          WON'T FIT
+         MVC   DAMTNAM,0(R02) COPY MEMBER NAME
+         MVC   DAMTADD,DAMCMEM COPY MEMBER ADDRESS
+         LA    R04,4           LEAVE AN END-OF-FILE MARKER
+         AL    R04,DAMCREC
+         ST    R04,DAMCREC
+         ST    R04,DAMHWM      NEXT AVAILABLE LOCATION FOR NEW DATA
+         ST    R04,DAMCMEM     NEXT MEMBER STARTS HERE
+         LA    R03,DAMTNXT     ADDRESS THE NEXT ENTRY
+         ST    R03,DAMCMNM     STORE CURRENT MEMBER NAME ADDRESS
+         FIX   'IT MAY BE NECESSARY TO DO A LITTLE MORE ABOUT THE END-OF
+               F-FILE HERE'
+         B     STO080
+STO050   MVI   19(R13),12      TABLE FULL
+         EX    0,*             OH! DEAR
+STO080   LM    R14,R12,12(R13) THAT'S IT
+         BR    R14
+         DROP  R01,R03,R15
+         TITLE 'READ A RECORD'
+READ     DS    0H
+*  PARAMETERS
+*        (0)   ADDRESS OF RECORD AREA
+*        (1)   ADDRESS OF DAMCB
+         SPACE
+*  RETURNS
+*        RECORD TO RECORD AREA,
+*  AT END OF FILE
+*              BRANCHES TO EOD ROUTINE IF PRESENT
+*              BLOWS OUT OF WATER IF NO EODAD ROUTINE
+         STM   R14,R12,12(R13)
+         XC    16(4,R13),16(R13) CLEAR PROSPECTIVE RETURN CODE
+         USING READ,R12
+         LR    R12,R15
+*        SPEAK 'DAM READ'                                        88036
+         LM    R14,R11,12(R13)                                   88036
+         LR    R03,R01         WE'LL USE R01 TO COPY DATA AROUND
+         USING DAMCB,R03
+         L     R14,DAMCREC     ADDRESS CURRENT RECORD
+         ST    R14,DAMLREC     LAST RECORD READ/WRITTEN          88036
+         LH    R15,0(,R14)     LOAD ITS LENGTH
+         LTR   R15,R15
+         BZ    RD050
+         LR    R01,R15         HERE TOO
+         STM   R14,R01,DAMRSVD1 DEBUGGING                        88036
+         MVCL  R00,R14         COPY THE RECORD
+         ST    R14,DAMCREC     STORE NEW RECORD ADDRESS
+         LM    R14,R12,12(R13)
+         BR    R14
+RD050    DS    0H
+         ICM   R15,15,DAMEODAD
+         BNZ   RD060           GO IF PRESENT
+         WTO   MF=(E,DAM010E)
+*        LM    R14,R12,12(R13) RESTORE CALLER'S REGS FOR DUMP
+         ABEND 0010,DUMP
+DAM010E  WTO   'DAM010E NO END-OF-FILE ROUTINE SPECIFIED',             .
+               ROUTCDE=(11),MF=L
+RD060    DS    0H
+         ST    R15,16(R13)
+         LM    R14,R12,12(R13)
+         BR    R15             TO EOD ROUTINE
+         DROP  R03,R12
+         TITLE 'WRITE A RECORD'
+WRITE    DS    0H
+*  PARAMETERS
+*        (0)   ADDRESS OF RECORD
+*        (1)   ADDRESS OF DAMCB
+         SPACE
+*  RETURNS
+*        NOTHING
+*  AT END OF STORAGE AREA
+*              BLOWS OUT OF WATER
+         STM   R14,R12,12(R13)
+         XC    16(4,R13),16(R13) CLEAR PROSPECTIVE RETURN CODE
+         USING WRITE,R12
+         LR    R12,R15
+*        SPEAK 'DAM WRITE'                                       88036
+         LM    R14,R12,12(R13)                                   88036
+         LR    R02,R01         HOLD ITS ADDRESS IN A SAFE PLACE
+         USING DAMCB,R02
+         LR    R14,R00         ADDRESS USER'S RECORD
+         LH    R15,0(,R14)     LOAD ITS LENGTH
+         LR    R01,R15         HERE TOO
+         AL    R15,DAMCREC     WILL IT FIT?
+         CL    R15,DAMEOS
+         BNL   WRT050          NO
+         LR    R15,R01         COPY IT BACK
+         L     R00,DAMCREC     ADDRESS RECORD AREA
+         ST    R00,DAMLREC     LAST RECORD READ/WRITTEN          88036
+         LR    R03,R01         SAVE ITS LENGTH
+         LR    R04,R00         ADDRESS OF THIS RECORD
+         MVC   2(2,R14),0(R04) COPY LENGTH OF THE PREVIOUS ONE
+         MVCL  R00,R14         COPY THE RECORD
+         LR    R04,R00         ADDRESS OF THIS RECORD
+         STH   R03,2(,R04)     STORE LENGTH IN HEADER FOR THE NEXT
+         ST    R00,DAMCREC     STORE NEW RECORD ADDRESS
+         ST    R00,DAMHWM      NEXT AVAILABLE LOCATION FOR NEW DATA
+         LM    R14,R12,12(R13)
+         BR    R14
+WRT050   DS    0H
+         WTO   MF=(E,DAM011E)
+*        LM    R14,R12,12(R13) RESTORE CALLER'S REGS FOR DUMP
+         ABEND 0011,DUMP
+DAM011E  WTO   'DAM011E OUT OF DYNAMIC FILE STORAGE',                  .
+               ROUTCDE=(11),MF=L
+         DROP  R12,R02
+         TITLE 'REPOSITION THE FILE'
+POINT    DS    0H
+*  PARAMETERS
+*        (0)   ADDRESS OF DATA RECORD TO POSITION TO:
+*                IF LOW BYTE NON-ZERO, POSITION TO FOLLOWING RECORD
+*        (1)   ADDRESS OF DAMCB
+         SPACE
+*  RETURNS
+*        THE FILE IS REPOSITIONED
+*   NOTE       IF AN INVALID STORAGE ADDRESS IS GIVEN,IT'S LIKELY
+*                AN 0C4 WILL OCCUR LATER
+*   NOTE       THE DATA STORAGE ADDRESS IS HELD IN BYTES 0-2 OF R00
+         SPACE
+         STM   R14,R12,12(R13)
+         USING POINT,R15
+*        SPEAK 'DAM POINT'                                       88036
+         LM    R14,R12,12(R13)                                   88036
+         XC    16(4,R13),16(R13) CLEAR PROSPECTIVE RETURN CODE
+         USING DAMCB,R01
+         LR    R02,R00         SWAP REGISTERS
+         L     R02,0(,R02)     GET THE ACTUAL "TTRK"
+         SLR   R03,R03
+         SRDL  R02,8           MOVE LOW BYTE TO R03
+         BCTR  R02,0           TAKE OFF THE ONE WE ALWAYS ADD    88036
+         AL    R02,DAMBUFFR    MAKE ABSOLUTE
+         ST    R02,DAMLREC     LAST RECORD READ
+         LTR   R03,R03
+         BZ    PNT010
+         AH    R02,0(,R02)     POINT TO THE RECORD FOLLOWING THIS
+PNT010   DS    0H
+         CL    R02,DAMEOS      IS IT IN BOUNDS?
+         BNL   PNT020          IT'S NOT!!!
+         ST    R02,DAMCREC     NEXT RECORD TO READ
+         LM    R14,R12,12(R13) THAT'S IT
+POINTX   BR    R14
+PNT020   DS    0H
+         WTO   MF=(E,DAM013E)
+         LM    R14,R12,12(R13)
+         ABEND 0013,DUMP
+DAM013E  WTO   'DAM013E POINT: INVALID ADDRESS GIVEN',                 .
+               ROUTCDE=11,MF=L
+         DROP  R15,R01
+         TITLE 'TAKE A NOTE OF WHERE WE ARE'
+NOTE     DS    0H
+*  PARAMETERS
+*        (1)   ADDRESS OF DAMCB
+         SPACE
+*  RETURNS
+*        THE FILE POSITION IS RETURNED IN R01
+*   NOTE       THE DATA STORAGE ADDRESS IS HELD IN BYTES 0-2 OF R01
+         USING DAMCB,R01
+         USING NOTE,R15        DEBUGGING                         88036
+         STM   R14,R12,12(R13)                                   88036
+*        SPEAK 'DAM NOTE'                                        88036
+         LM    R14,R12,12(R13)                                   88036
+*        L     R00,DAMCREC     LOAD ADDRESS
+         L     R00,DAMLREC     LAST RECORD READ/WRITTEN          88036
+         SL    R00,DAMBUFFR    MAKE IT RELATIVE
+         LA    R01,1           NEVER RETURN ZERO                 88036
+         ALR   R00,R01
+         SLL   R00,8           MOVE IT ALONG
+         LR    R01,R00                                           88036
+         SLR   R15,R15         THAT'S IT
+NOTEX    BR    R14
+         DROP  R01
+         TITLE 'BUILD A LIST OF MEMBERS'
+BLDL     DS    0H
+*  PARAMETERS
+*        (0)   ADDRESS OF MEMBER NAME LIST
+*        (1)   ADDRESS OF DAMCB
+         SPACE
+*  RETURNS
+*        (15)  0      FOUND ALL REQUESTED MEMBERS
+*              4      AT LEAST ONE MEMBER WASN'T FOUND
+         STM   R14,R12,12(R13)
+         USING BLDL,R15
+*        SPEAK 'DAM BLDL'                                        88036
+         LM    R14,R12,12(R13)
+         XC    16(4,R13),16(R13) CLEAR PROSPECTIVE RETURN CODE
+         USING DAMCB,R01
+         USING DAMMT,R03
+         LR    R02,R00         USE A REGISTER THAT CAN ADDRESS THINGS
+         LH    R04,0(,R02)     NUMBER OF MEMBERS TO FIND
+         LA    R05,4(,R02)     ADDRESS FIRST ONE
+BLD000   DS    0H
+         XC    8(4,R05),8(R05) CLEAR ADDRESS IN CASE IT'S NOT THERE
+         L     R03,DAMMBRS     ADDRESS MEMBER TABLE
+BLD010   CLC   DAMTNAM,0(R05) IS THIS IT?
+         BE    BLD025
+         CLI   DAMTNXT,0       END OF TABLE?
+         BNE   BLD020          YES
+         MVI   19(R13),4       SET RETURN CODE TO SHOW ONE NOT FOUND
+         B     BLD030
+BLD020   DS    0H
+         LA    R03,DAMTNXT     ADDRESS THE NEXT ENTRY
+         B     BLD010
+BLD025   DS    0H              FOUND ONE
+         L     R00,DAMTADD     ADDRESS DATA AREA
+         SL    R00,DAMBUFFR    MAKE IT RELATIVE
+         LA    R01,1                                             88036
+         ALR   R00,R01         NEVER GIVE A ZERO OFFSET          88036
+         SLL   R00,8           SHIFT ADDRESS
+         ST    R00,8(,R05)     STORE THE ADDRESS
+         XC    12(2,R05),12(R05) CLEAR TYPE, USER-DATA
+BLD030   DS    0H
+         AH    R05,2(,R02)     ADDRESS NEXT ENTRY IN BUILD LIST
+         BCT   R04,BLD000
+         LM    R14,R12,12(R13)
+         BR    R14
+         DROP  R01,R03,R15
+         TITLE 'UPDATE CURRENT ADDRESS SO NEXT WRITE EXTENDS FILE'
+EXTEND   DS    0H
+*  PARAMETERS
+*        (1)   ADDRESS OF DAMCB
+         SPACE
+*  RETURNS
+*        (15)  0      IT'S DONE
+         USING EXTEND,R15
+         ST    R01,24(,R13)                                      88036
+*        SPEAK 'DAM EXTEND'                                      88036
+         L     R01,24(,R13)                                      88036
+         USING DAMCB,R01
+         MVC   DAMCREC,DAMHWM
+         MVC   DAMLREC,DAMHWM
+         SLR   R15,R15
+         BR    R14
+         DROP  R01,R15
+         TITLE 'PROVIDE SIMPLE UPDATE-INPLACE PROCESSING'
+UPDATE   DS    0H
+*  PARAMETERS                                                    88036
+*        (1)   ADDRESS OF DAMCB                                  88036
+*        (0)   ADDRESS OF STRUCTURE AS FOLLOWS                   88036
+*              8-BYTE MEMBER NAME                                88036
+*              4-BYTE ADDRESS OF PROCESSING ROUTINE              88036
+*              4-BYTE WORD FOR THE USER'S INFO                   88036
+*  ON ENTRY TO THE PROCESSING ROUTINE                            88036
+*        (0)   CONTENTS OF THE USER'S WORD                       88036
+*        (1)   ADDRESS OF CURRENT RECORD                         88036
+*              0 FOR EOF                                         88036
+*        (14)  RETURN ADDRESS                                    88036
+*        (14)  RETURN ADDRESS                                    88036
+*        (15)  ADDRESS OF PROCESSING ROUTINE                     88036
+*  PROCESSING ROUTINE RETURNS                                    88036
+*        (15)  0  CONTINUE                                       88036
+*              4  FINISHED                                       88036
+*              >4 DIE                                            88036
+*        SPACE                                                   88036
+*  UPDATE RETURNS                                                88036
+*        (15)  0      IT'S DONE                                  88036
+         USING UPDATE,R12
+         USING DAMUPDT,R02                                       88036
+         USING DAMCB,R03                                         88036
+         STM   R14,R12,12(R13) SAVE REGISTERS                    88036
+         LR    R12,R15         LOAD BASE REGISTER                88036
+         LR    R02,R00         ADDRESS PARAMETER STRUCTURE       88036
+         LR    R03,R01         ADDRESS DAMCB                     88036
+         GETMAIN R,LV=72       OBTAIN A SAVE AREA                88036
+         ST    R01,8(,R13)     CHAIN SAVE AREAS                  88036
+         ST    R13,4(,R01)                                       88036
+         LR    R13,R01         ADDRESS SAVE AREA                 88036
+         $NOTE (R03)                                             88036
+         LR    R04,R01                                           88036
+STOP1    DS    0H                                                88036
+         AGO   .Z                                                88036
+         $FIND (R03),DUNAME    FIND MEMBER                       88036
+         LTR   R15,R15                                           88036
+         BNZ   UPD90           COULDN'T FIND IT                  88036
+         L     R05,DAMCREC     ADDRESS FIRST RECORD              88036
+         SLR   R06,R06                                           88036
+UPD10    DS    0H                                                88036
+         ICM   R06,3,0(R05)    LOAD RECORD LENGTH                88036
+         BZ    UPD20           AND EXIT IF IT'S EOF              88036
+         LM    R15,R00,DUPROC  ADDRESS PROCESSOR, USER AREA      88036
+         BALR  R14,R15         CALL THE PROCESSOR                88036
+*        SLR   R15,R15         PRETEND TO CALL THE PROCESSOR     88036
+         LTR   R15,R15         DID HE SAY STOP?                  88036
+         BNZ   UPD30           HE DID!                           88036
+         ALR   R05,R06         ADDRESS THE NEXT RECORD           88036
+         B     UPD10           GO AROUND AGAIN                   88036
+UPD20    DS    0H                                                88036
+         SLR   R01,R01         SIGNAL EOF                        88036
+         LM    R15,R00,DUPROC  ADDRESS PROCESSOR, USER AREA      88036
+         BALR  R14,R15         TELL HIM THE NEWS                 88036
+*        SLR   R15,R15         PRETEND TO CALL THE PROCESSOR     88036
+         LTR   R15,R15         DID HE SAY STOP?                  88036
+         BZ    UPD40           HE DID!                           88036
+UPD30    DS    0H                                                88036
+         CH    R15,=H'4'       BUT DID HE DO IT NICELY           88036
+         BE    UPD40                                             88036
+         ST    R15,0(,R13)                                       88036
+         WTO   'DAM014E INVALID RETURN CODE FROM UPDATE PROCESSING EXIT.
+                ROUTINE',ROUTCDE=(11)                            88036
+         L     R15,0(,R13)                                       88036
+         ABEND 0014,DUMP                                         88036
+UPD40    DS    0H                                                88036
+.Z       ANOP                                                    88036
+         ICM   R04,1,=AL1(1)   READ FOLLOWING RECORD             88036
+STOP2    DS    0H                                                88036
+         $POINT (R03),36(,R13) PRETEND WE WERE NEVER HERE        88036
+UPD90    DS    0H
+         LR    R01,R13                                           88036
+         L     R13,4(,R13)                                       88036
+         LR    R02,R15                                           88036
+         FREEMAIN R,A=(1),LV=72                                  88036
+         LR    R15,R02                                           88036
+         L     R14,12(,R13)                                      88036
+         LM    R00,R12,20(R13)                                   88036
+         SLR   R15,R15                                           88036
+         BR    R14                                               88036
+         DROP
+         TITLE 'ERROR ROUTINE FOR CLOSED FILE'
+AERROR   DC    A(*+4)
+         USING *,R15
+         STM   R14,R12,12(R13)
+         WTO   MF=(E,DAM012E)
+         LM    R14,R12,12(R13)
+         ABEND 0012,DUMP
+         DROP  R15
+DAM012E  WTO   'DAM012E ACCESS TO DYNAMIC FILE AFTER CLOSE',           .
+               ROUTCDE=11,MF=L
+         TITLE 'DYNAMIC ACCESS METHOD CONTROL BLOCK'
+DAMCB    DAMCB TYPE=DSECT
+         TITLE 'DAM MEMBER TABLE ENTRY FORMAT'
+DAMMT    DSECT
+DAMTNAM  DC    CL8' '          NAME OF MEMBER
+DAMTADD  DC    A(0)            4-BYTE OFFSET IN TABLE
+DAMTFL1  DC    X'00'           FLAG BYTE
+DAMTF1U  EQU   X'80'           THE MEMBER HAS BEEN CHANGED
+         DC    3X'00'          RESERVED FOR LATER
+DAMTNXT  DS    0X              NEXT ELEMENT IN THE TABLE
+DAMUPDT  DSECT                                                   88036
+DUNAME   DS    CL8                                               88036
+DUPROC   DS    A                                                 88036
+DUUSER   DS    A                                                 88036
+         END

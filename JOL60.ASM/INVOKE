@@ -1,0 +1,137 @@
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974,1975,1976
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         PRINT OFF
+         COPY JOLCOM
+         PRINT ON,DATA
+           SPACE 3
+* ON ENTRY THIS ROUTINE HAS PARAMETERS POINTING TO:
+*   R1 CONTAINS A POINTER TO 'DYNPARMS'.
+*
+* IN ADDITION, CALLAREA CONTAINS A POINTER TO THE BLDL LIST.
+*              CALLAREA+8 POINTS TO THE $$JLOAD DCB.
+*
+*
+           JOLSAVE CSECT=UJP38INV
+           ORG UJP38INV
+INVOKE     EQU *
+           ENTRY INVOKE
+           ORG
+           LM  R5,R6,CALLAREA
+         USING IHAPDS,R5
+           SPACE 3
+RUNBLD0    SR  R8,R8
+           IC  R8,RUNC1
+           LA  R9,X'1F'
+           NR  R8,R9
+           SLL R8,1
+           LA  R9,RUNUSDTA-4
+           AR  R9,R8
+           MVC TASKSSI,0(R9)
+           MVI CALLAREA,X'80'                                     74365
+           XC TASK2ECB,TASK2ECB                                   74365
+           LA R1,CALLAREA
+           ATTACH DE=RUNNAME,ECB=TASK2ECB          74365
+           LR  R11,R1          SAVE TCB ADDRESS                   74365
+           WAIT 1,ECB=TASK2ECB
+           MVC TASKRETN(1),X'1D'(R11) SHIFT IN ABEND CODE         74365
+           MVC TASKRETN+1(3),TASK2ECB+1 AND RETURN CODE           74365
+           ST R11,CALLAREA                                        74365
+           DETACH CALLAREA                                        74365
+E98LMAX     L   R1,TASKSSI                                        75128
+           SR  R0,R0
+           SLDL R0,4
+           AH R1,=H'15'        X'F'
+           STM R0,R1,CALLAREA
+           UNPK ENDMSSI,CALLAREA+3(5)
+           OI  ENDMSSI+7,X'F0'
+* NOW SEE IF TASK ABENDED OR RETURNED PROPERLY.
+           TM  TASKRETN,128                    ABEND ?
+           BZ  NOTABND
+* WAS IT A USER ABEND OR A SYSTEM ABEND ?
+           L   R1,TASKRETN
+           N   R1,=X'00FFF000'
+           BZ  USERABND
+           SRL R1,8
+           ST  R1,DBL
+         UNPK  ENDMRETC,DBL+1(3)                                  75311
+         OI    ENDMRETC+3,C'0'                                    75311
+           TR  ENDMRETC,HEX                                       75311
+         MVI   ENDMRETC,C'S'                                      75311
+           JOLERR 307,'STEP ',TASKLABL,' LM ',TASKNAME,' SSI ',   74365*
+               ENDSSI,' SYSTEM ABEND ',ENDRETC                    74365
+           B E99R16
+           SPACE 3
+NOTABND    XC TASKRETN(2),TASKRETN
+USERABND   EQU *
+           LA  R0,X'FFF'
+           N   R0,TASKRETN
+           CVD R0,DBL
+           OI  DBL,15
+           UNPK ENDMRETC,DBL
+           OI   ENDMRETC+3,X'F0'
+ENDMSSOK   EQU *
+           TM  TASKRETN,X'80'  ABEND ?
+           BO  E99TYPER
+           JOLERR 105,'STEP ',TASKLABL,' LM ',TASKNAME,' SSI ',   74365*
+               ENDSSI,' RETURNED ',ENDRETC                        74365
+           B   E99RET4K
+E99TYPER   JOLERR 306,'STEP ',TASKLABL,' LM ',TASKNAME,' SSI ',   74365*
+               ENDSSI,' USER ABEND ',ENDRETC                      74365
+E99RET4K    EQU  *
+           XC TASKRETN(2),TASKRETN
+           MVI TASKIND,C'1'
+           JOLRETN RC=4000
+E99RETN0   EQU *
+E99RETNO   EQU *
+           MVI TASKIND,C'1'
+           JOLRETN
+TASKSSI    DC  CL4' '          SSI OF THE SUB-TASK
+TASKRETN   DC  F'0'            RETURN CODE FROM TASK
+TASKECB    DC  F'0'            EVENT CONTROL BLOCK FOR TASK
+TASKIND    DC  C' '            SET TO 1 AFTER SCHEDULER CALLED
+*                              THE FIRST TIME.
+ENDSSI     DS 0CL8
+ENDMSSI    DS  CL8
+ENDRETC    DS 0CL4
+ENDMRETC   DS  CL4
+HEX        EQU *-240                                              75311
+           DC  C'0123456789ABCDEF'                                75311
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+   IHAPDS PDSBLDL=YES
+           END

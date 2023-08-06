@@ -1,0 +1,24 @@
+         MACRO                                                    J50
+&NAME    CAT   &DEST,&SRC
+.* THIS Macro concatenates the second string to the first
+.* IF WON'T FIT, part of the string is copied
+         SPACE 3
+&NAME    LH    R1,#&DEST        LOAD CURRENT LENGTH OF #Dest
+         LH    R15,#&SRC        GET CURRENT LENGTH OF #Src
+         LTR   R15,R15          Check if Length >0                J51
+         BZ    S32R&SYSNDX      No, so don't do anything          J51
+         AR    R15,R1           ADD THEM
+         CH    R15,=AL2(L'&DEST) TOO BIG ?
+         BNH   S32&SYSNDX
+         MVC   #&DEST,=AL2(L'&DEST) SHIFT MAX LENGTH
+         LA    R15,4            SET BAD RETURN CODE
+         B     S32R&SYSNDX
+         SPACE 3
+S32&SYSNDX STH R15,#&DEST       SET NEW LENGTH IN #Dest
+         LA    R1,&DEST.(R1)    CALC ADDRESS OF WHERE DATA IS TO GO TO
+         LH    R15,#&SRC        RELOAD SIZE OF Src NOW
+         BCTR  R15,0            -1 FOR MOVE EXECUTE
+         EX    R15,S32M&SYSNDX SHIFT DATA IN
+S32M&SYSNDX MVC 0(*-*,R1),&SRC    ****EXECUTED****
+S32R&SYSNDX DS 0H
+         MEND                                                     J50

@@ -1,0 +1,66 @@
+UJPCOLOR TITLE 'PROCESS THE COLOR STATEMENTS'                     86014
+* COPYRIGHT CCS-JOL P/L                   1986.
+*
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         EJECT
+         PRINT  OFF
+         COPY   JOLCOM
+         PRINT  ON
+         PRINT  GEN
+         PRINT DATA                                               75128
+         USING JOLCOM,R2
+         JOLSAVE CSECT=UJP68BLA
+         JOLERR 001,'Black Color Called'
+         JOLRETN
+         LTORG
+         JOLSAVE CSECT=UJP68BLU
+         JOLERR 002,'Blue Color Called'
+         JOLRETN
+         LTORG
+         JOLSAVE CSECT=UJP68BRI
+         JOLERR 003,'Bright Color Called'
+         JOLRETN
+         LTORG
+         JOLSAVE CSECT=UJP68CYA
+         JOLERR 004,'Cyan Color Called'
+         JOLRETN
+         LTORG
+         JOLSAVE CSECT=UJP68GRE
+         JOLERR 005,'Green Color Called'
+         JOLRETN
+         LTORG
+         JOLSAVE CSECT=UJP68MAG
+         JOLERR 006,'Magenta Color Called'
+         JOLRETN
+         LTORG
+         JOLSAVE CSECT=UJP68RED
+         JOLERR 007,'Red Color Called'
+         JOLRETN
+         LTORG
+         JOLSAVE CSECT=UJP68WHI
+         JOLERR 008,'White Color Called'
+         JOLRETN
+         LTORG
+         JOLSAVE CSECT=UJP68YEL
+         JOLERR 009,'Yello Color Called'
+         JOLRETN
+         LTORG
+         LTORG
+         END

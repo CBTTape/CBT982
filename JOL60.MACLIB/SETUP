@@ -1,0 +1,142 @@
+         MACRO                                                          SETUP001
+&NAME    SETUP &DALPARM,&INPARM                                         SETUP002
+.* THIS MACRO SETS UP THE DYNAMIC ALLOCATION LIST.                      SETUP003
+.* PARM 1 INDICATES THE ITEM TO BE INCLUDED IN THE LIST, AND            SETUP004
+.* PARM 2 (OPTIONAL) INDICATES THE VALUE TO BE ASSIGNED                 SETUP005
+.*                                                                      SETUP006
+.* EG   SETUP DALDSNAM,DDDSNAME WILL TURN ON THE DSNAME ALLOCATION      SETUP007
+.*       PARAMETER, AND COPY THE DSNAME TO THE REQUIRED AREA.           SETUP008
+         LCLC  &TYPE                                                    SETUP009
+         LCLC  &KEY,&PCOUNT,&LEN                                        SETUP010
+         LCLC  &TYPIN,&TYPOUT                                           SETUP011
+         LCLC  &WORK1,&WORK2                                            SETUP012
+         LCLA  &LIN,&LOUT                                               SETUP013
+         AIF ('&NAME' EQ '').NONM                                       SETUP014
+&NAME    EQU   *                                                        SETUP015
+.NONM     ANOP                                                          SETUP016
+.* THE 1ST PARAMETER NAME MUST COMMENCE WITH:-                          SETUP017
+.*                                                                      SETUP018
+.*       DAP   ALLOCATE                                                 SETUP019
+.*       DCC   CONCATENATE                                              SETUP020
+.*       DDC   DE-CONCATENATE                                           SETUP021
+.*       DIN   INFORMATION RETRIEVAL                                    SETUP022
+.*       DRI   REMOVE IN-USE FUNCTION                                   SETUP023
+.*       DDN   DDNAME ALLOCATION                                        SETUP024
+.*       DUN   UNALLOCATION                                             SETUP025
+.*                                                                      SETUP026
+.* WE ALSO KNOW THAT THE CORRESPONDING AREAS ARE NAMED:-                SETUP027
+.*       DLKXXX     FOR THE KEY (IF DAL)                                SETUP028
+.*       DL#XXX     FOR PARM COUNT                                      SETUP029
+.*       DLVXXX     FOR LENGTH OF PARM.                                 SETUP030
+.*       DLPXXX     FOR PARM ITSELF                                     SETUP031
+.*                                                                      SETUP032
+.* IF DUN,THEN DL ABOVE BECOMES DNK,ETC.                                SETUP033
+.*                                                                      SETUP034
+.* ASSUMPTION : R10 POINTS TO CURRENT LIST WE ARE BUILDING,             SETUP035
+.*  AND THAT THE RECIEVE AREAS ARE ALL 0 OR BLANK,                      SETUP036
+.*  AND KEYS ETC SET UP CORRECTLY.                                      SETUP037
+.*                                                                      SETUP038
+.* THE TNUM MACRO MAY BE USED                                           SETUP039
+&WORK1   SETC  '&DALPARM'(4,5)      GET LAST 5 CHARS OF PARM            SETUP040
+&WORK2   SETC  '&DALPARM'(1,2)      GET FIRST 2 CHARS TOO               SETUP041
+.*                                                                      SETUP042
+&KEY     SETC  '&WORK2.K&WORK1' SET KEY NAME                            SETUP043
+&PCOUNT  SETC  '&WORK2.#&WORK1' SET COUNT NAME                          SETUP044
+&LEN     SETC  '&WORK2.V&WORK1' SET LENGTH                              SETUP045
+         AIF   ('&INPARM' EQ '').SETPRM                                 SETUP046
+.* INPUT  OUTPUT    GENERATE                                            SETUP047
+.*  C      C        MVC            1                                    SETUP048
+.*  X      X        MVC            2                                    SETUP049
+.*  C      NUM      TNUM,STORE     3                                    SETUP050
+.*  NUM    NUM      MVC            4                                    SETUP051
+.*  NUM    C        CVD,UNPK       5                                    SETUP052
+.*                                                                      SETUP053
+&TYPIN   SETC  T'&INPARM                                                SETUP054
+&TYPOUT  SETC  T'&DALPARM                                               SETUP055
+&LIN     SETA  L'&INPARM                                                SETUP056
+&LOUT    SETA  L'&DALPARM                                               SETUP057
+         AIF   ('&TYPIN' EQ 'C' AND '&TYPOUT' EQ 'C').GENMVCC CASE 1    SETUP058
+         AIF   ('&TYPIN' EQ 'X' AND '&TYPOUT' EQ 'X').GENMVCX CASE 2    SETUP059
+         AIF   ('&TYPOUT' EQ 'X').ERR1                                  SETUP060
+         AIF   ('&TYPIN' EQ 'X').ERR2                                   SETUP061
+         AIF   ('&TYPIN' EQ 'C').CASE3                       CASE3      SETUP062
+         AIF   ('&TYPOUT' EQ 'C').CASE5                      CASE5      SETUP063
+*                                                             CASE 4    SETUP064
+.* CASE 4 HERE                                                          SETUP065
+.* TREAT AS MVC X TYPE TO X TYPE                                        SETUP066
+&TYPIN   SETC  'X'                                                      SETUP067
+&TYPOUT  SETC  'X'                                                      SETUP068
+.GENMVCX ANOP                                                           SETUP069
+         AIF   (&LIN GT &LOUT).ERR3                                     SETUP070
+         AIF   (&LIN EQ &LOUT).MVCEQU                                   SETUP071
+.* OUTPUT LENGTH > INPUT, SHIFT TO BOTTOM END                           SETUP072
+         MVC   &DALPARM+&LOUT-&LIN,&INPARM SHIFT AND RIGHT ALIGN        SETUP073
+         AGO   .SETPRM                                                  SETUP074
+.MVCEQU  ANOP                                                           SETUP075
+         MVC   &DALPARM,&INPARM             SHIFT EQUAL LENGTH PARM     SETUP076
+         AGO   .SETPRM                                                  SETUP077
+.GENMVCC ANOP                                                           SETUP078
+.* CHARACTER MVC                                                        SETUP079
+         AIF   (&LIN EQ &LOUT).MVCEQU                                   SETUP080
+         MVC   &DALPARM.(&LIN),&INPARM       SHIFT AND LEFT ALIGN       SETUP081
+         AIF (&LIN GT &LOUT).ERR400                                     SETUP082
+         AGO .SETPRM                                                    SETUP083
+.ERR400 MNOTE 8,'REC CHAR IS SHORTER THAN SEND CHAR'                    SETUP084
+         AGO .SETPRM                                                    SETUP085
+         AGO   .SETPRM                                                  SETUP086
+.CASE3   ANOP  CONVERT TO NUMERIC, STORE                                SETUP087
+         TNUM  &INPARM             CONVERT TO NUMERIC                   SETUP088
+         AIF   (&LOUT EQ 1).STC                                         SETUP089
+         AIF   (&LOUT EQ 2).STH                                         SETUP090
+         AIF   (&LOUT EQ 4).ST                                          SETUP091
+         AIF   (&LOUT EQ 3).ST3                                         SETUP092
+         MNOTE 16,'LENGTH FOR OUTPUT > 4:- NUMERIC'                     SETUP093
+         MEXIT                                                          SETUP094
+.STC     STC   R1,&DALPARM            STORE 1 CHARACTER NUMERIC         SETUP095
+         AGO   .SETPRM                                                  SETUP096
+.STH     STH   R1,&DALPARM            STORE HALF WORD                   SETUP097
+         AGO   .SETPRM                                                  SETUP098
+.ST      ST    R1,&DALPARM            STORE FULL WORD                   SETUP099
+         AGO   .SETPRM                                                  SETUP100
+.ST3     STC   R1,&DALPARM+2          STORE BOTTOM CHAR                 SETUP101
+         SRL   R1,8                                                     SETUP102
+         STH   R1,&DALPARM                                              SETUP103
+         AGO   .SETPRM                                                  SETUP104
+.* CASE 5 NOW                                                           SETUP105
+.CASE5   AIF   (&LIN EQ 1).IC1                                          SETUP106
+         AIF   (&LIN EQ 2).LH                                           SETUP107
+         AIF   (&LIN EQ 4).L                                            SETUP108
+         AIF   (&LIN EQ 3).IC3                                          SETUP109
+         MNOTE 16,'LENGTH NUMERIC IN >4:-&LIN'                          SETUP110
+         MEXIT                                                          SETUP111
+.IC1     ANOP                                                           SETUP112
+         SR    R15,R15        CLEAR REGISTER FOR 1 BYTE NUMERIC         SETUP113
+         IC    R15,&INPARM                                              SETUP114
+         AGO   .STNUM                                                   SETUP115
+.LH      ANOP                                                           SETUP116
+         LH    R15,&INPARM    LOAD NUMBER                               SETUP117
+         AGO   .STNUM                                                   SETUP118
+.L       ANOP                                                           SETUP119
+         L     R15,&INPARM    LOAD NUMBER                               SETUP120
+         AGO   .STNUM                                                   SETUP121
+.IC3     ANOP                                                           SETUP122
+         LH    R15,&INPARM    LOAD PART OF 3 BYTE NUMBER                SETUP123
+         SLL   R15,8          MAKE ROOM FOR LAST BYTE                   SETUP124
+         IC    R15,&INPARM+2                                            SETUP125
+.STNUM   CVD   R15,DBL        CONVERT TO PACKED                         SETUP126
+         UNPK  &DALPARM,DBL                                             SETUP127
+         OI    &DALPARM+&LOUT-1,C'0' MAKE CHAR                          SETUP128
+         AGO   .SETPRM                                                  SETUP129
+.SETPRM  LA    R15,&KEY       SET UP KEY IN R15                         SETUP130
+         ST    R15,0(R10)     STORE IN PARAMETER LIST                   SETUP131
+         LA    R10,4(R10)     SET UP NEXT PARAMETER ADDRESS             SETUP132
+         MEXIT                                                          SETUP133
+.ERR1    MNOTE 16,'OUTPUT IS X, INPUT IS &TYPIN'                        SETUP134
+         MEXIT                                                          SETUP135
+.ERR2    MNOTE 16,'INPUT IS X, OUTPUT IS &TYPOUT'                       SETUP136
+         MEXIT                                                          SETUP137
+.ERR3    MNOTE 16,'OUTPUT LENGTH FOR &TYPOUT LESS THAN INPUT:&LIN>&LOUT*SETUP138
+               '                                                        SETUP139
+         MEXIT                                                          SETUP140
+.ERR4    AGO .ERR3                                                      SETUP141
+         MEND                                                           SETUP142

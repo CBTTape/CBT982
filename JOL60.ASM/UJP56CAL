@@ -1,0 +1,290 @@
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1987
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-JOL
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         MACRO
+&L       SETVAR &VAR,&VALUE
+         LCLA  &A
+         AIF   ('&L' EQ '').NL
+&L       DS    0H
+.NL      ANOP
+         MVC   SYMBOLIC,=CL8&VAR
+         MVC   ICOMMAND,=CL8'MACRO'
+         AIF   (T'&VALUE EQ 'C').CHARS
+         AIF   ('&VALUE'(1,2) EQ '=C').CLIT
+         IHBINNRA ,&VALUE
+         CVD   R0,DBL
+         UNPK  WORK(5),DBL
+         OI    WORK+4,C'0'
+         MVC   #WORK,=Y(5)
+         AGO   .DOIT
+.CLIT    ANOP
+&A       SETA  K'&VALUE-4
+         MVC   WORK(&A),&VALUE
+         MVC   #WORK,=Y(&A)
+         AGO   .DOIT
+.CHARS   ANOP
+         MVC   WORK(L'&VALUE),&VALUE
+         MVC   #WORK,=Y(L'&VALUE)
+.DOIT    $CALL UJP85ASN
+         MEND
+         PUNCH ' PAGE UJP56CAL '
+         PRINT OFF
+         COPY JOLCOM
+         PRINT ON
+         SPACE 3
+* ON ENTRY TO THIS ROUTINE R1 POINTS TO NOTHING OF NOTE
+         SPACE 3
+         JOLSAVE CSECT=UJP56CAL
+         SETVAR 'CALLERR',1
+         SETVAR 'PGMABEND',=C' '
+         SETVAR 'LASTCC',0
+         GETTKN 2
+         CLI   TKN,C''''
+         BE    QUOTED
+         JOLERR 306,'DATASET NAME SHOULD BE IN QUOTES'
+         JOLRETN
+QUOTED   GETTKN 1
+         MVC   CALLAREA(2),=C'||'
+         MVC   TKNCURR,=H'2'
+         $CALL UJS60DSN
+         SPACE 3
+* NOW WE MUST FORM UP THE FULL DSNAME.EACH PART IS SEPARATED BY A '.'
+*  OR THERE MAY BE'( )' AFTER
+         XC    CALLAREA(2),CALLAREA
+         $CALL UJS60DSN        PROCESS DSNAME
+         B     *+4(R15)
+         B     P56DSN1         STRAIGHT DSNAME
+         B     P56DSN2         DSNAME + GENERATION NUMBER
+         B     P56DSN3         DSNAME + MEMBER
+         B     P56DSN4         ERROR IN GENERATION NUMBER
+         B     P56DSN5         INVALID DSNAME
+P56DSN1  JOLERR 301,'MEMBER NAME REQUIRED WITH ',#WORK,'.'
+         JOLRETN
+P56DSN4  DS    0H
+P56DSN2  JOLERR 302,'CANNOT CALL A GENERATION DATASET ',#WORK,'.'
+         JOLRETN
+P56DSN5  JOLERR 303,'INVALID DATASET NAME',#WORK,'(',MBRNAME,').'
+         JOLRETN
+P56DSN3  DS    0H
+         XC    S99AREA,S99AREA CLEAR SVC 99 PARAMETERS
+         LA    R0,S99RB
+         ST    R0,S99PARMS
+         OI    S99PARMS,X'80'
+         MVC   S99RB(2),=X'1401'
+         LA    R0,S99TU
+         ST    R0,S99TULST
+         MVC   TUDSN(4),=Y(2,1)  DSN=, THERE IS ONE OF THEM
+         MVC   TUDSN+4(46),#WORK
+         LA    R0,TUDSN
+         ST    R0,S99TU
+         LA    R0,=Y(4,1,1,8*256) DISP=, THERE IS ONE, IT'S SHARE
+         ST    R0,S99TU+8
+         MVC   TUPSWD(6),=Y(X'50',1,8) PSWD=, THERE IS 1 OF THEM, ETC
+         LA    R0,TUPSWD
+         ST    R0,S99TU+12
+         MVC   TURDDN(6),=Y(X'55',1,8) GIVE ME THE DDNAME
+         LA    R0,TURDDN
+         ST    R0,S99TU+4
+         OI    S99TU+12,X'80'  END OF THE LIST
+         CLI   PSWD+6,C' '                                        J40B
+         BNE   *+8                                                J40B
+         OI    S99TU+8,X'80'   REMOVE PASSWORD FROM THE LIST      J40B
+         LA    R1,S99PARMS
+         SVC   99
+         LTR   R15,R15
+         BZ    OKSOFAR
+         FIX   'USE DAIRFAIL SOME OTHER TIME'
+         JOLERR 304,'DATASET ALLOCATION FOR ',#DSN56,' FAILED.'
+         JOLRETN
+OKSOFAR  DS    0H
+         MVC   DUMMYDCB,LINKDCBL
+         MVC   DUMMYDCB+DCBDDNAM-IHADCB(8),RETDDN
+         MVI   CALLAREA,X'80'
+         OPEN  (DUMMYDCB,INPUT),MF=(E,CALLAREA)
+         LTR   R15,R15
+         BZ    OPENOK
+         JOLERR 305,'OPEN FAILURE FOR ',#DSN56
+         JOLRETN
+OPENOK   DS    0H
+         MVC   ATTACHW,ATTACHL
+         LA    R0,1
+         AH    R0,TKNCURR
+         STH   R0,TKNCURR
+         GETTKN TKNCURR
+         LTR   R15,R15
+         BNZ   QUOTED1A
+*        JOLERR 020,'TKN=',#TKN
+         CLI   TKN,C''''
+         BE    QUOTED1
+         JOLERR 309,'PARAMETERS MUST BE IN QUOTES'
+         JOLRETN
+QUOTED1  DS    0H
+         BAL   R14,DROPQUOT
+QUOTED1A DS    0H
+         LA    R1,#TKN
+         CLI   TKN,C' '                                           J40B
+         BNE   *+10                                               J40B
+         XC    #TKN,#TKN                                          J40B
+         STM   R1,R2,CALLAREA  PARAMETER STRING + JOLCOM
+         OI    CALLAREA,X'80'
+         LA    R1,CALLAREA
+         XC    CALLAREA+8(4),CALLAREA+8
+         XC    ECBAREA,ECBAREA
+         LA    R0,ABENDECB
+         LA    R1,NORMECB
+         STM   R0,R1,ECBLIST
+         OI    ECBLIST+4,X'80'
+         ATTACH EPLOC=MBRNAME,SF=(E,ATTACHW),                          .
+               TASKLIB=DUMMYDCB,ECB=NORMECB,                           .
+               ESTAI=(ABNORMAL,(R2))                                   .
+                                                                       .
+
+DSOK     DS    0H
+         ST    R1,TCBPTR       SAVE TCB ADDRESS
+         WAIT  1,ECBLIST=ECBLIST
+         MVI   CALLAREA,X'80'
+         CLOSE (DUMMYDCB),MF=(E,CALLAREA)
+         TM    ABENDECB,X'40'  ABEND ?
+         BNZ   XXXX            YES, ABNORMAL COPIED ABEND INFO
+         L     R15,TCBPTR
+*        MVC   CALLAREA+12(1),X'1D'(R15) SHIFT IN ABEND FLAG
+         MVC   CALLAREA+12+1(3),NORMECB+1 GET RETURN CODE
+XXXX     DS    0H
+         DETACH TCBPTR
+* NOW SEE IF TASK ABENDED OR RETURNED PROPERLY.
+         TM    ABENDECB,X'40'  ABEND ?
+         BZ    NOTABND
+*        B     NOTABND
+* WAS IT A USER ABEND OR A SYSTEM ABEND ?
+         L     R1,CALLAREA+12
+         N     R1,=X'00FFF000'
+         BZ    USERABND
+         UNPK  DBL(9),CALLAREA+12(5)
+         TR    DBL,HEX
+         MVI   SCC,C'S'
+         MVC   CC,SCC
+         MVI   CC+L'SCC,C' '
+         B     ABENDMSG
+*        JOLERR 311,MBRNAME,' ABENDED: CC=',CC
+*        SETVAR 'PGMABEND',CC
+         JOLRETN
+         SPACE 3
+USERABND DS    0H
+         LA    R0,X'FFF'
+         N     R0,CALLAREA+8
+         ST    R0,CALLAREA+8
+         CVD   R0,DBL
+         OI    DBL+7,15
+         UNPK  CC,DBL
+         MVI   CC,C'U'
+ABENDMSG DS    0H
+         JOLERR 312,MBRNAME,' ABENDED: CC=',CC
+         SETVAR 'PGMABEND',CC
+         SETVAR 'LASTCC',4095
+         JOLRETN
+         SPACE 3
+NOTABND  DS    0H
+         LA    R0,X'FFF'
+         N     R0,CALLAREA+8
+         ST    R0,CALLAREA+8
+         CVD   R0,DBL
+         OI    DBL+7,15
+         UNPK  WORK(4),DBL
+         MVC   #WORK,=H'4'
+ENDMSSOK DS    0H
+         JOLERR 008,MBRNAME,' RETURNED ',#WORK
+         SETVAR 'CALLERR',0
+         L     R0,CALLAREA+8
+         FIX   'LASTCC SHOULD BE SET SELECTIVELY BY JOLRETN TO ENSURE TH
+               HAT IT IS DONE CONSISTANTLY' AND REGULARLY BY ALL JOL ROU
+               UTINES
+         SETVAR 'LASTCC',(0)
+         JOLRETN
+         DROP
+ABNORMAL DS    0H
+         STM   R14,R12,12(R13)
+         LR    R12,R15
+         USING JOLCOM,R2
+         USING ABNORMAL,R12
+         L     R2,0(,R1)       ADDRESS JOL COMMON
+         L     R15,TCBPTR
+         MVC   CALLAREA+12+0(1),X'01D'(R15) SHIFT IN ABEND FLAG
+         MVC   CALLAREA+12+1(3),X'011'(R15) AND RETURN CODE
+         POST  ABENDECB
+         STIMER WAIT,BINTVL==A(60*100)
+*        DETACH TCBPTR
+*        DC    H'0'
+         LM    R14,R12,12(R13)
+         SLR   R15,R15
+         BR    R14
+HEX      EQU *-240
+         DC    C'0123456789ABCDEF'
+         DC    60S(*)
+LINKDCBL DCB   DDNAME=$$JLOAD,MACRF=R,DSORG=PO
+LENDCB   EQU   *-LINKDCBL
+ATTACHL  ATTACH SF=L
+ATTACHLL EQU   *-ATTACHL
+         DS    0D
+*        IHAPDS PDSBLDL=YES
+         DCBD  DSORG=PO,DEVD=DA
+JOLCOM   DSECT
+         ORG   DBL+1
+SCC      DS    CL4
+         ORG   #WORK
+#DSN     DS    H
+DSN      DS    CL44
+         ORG   WORK+100
+MBRNAME  DS    CL8
+         ORG   WORK+114
+TUPSWD   DS    XL6
+PSWD     DS    CL8
+         ORG   WORK+200
+S99AREA  DS    0XL256
+S99PARMS DS    F
+S99RB    DS    0XL24
+         DC    X'1401'
+S99FLGS1 DS    XL2
+S99ERR   DS    XL2
+S99INF   DS    XL2
+S99TULST DS    A
+         DS    XL4             RESERVED
+S99FLGS2 DS    XL2
+         DS    XL2             THE REST OF IT
+S99TU    DS    A               DSN=
+         DS    A               DISP=SHR
+         DS    A               PASSWORD=
+         DS    A               DDNAME=
+         DS    4A              IN CASE WE WANT THEM
+TUDSN    DS    XL4             DSN=, ONE OF THEM
+#DSN56   DS    H               LENGTH
+DSN56    DS    CL44            THE  DSNAME
+TURDDN   DS    XL4             YOU TELL ME ON DDN
+         DS    H               LENGTH
+RETDDN   DS    CL8             THE DDNAME
+CC       DS    CL5
+         DS    0D
+ECBLIST  DS    2A
+ABENDECB DS    F
+NORMECB  DS    F
+TCBPTR   DS    F
+ECBAREA  EQU   ECBLIST,*-ECBLIST,C'X'
+         DS    0D
+DUMMYDCB DS    XL(LENDCB)
+ATTACHW  DS    XL(ATTACHLL)
+         END

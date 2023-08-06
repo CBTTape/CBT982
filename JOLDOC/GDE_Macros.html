@@ -1,0 +1,185 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Macros</title>
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>Macros</u></font><font size="5"><u><span
+ style="font-weight: normal;"></span></u></font><font size="5"><i><u><span
+ style="font-weight: normal;"></span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">Jol commands can be combined with
+themselves and with any other program to form new commands tailored
+specifically to your installation.&nbsp; With Jol you can also execute
+commands from within commands, adding greatly to the flexibility and
+simplicity of procedures.&nbsp; This open-endedness is one of the
+highlights of Jol.<br>
+      <br>
+The Jol Macro Language may be considered as a major extension of the <span
+ style="font-weight: bold;">JCL PROC</span>edure statement, and
+provides a means of adding new instructions to the Language quickly and
+easily, thus allowing the tailoring of Jol to your installation. The
+Macro language provides you with the ability of using any&nbsp;
+of&nbsp; the instructions listed below, or instructions you develop ,
+and combining them into new instructions specifically for your
+installation, or a specific application.<br>
+      <br>
+A Macro is a set of instructions that creates Jol instructions to the
+user's specification, and once coded is stored in a <span
+ style="font-weight: bold;">MACRO</span> library. Whenever a
+non-standard Jol instruction is found, the <span
+ style="font-weight: bold;">MACRO</span> library is searched and
+interpreted, creating the tailored Jol instructions. The compilation
+then continues recommencing at the first of the created instructions.<br>
+      <br>
+Macros can:<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td
+ style="vertical-align: top; background-color: rgb(153, 255, 255);"><br>
+      <ul>
+        <li>Examine, verify and change User options or parameters.</li>
+        <li>Set up default parameters.</li>
+        <li>Execute other macros commands.</li>
+        <li>Generate tailored Jol instructions.</li>
+        <li>Set or alter the values of symbolic variables so that other
+instructions can test switches or values and take some action based on
+the results of the tests.</li>
+        <li><span style="font-weight: bold;">ALLOCATE, OPEN</span> and<span
+ style="font-weight: bold;"> WRITE</span> data in a manner similar to
+the Jol <span style="font-weight: bold;">SAVESYMS</span> macro command
+which saves the current values of symbolic variables in a data set for
+later use.</li>
+        <li>Write tailored <span style="font-weight: bold;">PL/I</span>,
+
+          <span style="font-weight: bold;">COBOL</span> or <span
+ style="font-weight: bold;">JCL</span> language statements to a data
+set, or submit them to a background region to be executed.</li>
+      </ul>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">Note
+:</span>&nbsp;&nbsp;&nbsp; Macros may be considered as small <span
+ style="font-weight: bold;">reentrant</span> and <span
+ style="font-weight: bold;">reusable </span>programs.<br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top; text-align: center;"><span
+ style="font-weight: bold;">Figure 1. Examples of Functions Macros can
+Perform.</span><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">
+      <h4><br>
+      </h4>
+      </td>
+      <td style="vertical-align: top;"><br>
+Macros or Commands are easily prepared by coding a <span
+ style="font-weight: bold;">MACRO</span> prototype statement followed
+by a series of Jol statements and terminated with an <span
+ style="font-weight: bold;">END</span>.<br>
+      <br>
+The <span style="font-weight: bold;">SORT</span> macro,&nbsp; a
+standard Jol macro, is called with parameters and allocates work areas
+for the sort program and performs the sort function for you.<br>
+      <br>
+For example, to make a command to both Print and Delete the input data
+set may be coded as:<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">
+      <h4><br>
+      </h4>
+      </td>
+      <td
+ style="vertical-align: top; background-color: rgb(153, 255, 255);"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">PRDEL
+:
+MACRO;</span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">PRINT
+%LIST(1);</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">DELETE %LIST (1);</span><br
+ style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">END;</span><br
+ style="font-weight: bold;">
+      </div>
+&nbsp;<br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      </td>
+      <td align="left" valign="top">
+      <div style="text-align: center;"> </div>
+      <div style="text-align: center;"><span style="font-weight: bold;">Figure
+2.
+Example of a Macro.</span><br>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      <span style="font-weight: normal;"><span
+ style="font-style: italic; font-weight: bold;"></span></span><br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

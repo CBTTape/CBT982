@@ -1,0 +1,27 @@
+         MACRO
+&NAME    ASSIGN &A,&B
+         AIF   (T'&A EQ 'C').CHAR
+         AIF   (L'&A EQ 1).NUM1
+         AIF   (L'&A EQ 2).NUM2
+         AIF   (L'&A EQ 3).NUM3
+         AIF   (L'&A EQ 4).NUM4
+         MNOTE 16,'ASSIGN MACRO: LENGTH TOO LONG'
+         MEXIT
+.NUM1    ANOP
+&NAME    MVI   &A,&B
+         MEXIT
+.NUM2    ANOP
+&NAME    MVC   &A,=H'&B'
+         MEXIT
+.NUM3    ANOP
+&NAME    MVC   &A,=AL3'&B'
+         MEXIT
+.NUM4    ANOP
+&NAME    MVC   &A,=F'&B'
+         MEXIT
+.CHAR    AIF   ('&B'(1,1) EQ '''').CHLIT
+&NAME    MVC   &A,=C'&B'
+         MEXIT
+.CHLIT   ANOP
+&NAME    MVC   &A,C&B
+         MEND

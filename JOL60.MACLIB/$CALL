@@ -1,0 +1,133 @@
+           MACRO                                                        CALL0010
+&NAME      $CALL  &MODULE,&PARM,&MF=                                    CALL0020
+.* THIS MACRO REPLACES THE NORMAL OS CALL MACRO FOR THE JOL COMPILER.   CALL0030
+.* IT DOES NOT WORK IN THE SCHEDULER.                                   CALL0040
+.* **********************************                                   CALL0050
+.*   A LOT OF CORE IS SAVED,PLUS A BIT OF SPEED                         CALL0060
+           LCLC &RP(4),&P(4),&LOAD(4)                                   CALL0070
+           LCLA &NO                                                     CALL0080
+           LCLC &REGMOD,&WORK                                           CALL0090
+           LCLC  &SPECNM(100)                                           CALL0100
+&SPECNM(1) SETC 'UJP02DCL'    PREPROCESSOR DECLARE                      CALL0110
+&SPECNM(2) SETC 'AUJP02'                                                CALL0120
+&SPECNM(3) SETC 'UJP85ASN'    PREPROCESSOR ASSIGN                       CALL0130
+&SPECNM(4) SETC 'AUJP85'                                                CALL0140
+&SPECNM(5) SETC 'UJSPLIT'     TOKENISER                                 CALL0150
+&SPECNM(6) SETC 'AUJSPLIT'                                              CALL0160
+&SPECNM(7) SETC 'UJS30OP'     GENERAL PURPOSE OUTPUT RTN                CALL0170
+&SPECNM(8) SETC 'AUJS30OP'                                              CALL0180
+&SPECNM(9) SETC 'UJP98OP'     DYNAMICALLY LOADED OUTPUT RTN O/P MODULE  CALL0190
+&SPECNM(10) SETC 'AUJP98'                                               CALL0200
+&SPECNM(11) SETC 'UJP21FNC'   REPLACE SYMBOLICS:FIX SUBSTR ETC          CALL0210
+&SPECNM(12) SETC 'AUJS21'                                               CALL0220
+&SPECNM(13) SETC 'UJP90OP'    PREPROCESSOR ROUTINE                      CALL0230
+&SPECNM(14) SETC 'AUJP90'                                               CALL0240
+&SPECNM(15) SETC 'UJG90OP'   GENERATOR JCL OUTPUT                       CALL0250
+&SPECNM(16) SETC 'AUJG90'                                               CALL0260
+            AGO   .NOTNOW
+&SPECNM(17) SETC 'UJP50RD'   PREPROCESSOR READ STATEMENT          84100 CALL0250
+&SPECNM(18) SETC 'AUJP50'                                         84100 CALL0260
+&SPECNM(19) SETC 'UJP52CHR'  PREPROCESSOR GET CHARACTER           84100 CALL0250
+&SPECNM(20) SETC 'AUJP52'                                         84100 CALL0260
+&SPECNM(21) SETC 'UJP53MAC'  PREPROCESSOR MACRO STATEMENT START   84100 CALL0250
+&SPECNM(22) SETC 'AUJP53'                                         84100 CALL0260
+&SPECNM(23) SETC 'UJP54INC'  PREPROCESSOR INCLUDE HANDLER         84100 CALL0250
+&SPECNM(24) SETC 'AUJP54'                                         84100 CALL0260
+.NOTNOW    ANOP
+           AIF ('&MODULE'(1,1) NE '(').NOTRCAL NOT REGISTER CALL        CALL0270
+&REGMOD   SETC '&MODULE'(2,K'&MODULE-2)  DROP BRACKETS                  CALL0280
+.NOTRCAL   AIF ('&PARM' NE '').LONG HAS PARAMETERS,GENERATE A LIST      CALL0290
+.* NO PARAMETERS                                                        CALL0300
+           AIF ('&REGMOD' EQ '').VCON1  REGISTER CALL? NO,->            CALL0310
+&NAME    LR    15,&REGMOD      LOAD 15 WITH ROUTINE ADDRESS             CALL0320
+         BALR  14,15           AND BRANCH                               CALL0330
+           MEXIT                                                        CALL0340
+.LONG      ANOP                                                         CALL0350
+.* SET UP SYMBOLIC LOCNS AS A WORK AREA UNTIL WE FIND THE BEST WAY      CALL0360
+.*   OF GENERATING THE PARAMETER LIST.                                  CALL0370
+&NO        SETA 1              SET LOOP CONTROLLER TO ONE               CALL0380
+.LUP1      ANOP                                                         CALL0390
+.* SET THE INSTRUCTION TO 'LR'(LOAD REGISTER)                           CALL0400
+&LOAD(&NO) SETC 'LR'                                                    CALL0410
+.* NOW TEST PARAMETER NAME AND TYPE. IF ITS NOT ONE OF THESE            CALL0420
+.*   'EXCEPTIONS' THEN A'LA' IS REQUIRED.                               CALL0430
+           AIF ('&PARM(&NO)' EQ 'JOLCOM').JOLC                          CALL0440
+           AIF ('&PARM(&NO)' EQ 'TKNX').TKNX                            CALL0450
+           AIF ('&PARM(&NO)'(1,1) EQ '(').REGPARM                       CALL0460
+.* NO SPECIALS SO CHANGE TO 'LA' AND PUT NAME IN SYMBOLIC LOCN          CALL0470
+&LOAD(&NO) SETC 'LA'                                                    CALL0480
+&P(&NO)    SETC '&PARM(&NO)'                                            CALL0490
+.ADD1NO    AIF (&NO EQ N'&PARM).END1                                    CALL0500
+&NO        SETA &NO+1                                                   CALL0510
+           AGO .LUP1                                                    CALL0520
+.JOLC      ANOP                                                         CALL0530
+&P(&NO)    SETC 'R2'           JOLCOM ALWAYS POINTED TO BY R2           CALL0540
+           AGO .ADD1NO                                                  CALL0550
+.TKNX      ANOP                                                         CALL0560
+&P(&NO)    SETC 'R3'           TKNX ALWAYS POINTED TO BY R3             CALL0570
+           AGO .ADD1NO                                                  CALL0580
+.REGPARM   ANOP                                                         CALL0590
+&P(&NO)    SETC '&PARM(&NO)'(2,K'&PARM(&NO)-2) DROP ()                  CALL0600
+           AGO .ADD1NO                                                  CALL0610
+.END1      ANOP                ALL INSTRUCTIONS,PARMS SET UP            CALL0620
+.* NOW IF THE MODULE BEING CALLED ALREADY HAS ITS ADDRESS IN            CALL0630
+.*   A REGISTER,WE CANNOT DO A STM AS WE MAY CLOBBER THAT REGISTER      CALL0640
+.*   WHEN WE LOAD REGISTERS READY TO DO THE STM.                        CALL0650
+.* HOWEVER,IF THERE IS ONLY 1 PARAMETER,WE DON'T HAVE TO WORRY          CALL0660
+.*   NOR IF THERE ARE ONLY 2.                                           CALL0670
+.* EG      CALL (1),(A,B) WILL GENERATE                                 CALL0680
+.*         LR  15,1            SET 15 SO WE CAN USE OTHER REGISTERS     CALL0690
+.*         LA  0,A             USE 0                                    CALL0700
+.*         LA  1,B             USE 1                                    CALL0710
+.*         STM 0,1,CALLAREA  SET UP LIST                                CALL0720
+.*         LR  1,2 A(CALLAREA)                                          CALL0730
+.*         BALR 14,15        BALR                                       CALL0740
+.* BUT,IF THERE ARE THREE WE CAN DO THE SAME,EXCEPT BEFORE THE          CALL0750
+.*         LR  1,2  WE CAN INSERT A LA,ST                               CALL0760
+.*                                                                      CALL0770
+.* JOL NEVER USES MORE THAN 3 PARAMETERS,AND THAT ONLY ONCE,SO:-        CALL0780
+           AIF ('&REGMOD' EQ '').VCON1                                  CALL0790
+&NAME    LR    15,&REGMOD    LOAD ROUTINE ADDRESS TO 15                 CALL0800
+           AGO .P1                                                      CALL0810
+.VCON1     ANOP                                                         CALL0820
+&NO      SETA  1                                                        CALL0830
+.MODLOOP AIF   ('&MODULE' EQ '&SPECNM(&NO)').SETR15                     CALL0840
+&NO      SETA  &NO+2                                                    CALL0850
+         AIF   ('&SPECNM(&NO)' EQ '').USEVCON                           CALL0860
+         AGO   .MODLOOP                                                 CALL0870
+.SETR15  ANOP                                                           CALL0880
+&NAME    L     R15,&SPECNM(&NO+1) LOAD ADDRESS OF ROUTINE(¬VCON)        CALL0890
+         AGO   .P1                                                      CALL0900
+.USEVCON ANOP                                                           CALL0910
+&NAME    L     15,=V(&MODULE) LOAD ROUTINE ADDRESS TO 15                CALL0920
+.P1      AIF   ('&PARM' EQ '').BALRNOW                                  CALL0930
+.P50       AIF (N'&PARM GT 1).NOT1P                                     CALL0940
+           AIF ('&LOAD(1)' EQ 'LR').ST1  REGISTER PARM?DO A ST THEN     CALL0950
+         LA    1,&P(1)       LOAD ADDRESS OF PARAMETER 1                CALL0960
+         ST    1,CALLAREA    STORE IN CALLAREA                          CALL0970
+         AGO   .BALR1                                                   CALL0980
+.ST1     ST    &P(1),CALLAREA STORE PARAMETER 1 IN CALLAREA             CALL0990
+.BALR1   LR    1,2           LOAD R1 WITH ADDRESS OF CALLAREA           CALL1000
+.BALRNOW BALR  14,15         AND BRANCH TO ROUTINE ADDRESS              CALL1010
+           AIF (N'&PARM GT 3).ERRXYZ                                    CALL1020
+           MEXIT                                                        CALL1030
+.ERRXYZ    MNOTE 12,'TOO MANY PARAMETERS, 3 ALLOWED'                    CALL1040
+           MEXIT                                                        CALL1050
+.NOT1P     ANOP                                                         CALL1060
+.* HERE WE HAVE 2 OR 3 PARAMETERS.                                      CALL1070
+.* 15 HAS ALREADY BEEN LOADED WITH THE ROUTINE ADDRESS                  CALL1080
+           AIF ('&LOAD(1)' EQ 'LR' AND '&LOAD(2)' EQ 'LR').ST2          CALL1090
+           &LOAD(1) 0,&P(1)  LOAD 0 WITH 1ST PARM                       CALL1100
+           &LOAD(2) 1,&P(2)  LOAD 1 WITH 2ND PARM                       CALL1110
+         STM   0,1,CALLAREA    STORE PARAMETERS IN CALLAREA             CALL1120
+.TPARM3    AIF (N'&PARM EQ 2).BALR1  2 PARMS ONLY? GEN THE BALR         CALL1130
+           AIF ('&LOAD(3)' EQ 'LR').ST3                                 CALL1140
+         LA    0,&P(3)       LOAD 3RD PARAMETER                         CALL1150
+         ST    0,CALLAREA+8  STORE 3RD PARAMETER                        CALL1160
+           AGO .BALR1                                                   CALL1170
+.ST3     ST    &P(3),CALLAREA+8 STORE 3RD PARAMETER                     CALL1180
+           AGO .BALR1                                                   CALL1190
+.ST2     ST    &P(1),CALLAREA  STORE PARAMETER 1                        CALL1200
+         ST    &P(2),CALLAREA+4 STORE PARAMETER 2                       CALL1210
+           AGO .TPARM3                                                  CALL1220
+           MEND                                                         CALL1230

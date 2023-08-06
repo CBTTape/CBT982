@@ -1,0 +1,11 @@
+         MACRO
+&L       IFTSO
+         LCLB  &B
+         LCLC  &C
+         AIF   (T'AGENDETS EQ 'U').NOTCOMP  BR IF NO JOLCOM
+         L     R14,AGENDETS
+         TM    MODEOUT-GENDETS(R14),IMMED TSO/TSS (INTERACTIVE) ?
+         BO    &SYSLIST(1)            GO TO SPECIAL FOR TIME SHARING
+         MEXIT
+.NOTCOMP MNOTE 16,'MUST HAVE ACCESS TO JOLCOM'
+         MEND

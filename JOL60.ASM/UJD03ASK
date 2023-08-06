@@ -1,0 +1,74 @@
+UJD03ASK TITLE 'ROUTINE TO ASK WHETHER TO FREE A DATASET'
+* JOL COPYRIGHT CCS-JOL PTY LTD 1988
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+         SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+* LAST SOURCE UPDATE
+*   CHANGES:-
+*     1.
+         COPY  JOLGLOBL
+         $UJEPARM
+&TYPE    SETC  'SCHED'                                           88036
+         PRINT ON,DATA
+UJECOMM  DSECT
+         USING UJECOMM,R3,R5
+         COPY  UJECOMM
+D03WORK  DSECT                                                    J40B
+         DS    18F                                                J40B
+D03WORKS EQU   *-D03WORK                                          J40B
+         JOLSAVE CSECT=UJD03ASK,                                       .
+               SIZE=D03WORKS,                                     J40B .
+               BASE=R11
+         USING D03WORK,R13                                        J40B
+         CLI   ISTSO,C' '      UNDER TSO/TSS?
+         BE    ASKRET4         NO, SO RETURN A 4
+         MVC   FREEDD,DDDDNAME
+ASKMORE  DS    0H
+         TCLEARQ INPUT                                            J40B
+*        LA    R1,FREEMSG
+*        LA    R0,L'FREEMSG
+*        SVC   93
+         TPUT  FREEMSG,FREEMSGL,ASIS                              J40B
+         LTR   R15,R15                                            J40B
+         BNZ   ASKMORE                                            J40B
+         LA    R1,WORKFREE
+         TGET  (1),1
+         LTR   R15,R15                                            J40B
+         BNZ   ASKMORE                                            J40B
+         OI    WORKFREE,C' '   UPPERCASE
+         CLI   WORKFREE,C'N'   YES
+         BE    ASKRET4
+         CLI   WORKFREE,C'Y'   YES
+         BNE   ASKMORE         TILL WE GET Y OR N
+         MVC   ASKDDN2,DDDDNAME
+         DYNPARM DDNAME=(8,ASKDDNM),VRB=UN,UNALLOC=YES
+*        LTR   R15,R15
+*        BNZ   ASKRET4
+         JOLRETN
+ASKRET4  DS    0H
+         JOLRETN RC=4
+FREEMSG  DC    C'Free file '
+FREEDD   DC    CL8' '
+         DC    C' (answer Y or  N)'                               J40B
+FREEMSGL EQU   *-FREEMSG                                          J40B
+WORKFREE DC    C'       '
+ASKDDNM  DC    H'8'
+ASKDDN2  DC    CL8' '
+         LTORG                                                   88036
+         END

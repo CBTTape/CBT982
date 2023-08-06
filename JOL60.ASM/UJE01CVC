@@ -1,0 +1,284 @@
+UJE01      TITLE 'CATALOG SEARCHING FOR GDGS AT EXECUTION TIME'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1982.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+           TITLE 'UJE60CAT:INITIALISATION ROUTINES'
+           GENSAVE CSECT=UJE60CAT
+* THIS CSECT IS CALLED TO OPEN THE FILES FOR THE CATALOG FIXING ROUTINE
+           SPACE 1
+           LA  R6,RETNAREA
+           USING  DDDSNDET,R6
+          OPEN (INSTRUCT,(UPDAT),PRINT,(OUTPUT))
+           TM  INSTRUCT+48,X'10'
+           BO  FILE1OK
+           WTO 'UJE60-01  NO DD CARD FOR $$INST'
+           ABEND  1
+FILE1OK  EQU   *                                                  75128
+           FIND INSTRUCT,MBRINST,D
+           B   E99INITR(R15)
+E99INITR   B   E99GOTMB
+           B   E99FIND4
+           B   E99FIND8
+MBRINST    DC  CL8'$$INST'
+           SPACE 3
+E99FIND8   WTO  'UJE60-02 I/O ERROR READING DIRECTORY'
+           ABEND  1
+           SPACE 3
+E99FIND4   EQU *
+           WTO  'UJE60-03 CANNOT FIND MEMBER $$INST'
+           ABEND  1
+E99GOTMB   EQU *
+* WE HAVE NOW FOUND THE $$RETN MEMBER OF THE DATA SET
+           MVC INSTRUCT+X'3E',=AL2(2560)                           DASD
+READNEXT   READ DECB,SF,INSTRUCT,MF=E
+           CHECK DECB
+* FIND OUT HOW MUCH DATA WE READ (ALSO USED FOR REWRITING)
+           L  R1,DECB+16          IOB ADDRESS
+           LH R14,INSTRUCT+X'3E'  BLOCKSIZE
+           SH R14,14(R1)  MINUS RESIDUAL COUNT
+           STH R14,INSTRUCT+X'3E'  SET THE BLOCK SIZE FOR RE-WRITE
+*    READ FROM THE INSTRUCT FILE.
+           CLI DDDD1,C'D'      DD-CARD TYPE ENTRY?
+           BNE READNEXT       ONLY WANT DD TYPE ENTRIES
+* NOW FOR DD-CARD TYPE ENTRIES,WE WILL CALL THE CATLG SEARCH
+*    ROUTINE.
+           LA   R1,DDDSNDET
+           CALL UJE01CAT
+           LTR  R15,R15
+           BNZ  READNEXT            DON'T BOTHER TO UPDATE
+           WRITE DECB,SF,INSTRUCT,MF=E
+           CHECK DECB
+           B   READNEXT        GET NEXT RECORD
+EOF        GENRETN RC=4
+           READ DECB,SF,INSTRUCT,RETNAREA,'S',MF=L
+CALLAREA   DS   12F
+DBL        DS   D
+AUJS20     DS   F
+HEX        EQU *-240                                              75311
+           DC  C'0123456789ABCDEF'                                75311
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+INSTRUCT   DCB DDNAME=$$INST,DSORG=PO,MACRF=(R,W),DEVD=DA,EODAD=EOF
+PRINT      DCB DDNAME=$$PRNT,DSORG=PS,DEVD=DA,RECFM=VB,LRECL=126,      *
+               BLKSIZE=136,MACRF=W
+WORK       DS  CL400
+           LTORG
+RETNAREA   DS   CL2560
+         COPY DDDSNDET
+           GENSAVE CSECT=UJE01CAT,BASE=5
+* THIS ROUTINE DOES THE CATALOGUE SEARCHING
+           SPACE
+* ON ENTRY R1 CONTAINS A POINTER TO THE FOLLOWING PARAMETER LIST
+*    1. POINTER TO THE DATA SET IDENTIFIER TO BE SEARCHED
+*    IF R0 =0 ON ENTRY THEN THIS MODULE MUST PRINT AN ERROR MESSAGE
+*          STATING THAT THE NAME BEING SEARCHED FOR WAS NOT PRESENT
+*          OTHER-WISE IT MUST MERELY RETURN THE VALUE FROM REGISTER
+*          15 THAT THE CATALOGUE ROUTINE RETURNED.
+           SPACE 2
+*
+           SPACE
+           L   R3,0(R1)        LOAD ADDRESS OF DD-CARD            74303
+           USING DDDSNDET,R3
+           CLI DDDSNAME,C'&&'                  TEMPORARY DSNAME ?
+           BE    S01RET0
+S01TSYIN EQU   *                                                  75128
+           CLI DDDSNAME,C'*'                   SYSIN ?
+           BE  S01RET0                                            74256
+           CLI DDDSNAME,C'%'                   NO DSNAME SPECIFIED ?
+           BE  S01RET0                                            74256
+           CLC =C'NULLFILE ',DDDSNAME          DUMMY ?
+           BE  S01RET0                                            74256
+*          CLI DDCATLGS,0                      CATALOGUE ALREADY SEARCH
+*                                              -ED ?
+*          BE  S01TGDGA        TEST IF REL GDG NEEDS ALTERING     75311
+*          CLI DDCATLGS,C' '                   CATLG NOT SEARCHED YET ?
+*          BE  DOSEARCH
+* HERE THE CATALOGUE HAS BEEN SEARCHED,BUT RETURNED A NON-ZERO
+*    CODE
+           CLI DDMBR,C'+'                      IS THIS THE 2ND TIME
+*                                              WE WERE CALLED FOR A
+*                                              + GDG ?
+           BNE S01TGDGA        NO,  TEST IF WE HAVE TO ALTER GDG  75311
+           MVI DDMBR,C' '
+           B  RETND8                           PRINT ERROR MESSAGE
+RETNOLD    EQU *
+           SR  R15,R15
+           IC  R15,DDCATLGS
+S01RET15   GENRETN RC=0                                           74256
+S01RET0    GENRETN RC=0                                           74303
+S01RET16   GENRETN RC=16                                          74256
+* NOW IF THIS IS A GDG, WE MUST ALTER THE DSNAME TO LOOK LIKE     75311
+*    A REAL GDG                                                   75311
+* IN FACT, THE GENERATE MODULE WILL FIX THIS FOR US, AS LONG      75311
+*    AS WE REMOVE THE '(' FROM THE 'DDMBR' FIELD.                 75311
+S01TGDGA   CLI DDTYPE,DDGDG    IS IT A GDG OF SOME DESCRIPTION ?  75311
+           BL  S01RET0         NO, -> GO HOME                     75311
+           MVI DDMBR,C' '      CLEAR INDIC FOR GENERATOR          75311
+           B   S01RET0
+           SPACE 3
+DOSEARCH   EQU *
+S01NORTN   SR  R8,R8
+           CLI DDMBR,C'('      IS IT A GDG ?
+           BNE S01RET0         GO BACK
+*                                                                 75311
+* NOW WE HAVE A GDG AND IF IT IS A + GDG, WE WILL CATLG           75311
+*  SEARCH FOR 0, THEN WE FIX THE GENERATION NUMBER
+* IF IT IS NEGATIVE , OR(0),WE WILL CATALOG SEARCH IN THE USUAL   75311
+*  WAY                                                            75311
+*                                                                 75311
+           LA  R1,DDDSNAME                     SEARCH AND SEE IF WE ARE
+*                                              LOOKING FOR A '+' GEN
+           LA  R15,L'DDDSNAME-1(R1)                               75311
+           LA  R14,1
+FINDEND    CLI 0(R1),C' '      GOT END OF DSN ?                   75311
+           BE  GOTEND          YES                                75311
+           BXLE R1,R14,FINDEND LOOK FOR END                       75311
+GOTEND     ST  R1,AUJS20       USE AS A WORK AREA ***             75311
+           B   FINDIT
+           MVC 0(3,R1),=C'(0)'                                    75311
+           CLI DDMBR+1,C'-'    -VE GENERATION ?                   75311
+           BNE S01TABS         NO, TEST IF ABSOLUTE GEN           75311
+           MVC 1(5,R1),DDMBR+1                                    75311
+           MVI 6(R1),C')'                                         75311
+           B   FINDIT                                             75311
+S01TABS    EQU *                                                  75311
+* NOW WE'D BETTER GET IF IT IS AN ABSOLUTE GENERATION             75311
+           CLI DDTYPE,DDGDGABS NO, GO SEARCH AS IS                75311
+           BNE FINDIT                                             75311
+           MVC 0(9,R1),=C'.G0000V00'                              75311
+           MVC 2(4,R1),DDMBR+2 SHIFT IN REAL NUMBER               75311
+FINDIT     EQU *
+           SPACE 3
+* NOW SET UP THE EQUIVALENT OF 'CAMLST' MACRO CAUSE WE CAN'T USE IT
+*    AS IT USES ADDRESS CONSTANTS AND I WANT LOAD ADDRESSES
+           XC  CALLAREA(20),CALLAREA    CLEAR PARMAREA
+           MVI  CALLAREA,68
+           B   S01NOTQU        SEARCH CATLG AS USUAL
+           SPACE
+S01GEQUO   EQU *
+           MVI 0(R14),C' '
+           MVC DDDSNAME(L'DDDSNAME-1),DDDSNAME+1
+S01NOTQU   EQU *
+           LA R1,DDDSNAME
+           ST R1,CALLAREA+4
+           LA   R1,WORK+200             GET WORK AND ON DOUBLE WD 75311
+           SRL  R1,3
+           SLL  R1,3
+           ST R1,CALLAREA+12
+           LOCATE CALLAREA
+S01STR15   EQU *                                                  74303
+           STC R15,DDCATLGS
+           SPACE
+S01TRET1   LTR R15,R15         DID CATALOG FAIL ?                 75128
+           BZ  RETND0          OK,IT DIDN'T SO GET VOLS ETC
+           B   RETND4
+           CH  R15,=H'8'      CATLG SEARCH FAIL??                 75128
+           BNE RETNTAB(R15)                                       75128
+*TWO ERROR MESSAGES CAME, UJV08-01 AS WELL, THIS ONE CANCELLED
+RETNTAB    B   RETND0
+           B   RETND4
+           B   RETND8
+           B   RETND12
+           B   RETND16
+           B   RETND20
+           B   RETND24
+           B   RETND28
+           B   RETND32
+           TITLE 'CATLG SEARCH RETURNED 0'
+RETND0     EQU *
+           LA  R10,WORK+200             GET WORK AND ON DOUBLE WD 75311
+           SRL  R10,3
+           SLL  R10,3
+           SPACE 2
+           USING VOLINFO,R10
+           SPACE 2
+* NOW WERE WE AFTER A '+' GENERATION ?
+           CLI DDMBR+1,C'+'                                       75311
+           BNE TNOVOLS                 NO, FILL IN DSNAME, RETURN
+* NOW COPY IN THE CORRECT GENERATION NUMBER                       75311
+           L   R1,AUJS20       LOAD DSN POINT WHERE WE COPIED (0) 75311
+           PACK DBL(4),0(R1)   PACK THE GENERATION NUMBER RETND   75311
+           PACK DBL+4(4),DDMBR+2 PACK THE + BIT                   75311
+           AP  DBL(4),DBL+4(4) ADD THEM BOTH                      75311
+* IF > 9999 WILL END UP AS 0000, SO OK                            75311
+           UNPK 0(4,R1),DBL(4)                                    75311
+           OI  3(R1),C'0'                                         75311
+* THERE, GENERATION NUMBER FIXED                                  75311
+           SPACE 1                                                75311
+TNOVOLS    EQU *
+           GENRETN RC=0                                           74256
+S01UNITS   DC  A(S01UNTAB,5,S01UNTBE-5)                           74303
+S01UNTAB   EQU  *
+           COPY UNITABLE
+S01UNTBE   EQU *                                                  74303
+           GENRETN RC=0                                           74256
+           TITLE 'CATLG SEARCH RETURNED 4'
+RETND4     EQU *
+RETND8     EQU *                                                  75311
+RETND12    EQU *                                                  75
+RETND16    EQU *                                                  75
+RETND20    EQU *                                                  75
+RETND24    EQU *                                                  75
+RETND28    EQU *                                                  75
+RETND32    EQU *                                                  75
+RETND36    EQU *                                                  75
+         GENRETN    RC=8
+         SPACE 3                                                  75128
+           LTORG
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+VOLINFO    DSECT
+NOVOLS     DS  H
+CATDEV     DS  XL4
+CATVOL     DS  CL6
+CATLABEL   DS  H
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+         END

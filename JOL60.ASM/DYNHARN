@@ -1,0 +1,623 @@
+           TITLE 'UJG00MN:GENERATE IBM JOB CONTROL LANGUAGE'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974      74303
+* COPYRIGHT CCS 1975,1976
+* COPYRIGHT CCS 1980
+*
+* TEST HARNESS FOR DYNAMIC ALLOCATION
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         EJECT
+         COPY   JOLCOM
+         PRINT DATA                                               75128
+         TITLE 'GENERATE MAIN LINE'
+           JOLSAVE CSECT=UJG00MN,BASE=12                          74303
+           USING JOLCOM,R2
+           USING DDDSNDET,R8
+           MVC STMT,=CL4'0001'
+* NOW SET'NEST' TO ZERO SO LATER WE KNOW IF WE HAVE GENERATED ANY OS
+*    STEPS.UJG02PGM SETS IT TO 1 IF IT HAS BEEN CALLED AT ALL.
+           MVI NEST,0
+           SPACE
+           L  R8,AVTBLE
+G00TDD     CLI DDDD1,C'D'      DD CARD?
+           BNE G00NOTDD
+           CLI DDDDNAME,C'%'   INSTRUCTION ?
+           BNE G00REALD        NO IT'S A REAL DD CARD AND MUST BE OUTP
+*                              -UT
+*NOW WE HAVE FOOUND A DISPOSITION INSTRUCTION
+*    EG CATLG,DELETE ETC
+* THIS GETS VERY COMPLEX ABOUT THIS AREA BECAUSE IF WE HAD THE
+*    SITUATION
+*    1.    RUN  A  (USES SAY DISK01)
+*    2.    IF B THEN
+*          CATLG X (ON DISK01)
+* WE DON'T WANT TO HAVE 2 OS STEPS IF WE CAN AVOID IT.
+           SPACE
+* THE FOLLOWING PIECES OF VITAL INFORMATION MUST BE TAKEN
+*    INTO ACCOUNT.
+* 1.
+*    JOL IS MORE THAN HAPPY TO PLAY WITH JOBQ,PDQ ETC TO KEEP AND
+*    CATLG DATA-SETS
+           SPACE
+* 2. A DELETE OR SCRATCH MUST HAVE THE PACK MOUNTED
+*    A TAPE NEED NOT BE MOUNTED FOR A SCRATCH,BECAUSE NO 'SCRATCH'
+*          IS ACTUALLY ISSUED.
+           SPACE
+* 3.
+*    A KEEP OR CATLG NEED ONLY HAVE A DD-CARD POINTING TO THE
+*    VOLUME IF THE VOLUME IS NO LONGER RETAINED,I.E OS MAY UNLOAD
+*    THE VOLUME IF IT SO DESIRES
+***** NOTE THIS MAY BE CHANGED LATER *****
+           SPACE
+* 4.
+*    PERMANENTLY  MOUNTED VOLUMES DO NOT COME INTO THIS CATEFORY.
+           SPACE
+* 5.
+*    UNCATLG NEVER NEEDS TO HAVE THE VOLUME MOUNTED AND
+*    IS REALLY (AS FAR AS THIS DISCUSSION IS CONCERNED) A NOP.
+           SPACE
+* 6.
+*    AS MENTIONED EARLIER,JOL CAN DYNAMICALLY PERFORM MAY ACTIONS.
+*    IF IT CANNOT THOUGH (SAY PACK NOT UP),IT MUST BE ABLE TO
+*    HAVE THE PACK(S) MOUNTED THROUGH JCL,AND THEREFORE EXTRA STEPS
+*    ARE INSERTED WHICH MAY BE BY-PASSED BY JOL IN A SUPER-HI-SPEED
+*    SUPER-DUPER JOB STEP LEAP
+* WOW: LETS GO
+           SPACE 3
+* IF UNCATLG,IGNORE
+           CLI DDDDNAME+1,C'U' UNCATALOG ?
+           BE  G00OLDST        GOOD OH,DON'T GENERATE A NEW STEP
+           SPACE
+* IS IT A KEEP OR CATLG,BUT THE VOLUME STILL MARKED RETAIN ?
+           CLI DDDDNAME+1,C'K' KEEP?
+           BE  G00OLDST
+*          BE  G00KEEP1
+           CLI DDDDNAME+1,C'C' CATALOG  ?
+           BE  G00OLDST
+*          BE  G00KEEP1
+* WELL,IT CAN ONLY BE A 'DELETE' OR A 'SCRATCH'
+* MUST OUTPUT A STEP IF NOT A PERMANENT VOLUME
+* **** BUT IF THIS IS THE VERY FIRST STEP, WE WILL OUTPUT A
+* STEP SO THAT WE DON'T GET THE SITUATION THAT A DS IS SCRATCHED
+* IN THE SAME STEP THAT CREATES IT....
+         MVI   DDDISP+1,C'D'  DELETE                     JOL30112  DASD
+         CLI   NEST,0         ANY STEPS CREATED YET ?    JOL30101 76200
+         BE    G00NEWST                                           75311
+*                                                                 76200
+* FOR DELETE GDGALL, WE WILL LET OS DO IT. ALL WE HAVE TO DO IS   76200
+*  POP OUT A STEP FOR THE MONITOR TO EXECUTE, AND PUT A DISP OF   76200
+*  OLD,DELETE ON THE JCL.                                         76200
+*                                                                76200
+         CLI   DDCATLGS,104   IS THIS A GDG ALL?         JOL30112 76200
+         BNE   G00NGDGA       NOPE                       JOL30112 76200
+         MVI   DDDISP,X'10'   OLD                        JOL30112 76200
+         MVI   DDDISP+1,C'D'  DELETE                     JOL30112 76200
+         B     G00NEWST       GO CREATE SPECIAL STEP     JOL30112 76200
+G00NGDGA EQU   *                                         JOL30112 76200
+         SPACE 2                                         JOL30112 76200
+           TM  DDUNITYP,B'01000000' PERM
+           BO  G00OLDST        YES,NO STEP REQUIRED
+           TM  DDUNITYP,B'10000000' IS IT A TAPE ?                74303
+           BZ  G00OLDST             YES,NO NEW NEW STEP REQ'D     74303
+* NOW WE SHALL SCAN THE UCBS TO FIND WHICH VOLS ARE UP     FIX-X 76200
+* PERMANENTLY.                                             FIX-X 76200
+         L     R15,16         GET CVT ADDRESS              FIX-X 76200
+         USING CVT,R15                                     FIX-X 76200
+         L     R14,CVTILK2    GET UCB LOOPUP TABLE ADDR    FIX-X 76200
+         CLC   0(2,R14),ZERO   SHOULD WE SKIP THIS ENTRY?  FIX-X 76200
+         BE    G00BUMPU       YES.                         FIX-X 76200
+G00TUCB  CLC   0(2,R14),=X'FFFF'   LAST ENTRY?             FIX-X 76200
+         BE    G00NEWST       YES, GO CREATE STEP FOR DELETFIX-X 76200
+* NOW LOOK TO SEE IF THIS IS A DIRECT ACCESS DEVICE        FIX-X 76200
+         LH    R1,0(R14)      GET UCB ADDRESS ACTUAL       FIX-X 76200
+         USING UCBS,R1                                     FIX-X 76200
+         CLI   UCBTBYT3,UCB3DACC   DIRECT ACCESS?          FIX-X 76200
+         BNE   G00BUMPU      BUMP TO NEXT ADDRESS          FIX-X 76200
+         TM    UCBSTAT,UCBPRES     PERMANENTLY MOUNTED?    FIX-X 76200
+         BNO   G00BUMPU   NO,SKIP TO NEXT ENTRY            FIX-X 76200
+         CLC   UCBVOLI,DDVOLUME    VOLS EQUAL??            FIX-X 76200
+         BNE   G00BUMPU                                    FIX-X 76200
+* HERE WE HAVE A PERMANENTLY MOUNTED VOLUME                FIX-X 76200
+         B     G00OLDST       OLD STEP ,, HURRAY....       FIX-X 76200
+G00BUMPU LA    R14,2(R14)                                  FIX-X 76200
+         B     G00TUCB                                     FIX-X 76200
+      DROP R15,R1
+* SUCH A BORE,OUTPUT A STEP OLD FRUIT.
+G00NEWST   EQU  *
+***********
+*
+* IT IS POSSIBLE,GOOD AND PROPER TO SORT ANY FOLLOWING
+* DISPOSITION INSTRUCTIONS INTO PACK ORDER
+*
+***********
+* LATER
+      SPACE 3
+           MVC STMT,DDDDNAME+2  DISP STMT NUMBER
+           OC STMT,=C'0000'
+          $CALL UJG02PGM,DDDSNDET                                74303
+         ZAP   WORKDS,=P'0'      CLEAR WORK FIELD  76200
+G00OPDSP   EQU *
+* IF UNCATLG, KEEP OR CATLG IGNORE                          76200
+          CLI DDDDNAME+1,C'U' UNCATALOG ?                   76200
+          BE  G00OBYPS                                      76200
+          CLI DDDDNAME+1,C'K' KEEP?                         76200
+          BE  G00OBYPS                                      76200
+          CLI DDDDNAME+1,C'C' CATALOG  ?                    76200
+          BE  G00OBYPS                                      76200
+         AP    WORKDS,=P'1'     UPDATE WORK COUNTER         76200
+         OI    WORKDS+1,X'0F'   CHANGE SIGN TO SOMETHING GOO76200
+         UNPK  DDDDNAME+6(2),WORKDS APPEND 2 BYTES TO DDNAME76200
+          $CALL UJD03DS1,DDDSNDET                                 74303
+* NOW IF PERCHANCE THE NEXT ITEM IN THE TABLE IN ANOTHER
+*     DISPOSITION INSTRUCTION,AND IT USES THE SAME VOLUMES
+*     AS THIS ONE,THERE APPEARS TO BE VERY LITTLE POINT IN
+*     GENERATING AN EXTRA OS JOB STEP,SO WE WON'T OF COURSE
+G00OBYPS   LR R1,R8            SAVE POINTER
+           AH R8,0(R8)         STEP ON
+           CLC 0(2,R8),=H'0'   END STACK
+           BE G00NG001         NO GOOD FOR THIS PURPOSE
+           CLI DDDD1,C'D'      DD-CARD ENTRY ?
+           BNE G00NG001        NO GOOD EITHER
+           CLI DDVOLUME,C' '   VOL BLANK ?
+           BE  G00NG001        NO GOOD EITHER
+           CLC DDVOLUME,DDVOLUME-DDDSNDET(R1) VOLS EQUAL ?
+           BNE G00NG001        WELL THATS NO GOOD EITHER
+* ALL LOOKS WELL,OUTPUT THE REQUIRED INFORMATION
+           B   G00OPDSP
+G00NG001   LR  R8,R1
+           B   G00OLDST        STEP ON TO NEXT ITEM.
+           SPACE 3
+*        PLEASE NOTE THAT "G00KEEP1"  CODE IS NO LONGER
+*        BRANCHED TO AS OF 10-29-76
+*        IT WAS REMOVED TO STOP STEPS BEING GENERATED
+*        FOR DELETS CATLG AND UNCATLOGS
+G00KEEP1   EQU *
+* NOW WE DON'T REALLY WANT TO GENERATE A NEW STEP UNLESS THE VOLUME
+*    HAS TO COME DOWN.
+* THE VOLUME DOESN'T COME DOWN IF IT IS A PERMANENT OR PREFERRED
+*    TO STAY MOUNTED VOLUME
+           TM  DDUNITYP,B'01100000'
+           BM  G00OLDST        GOOD,NO NEW JCL REQUIRED.
+           BO  G00OLDST
+* ALSO,IF IT IS A TAPE THERE IS NOT NEED TO GENERATE A NEW STEP   74303
+           TM  DDUNITYP,B'10000000' TAPE ?                        74303
+           BZ  G00OLDST             YEP                           74303
+           CLI DDDISP+1,C'L'   THIS LAST USE OF DATA SET IN JOB?
+           BNE G00OLDST        YES,SO DON'T BOTHER CREATING A NEW
+*                              OS STEP
+          OI  DDUSE,X'02'     TURN ON DEFERRED MOUNT FOR KEEP/CATLG
+           B   G00NEWST        CREATE A NEW STEP
+G00REALD   EQU  *
+* JUST BEFORE OUTPUTTING THE DD-CARD WE MUST SEE IF THE VOLUME
+*     SPECIFIED FOR A REAL DATA SET IS A VREF OR A BLANK,AND
+*     IF SO WE MUST REFER TO AN EARLIER DD-CARD SO OS WON'T JCL
+*     US OFF AT STEP INITIATION,OR WORSE,IT MAY SEARCH THE
+*     CATALOGUE TO FIND IT AND BECAUSE THE DSNAME COULD BE THE SAME
+*     AS A CATALOGUED ONE,THE WRONG VOLUME COULD BE USED.
+* NOW IF THIS IS A SYSOUT OR SYSIN DATA SET,IGNORE IT HERE
+         CLI   DDTYPE,25      REAL DATA SET?                      75128
+         BL    G00VOLOK       NO,FORGET IT FOR NOW                75128
+* A REAL DATA APPEARS TO EXIST
+           CLI DDVOLUME,C'*'   VOLREF ?
+           BE  G00VREF1        YES,GO CHECK IF IN THIS OS STEP
+           CLI DDVOLUME,C' '   PASSED OR NEW,CHECK IS DSNAME
+*                              ALREADY USED IN THIS STEP AND
+*                              IF SO/GIVE IT A VREF
+           BNE G00VOLOK        VOL ¬'' SO OUTPUT THE CONFOUNDED
+*                              THING
+           SPACE 3
+G00VREF1   EQU *
+           LA R15,DDDSNDET     SORRY,COULD HAVE USED A LR,BUT THIS IS
+*                              MORE FLEXIBLE
+G00BACK1   EQU *
+           SH R15,2(R15)       STEP BACKWARDS ONE RECORD
+           CLC 2(2,R15),=H'0'  GONE BACK TO START ?
+           BE  G00VOLOK        NO VOL REF THEN OBVIOUSLY.
+           CLI DDDD1-DDDSNDET(R15),C'E' STEP START ?
+           BE  G00VOLOK        DIDN'T FIND A DDCARD THEN TO MATCH.
+*                              SO MERELY GENERATE THE DDCARD.
+           CLI DDDD1-DDDSNDET(R15),C'D' DD-CARD ?
+           BNE G00BACK1        GO BACK ANOTHER DD-CARD
+* RIGHT 0H,A DD CARD IN THIS VERY JCL STEP EXISTS.
+           CLI DDVOLUME,C'*'
+           BE  G00VREF2
+* BLANK VOLUME,CHECK IF DSN'S EQUAL
+* BUT WE MUST ALSO CHECK THAT THE DSNAMES AREN'T EQUAL
+* AND ****** BLANK ******
+         IFNULL  DDDSNAME,G00BACK1
+         CLC =C'*DUMMY',DDDSNAME                                  75311
+         BE  G00BACK1                                             75311
+         CLC   DDDDNAME-DDDSNDET(,R15),BLANKS DDNAME=''  JOL30120 76200
+         BE    G00BACK1                                           75311
+           CLC DDDSNAME,DDDSNAME-DDDSNDET(R15)
+           BNE G00BACK1
+         SPACE 2
+         CLI   DDDSNAME,C'%'  IS THIS A NODSN IDENTIFIER?JOL30069 76200
+         BE    G00BACK1       YES, SO ASSUME DIFF  D/S   JOL30069 76200
+         CLI   DDMBR,C'('     IS THIS A GDG REL / ABS ?  JOL30069 76200
+         BNE   G00MAKVR       NO,AND DSN'S EQUAL,SO MAKE=JOL30069 76200
+         CLI   DDMBR-DDDSNDET(R15),C'(' 2ND DSID GDG?    JOL30069 76200
+         BNE   G00BACK1       NO,MUST BE GDGALL,NO VOLREFJOL30069 76200
+* HERE WE HAVE 2 DSNAMES THE SAME,AND BOTH GDGS.         JOL30069 76200
+**TEST IF GDG NUMBERS ARE THE SAME THEN.                 JOL30069 76200
+         SPACE 1                                         JOL30069 76200
+         CLC   DDMBR(6),DDMBR-DDDSNDET(R15) GDG NUMBERS=?JOL30069 76200
+         BNE   G00BACK1                     NO -> ...    JOL30069 76200
+         SPACE 2                                         JOL30069 76200
+G00MAKVR   EQU *
+           CLEAR DDVOLUME
+           MVC DDVOLUME(3),=C'**.' SET DDNAME VREF INDICATOR
+           MVC DDVOLUME+3(8),DDDDNAME-DDDSNDET(R15) PUT IN VREFD NAME
+           CLC DDDSNAME,DDDSNAME-DDDSNDET(R15) DSNS=        C0034-74191
+           BNE G00VOLOK                                     C0034- DASD
+           CLC =C'IS',DDDSORG   CHECK FOR ISAM  (ABEND S034)       DASD
+           BE  G00VOLOK         OK  DONT CHANGE TO  SHR,PASS       DASD
+* THIS WILL LEAVE THE 2ND AND 3RD (PRIME & OVFLOW) AT NEW,PASS     DASD
+         CLI   DDDISP,X'C0'    DISP=SHR AND LABEL¬=IN ?            SOCO
+         BE    G00VOLOK                                            SOCO
+* THIS WILL LEAVE DISP=SHR & LABEL¬=IN ALONE                       SOCO
+         NI    DDDISP,X'81'   CHANGE DISP TO SHR (LEAVE  JOL30044 76200
+*                             MOD AND UNITAFF ON THOUGH) JOL30044 76200
+           B  G00VOLOK
+           SPACE 1
+G00VREF2   EQU *
+           CLC DDVOLUME+1(L'DDDSNAME-3),DDDSNAME-DDDSNDET(R15)
+           BE  G00MAKVR                   YES,FIX VREF
+           B   G00BACK1        NO,CONTINUE CHECKING
+G00VOLOK   EQU *
+          $CALL UJD03DS1,DDDSNDET                                 74303
+           B  G00STEP
+G00NOTDD   LR  R1,R8
+           USING PGMDETS,R1
+           CLI DDDD1,C'E'      RUN STATEMENT ?
+          BNE G00TPARM    NO SONO NEW OS STEP
+         IFNULL PGMNODDS,G00STEP   DO WE NEED A NEW OS STEP ? NO->75128
+           MVC STMT,PGMESTMT
+           OC STMT,=C'0000'
+           DROP R1
+          $CALL UJG02PGM,DDDSNDET                                74303
+          B   G00STEP
+G00TPARM  EQU *
+          CLI DDDD1,C'I'    INSTRUCTION?
+          BNE G00STEP
+         CLC   =C'OPCNTL ',ICOMMAND-ILENGTH(R8)   OPCNTL NOW ?    75128
+         BE    G00OPCNT  YES                                      75128
+          CLC =C'PARM',ICOMMAND-ILENGTH(R8)
+          BNE G00STEP
+          MVC DBL(2),ITEXT-ILENGTH(R8)
+          LH  R14,DBL
+          MVC WORK(80),BLANKS
+         MVI #WORK+1,80
+          BCTR R14,0
+          MVC WORK(10),=C'//* PARM='''                             DASD
+          EX  R14,G00PRMEX
+          LA R15,WORK+10   POINT TO START OF PARM FIELD IN #WORK   DASD
+          AR R15,R14       ADD PARM LENGTH TO GET END ADDRESS      DASD
+          MVI 1(R15),C'''' ADD ENDING QUOTE                        DASD
+           OPJCL #WORK                                            74303
+          MVC  DBL(2),ITEXT-ILENGTH(R8)                            DASD
+          LH   R14,DBL                                             DASD
+          SH   R14,=H'70'   IS PARM FIELD GREATER THAN 70 BYTES ?  DASD
+          BM   G00STEP      NOPE                                   DASD
+          MVC  WORK(80),BLANKS                                     DASD
+          MVI  #WORK+1,80     MAKE #WORK 80 BYTES LONG             DASD
+          MVC  WORK(3),=C'//* PARM=''' USE SAME LITERAL AS ABOVE   DASD
+          EX   R14,G00PRME2   MOVE THE REST                        DASD
+          OPJCL #WORK         OUTPUT THIS SUFF                     DASD
+          B   G00STEP
+G00OPCNT MVC   DBL(2),ITEXT-ILENGTH(R8) SHIFT LENGTH SO NO 0C6    75128
+         LH    R14,DBL             LOAD LENGTH OF RECORD          75128
+         MVC   WORK(80),BLANKS     BLANK FILL WORK                75128
+           STH R14,#WORK       SET LENGTH CORRECTLY               75311
+         BCTR  R14,0               -1 FOR EXECUTE                 75128
+         EX    R14,G00MVOP         SHIFT 'OPCNTL'                 75128
+         OPJCL #WORK               OUTPUT RECORD                  75128
+         MVI   DDDD1,C'%'          DELETE INSTRUCTION
+         B     G00STEP             ON TO LOOP DOWN                75128
+         SPACE 3
+G00MVOP  MVC   WORK(*-*),ITEXT+2-ILENGTH(R8)                      75128
+G00PRMEX  MVC WORK+10(*-*),ITEXT+2-ILENGTH(R8)
+G00PRME2  MVC WORK+10(*-*),WORK+80                                 DASD
+G00STEP    EQU  *
+G00OLDST   EQU  *
+           AH  R8,0(R8)        STEP ON
+           CLC 0(2,R8),=H'0'
+           BNE G00TDD
+           CLI NEST,0          PRODUCED ANY OS STEPS YET ?
+           BNE G00RETNO        YES,SO RETURN PLEASANTLY
+           SR  R8,R8
+          $CALL UJG02PGM,DDDSNDET                                74303
+G00RETNO   EQU *
+           LA  R8,5                                               75311
+G00OPLST   OPJCL '//* END OF JOB-END OF JOB-END OF JOB'           75311
+           BCT R8,G00OPLST                                        75311
+         OPJCL '//'                                               75128
+           CLI EOFSYSIN,C' '  IS THIS THE LAST JOB                76200
+           BNE G00NOEOF       NOPE                                76200
+           OPJCL '/*EOF'      THIS GUY IS FOR HASP                76200
+G00NOEOF   EQU   *
+           $LINK UJG26DEQ      DEQUEUE INTERNAL READER            75311
+           JOLRETN
+           CNOP 0,8
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+         LTORG
+         TITLE 'CREATE AND GENERATE EXEC MONITOR JCL'             75128
+           JOLSAVE CSECT=UJG02PGM
+           L  R3,0(R1)         LOAD PARM                          74303
+* THIS CSECT MERELY OUTPUTS INSTRUCTIONS SUFFICENT TO EXECUTE     75128
+*    OUR LITTLE JOL MONITOR PROGRAM.
+* BY THIS STAGE,THE 'JCL' HELD IN CORE WILL HAVE BEEN CPTIMISED
+*    HOPEFULLY TO A FAIRLY HIGH DEGREE AND LOW AND BEHOLD ALL WE
+*    HAVE TO TO HERE IS POP OUT A FEW JCL INSTRUCTIONS THAT
+*    ARE SUFFICIENT TO CAUSE THE MONITOR TO RUN
+           USING JOLCOM,R2
+           USING PGMDETS,R3
+           L   R1,AJOLGEN
+           USING GENDETS,R1
+         TM    PARMPRNT,X'04' TOLD NOT TO PRINT COMMENTS ?        75128
+         BO    G02XC                                              75128
+         DROP R1
+          OPJCL '//*'
+          OPJCL '//***************'
+          OPJCL '//*'
+G02XC      MVC WORK(80),BLANKS      CLEAR A BIT              75049
+           LA R10,WORK
+         CONCAT '//$$         EXEC PGM='                          75128
+          L   R1,AJOLGEN
+          USING GENDETS,R1
+         MVC   0(8,R10),SCHED ** CONCAT MACRO DOESN'T WORK WHEN   75128
+         DROP  R1
+         LA    R10,8(R10)     ** USING MACRO GENERATED NAMES      75128
+           SPACE
+           CLI DDDD1,C'D'      UNCATLG ETC ??
+           BNE G02ISPG
+           MVC WORK+4(6),DDDDNAME+2
+         CONCAT ',REGION=40K DISPOSITION PROCESSING'        FIX-X 76200
+           B G02OPPGM
+G02ISPG    MVC WORK+2(8),PGMSTEP PUT IN STEP NAME                 75311
+           LTR R8,R8            FIRST STEP ??
+           BNZ G02TMESZ                                           74256
+           MVC WORK+2(8),BLANKS                                   75311
+           LA  R1,WORK
+           SR  R10,R1
+           STH R10,#WORK
+         OPJCL #WORK
+         B     G02NCOM9
+G02TMESZ   EQU *                                                  74256
+         L     R1,AGENDETS                                  FIX-X 76200
+         USING GENDETS,R1                                   FIX-X 76200
+         CLC   =C'MFT',DEFSYS                               FIX-X 76200
+         BE    G02NVS                                       FIX-X 76200
+         CLC   =C'MVT',DEFSYS                               FIX-X 76200
+         BNE   G02VS                                        FIX-X 76200
+G02NVS   CLEAR PGMPERFO,PGMNODYN,PGMADDR                    FIX-X 76200
+G02VS    EQU   *                                            FIX-X 76200
+         IFNULL PGMTIME1,PGMSIZE,PGMPERFO,PGMNODYN,         FIX-X 76200*
+               PGMADDR,PGMACCT,G02NACCT                     FIX-X 76200
+           IFNULL  PGMTIME1,G02NTIME                       C-0036 74191
+           CONCAT ',TIME=('                                C-0036 74191
+           CLI PGMTIMEQ,C'S'   SECONDS                     C-0036 74191
+           BNE G02NSECS                                    C-0036 74191
+* CONVERT TO MINS, SECS IF SECONDS > 60                           75128
+         TNUM  PGMTIME1                                           75128
+         C   R1,=F'60'      TIME <60 ?                          75128
+         BNH   G02CONS        YES, NO CONVERSION NECESSARY        75128
+         SR    R0,R0          CLEAR BOTTOM REGISTER               75128
+         D     R0,=F'60'      DO THE DIVIDE                       75128
+         CVD   R0,DBL         CONVERT SECONDS TO CORRECT NUMBER   75128
+           CLEAR PGMTIME1                                         75311
+           UNPK PGMTIME1(2),DBL UNPACK 2 CHARACTERS               75311
+           OI  PGMTIME1+1,C'0' MAKE EBCIDIC                       75311
+         STH   R1,CARDCNT     STORE MINUTES IN A HALF-WORD LOCN   75128
+         CONCAT CARDCNT       CONCAT MINUTES OF CPU TIME          75128
+G02CONS  EQU   *                                                  75128
+           CONCAT ','                                      C-0036 74191
+G02NSECS   CONCAT PGMTIME1                                        74191
+           CLI 0(R10),C' '     DROP END BLANKS NOW         C-0036 74256
+           BNE *+8                                         C-0036 74256
+           BCT R10,*-8                                     C-0036 74256
+           LA  R10,1(R10)     SKIP OVER LAST DIGIT    75049
+            CONCAT ')'          THERE TIME DONE            C-0036 75049
+*                                                          C-0036 7419
+G02NTIME   IFNULL PGMSIZE,G02NSIZE SIZE ?                  C-0036 7419
+           CONCAT ',REGION='                               C-0036 74191
+           CONCAT PGMSIZE                                  C-0036 74191
+           CLI 0(R10),C' '     DROP END BLANKS NOW         C-0036 74256
+           BNE *+8                                         C-0036 74256
+           BCT R10,*-8                                     C-0036 74256
+           LA R10,1(R10)       RESET R10 PROPERLY FOR NEXT CONCAT75049
+           CONCAT PGMSIZEQ     CONCAT 'K'                  C-0036 75049
+G02NSIZE   EQU *                                           C-0036 74191
+         IFNULL PGMPERFO,G02NPERF                                 75128
+*        CONCAT ',PERFORM=',PGMPERFO                       C77263  DASD
+         MVC   0(9,R10),=CL9',PERFORM=' INSERT THE PERFORMANCE   C DASD
+         LH    R1,PGMPERFO              GROUP SUBPARAMETER ON    C DASD
+         CVD   R1,DBL                   THE EXEC JCL CARD FOR    C DASD
+         UNPK  9(3,R10),DBL             THE SCHEDULER            C DASD
+         OI    11(R10),C'0'                                      C DASD
+         LA    R10,12(R10)              INCR THE BASE REG        C DASD
+G02NPERF IFNULL PGMNODYN,G02NDYN                           C77263  DASD
+         MVC   0(10,R10),=CL10',DYNAMNBR=' INSERT THE DYNAMNBR   C DASD
+         LH    R1,PGMNODYN                 SUBPARAMETER ON       C DASD
+         CVD   R1,DBL                      THE EXEC JCL CARD FOR C DASD
+         UNPK  10(4,R10),DBL               SCHEDULER             C DASD
+         OI    13(R10),C'0'                                      C DASD
+         LA    R10,14(R10)                 INCR THE BASE REG     C DASD
+*        CONCAT ',DYNAMNBR=',PGMNODYN                              DASD
+G02NDYN  EQU   *                                                  75128
+           IFNULL PGMADDR,G02NADDR VIRT | REAL CODED ?            75311
+           CONCAT ',ADDRSPC=',PGMADDR                             75311
+G02NADDR   EQU *                                                  75311
+         IFNULL PGMACCT,G02NACCT                                  76200
+         CONCAT ',ACCT=',PGMACCT                                  76200
+G02NACCT EQU   *                                                  76200
+           MVC 0(3,R10),BLANKS                                    74303
+           LA R1,WORK          SET                         C-0036 74191
+           SR R10,R1           *STRING                     C-0036 74191
+           STH R10,#WORK       **LENGTH                    C-0036 74191
+           OPJCL #WORK                               C-0036 74303 74191
+           MVC  WORK(80),BLANKS                            C-0036 74256
+           LA R10,WORK         RESET R10 FOR 'CONCAT' MACR C-0036 74191
+           CONCAT '//* '       CONCAT COMMENT STARTER      C-0036 74191
+         LA    R10,10(R10)    GIVE SOME MORE BLANKS               75128
+G02COMNT   EQU *                                           C-0036 74191
+G02LINE1  EQU  *
+         CONCAT ' '           IF NO REGION,ETC JCL FLUSH-ER FIX-X 76200
+         CONCAT 'DECLARE STMT=',PGMSTMT,' PGMID=',PGMID,          75128*
+               ' PROGRAM=',PGM,' RUN STMT=',PGMESTMT              75128
+           SPACE 2
+G02OPPGM   EQU  *
+           LA  R1,WORK
+           SR  R10,R1
+           STH R10,#WORK
+           L   R4,AGENDETS                                        75311
+           USING GENDETS,R4                                       75311
+           TM  PARMPRNT,X'04'  DO WE PRODUCE COMMENTS ?           75311
+           BO  G02NCOM9        NO                                 75311
+           DROP R4                                                75311
+           OPJCL #WORK                                            74303
+G02NCOM9   EQU *                                                  75311
+           OPJCL '//$$INST DD DSN=&&&&$$JOLIN,DISP=(MOD,PASS) INSTRUCTI*
+               ONS'                                               74293
+         L     R4,AGENDETS                                        75128
+         USING GENDETS,R4                                         75128
+         CLI   SPOOL,C'H'     HASP IN SYSTEM ?           JOL30026 76200
+         BE    G02HASRS       YES, OUTPUT HASPFAIL       JOL30026 76200
+           CLI SPOOL,C' '
+         BNE  G02TDUMP       TEST IF DUMP CARD TO GO OUTJOL30026 76200
+           OPJCL '//$$PRNT DD DSN=*.INIT.$$PRINT,DISP=(MOD,PASS),VOL=RE*
+               F=*.INIT.$$PRINT'                          75060
+           B   G02TDUMP        OUTPUT DUMP DATA SET               75311
+G02HASRS   OPJCL '//$$PRNT DD DSN=&&HASPFAIL,DISP=(MOD,PASS),VOL=REF=*.*
+               INIT.HASPFAIL '                                    75311
+G02TDUMP    EQU *
+         LA    R1,DUMPCARD                                        75128
+         $CALL UJG90OP                                            75128
+         OPJCL LGENCRD1       OP USER CARD IF CODED AT JOLGEN     75128
+         OPJCL LGENCRD2       OP USER CARD IF CODED AT JOLGEN     75128
+         OPJCL LGENCRD3       OP USER CARD IF CODED AT JOLGEN     75128
+           MVI NEST,1          LET US KNOW THAT AN OS STEP WAS PRODUCED
+           JOLRETN
+         DROP  R4
+           CNOP 0,8
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+            LTORG
+           TITLE 'CREATE AND OUTPUT A DD-CARD'
+         JOLRETN RC=0         NO, FINISHED, SO RETURN NOW         75128
+G03LBTBL   EQU *                                                  75311
+G03LTBL    DC  CL4'SL'         0                                  75311
+           DC  CL4'NL'         1                                  75311
+           DC  CL4'BLP'        2                                  75311
+           DC  CL4'SUL'        3                                  75311
+           DC  CL4'NSL'        4                                  75311
+           DC  CL4'AL'         5                                  75311
+           DC  CL4'LTM'        6                                  75311
+           DC  CL4'AUL'        7                                  75311
+           DC  CL4'NUL'        8                                  75311
+           DC  CL4'NUL'        9                                  75311
+           DC  CL4'NUL'        10                                 75311
+           DC  CL4'NUL'        11                                 75311
+           DC  CL4'NUL'        11                                 75311
+* THIS ROUTINE IS BAL'D TO ON R14 AND REMOVES EXCESS COMMAS       75128
+*  AND BLANKS FROM THE STRING                                     75128
+* IT IS NOT A REPLACEMENT FOR 'UJCPACK'                           75128
+G03DROPC BCTR R10,0      BACK OFF ONE BYTE
+G03DROPX CLI   0(R10),C' '    BLANK ?                             75128
+         BNE   G03TC1         NOPE -> TEST ','                    75128
+         BCT   R10,G03DROPX   REDUCE R10 BY 1, CHECK NXT CHAR     75128
+G03TC1   CLI   0(R10),C','    ',' ?                               75128
+         BNE   G03ADD1        NO, SO END ROUTINE                  75128
+         BCT   R10,G03DROPX   DROP ',',BACK TO NXT CHAR           75128
+G03ADD1  LA    R10,1(R10)                                         75128
+         BR    R14            BACK TO CALLER                      75128
+SAVER5R7 DS    3F                      SAVE THE WORK REGS HERE     DASD
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DROP R8
+          LTORG
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+CVT      CVT   DSECT=YES,PREFIX=YES
+UCBS    DSECT
+         IEFUCBOB    LIST=YES
+         END

@@ -1,0 +1,219 @@
+<html>
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta name=Generator content="Microsoft Word 10 (filtered)">
+<title>Preface</title>
+
+<style>
+<!--
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:"Times New Roman";}
+h1
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	font-weight:normal;}
+ /* Page Definitions */
+ @page Section1
+	{size:612.0pt 792.0pt;
+	margin:72.0pt 90.0pt 72.0pt 90.0pt;}
+div.Section1
+	{page:Section1;}
+ /* List Definitions */
+ ol
+	{margin-bottom:0cm;}
+ul
+	{margin-bottom:0cm;}
+-->
+</style>
+
+</head>
+
+<body lang=EN-US style='text-justify-trim:punctuation'>
+
+<div class=Section1>
+
+<p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+
+<table class=MsoNormalTable border=0 cellspacing=0 cellpadding=0
+ style='margin-left:5.4pt;border-collapse:collapse'>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h1 align=right style='margin-bottom:3.0pt;text-align:right;page-break-after:
+  avoid'><b><u><span style='font-size:18.0pt;font-family:Arial'>Preface</span></u></b></h1>
+  <p class=MsoNormal align=right style='text-align:right'><b><u><span
+  style='font-size:18.0pt;font-family:Arial'><span style='text-decoration:none'>&nbsp;</span></span></u></b></p>
+  <p class=MsoNormal align=right style='text-align:right'><span
+  style='font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>The <i>Jol
+  Reference Guide</i> provides a handy aid to the Jol programmer.  It is a
+  companion publication to the <i>Jol Reference Manual</i> and <i>General
+  Information Manual</i> and it provides the syntax and a brief description of
+  the functions of most of the instructions and commands provided with the Jol
+  Command Language.  For more detailed explanations of the instructions, refer
+  to the <i>JOL Reference Manual</i>.  This manual is intended for reference
+  use at a terminal, and prior knowledge of Jol is assumed.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>In
+  conjunction with the <i>Jol General Information Manual</i>, it can be used by
+  experienced Jol programmers to write programs in place of the full <i>Jol
+  Reference Manual</i>.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>Some
+  instructions, such as DOSTOJOL, JCLTOJOL, Networking and Scheduling
+  Instructions are not described in this Guide, but in other publications.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>Supplemental
+  publications include, but are not limited to:</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Jol Concepts
+  and Facilities Manual</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Jol General
+  Information Manual</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Answers to
+  Questions about Jol</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Teach Yourself
+  Jol Program Diskette for the IBM Personal Computer</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Jol Reference
+  Manual</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Jol Messages
+  and Codes</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Jol User Guide</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Jol Evaluation
+  Plan and Financial Work Sheets</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Jol Conversion
+  Utilities</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Jol System
+  Programmer Guide</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Jol Release
+  and SMP Guide</span></p>
+  <p class=MsoNormal style='margin-left:14.15pt;text-indent:-14.15pt'><span
+  style='font-size:10.0pt;font-family:Symbol'>·<span style='font:7.0pt "Times New Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><span style='font-size:10.0pt;font-family:Arial'>Jol Program
+  Logic Manual (Licensed Material)</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+</table>
+
+<span style='font-size:10.0pt;font-family:Arial'><br clear=all
+style='page-break-before:always'>
+</span>
+
+<p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+
+<table class=MsoNormalTable border=0 cellspacing=0 cellpadding=0
+ style='margin-left:5.4pt;border-collapse:collapse'>
+ <tr>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><b><u><span style='font-size:10.0pt;font-family:Arial'>Summary
+  of Amendments</span></u></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><b><span style='font-size:10.0pt;font-family:Arial'>Scheduling
+  and Networking Facilities</span></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:22.5pt;text-indent:-22.5pt'><span
+  style='font-size:10.0pt;font-family:Arial'>&#61623;<b>     </b>Jobs may be
+  defined as part of a network, and automatically submitted on certain days.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><b><span style='font-size:10.0pt;font-family:Arial'>TSO
+  Support</span></b><span style='font-size:10.0pt;font-family:Arial'>.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt;text-indent:-21.6pt'><span
+  style='font-size:10.0pt;font-family:Arial'>&#61623;     Options to allow the
+  job to execute under TSO or Background, using the same Command Language.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><b><span style='font-size:10.0pt;font-family:Arial'>ALLOCATE
+  Command</span></b><span style='font-size:10.0pt;font-family:Arial'>.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:22.8pt;text-indent:-22.8pt'><span
+  style='font-size:10.0pt;font-family:Arial'>&#61623;     <b>ALLOCATE</b> a
+  data set in the Preprocessor or Macro Phase for Input or Output.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><b><span style='font-size:10.0pt;font-family:Arial'>Addition
+  of OPEN, READ and WRITE Instructions</span></b><span style='font-size:10.0pt;
+  font-family:Arial'>.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&#61623;          <b>OPEN</b>
+  a file for input or output.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&#61623;          <b>READ</b>
+  a record into a variable.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&#61623;          <b>WRITE</b>
+  a record from a variable.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><b><span style='font-size:10.0pt;font-family:Arial'>Automatic
+  Reset of Relative Generation Numbers</span></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt;text-indent:-21.6pt'><span
+  style='font-size:10.0pt;font-family:Arial'>&#61623;     Relative Generation
+  Numbers are automatically reset for Reruns or Restarts.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><b><span style='font-size:10.0pt;font-family:Arial'>Testing
+  if a data set exists.</span></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:22.8pt;text-indent:-22.8pt'><span
+  style='font-size:10.0pt;font-family:Arial'>&#61623;     <b>TEXIST</b> Command
+  allows the testing of the existence of a data set at execution time.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt;font-family:Arial'>&nbsp;</span></p>
+  </td>
+ </tr>
+</table>
+
+<p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+
+<p class=MsoNormal><span style='font-family:Arial'>&nbsp;</span></p>
+
+</div>
+
+</body>
+
+</html>

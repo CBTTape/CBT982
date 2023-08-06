@@ -1,0 +1,36 @@
+         MACRO
+&NAME    VSIO  &VSFUNC,&VSFILE,&VSREC,&ERRET=,&NRETURN=
+         LCLA  &ASUM
+         LCLB  &MFESW,&MFISW,&MFI2SW,&B(6)
+         LCLC  &C
+&NAME    IHBINNRA &VSFILE,&VSREC LOAD FILE AND RECORD ADDRESSES
+         AIF   ('&VSFILE' EQ '').ERROR5
+&B(1)    SETB  ('&VSFUNC' EQ 'INSERT')
+&B(2)    SETB  ('&VSFUNC' EQ 'UPDATE')
+&B(3)    SETB  ('&VSFUNC' EQ 'DELETE')
+&B(4)    SETB  ('&VSFUNC' EQ 'GETFIRST')
+&B(5)    SETB  ('&VSFUNC' EQ 'GETNEXT')
+&B(6)    SETB  ('&VSFUNC' EQ 'RELEASE')
+         AIF   (&B(1)+&B(2)+&B(3)+&B(4)+&B(5)+&B(6) NE 1).ERROR1
+&ASUM    SETA  &B(6)*16+&B(5)*16+&B(4)*12+&B(3)*08+&B(2)*04+&B(1)*00
+         L     15,12(,1)         LOAD ACCESS ROUTINE ADDRESS
+         MVI   8(1),&ASUM        STORE ACCESS CODE
+         BALR  14,15          PROCESS THE RECORD IN THE APPROVED MANNER
+         AIF   (T'&ERRET EQ 'O' AND T'&NRETURN EQ 'O').NERRET
+         LTR   R15,R15
+         AIF   (T'&NRETURN EQ 'O').NRET
+         BZ    &NRETURN
+.NRET    ANOP
+         AIF   (T'&ERRET EQ 'O').NERRET
+         BNZ   &ERRET
+.NERRET  ANOP
+         MEXIT
+.ERROR1  IHBERMAC 49,,&VSFUNC             INVALID OPTION OPERAND
+         MEXIT
+.ERROR3  IHBERMAC 35,,&MF               INVALID MF OPERAND SPECIFIED
+         MEXIT
+.ERROR5  IHBERMAC 6                     VSFILE MISSING
+         MEXIT
+.ERROR6  IHBERMAC 69                    INVALID REG NOTATION W/MF=L
+.FINI    ANOP
+         MEND

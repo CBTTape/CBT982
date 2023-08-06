@@ -1,0 +1,195 @@
+        GENSAVE CSECT=COMPSRC,BASE=12
+* REGISTER USAGE:-
+*
+* R2 POINTS TO IND ARRAY FOR OLD CARDS
+* R3 POINTS CARD ARRAY FOR OLD CARDS
+*
+* R4 POINTS TO IND ARRAY FOR NEW CARDS
+* R5 POINTS CARD ARRAY FOR NEW CARDS
+*
+        OPEN (LIST,(OUTPUT),OLDSRC,(INPUT),NEWSRC,(INPUT))
+LIMIT   EQU  15000
+        GETMAIN R,LV=LIMIT
+        LR   R2,R1             SAVE POINTER TO IND ARRAY
+        GETMAIN R,LV=LIMIT*80
+        LR   R3,R1              SAVE POINTER TO CARD ARRAY
+        USING IND,R2
+        USING ARRAYD,R3
+* CLEAR THE IND AREA
+        LA    R6,INDS
+        LH    R7,=AL2(LIMIT)
+        LA    R8,=C'  '
+        L     R9,=X'40000001'
+        MVCL  R6,R8
+* DONE
+* CLEAR THE CARD AREA
+        LA    R6,ARRAYD            START OF CARD AREA ARRAY
+        L     R7,=A(LIMIT*80)      SET LENGTH OF ARRAY
+        LA    R8,=C'  '
+        L     R9,=X'40000001'
+        MVCL  R6,R8
+* DONE
+* READ THE OLD SOURCE INTO MEMORY
+         LA     R7,ARRAYD
+         LR     R8,R7
+         A      R8,=A(LIMIT*80)     STOP POINT (END OF ARRAY)
+GETOLD   GET    OLDSRC,(R7)         READ OLD
+         LA     R7,80(R7)           INCREMENT TO NEXT CARD AREA
+         CR     R7,R8               HAVE WE FILLED THE AREA ?
+         BH     ERROFL              YES, OUTPUT A MESSAGE, TERMINATE
+         B      GETOLD              NO, GET NEXT OLD SOURCE CARD
+         SPACE 3
+* EOF ON ONE
+STEP2    EQU    *
+         LR     R4,R7               SET UP REG FOR START OF NEW
+* READ IN THE NEW SOURCE NOW
+GETNEW   GET    NEWSRC,(R7)         GET IT IN
+         LA     R7,80(R7)            INCREMENT TO NEXT CARD AREA
+         CR     R7,R8               FILLED THE AREA?
+         BL     GETNEW              NO, CONTINUE READING
+ERROFL   EQU    *
+         PUT    LIST,OFLOMS
+         GENRETN RC=16
+OFLOMS   DC     AL2(ENDOF-*,0)
+         DC     C'****ARRAY OVERFLOW!!!*, INCR VARIABLE ''LIMIT'''
+ENDOF    DS     0H
+         EJECT
+* EOF ON TWO
+STEP3    EQU    *
+         ST     R7,IENDNEW          SAVE END OF NEW SOURCE
+         LR     R11,R5          COPY R5 (CURRENT 'NEW' POINTER)
+         SR     R11,R3          - CARD ARRAY(0)
+*                                 GIVES US CURRENT CARD NUMBER NOW
+         SR     R10,R10         CLEAR FOR DIVIDE
+         D      R10,=F'80'      GET INTEGER NUMBER
+         LA     R4,IND(R11)    POINT TO IND BYTE
+* R4 NOW POINTS TO THE IND AREA FOR NEW CARDS
+*
+* R2 POINTS TO IND ARRAY FOR OLD CARDS
+* R3 POINTS TO CARD ARRAY FOR OLD CARDS
+*
+* R4 POINTS TO IND ARRAY FOR NEW CARDS
+* R5 POINTS TO CARD ARRAY FOR NEW CARDS
+*
+         ST     R3,ACARDOLD
+         ST     R5,ACARDNEW
+         ST     R2,AINDOLD
+         ST     R4,AINDNEW
+         L      R9,AINDOLD
+         L      R10,ACARDOLD
+TIND9    L      R7,ACARDNEW         PICK UP START OF THE NEW SOURCE
+         L      R8,AINDNEW          PICK UP START OF THE NEW INDS
+TIND     EQU    *
+         CLI    0(R9),C' '      HAS THIS CARD ALREADY BEEN LOOKED AT?
+         BNE    X               YES, SAVE PAGING, GO LOOK AT NEXT
+         CLC    0(72,R10),0(R7) SEE IF CARDS ARE EQUAL
+         BNE    X               NOPE, DON'T SET INDICATOR
+         MVI    0(R9),C'1'      CARDS =, SET INDS
+         MVI    0(R8),C'1'      CARDS =, SET INDS
+         B      X9
+X        EQU   *
+* INCREMENT AND TEST INNER LOOP
+         LA     R7,80(R7)
+         LA     R8,1(R8)
+         C      R7,ACARDNEW
+         BNH    TIND
+* INCREMENT AND TEST OUTER LOOP
+X9       EQU   *
+         LA     R10,80(R10)
+         LA     R9,1(R9)
+         C      R5,AENDNEW
+         BNH    TIND9
+*    DO I=1 TO IENDOLD;
+*       DO J=IENDOLD TO IENDNEW;
+*          IF  IND(J)=' ' THEN
+*          IF CARD(I)=CARD(J)
+*          THEN DO;
+*              IND(J)='1';
+*              IND(I)='1';
+*              GO TO X;
+*           END;
+*       END;
+*  X:
+*    END;
+* R2 POINTS TO START OF IND ARRAY
+* R3 POINTS TO START OF CARD ARRAY
+         SPACE 3
+* PRINT FIRST 50 LINES OF INPUT1 AS A HEADER
+         SPACE 3
+         LR     R5,R3
+         LA     R7,80*50(R5)      SET STOP OF 50 LINES
+PUTPAGE1 MVC    LINE,0(6)
+         PUT    LIST,LINEOP
+         LA     R5,80(R5)
+         CR     R5,R7
+         BL     PUTPAGE1
+         SPACE 3
+* PRINT OLD NOT FOUND PAGE HEADER
+         SPACE 3
+         PUT    LIST,OLDNFND
+         L      R9,AINDOLD
+         L      R10,ACARDOLD
+         L      R8,ACARDNEW    (END OF OLD)
+         CALL   PRINTNFN
+* PRINT 'NEW' NOT FOUND PAGE HEADER
+         PUT    LIST,NEWNFND
+         L      R9,AINDNEW          PICK UP START OF THE NEW INDS
+         L      R10,ACARDNEW         PICK UP START OF THE NEW SOURCE
+         L      R8,AENDNEW    (END OF NEW)
+         CALL   PRINTNFN
+         SPACE 3
+         SPACE 3
+         PUT    LIST,NEWNFND
+         GENRETN
+NEWNFND  DC     AL2(ENDN-*,0)
+         DC     C'0NEW MASTER RECORDS NOT FOUND '
+ENDN     EQU    *
+OLDNFND  DC     AL2(ENDO-*,0)
+         DC     C'0OLD MASTER RECORDS NOT FOUND '
+ENDO     EQU    *
+LINEOP   DC     AL2(85,0)
+         DC     C' '
+LINE     DS     CL80
+I       DS   A
+J       DS   A
+IENDNEW DS   A
+IENDOLD DS   A
+ACARDOLD  DS  A
+AINDOLD   DS  A
+ACARDNEW  DS  A
+AINDNEW   DS  A
+AENDNEW  DS  A
+OLDSRC  DCB  DDNAME=OLDSRC,MACRF=GM,EODAD=STEP2,DSORG=PS
+        PRINT NOGEN
+NEWSRC  DCB  DDNAME=NEWSRC,MACRF=GM,EODAD=STEP3,DSORG=PS
+LIST    DCB  DDNAME=SYSPRINT,MACRF=PM,RECFM=VBA,LRECL=121,      +_______
+               BLKSIZE=1210,DSORG=PS
+        LTORG
+RECS    DSECT
+CARD    DS   CL72
+NUMBER  DS   CL8
+CARDX   DS   CL80
+IND     DSECT
+INDS    DS   CL(LIMIT)
+YYYY    EQU  *
+ARRAYD  DSECT
+ARRAY   DS   CL(LIMIT)
+XXXX    EQU  *
+         GENSAVE  CSECT=PRINTNFN
+* R9 POINTS TO START OF IND ARRAY
+* R10 POINTS TO START OF CARD ARRAY
+         SPACE 3
+* PRINT ALL CARDS WITH NO INDICATOR SET
+         SPACE 3
+TIND2    EQU    *
+         CLI    0(R9),C' '      WAS THIS INDIACTOR SET ?
+         BNE    X2              YES, DON'T PRINT IT
+         MVC    LINE,0(R10)      PREPARE TO PRINT NOT FOUND
+         PUT    LIST,LINEOP
+* INCREMENT AND TEST SOURCE INDICATORS FOR FOUND CONDITION
+X2       LA     R10,80(R10)
+         CR     R10,R8
+         BNH    TIND2
+         GENRETN
+         LTORG
+        END

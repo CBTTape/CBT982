@@ -1,0 +1,60 @@
+         AIF  (NOT &X8).NOX8MAC
+         TITLE 'FIXED LOW CORE'
+         XAMFLC  DSECT=YES
+PSA      EQU   FLC
+PSATOLD  EQU   FLCTOLD            FOR MVS,F4 COMPATIBILITY
+         TITLE 'COMMUNICATIONS VECTOR TABLE'
+         XAMCVT  DSECT=YES
+         TITLE 'TASK CONTROL BLOCK    '
+         XAMTCB  DSECT=YES
+TCBFLGS1 EQU   TCBFLAG1       EQUIVALENT FIELDS ON F4,X8
+         TITLE 'REQUEST BLOCK         '
+         XAMRB   DSECT=YES
+         TITLE 'FILE CONTROL TABLE'
+         XDDFCT
+         TITLE 'JOB-STEP CONTROL BLOCK'
+         XDDJSCB
+JSCBLEN  EQU   *-JSCB         MY NAME FOR ITS LENGTH
+JSCBDISP EQU   0              MVS,F4 NAME FOR DISPLACEMENT TO START
+JSCBOPTS EQU   JSCBSTS
+JSCBAUTH EQU   JSCAUTH                                            J40B
+         TITLE 'COMMAND-SCHEDULER CONTROL BLOCK'
+         XDDCSCB
+         TITLE 'SYSTEM DIAGNOSTIC WORK AREA'
+         XAMSDWA                                                 88036
+         AGO   .COM010
+.NOX8MAC ANOP
+         AIF   (&MVS).MVSCB                                       J40B
+         TITLE 'JOB-STEP CONTROL BLOCK'
+         KDJJSCB
+         ORG   KDJJSCB                                            J40B
+JSCB     DS    0A                                                 J40B
+         ORG
+JSCBLEN  EQU   *-JSCB         MY NAME FOR ITS LENGTH
+         TITLE 'FIXED LOW CORE'
+         KAAFLC  DSECT=YES
+PSA      EQU   FLC
+PSATOLD  EQU   FLCTOLD            FOR MVS,F4 COMPATIBILITY
+         TITLE 'SYSTEM DIAGNOSTIC WORK AREA'
+         KAASDWA  LIST=YES                                        J40B
+         AGO   .COM000                                            J40B
+.MVSCB   ANOP                                                     J40B
+         TITLE 'JOB-STEP CONTROL BLOCK'                           J60
+         IEZJSCB
+         ORG   IEZJSCB                                            J60
+JSCB     DS    0A                                                 J40B
+         ORG
+JSCBLEN  EQU   *-JSCB         MY NAME FOR ITS LENGTH
+         TITLE 'FIXED LOW CORE'
+         IHAPSA  DSECT=YES
+PSA      EQU   FLC
+PSATOLD  EQU   FLCTOLD            FOR MVS,F4 COMPATIBILITY
+         TITLE 'SYSTEM DIAGNOSTIC WORK AREA'
+         IHASDWA  LIST=YES                                        J40B
+.COM000  ANOP
+         IEFQMNGR
+         IEFJESCT
+         TITLE 'TASK CONTROL BLOCK'
+         IKJTCB  PRINT=ON
+.COM010  ANOP
+         DCBD  DSORG=(PS,PO),DEVD=DA                             88036

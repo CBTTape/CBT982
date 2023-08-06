@@ -1,0 +1,348 @@
+UJD24PDQ TITLE 'PASSED DATASET HANDLER'
+* JOL COPYRIGHT CCS-JOL PTY LTD 1988
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+         SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+* WRITTEN MAY 3, 1988
+*   CHANGES:-
+*     1.       SUPPORT MSP AND MVS  MAY 18, 1988
+         LCLC  &C
+         COPY  JOLGLOBL
+&TYPE    SETC  'SCHED'                                           88036
+&DEBUG   SETB  1                                                  J40B
+         $UJEPARM
+         PRINT ON,DATA
+UJECOMM  DSECT
+         USING UJECOMM,R3,R5
+         COPY  UJECOMM
+PDQWRK   DSECT                                                    J40B
+         DS    18F                                                J40B
+PDQSA    DS    16F                                                J40B
+PDQWRKL  EQU   *-PDQWRK                                           J40B
+         JOLSAVE CSECT=UJD24PDQ,                                 88036 .
+               SIZE=PDQWRKL                                       J40B
+         USING PDQWRK,R13                                         J40B
+         AIF   (&X8).X8010                                        J40B
+         USING PSA,0                                              J40B
+*  IT IS NECESSARY TO LOCATE THE DSAB FOR THE DATASET WHOSE NAME IS
+*    IN DDDSNAME, TO FIND THE CURRENT VOLUMES AND COPY THE LIST TO
+*    THE ALLOCATION REQUEST FOR THIS DATASET
+         L     R15,PSATOLD         MY TCB ADDRESS
+         USING TCB,R15
+         L     R15,TCBJSCB         MY JSCB ADDRESS
+         DROP  R15
+         USING IEZJSCB,R15                                         J60
+&C       SETC  (&X8)'JSCBQDB'.(1-&X8)'JSCDSABQ'                  88036
+         L     R15,&C              DSAB Q
+         DROP  R15
+         USING QDB,R15             DSAB Q DESCRIPTOR BLOCK
+         ICM   R4,15,QDBNELMS      ARE THERE ANY?
+         BZ    QSR090              A... NO
+         L     R4,QDBFELMP         LOAD DSAB ADDRESS
+         USING DSAB,R4
+QSR005   DS    0H
+         UJE21DMP (R4),63,TITLE=' DSAB',                          J40B .
+               SA=PDQSA DBUG=NO                                   J40B
+         L     R2,DSABTIOT         POINT TO TIOT ENTRY
+         UJE21DMP (R2),31,TITLE=' TIOT ENTRY',                    J40B .
+               SA=PDQSA DBUG=NO                                   J40B
+         ICM   R2,7,12(R2)       JFCB
+         UJE21DMP (R2),175,TITLE=' JFCB ',                        J40B .
+               SA=PDQSA DBUG=NO                                   J40B
+         L     R1,DSABTIOT         POINT TO TIOT ENTRY
+*        CLC   =CL8' ',4(R1)       BLANK DDNAME?
+*        BE    QSR020              IF SO, NOT A MATCH
+*        CLC   DDDDNAME(8),4(R1) SAME DDNAME?
+*        BNE   QSR020            NO, SO, NOT A MATCH
+         ICM   R1,7,12(R1)         POINT TO JFCB
+         USING JFCB-16,R1
+         CLC   DDDSNAME,JFCBDSNM
+         BE    QSR080              RETURN, WE HAVE THE DSNAME
+QSR020   DS    0H        THIS ONE DID NOT MATCH:
+         CLM   R4,7,QDBLELMP+1    Q... WAS THAT THE LAST?
+         BE    QSR090              A... YES IT WAS: EXIT NOT FOUND
+         L     R4,DSABFCHN         POINT TO THE NEXT
+         B     QSR005              AND TRY AGAIN
+QSR090   DS    0H              NOT FOUND
+         JOLERR 507,'DSID ',DDDSID,                                    .
+               ',DD ',DDDDNAME,                                  J40B  .
+               ',DS ',#DSN,                                      J40B  .
+               ' IS NOT PASSED, VOLUMES COULD NOT BE RESOLVED'
+QSR080   DS    0H              FOUND
+         MVC   DDVOLUME,JFCBVOLS                                  J40B
+         DROP  R1
+         AGO   .NX8010                                            J40B
+.X8010   ANOP                                                     J40B
+*  IT IS NECESSARY TO LOCATE THE FCT FOR THE DATASET WHOSE NAME IS
+*    IN DDDSNAME, TO FIND THE CURRENT VOLUMES AND COPY THE LIST TO
+*    THE ALLOCATION REQUEST FOR THIS DATASET
+         L     R4,ASHTCB            ADDRESS MY TCB
+         L     R4,TCBJSCB-TCB(,R4)          MY JSCB
+         ICM   R4,7,JSCBFCTA-JSCB(R4)         FIRST FCT
+         BZ    D24$020               EXIT IF NONE ?!! & SSSSSSSSS
+         SPACE
+*   FOUND THE FCT CHAIN. NOW FIND THE DATASET ENTRY
+         SPACE
+         USING FCT,R4
+D24$010  DS    0H
+         UJE21DMP (R4),127,TITLE='0FCT',                          J40B .
+               SA=PDQSA,DBUG=YES                                  J40B
+         CLI   DDDDNAME,C' '    Q... IS THE DDNAME BLANK
+         BE    D24$011                                           88036
+         CLC   FCTACSN,DDDDNAME    Q... IS THIS IT?
+         BNE   D24$015                                           88036
+         B     D24$012                                            J40B
+D24$011  DS    0H
+         CLC   =C'SYS0',FCTACSN    Q... IS THIS IT?
+         BNE   D24$013                                           88036
+D24$012  DS    0H
+         CLC   FCTFLN,DDDSNAME                                   88036
+         BE    D24$030         A... NO
+         B     D24$015                                           88036
+D24$013  DS    0H
+         BAL   R14,D24CONC     Q... IS IT CONCATENATED HERE?      J40B
+         BE    D24$025         A.... YES, GET THE VOLUME INFO     J40B
+         SPACE
+D24$015  DS    0H
+         ICM   R4,7,FCTNFCTA         NEXT FCT
+         BNZ   D24$010               GO AND TEST THE NEXT ONE
+D24$020  DS    0H                    END OF CHAIN, AND NOT FOUND
+         JOLERR 507,'DSID ',DDDSID,                                    .
+               ',DD ',DDDDNAME,                                  J40B  .
+               ',DS ',#DSN,                                      J40B  .
+               ' IS NOT PASSED, VOLUMES COULD NOT BE RESOLVED'
+D24$025  DS    0H
+         LR    R4,R8                                              J40B
+D24$030  DS    0H
+         SPACE 3
+* NOW I HAVE FOUND THE FCT, COPY THE VOLUME SERIAL NUMBERS
+         SPACE 2
+         CLEAR DDVOLUME
+         SLR   R8,R8
+         ICM   R8,1,FCTVOLNO        LOAD VOLUME COUNT
+         BZ    D24$020              EXIT IF THERE ARE NO VOLUMES
+         LA    R0,L'DDVOLUME/6      LOAD NUMBER OF VOLUMES ALLOWED
+         CR    R0,R8                CHECK THAT THE SERIAL NUMBERS FIT
+         BNL   D24$040              BE IF OK
+         JOLERR 412,'DS ',DDDSID,',',#DSN,                             .
+               ' IS NOT PASSED,',' REFERS TO TOO MANY VOLUMES'
+         ABEND  2,DUMP                                            J40B
+D24$040  DS    0H
+         L     R6,FCTVCT
+         LA    R15,DDVOLUME         ADDRESS FOR VOLUMES
+D24$050  DS    0H
+         MVC   0(6,R15),8(R6)       COPY THE VOLUME SERIAL NUMBER
+         LA    R15,6(,R15)          ADDRESS FOR NEXT AREA
+         L     R6,4(,R6)            ADDRESS THE NEXT VCT
+         BCT   R8,D24$050           CONTINUE UNTIL ALL AREA DONE
+.NX8010  ANOP                                                     J40B
+         L     R0,=A(X'47000004')                                88036
+         AH    R0,DDOSVB       LENGTH OF THE RECORD              88036
+         GETMAIN R,LV=(0)                                        88036
+         MVC   0(4,R1),APDQ    ADDRESS OF PREVIOUS ENTRY         88036
+         LH    R15,DDOSVB                                        88036
+         BCTR  R15,0                                             88036
+         MVC   4(0,R1),DDOSVB                                    88036
+         EX    R15,*-6         COPY THE DD DETAILS               88036
+         ST    R1,APDQ         ADD TO THE CHAIN                  88036
+         LA    R5,4(,R1)                                          J40B
+         PUSH  USING                                              J40B
+         USING  DDOSVB,R5                                         J40B
+         DBGMSG 122,'DS ',DDDSID,',',#DSN,                             .
+               ' IS PASSED ON ',DDVOLUME
+         POP   USING                                              J40B
+         JOLRETN RC=0                                            88036
+         AIF   (NOT &X8).NX8020                                   J40B
+D24CONC  DS    0H                                                 J40B
+         CLI   DDDDNAME,C' '   MUST BE A BLANK DDNAME             J40B
+         BNER  R14             TO SATISFY A CONCATENATED SEARCH   J40B
+         LR    R8,R4                                              J40B
+         TM    FCTFLG6,FCTF6CF ARE WE LOOKING AT A CONCATENATED D/S?
+         BZ    D24C080         NO                                 J40B
+         SLR   R0,R0                                              J40B
+         IC    R0,FCTCFNO      LOAD NUMBER OF CONCATENATED D/S    J40B
+D24C010  DS    0H                                                 J40B
+         UJE21DMP (R8),127,TITLE='0C FCT',                        J40B .
+               SA=PDQSA,DBUG=YES                                  J40B
+         USING FCT,R8                                             J40B
+         ICM   R8,7,FCTCFCTA                                      J40B
+         BZ    D24C080                                            J40B
+         CLC   FCTFLN,DDDSNAME                                    J40B
+         BER   R14                                                J40B
+         BCT   R0,D24C010                                         J40B
+D24C080  DS    0H                                                 J40B
+         CLR   R11,R14         CHANGE CONDITION CODE SO ¬=        J40B
+         BR    R14                                                J40B
+.NX8020  ANOP                                                     J40B
+         LTORG                                                   88036
+         DC    20S(*)                                            88036
+         TITLE 'REMOVE CURRENT DS FROM PDQ'
+         JOLSAVE CSECT=UJD24UNP,                                 88036 .
+               SIZE=PDQWRKL                                       J40B
+         CLI   DDDISP+1,C'P'   IF NOT PASS                       88036
+         BE    JRETN0          IT'S PROBABLY OK TO REMOVE FR PDQ 88036
+         LA    R15,APDQ        JUST IN CASE IT'S THE FIRST ENTRY 88036
+         ICM   R4,15,APDQ      ADDRESS TOP OF QUEUE              88036
+         BNZ   D24$110                                           88036
+         JOLERR 100,'DS ',DDDSID,' ',#DSN,' NOT REMOVED FROM PDQ',     .
+               ' THERE ISN''T A PDQ'                             88036
+         JOLRETN RC=4                                            88036
+D24$110  DS    0H                                                88036
+         LA    R0,1                                               J40B
+         AH    R0,4(,R4)                                          J40B
+         UJE21DMP (R4),(0),TITLE='0PDQE IN UND',                  J40B .
+               SA=PDQSA                                           J40B
+         CLC   DDDSID,DDDSID-DDDSNDET+4(R4) IS THIS IT?          88036
+         BNE   D24$115         NO                                88036
+         CLC   DDDSNAME,DDDSNAME-DDDSNDET+4(R4) IS THIS IT?      88036
+         BE    D24$120         YES                               88036
+D24$115  DS    0H                                                88036
+         LR    R15,R4          I'LL NEED THIS ADDRESS TO DELETE  88036 .
+                               THE PDQ ENTRY                     88036
+         ICM   R4,15,0(R4)     ADDRESS THE NEXT ONE              88036
+         BNZ   D24$110         GO AND CHECK IT                   88036
+         JOLERR 101,'DS ',DDDSID,' ',#DSN,' NOT REMOVED FROM PDQ',     .
+               ' IT ISN''T IN IT'                                88036
+         JOLRETN RC=4                                            88036
+D24$120  DS    0H                                                88036
+         MVC   0(4,R15),0(R4)  REMOVE FROM QUEUE                 88036
+         L     R0,=A(X'47000004')                                88036
+         AH    R0,4(,R4)       LENGTH TO FREE                    88036
+         LR    R1,R4                                             88036
+         FREEMAIN R,LV=(0),A=(1)                                 88036
+         DBGMSG 103,'DS ',DDDSID,' ',#DSN,' REMOVED FROM PDQ'
+         JOLRETN RC=0                                            88036
+         LTORG                                                   88036
+         DC    20S(*)                                            88036
+         TITLE 'LOCATE CURRENT DS IN PDQ, FILL VOLUMES'
+         JOLSAVE CSECT=UJD24FND,                                 88036 .
+               SIZE=PDQWRKL                                       J40B
+         ICM   R4,15,APDQ      ADDRESS TOP OF QUEUE              88036
+         BZ    JRETN4          NO PDQ                            88036
+D24$210  DS    0H                                                88036
+         LA    R0,1                                               J40B
+         AH    R0,4(,R4)                                          J40B
+         UJE21DMP (R4),(0),TITLE='0PDQE IN FND',                  J40B .
+               SA=PDQSA                                           J40B
+         CLC   DDDSID,DDDSID-DDDSNDET+4(R4) IS THIS IT?          88036
+         BNE   D24$215         NO                                88036
+         CLC   DDDSNAME,DDDSNAME-DDDSNDET+4(R4) IS THIS IT?      88036
+         BE    D24$220         YES                               88036
+D24$215  DS    0H                                                88036
+         ICM   R4,15,0(R4)     ADDRESS THE NEXT ONE              88036
+         BNZ   D24$210         GO AND CHECK IT                   88036
+         JOLERR 111,'DS ',DDDSID,' ',#DSN,' NOT FOUND IN PDQ'
+         JOLRETN RC=4                                            88036
+D24$220  DS    0H                                                88036
+         MVC   DDVOLUME,DDVOLUME+4-DDDSNDET(R4) COPY VOLUMES     88036
+         DBGMSG 113,'DS ',DDDSID,' ',#DSN,' FOUND IN PDQ ON ',DDVOLUME
+         JOLRETN RC=0                                            88036
+         LTORG                                                   88036
+         DC    20S(*)                                            88036
+         TITLE 'RESOLVE VOLREF  FROM PDQ, FILL VOLUMES'
+         JOLSAVE CSECT=UJD24VRF,                                 88036 .
+               SIZE=PDQWRKL                                       J40B
+         ICM   R2,15,APDQ      ADDRESS TOP OF QUEUE              88036
+         BZ    JRETN4          NO PDQ                            88036
+D24$310  DS    0H                                                88036
+         LA    R0,4                                               J40B
+         AH    R0,4(,R2)                                          J40B
+         UJE21DMP (R2),(0),TITLE='0PDQE IN VRF',                  J40B .
+               SA=PDQSA                                           J40B
+         CLC   DDVOLUME+1(43),DDDSNAME-DDDSNDET+4(R2)            J40B
+         BE    D24$320         YES                               88036
+         ICM   R2,15,0(R2)     ADDRESS THE NEXT ONE              88036
+         BNZ   D24$310         GO AND CHECK IT                   88036
+         JOLERR 113,'DS ',DDDSID,' ',DDVOLUME,' NOT FOUND IN PDQ'
+         ICM   R1,15,APDQ      ADDRESS TOP OF QUEUE              88036
+         EX    0,*                                               88036
+         JOLRETN RC=4                                            88036
+D24$320  DS    0H                                                88036
+         MVC   DDVOLUME,DDVOLUME+4-DDDSNDET(R2) COPY VOLUMES     88036
+         DBGMSG 113,'DS ',DDDSID,' ',#DSN,' FOUND IN PDQ'
+         DBGMSG 114,'ON ',DDVOLUME
+         JOLRETN RC=0                                            88036
+         LTORG                                                   88036
+         DC    20S(*)                                            88036
+         AIF   (NOT &X8).OS                                       J40B
+*        TITLE 'CVT'
+*        XAMCVT
+*        TITLE 'FLC'
+*        XAMFLC
+         TITLE 'TCB'
+         XAMTCB
+         TITLE 'FCT'
+         XDDFCT
+         TITLE 'JSCB'
+         XDDJSCB
+         AGO   .CBDUN                                             J40B
+.OS      ANOP                                                     J40B
+         TITLE 'COMMUNICATIONS VECTOR TABLE'
+         CVT   DSECT=YES,SYS=BOTH
+         TITLE '  DATA CONTROL BLOCK'
+         DCBD  DSORG=PS,DEVD=DA
+*        AGO   .F4CB
+         AIF   (&F4).F4CB
+         TITLE 'FIXED LOW STORAGE'                                J40B
+         IHAPSA                                                   J40B
+         TITLE '  TASK CONTROL BLOCK'
+         IKJTCB
+         TITLE '  JOB-STEP CONTROL BLOCK'
+         IEZJSCB  ,                                               J60
+         ORG   IEZJSCB                                            J40B
+JSCB     DS    A                                                  J40B
+         ORG   ,                                                  J40B
+         TITLE '  DATA-SET ASSOCIATION BLOCK'
+         IHADSAB
+         TITLE '  DSAB QUEUE DESCRIPTOR BLOCK'
+         IHAQDB
+         TITLE '  JOB FILE CONTROL BLOCK'
+*FCB     DSECT
+*        IEFJFCBN
+         AGO   .CBDUN
+.F4CB    ANOP
+         TITLE 'FIXED LOW STORAGE'                                J40B
+         KAAFLC  LIST=YES                                         J40B
+         ORG   FLC                                                J40B
+PSA      DS    A                                                  J40B
+         ORG   FLCTNEW                                            J40B
+PSATNEW  DS    A                                                  J40B
+         ORG   FLCTOLD                                            J40B
+PSATOLD  DS    A                                                  J40B
+         ORG   FLCANEW                                            J40B
+PSAANEW  DS    A                                                  J40B
+         ORG   FLCAOLD                                            J40B
+PSAAOLD  DS    A                                                  J40B
+         ORG   ,                                                  J40B
+         TITLE '  TASK CONTROL BLOCK'
+         KAATCB
+         TITLE '  JOB-STEP CONTROL BLOCK'
+         KDJJSCB
+         ORG   KDJJSCB                                            J40B
+JSCB     DS    A                                                  J40B
+         ORG    ,                                                 J40B
+         TITLE '  DATA-SET ASSOCIATION BLOCK'
+         KDJDSAB
+         TITLE '  DSAB QUEUE DESCRIPTOR BLOCK'
+         KDJQDB
+         TITLE '  JOB FILE CONTROL BLOCK'
+*FCB     DSECT
+*        KDJJFCBN LIST=YES,DSECT=NO
+.CBDUN   ANOP
+         END

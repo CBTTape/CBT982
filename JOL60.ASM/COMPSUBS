@@ -1,0 +1,1180 @@
+           TITLE 'JOL SUBROUTINES'                                74303
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974,1975
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1976,1977,1978,1979,1980.
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1981.
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1982.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+         COPY JOLCOM
+           TITLE 'GENERAL PURPOSE STORE ROUTINE'
+         PRINT DATA                                               75128
+           JOLSAVE CSECT=UJS10STR,BASE=1                          74303
+* THIS CSECT RECIEVES CONTROL FROM THE JOLSTOR MACRO.
+* ON ENTRY,R14 POINTS TO THE PARAMETER LIST DESCRIBED BELOW AS UJS10DST
+           USING JOLCOM,R2
+           USING UJS10DST,R14
+* WHAT WE WANT TO END UP WITH IS THIS:-
+* R4=L'ERROR MESSAGE
+* R5=L'RECEIVE
+* R6=L'SEND
+* R7=A(ERROR MESSAGE)
+* R8=A(RECEIVE)
+* R9=A(SEND)
+           LH R15,S10RETN4     LOAD AN LA 15 INSTRUCTION
+           STH R15,CALLAREA+24                                    74303
+           STH R15,CALLAREA+28                                    74303
+           MVI CALLAREA+25,0     MOW AN LA R0 INSTRUCTION         74303
+           MVC CALLAREA+26(2),S10SSEND                            74303
+           MVC CALLAREA+30(2),S10SREC                             74303
+           EX  0,CALLAREA+24   LA R0,SEND                         74303
+           EX  0,CALLAREA+28   LA R15,RECEIVE
+           DROP R1                                                74303
+           LR  R11,R1          SWITCH TO A NICER BASE REGISTER    74303
+           USING UJS10STR,R11                                     74303
+           LR  R9,R0           R9=A(SEND)
+           LR  R8,R15          R8=A(RECEIVE)                      74303
+           SR  R4,R4
+           SR  R5,R5
+           SR  R6,R6
+           IC  R4,S10LERR      LENGTH ERROR MESSAGE
+           IC  R5,S10LREC      LENGTH RECEIVE AREA
+           IC  R6,S10LSEND     LENGTH SEND AREA
+           LA  R7,S10ERRMS
+           LTR R6,R6           IS LENGTH SEND=0?,IE VARYING STRING
+           BNZ S10NOVR
+           LH  R6,0(R9)        LOAD LENGTH OF STRING
+           LA  R9,2(R9)        POINT 9 TO REAL DATA
+* NOW SAVE R14 (-> PARM AREA)
+S10NOVR    LR  R10,R14
+           DROP R14
+           USING UJS10DST,R10
+         SPACE 2                                         JOL30136 76200
+* CHECK LENGTH TO BE NON-ZERO                            JOL30136 76200
+         LTR   R6,R6                                     JOL30136 76200
+         BZ    S10RETN0                                  JOL30136 76200
+         SPACE 2                                         JOL30136 76200
+* NOW LETS SEE IF WE HAVE TO TEST THE FIELD TO BE NUMERIC.
+* WE DO THIS IF:-
+*    1. THE S10VAL IS ¬=0
+*    2. THE RECEIVE AREA IS NOT CHAR
+           LH  R12,S10VAL
+           LH  R1,=X'FFFF'     IF S10VAL=-1,WANT MAX VALUE IN R12,
+           NR  R12,R1          NOT -1
+           LTR R12,R12
+           BNZ S10TNUM         GO TEST IF NUMERIC
+           CLI S10TREC,C'C'    CHARACTER STRING?
+           BE  S10CHAR         YES
+           LH  R12,=X'7FFF'    MAX NUMBER IN HALF WORD            74303
+* HERE WE MUST TEST THE CHAR STRING TO BE NUMERIC.
+S10TNUM    LR  R0,R6           R0=LENGTH STRING
+           LR  R1,R9           R1=A(STRING)
+           L   R15,ATNUM                                          75311
+           BALR R14,R15        BALR TO IT
+           LTR R15,R15         DID IT CONVERT ?
+         BNZ   S10NUMER       NO,SO ERROR IN <NUMBER>             75128
+         LR    R15,R1                                             75128
+* OK,HERE IT CONVERTED,BUT IS IT IN RANGE ?
+           CLI S10TREC,C'C'    CHARACTER STRING?
+           BE  S10CHAR         YES,SO MERELY PUT IT AWAY,WE HAVE
+*                              CHECKED IT TO BE NUMERIC.
+*                              THE S10CHAR ROUTINES WILL DO MORE
+*                              CHECKING FOR US,IE IS RECEIVE '' AND
+*                              LONG ENOUGH TO CONTAIN THE DATA.
+* NOW HERE WE HAVE A VALID NUMERIC IN R15.
+* WE WILL STORE THE NUMBER IF THE RECEIVING FIELD IS 0 AND IF IT
+* WILL FIT. HOWEVER R12 NOW CONTAINS A NUMBER THAT MUST BE USED
+* TO CHECK THE RANGE AS WELL.
+           CR  R15,R12         CR REGISTERS
+           BH  S10NUMRG        RANGE FAILURE
+           CLI S10LREC,1       IS LENGTH RECEIVE ONLY 1?
+           BE  S10NUML1
+           CH  R15,=H'32767'
+           BH  S10NUMBG        TOO BIG,ERROR
+           CLC 0(2,R8),=H'0'   IS RECEIVE FIELD =0?
+           BNE S10NOTNL        NO -> GIVE ERROR IF OVER-RIDE=' '
+           STH R15,0(R8)       STORE THE VALUE.
+S10RETN0   SR  R15,R15
+* NOW WE MUST UPDATE THE RETURN ADDRESS
+* R10 POINTS TO THE PARAMETER LIST NOW. WE MUST SKIP IT,AND ADD
+*    THE LENGTH OF THE ERROR MSSGE CONSTANT AND ROUND UP
+S10RETN    SR  R14,R14
+           IC  R14,S10LERR
+           LA  R14,S10ERRMS-UJS10DST+1(R10,R14)
+           SRL R14,1           /2
+           SLL R14,1           ROUND UP
+           L   R1,4(R13)       GET OLD SAVE ADDRESS
+           ST  R14,12(R1)      RESET R14 IN SAVE AREA
+           JOLRETN RC=(15)     AND RETURN
+           SPACE 1
+S10RETN4   LA  R15,4
+           B   S10RETN
+           SPACE 1
+S10NUML1   EQU *
+* HERE,WE ARE STORING INTO A 1 BYTE FIELD
+           CLI 0(R8),0         IS FIELD 0 OR HAS SOMETHING BEEN STORED
+*                              IN IT ALREADY ?
+           BNE S10NOTNL        NOT NULL,GIVE ERROR
+           STC R15,0(R8)       STORE THE CHARACTER (1 BYTE NUMBER)
+           B   S10RETN0        RETURN GRACEFULLY.
+           SPACE 2
+S10CHAR    EQU *
+* WE HAVE BEEN REQUESTED TO STORE A CHARACTER STRING.
+* LETS REDUCE THE LENGTHS OF THE RECEIVING AND SENDING STRINGS
+* SO THAT WE CAN DO SOME CLC'S AND MVC'S WITH AN 'EXECUTE'
+           BCTR R5,0           RECEIVE
+           BCTR R6,0           SEND
+           SPACE 1
+          CLI   0(R8),C' '   IS THIS FELLOW STARTING WITH A BLANK  DASD
+          BNE   S10NOTNC     NOPE -  ERROR                         DASD
+          LTR   R15,R5       LOAD R5 AND DECREMENT BY 1 FOR EXEC   DASD
+          BZ    S10BYEX      ONLY 1 BYTE LONG                      DASD
+          BCTR  R15,0        REDUCE                                DASD
+           EX  R15,S10TNULL     TEST NULL                          DASD
+           BNE S10NOTNC        NOT,SO GIVE A MESSAGE.
+           SPACE 1
+S10BYEX    EQU  *                                                  DASD
+           CR  R6,R5           TEST IF IT WILL FIT
+           BH  S10TOOBG        WON'T FIT,ERROR
+* WELL IT WILL FIT SO LET'S SHIFT IT.
+           EX  R6,S10MUVCH     DONE
+           B   S10RETN0        AND RETURN
+*S10TNULL   CLC 0(*-*,R8),BLANKS                TEST BLANK         DASD
+S10TNULL   CLC 1(*-*,R8),0(R8)                  TEST BLANK         DASD
+S10MUVCH   MVC 0(*-*,R8),0(R9)                 MOVE DATA
+S10NOTNL   BCTR R6,0           REDUCE <NUMBER> LENGTH BY 1
+S10NOTNC   EQU *               CHARACTER LENGTH ALREADY REDUCED
+           CLI OVERRIDE,C' '   ARE WE IN AN OVER-RIDE TYPE SITUATION?
+         BNE   S10RETN4       YES,BACK-NO ACTION-NO ERROR MSSGE   75311
+           BAL R12,S10SETUP    SET-UP FIRST PART OF ERROR MESSAGE
+         JOLERR 301,#OP,''' FIELD ALREADY CONTAINS DATA'
+           B   S10RETN4
+           SPACE 2
+S10NUMBG   BCTR R6,0           REDUCE LENGTH OF NUMBER BY ONE
+S10TOOBG   BAL  R12,S10SETUP   SET UP FIRST PART OF MESSAGE.
+         JOLERR 302,#OP,''' FIELD AS IT IS TOO SHORT TO RECEIVE THE DATA
+               A'
+           B   S10RETN4        RETURN
+           SPACE 2
+S10NUMRG   BCTR R6,0           NUMBER OUT OF RANGE
+           BAL R12,S10SETUP
+           LH  R1,#OP
+           LA  R15,OP(R1)
+           MVC 0(31,R15),=C' FIELD AS IT IS GREATER THAN '''
+           LH  R12,10(R10)
+           CVD R12,DBL
+           UNPK 31(5,R15),DBL
+           OI   35(R15),C'0'
+           MVI  36(R15),C''''
+           LA  R1,36(R1)
+           STH R1,#OP
+           JOLERR 303,#OP
+           B   S10RETN4
+           SPACE 2
+S10NUMER   BCTR R6,0           NOT NUMERIC ERROR
+           BAL R12,S10SETUP
+         JOLERR 304,#OP,''' FIELD AS IT IS NOT NUMERIC'
+           B   S10RETN4
+           SPACE 2
+* S10SETUP,INITIALISE ERROR TEXT
+S10SETUP   MVI OP,C''''        SHIFT ' INTO ERROR MESSAGE TEXT
+           LA  R1,OP+1         LOAD ADDRESS NEXT BYTE
+           EX  R6,S10MUVE1     MOVE IN DATA IGNORED
+           LA  R1,1(R1,R6)     GET ADDRESS NEXT BYTE
+           MVC 0(21,R1),=C''' NOT STORED IN THE '''
+           EX  R4,S10MUVE2     SHIFT IN FIELD NAME IGNORED
+           LA  R1,21(R1,R4)    ADDRESS NEXT BYTE
+           LA  R15,OP          A(START STRING)
+           SR  R1,R15          = LENGTH OF STRING
+           STH R1,#OP          STORED.
+           BR  R12
+* NOW 'OP' CONTAINS 'DATA' NOT STORED AS 'LABEL
+           SPACE 3
+S10MUVE1   MVC 0(*-*,R1),0(R9)
+S10MUVE2   MVC 21(*-*,R1),0(R7)
+           LTORG
+           DROP R10
+           DC S(*,*,*,*)                                          74303
+           DC S(*,*,*,*)                                          74303
+           DC S(*,*,*,*)                                          74303
+           DC S(*,*,*,*)                                          74303
+           DC S(*,*,*,*)                                          74303
+           DC S(*,*,*,*)                                          74303
+           DC S(*,*,*,*)                                          74303
+           DC S(*,*,*,*)                                          74303
+UJS10DST   DSECT
+S10SREC    DS  S
+S10SSEND   DS  S
+S10LERR    DS  AL1
+S10LREC    DS  AL1
+S10LSEND   DS  AL1
+S10TREC    DS  C
+S10VAL     DS  H
+S10ERRMS   DS  C
+         TITLE 'OUTPUT TO WORK FILE'
+           JOLSAVE CSECT=UJS15OP
+* THIS ROUTINE ACTUALLY OUTPUTS TO THE WORKFILE
+           L   R3,0(R1)        LOAD ADDRESS OF RECORD TO GO OUT   74303
+           USING JOLCOM,R2
+* R3 POINTS TO THE INFORMATION TO BE WRITTEN OUT
+           LH  R0,0(R3)        LOAD LENGTH OF RECORD              75128
+           LTR R0,R0                                              75128
+           BP   S15POS
+         JOLERR 501,'-VE OR 0 LEN RECORD'
+S15RETNF   L  R15,4(R13)
+           SR R1,R1
+           ST R1,24(R15)
+           JOLRETN RC=16
+S15POS     EQU   *
+           L   R0,AWRKCNTL                                        75128
+         LR    R1,R3          SWAP TO CORRECT REG FOR S30OP       75128
+         $CALL UJS30OP        CALL OP ROUTINE
+         L     R15,4(R13)
+         ST    R1,24(R15)
+          L   R14,AERRCNTL
+         USING CATX,R14                                           76200
+          MVC   WORKBLKN,24(R15)   SHIFT CURRENT BLKNO
+            DROP  R14
+          JOLRETN
+         LTORG
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+         TITLE 'FIND/GET/POINT TO INFO ON WORK FILE'
+         JOLSAVE CSECT=UJS16GID                                   75128
+* THIS CSECT GETS AN IDENTIFIER AND TRANSFERS IT TO TRANS         75128
+         LR    R4,R1           SAVE R1                            87150
+         CLEAR TRANS                                              75128
+         LR    R1,R4           RESTORE R1                         87150
+         $CALL UJS16PID  SEARCH NAME TABLE,GET RECORD INTO CORE   75128
+*                        IF ITS NOT ALREADY                       75128
+         LR    R5,R0     SET R5=CORE ADDRESS                      75128
+         LR    R6,R1     GET TABLE POSITION (MAY BE RQD BY CALLER)75128
+         LTR   R15,R15   DID WE FIND IT                           75128
+         BNZ   S16FAIL   NO->                                     75128
+* NOW R5 CONTAINS THE CORE ADDRESS FOR THE RECORD
+         MVC   DBL(2),0(R5)   GET REC LEN (NO 0C6)
+         LH    R7,DBL         GET LENGTH INTO R7
+         BCTR  R7,0           -1 FOR MVC EXECUTE
+         CH    R7,=AL2(L'TRANS-1) WILL IT FIT IF WE MOVE IT ?
+         BH    S16FAIL0       NOPE
+         EX    R7,S16MVC1     YES, SHIFT IT
+         SR    R15,R15        CLEAR RETURN CODE
+S16FAIL  L     R9,4(R13)      GET OLD SAVE AREA
+         STM   R5,R6,20(R9)  RESET CALLERS R0,R1
+         JOLRETN RC=(15)
+         SPACE 2
+S16FAIL0 JOLERR 502,'RECORD TOO LARGE'                            75311
+         LA    R15,4          SET R15 NON-ZERO FOR ERROR          75128
+         B     S16FAIL
+S16MVC1  MVC   TRANS(*-*),0(R5)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         JOLSAVE CSECT=UJS16PID                                   75128
+* THIS CSECT WILL FIND AND LOAD THE REQD INFORMATION FOR AN IDENTIFIER
+*
+* SEVERAL CHANGES HAVE BEEN MADE HERE; ORIGINALLY EVERY DECODED   75128
+* DSID ETC WAS OUTPUT AS A SEPERATE BLOCK ON DISK, NOW WE BLOCK   75128
+* THINGS UP A BIT.                                                75128
+*
+* NOW WE HAVE THESE 3 PROBLEMS :                                  75128
+*    THE THING WE WANT MAY BE IN THE BLOCK BEING FILLED           75128
+*    THE THING WE WANT MAY BE ON DISK                             75128
+*    THE THING WE WANT MAY BE IN THE INPUT BUFFER                 75128
+* SO:-                                                            75128
+           L   R3,0(R1)        LOAD PARM                          74303
+         L   R10,AERRCNTL
+         USING ACATBUF,R10                                        76200
+           USING JOLCOM,R2
+           USING IDFNAME,R3    JUST A DS CL8 DSECT
+          $CALL UJS17FID,IDFNAME                                  74303
+* NOW THE ADDRESS IS RETURNED IN THE FORM - BLOCKNO/OFFSET IN R1  75128
+           LR  R4,R1
+           LTR R15,R15
+           BNZ S16RETN
+           USING IDTABLE,R4
+           LH  R5,IDADDR+2     ADDRESS IN THE BLOCK               75128
+           LTR  R5,R5
+           BNZ  S16TDISK
+         JOLERR 401,'IDENTIFIER ''',IDFNAME,''' IS A NAME ONLY AND CAN *
+               ONLY BE TESTED WITH AN IF'
+            LA R15,16       ERROR INDIC                   75051
+           B  S16RETN
+S16TDISK   EQU  *
+         CLC   WORKBLKN,IDDISK IS IT IN THE CURRENT BLOCK ?       75128
+           BNE S16NOTC         NOPE                               75128
+* HERE IT IS IN THE CURRENT BLOCK.                                75128
+           L   R1,AWORKBUF     LOAD ADDRESS BUFFER                75128
+S16AR      AR  R5,R1           R5 -> RECORD IN CURRENT BUFFER     75128
+           B   S16MUVRC                                           75128
+           SPACE 1                                                75128
+S16NOTC    EQU *                                                  75128
+* WELL LETS SEE IF IT IS IN THE INPUT WORK BUFFER                 75128
+           CLC IDDISK,WORK2BLK                                    75128
+           BNE S16READ         NOPE,WE'LL HAVE TO READ IT IN      75128
+S16LWK2    L   R1,AWORK2BF
+           B   S16AR
+S16MUVRC LR    R3,R5                                              75128
+S16RETN0   SR  R15,R15
+S16RETN    EQU  *
+           L  R1,4(R13)
+         STM   R3,R4,20(R1)                                       75128
+           JOLRETN RC=(15)
+S16READ    EQU *
+* REQD INFO IS ON DISK,HAUL IT IN.
+         LH   R15,IDDISK      GET BLOCK NO. CONTAINING INFO       75128
+         STH  R15,WORK2BLK    RESET CURRENT INPUT BLOCK NUMBER    75128
+*                             SO WE WON'T RE-READ THIS BLOCK SHOUL75128
+*                             D WE WANT MORE INFO OUT OF IT       75128
+         SLL  R15,2            * 4
+         L     R6,ADCBS       GET DCB ADDRESSES                   75128
+         USING DCBS,R6                                            75128
+           POINT WORKFILE,WORKTTR1(R15)
+         DROP  R6                                                 75128
+           L   R6,AWORK2BF
+           READ WORKINDB,SF,,(6),MF=(E,WORKINDB)                  75128
+           CHECK WORKINDB
+           B   S16LWK2
+           LTORG
+         DROP  R10
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+S16DSECT   DSECT                                                  74303
+IDFNAME    DS  CL8                                                74303
+         EJECT
+S16EDSEC DSECT
+         DS    18F
+S16SAVEC DS    CL8             SAVE COMMAND AREA
+         COPY  DDEXTRA
+S16EXTEN EQU   *-S16EDSEC
+         JOLSAVE CSECT=UJS16EXT,SIZE=S16EXTEN                     75128
+         USING S16EDSEC,R13                                       87150
+* THIS CSECT EXAMINES THE DDDSNDET RECORD AND READS ANY EXTRA     87150
+* INFORMATION SUCH AS SUBSYS OR LONG VOLUMES, AND OUTPUTS         87150
+* A RECORD TO THE GENERATE PHASE WITH THE EXTRA INFORMATION.      87150
+*
+         L     R3,0(R1)        LOAD PARM(DDDSNDET)                87150
+         USING DDDSNDET,R3
+         CLC   DDAEXTRA,ZERO
+         BNE   S16GEXT
+         JOLRETN
+S16GEXT  L     R10,AERRCNTL
+         USING ACATBUF,R10                                        76200
+* FOR PATH ON THE DDCARD, I HAVE COPIED IT INTO GOTTEN STORAGE,   J60
+* SOMETHING I WOULD NEVER NORMALLY DO.                            J60
+         CLI   DDTYPE,DDPATH                                      J60
+         BNE   S16NOTGT                                           J60
+         L     R4,DDAEXTRA                                        J60
+*
+         JOLRETN
+*
+S16NOTGT DS    0H                                                 J60
+* NOW WE HAVE THESE 3 PROBLEMS :                                  87150
+*    THE THING WE WANT MAY BE IN THE BLOCK BEING FILLED           87150
+*    THE THING WE WANT MAY BE ON DISK                             87150
+*    THE THING WE WANT MAY BE IN THE INPUT BUFFER                 87150
+* SO:-                                                            87150
+* NOW THE ADDRESS IS IN THE FORM - BLOCKNO/OFFSET IN R1           87150
+         LH    R4,DDAEXTRA     GET THE ADDRESS OF THE BLOCK       87150
+         LH    R5,DDAEXTRA+2   ADDRESS IN THE BLOCK               87150
+         CH    R4,WORKBLKN     IS IT IN THE CURRENT BLOCK ?       87150
+         BNE   S16NOTCU        NOPE                               87150
+* HERE IT IS IN THE CURRENT BLOCK.                                75128
+         L     R1,AWORKBUF     LOAD ADDRESS BUFFER                75128
+S16AR3   AR    R5,R1           R5 -> RECORD IN CURRENT BUFFER     75128
+         B     S16WRITE                                           87150
+         SPACE 1                                                  87150
+S16NOTCU EQU   *                                                  87150
+* WELL LETS SEE IF IT IS IN THE INPUT WORK BUFFER                 87150
+         CH    R4,WORK2BLK                                        87150
+         BNE   S16READX        NOPE,WE'LL HAVE TO READ IT IN      87150
+S16LDWK  L     R1,AWORK2BF
+         B     S16AR3
+S16READX EQU   *
+* REQD INFO IS ON DISK,HAUL IT IN.
+         LR   R15,R4          GET BLOCK NO. CONTAINING INFO       87150
+         STH  R15,WORK2BLK    RESET CURRENT INPUT BLOCK NUMBER    87150
+*                             SO WE WON'T RE-READ THIS BLOCK SHOUL87150
+*                             D WE WANT MORE INFO OUT OF IT       87150
+         SLL  R15,2            * 4
+         L     R6,ADCBS       GET DCB ADDRESSES                   75128
+         USING DCBS,R6                                            75128
+         POINT WORKFILE,WORKTTR1(R15)
+         DROP  R6                                                 75128
+         L     R6,AWORK2BF
+         READ WORKINDB,SF,,(6),MF=(E,WORKINDB)                    75128
+         CHECK WORKINDB
+         B     S16LDWK
+S16WRITE DS    0H                                                 87150
+* NOW R5 CONTAINS THE CORE ADDRESS FOR THE RECORD
+         LH    R7,0(R5)       GET REC LEN (NO 0C6)
+         BCTR  R7,0           -1 FOR MVC EXECUTE
+         CH    R7,=AL2(LENDDEXT) WILL IT FIT IF WE MOVE IT ?
+         BH    S16FAIL2       NOPE
+         EX    R7,S16MVC2     YES, SHIFT IT
+         MVC   ITEXT,#DDSUBS   MOVE IN SUBSYS ONLY FOR NOW
+         LA    R1,IBODY+2
+         AH    R1,#DDSUBS
+         STH   R1,ILENGTH
+         MVC   S16SAVEC,ICOMMAND
+         MVC   ICOMMAND,=CL8'SUBSYS'
+         OPINST INST
+         MVC   ICOMMAND,S16SAVEC
+         JOLRETN RC=0
+S16FAIL2 JOLRETN RC=16
+         LTORG
+         DROP  R10
+S16MVC2  MVC   DDLENXTR(*-*),0(R5)
+         DC    S(*),S(*),S(*),S(*)
+         DC    S(*),S(*),S(*),S(*)
+         DC    S(*),S(*),S(*),S(*)
+         DC    S(*),S(*),S(*),S(*)
+         DC    S(*),S(*),S(*),S(*)
+         DC    S(*),S(*),S(*),S(*)
+           TITLE 'UJS17FID:FIND ADDRESS OF IDENT IN TABLE'
+UJS17FID   CSECT                                                  74303
+           USING *,R15                                            74303
+           STM R4,R7,CALLAREA+20 SAVE 4 TO 7                      74303
+           USING JOLCOM,R2
+           LA  R5,20           LENGTH OF TABLE                    74303
+           LNR R6,R5           -20 IN R6                          74303
+           MH  R5,NOIDS        R5= 20*NOIDS                       74303
+           L   R7,AIDTBL       R7=START OF TABLE                  74303
+           AR  R5,R7           R5=START OF TABLE+NOIDS * 20       74303
+           L   R4,0(R1)        R4=ADDR OF ITEM WE ARE LOOKING FOR 74303
+           LR  R1,R5           SAVE NEXT HOLE IN TABLE            74303
+S17BXH     BXH R5,R6,S17COMP   DO BXH FIRST,COS R5 IS 20 TOO HIGH 74303
+*                              INITIALLY                          74303
+          CLC 0(8,R5),0(R4)   CHECK FIRST ENTRY
+          BE S17FOUND         FOUND FIRST ENTRY
+* NOT FOUND HERE                                                  74303
+           LA  R15,4           NOT FOUND INDIC                    74303
+           LM  R4,R7,CALLAREA+20 RELOAD 4 TO 7                    74303
+           BR  R14             BACK TO CALLER                     74303
+S17COMP    CLC 0(8,R5),0(R4)   DO WE HAVE THE RIGHT SPOT ?        74303
+           BNE S17BXH                                             74303
+* HERE WE HAVE FOUND THE NAME                                     74303
+S17FOUND   LR   R0,R1      RETURN NEXT HOLE IN R0
+           LR   R1,R5     R1=POSN OF ITEM FOUND
+           LM  R4,R7,CALLAREA+20 RELOAD 4 TO 7                    74303
+           SR  R15,R15         CLEAR R15                          74303
+           BR  R14             BACK TO CALLER                     74303
+           LTORG                                                  74303
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DROP R15                                               74303
+          TITLE 'GET A RECORD SEQUENTIALLY FROM THE WORK FILE'
+         JOLSAVE CSECT=UJS31IN,SIZE=S31DSIZE
+* THIS CSECT IS CALLED WHEN IT IS NECESSARY TO READ A RECORD
+*  FROM THE WORKFILE, IN A SEQUENTIAL MANNER.
+         SPACE
+* ON ENTRY, R0 -> CONTROL AREA
+*           R1 -> RECEIVE AREA
+*
+* THE CONTROL AREA IS THE SAME ONE AS USED FOR UJS30OP ABOVE
+         LR    R4,R0          CHANGE REGISTERS
+         LR    R5,R1          CHANGE REGISTERS
+         USING JOLCOM,R2
+         USING S30PARM,R4
+         USING S30OP,R5
+         USING S31SAVE,R13
+* NOW I HAVE TO KNOW
+*  1. THE BLOCKLENGTH
+*  2. THE OFFSET IN THE BLOCK OF THE LAST READ RECORD
+*
+* THE MAIN CONTROLLING MODULES WOULD HAVE SET THE CURRENT
+* BLOCKLENGTH TO 0, THE OFFSET IN THE BLOCK VERY HIGH,
+* AND THE CURRENT BLOCKNO TO -1 FOR THE VERY FIRST READ.
+*
+*
+         L     R7,S30ABUF     LOAD ADDRESS OF THE BUFFER
+         LR    R8,R7          SAVE IT
+         CLC   S30LASTL,0(R8) WILL WE RUN OVER THE BLOCK ?
+         BL    S31MUV         NOPE,-> MERELY SHIFT THE RECORD
+         SPACE 3
+* HERE WE HAVE TO READ A NEW BLOCK INTO STORAGE, IF THERE ARE
+*  ANY LEFT
+         SPACE
+         LH    R14,S30BLKNO   LOAD CURRENT BLOCK NUMBER
+         A     R14,ONE        ADD  1 TO IT
+         CH    R14,S30MAXBL   IS THIS BLOCK THE LAST ONE ?
+         BNH   S31MORE        NO STILL MORE(PROBABLY)              DASD
+*        BL    S31MORE        NO, STILL MORE (PROBABLY)            DASD
+S31EOF   JOLRETN RC=4         EOF
+         SPACE 2
+S31MORE  STH   R14,S30BLKNO   RESET BLOCK NUMBER
+         SLL   R14,2          MULT BY 4
+         LA    R15,S30TTR1-4(R14) LOAD A(TTR OF BLOCK)
+         CLC   0(4,R15),ZERO  IS IT EMPTY (IE LAST BLOCK WAS LAST
+*                             OF DATA?)
+         BE    S31EOF         EOF, RETURN A 4
+         L     R14,AWORKFIL
+         POINT (R14),(R15)    POINT TO THE TTR
+         READ  WORKINDB,SF,,(8),MF=E READ IT
+         CHECK WORKINDB       WAIT FOR IT
+         MVC  S30LASTL,=H'4'    SET OFFSET TO FIRST RECORD TO 4
+         SPACE 3
+S31MUV   EQU   *
+         AH    R7,S30LASTL    ADD OFFSET TO POINT TO THIS RECORD
+* HERE ALL WE HAVE TO DO IS SHIFT THE RECORD TO THE AREA
+*  SPECIFIED, AND RETURN
+         LR    R1,R5          LOAD R1 WITH A(RECEIVE)
+         LR    R0,R7          LOAD SEND ADDRESS
+         BAL   R14,MOVEDATA   SHIFT IT (LOOKS AFTER > 256 BYTES)
+         LH    R1,S30LASTL
+         MVC   S31WORK,0(R7)  SHIFT LAST RECORD LRECL SO NO 0C6
+         AH   R1,S31WORK      CALC NEW OFFSET
+         STH   R1,S30LASTL    RESET OFFSET IN BLOCK
+         JOLRETN
+         LTORG
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         SPACE 3
+S31SAVE  DSECT
+         DS    18F
+S31WORK  DS    H
+         DS    H
+S31DSIZE EQU   *-S31SAVE
+S30PARM    DSECT
+S30ABUF    DS  A               ADDRESS OF BUFFER
+S30LBUF    DS  H               LENGTH OF BUFFER
+S30BLKNO   DS  H               CURRENT BLOCK NUMBER
+S30MAXBL   DS  H               MAX NO OF BLOCKS
+S30LASTL   DS  H               LAST BLOCK LENGTH
+S30TTR1    DS  A               TTRS OF BLOCKS
+S30OP      DSECT
+#S30REC    DS  H               LENGTH OF RECORD TO GO OUT
+S30REC     DS  CL1             RECORD
+           TITLE 'ANALYSE/FIX DSNAME PROCESSING'                  75311
+* THIS IS A NEW CSECT DESIGNED TO HANDLE DSNAME PROCESSING.
+* ON ENTRY, CALLAREA CONTAINS '||' | X'0000' (IF FROM UJC02PGM)
+*
+* ON RETURN, #WORK CONTAINS A DSNAME (WITHOUT QUOTES)
+*          AND WORK+ 100 CONTAINS
+*              1. BLANKS IF NO MEMBER NAME OR GDG
+*           OR 2. THE MEMBER NAME
+*           OR 3. THE GDG GENERATION IN THIS FORM
+*               A. ( NNNN      ABSOLUTE OR 0 GENERATION
+*               B. (+NNNN      FOR + GDGS
+*               C. (-NNNN      FOR - GDGS
+*          AND WORK+ 120 CONTAINS A PASSWORD IF CODED.
+*
+* WE CAN BE CALLED FROM UJC02PGM, UJC03DS OR UJC05CAT ETC.
+*
+* TOKENS:-
+*    ON RETURN, TKNCURR POINTS TO THE TOKEN AFTER THE LAST
+*              USED ONE, AND SIMILARLY WITH 'TKN'
+*
+* IF THE TOKEN WE ENTER WITH HAS QUOTES, THEY ARE REMOVED.
+*
+* THE CONCATENATE SYMBOL CANNOT BE USED IN UJC02PGM, BECAUSE
+*  IT MAY GET CONFUSED WITH CONCATENATED DDNAMES.
+           JOLSAVE CSECT=UJS60DSN
+           USING TKNX,R3
+           MVC WORK+100(20),BLANKS
+           MVC WORK+120(8),BLANKS
+* NOW CHECK IF DSNAME HAS QUOTES, AND IF SO REMOVE THEM
+           CLI TKN,C'('        BRACKETS CODED ?
+           BNE S60NB#          NO
+           GETTKN TKNCURR      GET NEXT TOKEN
+           STH R1,TKNCURR      SO THAT WE CAN SKIP THE BRACKET
+S60NB#     CLI TKN,C''''       GOT QUOTES ?
+           BNE S60NOQ          NOPE, ENTER DIFFERENT TYPE OF
+*                              PROCESSING
+           SPACE 3
+* HERE, THE DSNAME HAS GOT QUOTES AROUND IT.
+           BAL R14,DROPQUOT
+           BAL R14,DROPQUOT    DO IT AGAIN FOR DOS QUOTED DSNAMES
+           MVC #WORK(L'TKN),#TKN SHIFT DSNAME TO WORK
+           GETTKN TKNCURR      GET NEXT TOKEN TO SEE IF PASSWORD 80290
+           CLI  TKN,C'/'       START OF PASSWORD?                80290
+           BNE  S60#1                                            80290
+           GETTKN (R1)         GET NEXT TOKEN AFTER PASSWORD     80290
+           MVC  WORK+120(8),TKN SAVE THE PASSWORD                80290
+           STH  R1,TKNCURR     UPDATE CURRENT TOKEN POINTER      80290
+* NOW FIND '(' ETC (IF PRESENT)
+S60#1      LH  R15,#WORK       LOAD LENGTH OF DSN
+           LA  R1,WORK
+           AR  R15,R1
+           LA  R14,1           THERE... BXLE LOOP SET UP NOW
+           SPACE 1
+           LR  R7,R1           SAVE R1 IN R7 FOR NOW
+           CLI 0(R1),C'('
+           BE  S60OPEN
+           BXLE R1,R14,*-8
+* NO MEMBER, NO GDG, RETURN
+           JOLRETN
+           SPACE 2
+S60OPEN    EQU *
+* R1 POINTS TO THE '(', SO
+S6000       CLI  0(R15),C' '
+            BNE  S6001
+            BCT  R15,S6000
+S6001      CLI 0(R15),C')'     IS THERE A CLOSING BRACKET ?
+           BNE S60NCLB         NO
+           MVI 0(R15),C' '     YES, CLEAR ')',COS WE DONT WANT IT
+           BCTR R15,0          BACK TRACK ANOTHER BYTE
+S60NCLB    EQU *
+           MVC TKN(12),1(R1)   SHIFT MEMBER OR WHATEVER TO TKN
+*                              (AND DROP '(')
+           MVC 0(12,R1),BLANKS CLEAR MEMBER | GDG BIT IN WORK
+           SR  R15,R1          CALC
+           STH R15,#TKN        - OF MBR BIT
+           SPACE 1
+           SR  R1,R7           CALC
+           STH R1,#WORK        - DSNAME
+           SPACE 3
+* NOW DETEMINE WHAT WE HAVE GOT IN THE MEMBER BIT, AND
+*  DECODE IT A BIT.
+           LA  R8,C' '         LOAD A BLANK INTO R8
+           CLI TKN,C'+'        + GDG ?
+           BE  S60PLUS         YES
+           CLI TKN,C'-'        - GDG ?
+           BE  S60MINUS        YES
+           TNUM #TKN           SEE IF ABSOLUTE GENERATION NUMBER
+           LTR R15,R15
+           BNZ S60MEMBR        ITS A MEMBER, NO A GDG THINGO
+S60CVD     CH  R1,=H'9999'     > 9999
+           BH  S60GDGER        ERROR
+         LTR   R1,R1          GEN (0)                    JOL30063 76200
+         BNZ   S60NZ2                                    JOL30063 76200
+         LA    R8,C'+'        SET + IN R8                JOL30063 76200
+S60NZ2   EQU   *
+           CVD R1,DBL
+           UNPK WORK+102(4),DBL
+           OI  WORK+105,C'0'   MAKE NORMAL NUMBER
+           MVI WORK+100,C'('   INDICATE GDG
+           STC R8,WORK+101     STORE '+' | '-' IN MEMBER BIT.
+           JOLRETN RC=4        RETURN, INDICATING GDG
+           SPACE 3
+S60PLUS    EQU *
+S60MINUS   EQU *
+           IC  R8,TKN          LOAD + | - INTO R8
+           MVI TKN,C' '        CLEAR TKN
+           TNUM #TKN           CONVERT TO NUMERIC
+           LTR R15,R15         DID IT CONVERT
+           BZ  S60CVD
+S60GDGER   MVC WORK+100(20),BLANKS
+           JOLRETN RC=12       RETURN GENERATION NUMBER ERROR
+           SPACE 3
+S60MEMBR   MVC WORK+100(8),TKN SHIFT MEMBER TOKEN
+           JOLRETN RC=8        RETURN, INDICATING MEMBER NAME
+           SPACE 3
+S60NOQ     EQU *
+* HERE, WE HAVE THE START OF A DSNAME BUT WE HAVE TO FORM IT
+*  UP INTO A PROPER DSNAME NOW BY GETTING MORE TOKENS AS NECESSARY
+           MVC #WORK(L'TKN+2),#TKN SHIFT FIRST PART TO WORK
+           CLI WORK,C'&&'      START OF TEMPORARY DSNAME ?
+           BNE S60NOTMP        NOT A TEMPORARY DSNAME
+           GETTKN TKNCURR      GET NEXT TOKEN
+           CLI TKN,C'&&'       NEXT A '&' TOO ?
+           BNE S60GOTTM
+           GETTKN (R1)         SKIP 2ND AMPERSAND
+S60GOTTM   STH R1,TKNCURR
+           BAL R14,CONCAT      CONCATENATE NAME TO #WORK
+* NOW CHECK IF THE NEXT TOKEN INDICATES A MEMBER NAME, WED BETTER
+*    PROCESS IT.
+           GETTKN (R1)         GET NEXT
+           CLI TKN,C'('        START OF MEMBER ?
+           BE  S60MEMST        GO TO START OF MEMBER PROCESSING
+           CLI  TKN,C'/'       START OF PASSWORD?                80290
+           BNE  S60RETN0                                         80290
+           GETTKN (R1)         GET NEXT TOKEN AFTER PASSWORD     80290
+* SKIP PASSWORDS FOR TEMPORARY DATA SETS                         80290
+           STH  R1,TKNCURR     UPDATE CURRENT TOKEN POINTER      80290
+S60RETN0   JOLRETN RC=0        NO, JUST RETURN THEN
+           SPACE 3
+S60MEMST   EQU *
+* TKN CONTAINS A '(' NOW
+           LA  R8,C' '         SET R8=' ' NOW (MAY HAVE + | - LATER)
+           GETTKN (R1)         GET NEXT TOKEN
+           STH R1,TKNCURR      SAVE CURRENT TOKEN NUMBER
+           CLI TKN,C'+'
+           BE  S60PLUS2
+           CLI TKN,C'-'
+           BE  S60MIN2
+* HERE IT COULD BE A MEMBER OR A SPECIFIC GENERATION
+           CLI TKNTYPE,2       <IDENTIFIER> (MEMBER NAME) ?
+           BE  S60MEM2         YES
+S60GEN2    TNUM #TKN           CONVERT NUMBER TO NUMERIC
+           LR  R6,R15          SAVE RETURN CODE
+           LR  R7,R1           SAVE BINARY NUMBER IN R7
+           GETTKN TKNCURR      SEE IF NEXT ')'
+           CLI TKN,C')'        IS IT A ')'
+           BNE *+8             NO, USER DIDN'T CODE IT
+           STH R1,TKNCURR      YES, SET TKNCURR 1 HIGHER
+*                              SO NO-ONE ELSE WILL GET ')' AGAIN
+           LR  R1,R7           SET R1 TO BINARY NUMBER FROM TNUM
+           LTR R15,R6          TEST RETURN CODE
+           BNZ S60GDGER        ERROR, DIDN'T CONVERT
+           B   S60CVD          CONVERT TO ZONED, RETURN
+           SPACE 3
+S60PLUS2   EQU *
+S60MIN2    EQU *
+           IC  R8,TKN          LOAD '+' | '-'
+           GETTKN TKNCURR      GET WHAT SHOULD BE A NUMBER
+           STH R1,TKNCURR                                         75311
+           SPACE 1                                                75311
+* NOW WE MUST CHECK TO SEE IF 'GDG.X(+-2)' WAS CODED              75311
+           CLI TKN,C'-'                                           75311
+           BNE S60GEN2         NOPE, BETTER BE A NUMBER THEN      75311
+           IC  R8,TKN          LOAD '-'                           75311
+           GETTKN (R1)         GET NEXT TOKEN                     75311
+           STH R1,TKNCURR      BACK TO GDG PROCESSING             75311
+           B   S60GEN2
+           SPACE 3
+S60MEM2    EQU    *
+           MVC   WORK+100(8),TKN      SHIFT MEMBER NAME
+           GETTKN TKNCURR
+           CLI   TKN,C')'
+           BNE   S60TPASS      TEST FOR A PASSWORD                80290
+           STH   R1,TKNCURR
+S60TPASS   GETTKN TKNCURR      GET NEXT TOKEN TO SEE IF PASSWORD 80290
+           CLI  TKN,C'/'       START OF PASSWORD?                80290
+           BNE  S60RETN0                                         80290
+           GETTKN (R1)         GET NEXT TOKEN AFTER PASSWORD     80290
+           MVC  WORK+120(8),TKN SAVE THE PASSWORD                80290
+           STH  R1,TKNCURR     UPDATE CURRENT TOKEN POINTER      80290
+           JOLRETN RC=0
+S60NOTMP   EQU *
+* NOT A TEMPORARY DSNAME HERE, SO, LETS GO.
+           LH  R1,TKNCURR      SET R1 TO LATEST TOKEN NUMBER.
+S60LOOP    GETTKN (R1)         GET ITEM AFTER DSN START
+           CLI TKN,C'('        START OF MEMBER ? (OR GDG)
+           BE  S60MEMST        YES, GO PROCESS
+* NOW HERE IT COULD BE '.' | '||'. IF NOT, END OF DSNAME
+*
+* WATCH C02PGM, WHICH DOESN'T ALLOW '||'
+*
+           CLC TKN(2),CALLAREA '||' ?
+           BE  S60CON3         IGNORE IT TOTALLY
+           CLI TKN,C'.'        CONNECTOR ?
+           BE  S60STOP
+* OK, DSN FORMED UP HERE, RETURN
+           BCTR  R1,0              DROP R1 BY 1
+           STH R1,TKNCURR
+           B   S60TPASS       TEST FOR A PASSWORD                 80290
+           SPACE 3
+S60STOP    EQU *
+           BAL R14,CONCAT      CONCAT '.' INTO #WORK
+S60IGNRS   GETTKN (R1)         GET NEXT
+           CLI TKN,C'.'        ANOTHER '.'
+           BE  S60IGNRS        IGNORE IT
+S60CON4    BAL R14,CONCAT      CONCAT ITEM AFTER '.' OR '||'
+           B   S60LOOP
+S60CON3    GETTKN (R1)         SKIP '||' SYMBOL
+           B  S60CON4
+           SPACE 3
+           LTORG
+          DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+S61SAVE  DSECT
+         DS    18F            SAVE AREA
+S61OLDGN DC  P'000000'       OLD GEN
+S61NEWGN DC  P'000000'       OLD GEN
+S61ENDDS DS  A                A(END DSN)
+S61LOCAT DS  A
+S61PARM1 DS  A               CATLG SEARCH PARM AREA (RE-ENTRANT)
+S61PARM2 DS  A               CATLG SEARCH PARM AREA (RE-ENTRANT)
+S61PARM3 DS  A               CATLG SEARCH PARM AREA (RE-ENTRANT)
+S61PARM4 DS  A               CATLG SEARCH PARM AREA (RE-ENTRANT)
+S61PARM5 DS  A               CATLG SEARCH PARM AREA (RE-ENTRANT)
+S61LDSN  DS     0D   DSNAME IS REALLY IN DDDSNAME                  DASD
+S61LAREA DS     265C   WORK AREA FOR CAMLST ,LOCATE SVCS           DASD
+S61SAVEL EQU   *-S61SAVE
+S61GENDT DSECT
+S61BRAC  DS  CL1             '('
+S61GDGTY DS  CL1             '+' | '-' | ' '
+S61GENNO DS  CL4             GENERATION NUMBER
+         JOLSAVE CSECT=UJS61DD,SIZE=S61SAVEL
+* THIS ROUTINE GETS CONTROL WHEN WE HAVE TO FIX A
+*  GENERATION NUMBER.
+* IT IS CALLED FROM UJC24RUN AND UJCO5CAT
+*
+* WHAT HAPPENS IS THIS:-
+*  THE DDSNAME FIELD CONTAINS A DATA SET NAME
+*  WORK (8 CHARS) CONTAINS WHAT MAY BE A RELATIVE GENERATION
+*  NAME, AND THE DSNAME MAY ALSO CONTAIN ONE.
+*
+* WHAT WE HAVE TO DO IS TRY AND GET A VALID GENERATION NUMBER
+*  FROM ALL THIS
+* 1. DSN=T.X        WORK=0    OUTPUT=T.X(0)
+* 2. DSN=T.X        WORK=+1   OUTPUT=T.X(+1
+* 3. DSN=T.X(+1)    WORK=+1   OUTPUT=T.X(+2)
+* 4. DSN=T.X(9)    WORK=+1    OUTPUT=T.X(10)
+* 5. DSN=T.X(22)    WORK=-1   OUTPUT=T.X(21)
+* GOT THE PICTURE ?
+         SPACE 3
+           LM  R9,R10,0(R1)    LOAD PARAMETERS
+           USING DDDSNDET,R9
+           USING S61GENDT,R10
+         USING S61SAVE,R13
+           XC    S61PARM1(20),S61PARM1      CLEAR CATLG SEARCH AREA
+           LA    R1,S61PARM1               CAMLST PARAMETER
+           ST    R1,S61LOCAT               CAMLST PARAMETER
+           MVI   S61PARM1,68                SET CAT SEARCH CODES
+           LA    R1,DDDSNAME
+           ST    R1,S61PARM2                SET DSNAME ADDRESS
+           LA    R1,S61LDSN
+           ST   R1,S61PARM4                 SET WORK AREA ADDRESS
+         CLEAR S61OLDGN,S61NEWGN
+* FIRST OF ALL, CHECK THAT THE NEW GENERATION HAS SOMETHING IN IT
+           CLI S61BRAC,C'('    IS IT A GDG OF SOME DESCRIPTION ?  75311
+           BE  S61ISGD1        YES                                75311
+           CLI S61BRAC,C' '    IS THERE A MEMBER SPECIFIED ?      75311
+           BE  S61RETN0        NOPE, JUST RETURN                  75311
+           MVC DDMBR,S61BRAC   COPY MEMBER NAME                   75311
+           MVI DDTYPE,DDMEMSPC TURN ON MEM INDIC                  75311
+S61RETN0   JOLRETN RC=0                                           75311
+           CLC S61GENNO,BLANKS
+         BE    S61RETN0       DON'T DO A THING
+* NOW SEE IF WE ARE DEALING WITH A VALID DATA SET TYPE
+         CLI   DDTYPE,DDREALDS
+           BL  S61ERR2
+           AGO .S61IG01                                           75311
+* LETS GET THE END OF THE DSNAME, AND THE PRECEEDING DOT, IF
+*  THERE IS ONE
+         LA    R5,DDDSNAME
+         LA    R6,DDDSNAME+L'DDDSNAME-1
+S61LOOP1 CLI   0(R6),C' '
+         BNE   S61GOTEN
+         CR    R5,R6
+         BH    S61ERR02       INTERNAL ERROR, BLANK DSN
+         BCT   R6,S61LOOP1
+S61GOTEN   ST  R6,S61ENDDS     SAVE END OF DSNAME
+.S61IG01   ANOP                                                   75311
+         SPACE 1
+S61ISGD1  EQU   *
+*******************************************************            DASD
+* NOW WE MUST CHECK BOTH GDG NUMBERS FOR NUMERICS     *            DASD
+*******************************************************            DASD
+*  USING INLINE TNUM MACRO                                         DASD
+          CLC   DDMBR,BLANKS   DON'T CHECK NUMERICS ON BLANKS      DASD
+          BE    S60CKNXT                                           DASD
+          L    R15,ATNUM       LOAD ADDRESS OF NUMERIC CHECK RTN   DASD
+          LA   R0,4            CHECK 4 BYTES                       DASD
+          LA   R1,DDMBR+2      FIELD TO CHECK                      DASD
+          BALR R14,R15         GO CHECK THE FIELD                  DASD
+          LTR  R15,R15         IS IT GOOD                          DASD
+          BZ   S60CKNXT        OK KEEP GOING                       DASD
+           JOLERR 103,'DSNAME ''',DDDSNAME,''' DECLARED AT ',          *
+               DDSTMT,' HAS NON NUMERIC VALUE IN GDG NUMBER',          *
+               ', SET TO ABSOLUTE ZERO'                            DASD
+          MVC  DDMBR(8),=C'( 0000  '                               DASD
+S60CKNXT  EQU  *                                                   DASD
+           SPACE  1
+* NOW WE HAVE SIX POSSIBILITEES
+         SPACE 2
+* ..--***OLD***--..    ..--***NEW***--..                         RESULT
+*      ABSOLUTE             ABSOLUTE         CASE 1    OK,ERR,ABS   ABS
+*      ABSOLUTE             RELATIVE         CASE 2    OK           ABS
+*      RELATIVE             ABSOLUTE         CASE 3    TAKE ABS,ERR ABS
+*      RELATIVE             RELATIVE         CASE 4    OK           REL
+*      INDEX                ABSOLUTE         CASE 5    OK           ABS
+*      INDEX                RELATIVE         CASE 6    OK           REL
+           SPACE 1
+* SO NOW WE'D BETTER WORK OUT EXACTLY WHAT WE HAVE GOT, AND
+*  PERFORM APPROPRIATE ACTIONS.
+*
+* SEE IF EITHER RELATIVE (-) AND CHANGE SIGN BIT BEFORE PACK
+          CLI DDMBR+1,C'-'
+          BNE S60NNEG1
+          NI  DDMBR+5,X'0F'
+          OI  DDMBR+5,B'11010000'
+S60NNEG1  CLI S61GDGTY,C'-'
+          BNE S60NNEG2
+          NI  S61GENNO+3,X'0F'
+          OI  S61GENNO+3,B'11010000'
+S60NNEG2  EQU  *
+           PACK S61OLDGN,DDMBR+2(4)
+           PACK S61NEWGN,S61GENNO
+* NOW WE'D BETTER CHECK IF BOTH ARE BLANK, AND RETURN (EMERGENCY
+*    TYPE EXIT REALLY)
+           IFNULL DDMBR,S61BRAC(8),S61RETN0 BOTH=' ', RETURN
+* NOW LETS DO THE SIMPLE CASES OF 5,6 (INDEX, AND REL | ABS SPECIFIED)
+           IFVALUE DDMBR,S61NOT56 NOT CASES 5,6
+S61COPYN   MVC DDMBR,S61GENDT  FIXES CASES 5,6
+         OI    DDMBR+5,C'0'   MAKE PRINTABLE             JOL30070 76200
+* END 5,6
+           SPACE 3
+S61SETYP   EQU *
+* NOW WE MUST RESET THE 'DDTYPE' FIELD
+           CLI DDMBR+1,C'-'
+           BE  S61REL01
+           CLI DDMBR+1,C'+'
+           BE  S61REL01
+           CLC DDMBR+2(4),=C'0000'
+           BE  S61REL01
+           MVI DDTYPE,DDGDGABS
+           JOLRETN
+           SPACE
+S61REL01   MVI DDTYPE,DDGDGREL
+           JOLRETN
+           SPACE 3
+S61NOT56   EQU *
+* NOW SEE IF 'INPUT' ONE IS ABS / REL
+           CLI DDMBR+1,C'-'
+           BE  S61CASE3
+           CLI DDMBR+1,C'+'
+           BE  S61CASE3
+           CLC =C'0000',DDMBR+2
+           BE  S61CASE3
+           SPACE 2
+* HERE WE HAVE ABSOLUTE GENERATION ON THE INPUT, SO CASES 1 AND 2
+*    APPLY
+           SPACE 1
+           CLC =C' 0000',S61GDGTY  IS OVER-RIDE (0) ?
+           BE  S61SETYP        YES, DON'T DO ANYTHING, GO HOME.
+           SPACE
+           CLI S61GDGTY,C'+'   NEW REL (+)
+           BE  S61REL02        YES
+           CLI S61GDGTY,C'-'   NEW REL (-)
+           BE  S61REL02        YES
+* HERE MUST BE 2 ABSOLUTES, TAKE THE NEW ABSOLUTE AFTER ERROR
+*    MESSAGE
+S61ERR1    JOLERR 301,'DSNAME ''',DDDSNAME,''' DECLARED AT ',          *
+               DDSTMT,' SPECIFIES ABSOLUTE GENERATION, AND ABSOLUTE ', *
+               'ALSO SPECIFIED ON PROGRAM OR DISPOSITION, DSID GEN IGNO*
+               RED'
+           B   S61COPYN        COPY NEW ONE
+           SPACE 3
+S61REL02   EQU *
+* HERE ABSOLUTE ON DSID, REL ON PROGRAM. (+)
+*****************************************************              DASD
+* PROBLEM HERE DOING GDG ARITHMETIC.                *              DASD
+* NON VIRGIN GDG'S DO NOT HAVE ALL ENTRIES IN THE   *              DASD
+* CATALOG DO TO UNCATLGING WITH IEHPROGM AND THE    *              DASD
+* LIKE.  SOO WE MUST SEE WHERE THE ABSOLUTE GDG #   *              DASD
+* SITS IN THE CATALOG AND IF DOING MINUS GDG ARITH  *              DASD
+* LOCATE -NNN DEEP INSTEAD OFF SUBTRACTING          *              DASD
+* EXAMPLE.                                          *              DASD
+* CATALOG CONTAINS (0) G0069V00                     *              DASD
+*                 (-1) G0003V00                     *              DASD
+*                 (-2) G0001V00                     *              DASD
+* JOL WHEN DOING THIS CALCULATION OF 69 MINUS 1     *              DASD
+* WILL GET G0068V00  WHICH IS WRONG BECAUSE         *              DASD
+* THE (-1) GENERATION IS G0003V00   OK??            *              DASD
+*****************************************************              DASD
+         CLI   S61GDGTY,C'-'        ARE WE DOING NEGATIVE GDG WORK DASD
+         BNE   S61NONEG            NOPE GO DO IT THE OLD WAY       DASD
+         CLI   DDMBR+1,C' '         ABS ON OLD                     DASD
+         BNE   S61NONEG             NOPE JUMP OVER THIS            DASD
+         LA    R1,DDDSNAME         POINT TO DSNAME                 DASD
+         ST    R1,S61LOCAT+4       USE THIS FOR THE LOCATE AREA    DASD
+         LA    R15,43(R1)          POINT TO END OF DSNAME          DASD
+         LA    R14,1               INCR BY 1                       DASD
+S61GFIND CLI   0(R1),C' '          END OF DSNAME YET ??            DASD
+         BE    *+8                 YES SIR                         DASD
+         BXLE  R1,R14,S61GFIND     WELL LETS JUST KEEP LOOKING     DASD
+         ST    R1,CALLAREA         LETS SAVE THE ADDRRESS   OK     DASD
+         MVC   0(3,R1),=C'(0)'     MOVE IN REL GDG ZERO            DASD
+S61LOOK  EQU   *                                                   DASD
+         LOCATE S61LOCAT           LET OS FIND THE SUCKER          DASD
+         LTR    R15,R15            I HOPE R15 IS ZERO              DASD
+         BZ     S61GODL1           GREATE ITS CATALOGED            DASD
+S61CLEAN L      R1,CALLAREA        RELOAD POINTER                  DASD
+         MVC    0(9,R1),BLANKS     CLEAR OUT JUNK                  DASD
+         B     S61NONEG            DOIT THE OLD WAY                DASD
+S61GODL1 L     R1,CALLAREA                                         DASD
+         PACK  2(4,R1),2(4,R1)     NOW PACK THIS GUY               DASD
+         OI    S61OLDGN+3,X'0F'    TURN OFF NEG SIGN               DASD
+         CP    S61OLDGN,2(4,R1)    NOW CHECK FOR ABS # TO REL(0)   DASD
+         BE    S61GDGEQ            GREAT REL(0) IS THE ABS #       DASD
+         BL    S61LOW              ABS # IS LOWER THAN CATALOG     DASD
+* ABS # IS HIGHER THAN REL(0) IN CATALOG                           DASD
+         ZAP   CALLAREA+8(4),S61NEWGN SAVE ORG #                   DASD
+         ZAP   CALLAREA+4(4),S61OLDGN  NOW SUBTRACT ABS# FROM REL  DASD
+         SP    CALLAREA+4(4),2(4,R1)                               DASD
+         AP    S61NEWGN,CALLAREA+4(4) BACKOFF TO CORRECT REL #     DASD
+         BM    S61GDGEQ               IF STILL NEG GREAT           DASD
+         ZAP   S61NEWGN,CALLAREA+8(4)  RESTORE TO OLD VALUE        DASD
+         B     S61CLEAN                NOW DOIT THE OLD WAY        DASD
+S61LOW   EQU   *                                                   DASD
+         ZAP   CALLAREA+4(4),=P'0'     CLEAR                       DASD
+S61LOWL  EQU   *                                                   DASD
+         AP    CALLAREA+4(4),=P'1'     INCR LOCATE LELVE           DASD
+         MVC   1(10,R1),BLANKS       CLEAR OUT TRASH               DASD
+         UNPK  2(4,R1),CALLAREA+4(4)    UNPACK NEW REL #           DASD
+         OI    5(R1),C'0'             TURN OFF SIGN                DASD
+         MVC   0(2,R1),=C'(-'                                      DASD
+         MVI   6(R1),C')'               SB DSNAME(-NNNN)           DASD
+         LOCATE S61LOCAT           NOW GO FIND THE RIGHT GUY       DASD
+         LTR   R15,R15             IS ALL WELL ??                  DASD
+         BNZ   S61LERR             NOPE   BAD  NOT IN CATALOG RIGHTDASD
+         L     R1,CALLAREA         RELOAD POINTER TO END OF DSNAME DASD
+         PACK  2(4,R1),2(4,R1)    PACK GDG ABS # FROM LOCATE       DASD
+         CP    S61OLDGN,2(4,R1)    HAVE WE FOUND THE # YET         DASD
+         BL    S61LOWL              NOPE BACK WE GO                DASD
+         OI    S61NEWGN+3,X'0F'     TURN OFF NEG SIGN              DASD
+         AP    S61NEWGN,CALLAREA+4(4) ADD OLD -NNN TO CURRENT ABS LDASD
+* NOW GO GET THE PROPER LEVEL                                      DASD
+S61GDGEQ EQU   *                                                   DASD
+         MVC   1(10,R1),BLANKS       CLEAR OUT TRASH               DASD
+         UNPK  2(4,R1),S61NEWGN         EDIT REL #                 DASD
+         OI    5(R1),C'0'             TURN OFF SIGN                DASD
+         MVC   0(2,R1),=C'(-'                                      DASD
+         MVI   6(R1),C')'               SB DSNAME(-NNNN)           DASD
+         LOCATE S61LOCAT           NOW GO FIND THE RIGHT GUY       DASD
+         LTR   R15,R15             IS ALL WELL ??                  DASD
+         BNZ   S61LERR             NOPE   BAD  NOT IN CATALOG RIGHTDASD
+         L     R1,CALLAREA         RELOAD POINTER TO END OF DSNAME DASD
+         MVC   DDMBR+2(4),2(R1)    NOW WE HAVE THE CORRECT ABS #   DASD
+         MVC   0(9,R1),BLANKS      LITTLE CLEAN UP HERE            DASD
+         MVI   DDMBR+1,C' '        MAKE ABS                        DASD
+         B     S61SETYP                                            DASD
+S61NONEG   AP  S61OLDGN,S61NEWGN                                   DASD
+         CP    S61OLDGN,=P'0'        DID WE GO NEGATIVE  JOL30049 76200
+         BP    S61UNPK              NOPE                 JOL30049 76200
+         CLI   DDMBR+1,C' '         CASE 2 ?             JOL30049 76200
+         BNE   S61UNPK              NOPE                 JOL30049 76200
+         AP    S61OLDGN,=P'10000'   BRING ABS NUMBER BACKJOL30049 76200
+S61UNPK  EQU   *                                         JOL30049 76200
+         UNPK  DDMBR+2(4),S61OLDGN  MOVE IN NEW GUY      JOL30049 76200
+         OI    DDMBR+5,C'0'         FIX UP SIGN          JOL30049 76200
+         CLI DDMBR+1,C' '           CASE 2               JOL30049 76200
+         BE    S61SETYP                                  JOL30049 76200
+         MVI   DDMBR+1,C'+'         SET TO POSIVIVE INITIJOL30049 76200
+         TM    S61OLDGN+3,X'0D'     CHECK TO SEE IF NEGATJOL30049  DASD
+         BNO   S61SETYP             IF NOT  GO           JOL30049 76200
+         MVI   DDMBR+1,C'-'         SET TO NEGATIVE      JOL30049 76200
+         B     S61SETYP             ALL DONE HERE        JOL30049 76200
+           SPACE 3
+S61CASE3   EQU *
+* NOW CHECK IF CASE 3 | 4.
+           SPACE
+* FIRST, IF NEW=(0), IGNORE, GO HOME
+           CLC =C' 0000',S61GENDT
+           BE  S61SETYP        YES, IGNORE, GO HOME
+           CLI S61GDGTY,C'+'
+           BE  S61REL02
+           CLI S61GDGTY,C'-'
+           BE  S61REL02
+* HERE RELATIVE AND ABSOLUTE, TAKE ABSOLUTE
+           B   S61ERR1
+           SPACE 3
+S61LERR  L     R1,CALLAREA                                         DASD
+          MVC   0(9,R1),BLANKS     CLEAR OUT THE MUCK              DASD
+S61ERR2    JOLERR 302,'DSNAME ''',DDDSNAME,''' DECLARED AT STMT ',     *
+               DDSTMT,' IS NOT A REAL DATA SET, NO GENERATION OVERRIDE *
+               CAN OCCUR'
+           JOLRETN RC=16
+            LTORG
+*S61LOCAT CAMLST NAME,S61LDSN,,S61LAREA
+            DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+            DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+            DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+         LTORG
+         JOLSAVE CSECT=UJS98QU                                    76200
+* THIS CSECT HAS A PARAMETER -) VARYING CHARACTER STRING.         76200
+* THE IDEA IS TO DROP QUOTES FROM EITHER END, THEN CHECK FOR      76200
+* DOUBLE QUOTES IN THE MIDDLE AND MAKE THEM 1, IF ANY ARE FOUND.  76200
+         SPACE 2                                                  76200
+         L     R5,0(R1)       POINT TO PARM              JOL30027 76200
+         CLC   0(2,R5),ZERO   ZERO LENGTH ?              JOL30027 76200
+         BE    S98RETN                                   JOL30027 76200
+         MVC   DBL(2),0(R5)   SHIFT LENGTH SO NO 0C6     JOL30027 76200
+         LH    R6,DBL         LOAD ITS LENGTH.           JOL30027 76200
+         CLI   2(R5),C''''    QUOTE ON START OF STRING ? JOL30027 76200
+         BNE   S98FDBLQ       NO,SO JUMP INTO DBL QUOTE  JOL30027 76200
+         SPACE 2                                         JOL30027 76200
+         BCTR  R6,0           -1 FROM R6                 JOL30027 76200
+         BCTR  R6,0           -1 FROM R6 =-2             JOL30027 76200
+         LTR   R7,R6          SAVE NEW LENGTH            JOL30027 76200
+         BZ    S98RETZ        IF ZERO NOW, STORE LEN, RET OL30027 82200
+         BCTR  R6,0           -1 FOR MVC EXECUTE         JOL30027 76200
+****************************************************************** DASD
+* ABEND 002 OCCURED BY A MINUS VALUE IN REG-6 WHICH SHIFTED      * DASD
+* THE BUFFER ADDRESS (WHICH IS GETMAINED AFTER THE TKN AREA)       DASD
+* ONE BYTE WHICH LEFT A BIG RDW IN THE VB LENGTH                 * DASD
+* A TEST HERE FOR A MINUS VALUE SHOULD DO IT                     * DASD
+****************************************************************** DASD
+         LTR   R6,R6   DID REGISTER 6 GO NEGATIVE  ??              DASD
+         BM    S98RETN YEP   LETS NOT DO ANY MORE                  DASD
+         EX    R6,S98MVC1     MOVE AND DROP 1ST QUOTE    JOL30027 76200
+         LA    R8,3(R5,R6)    POINT TO LAST QUOTE-1      JOL30027 76200
+         MVC   0(2,R8),BLANKS BLANK THEM OUT             JOL30027 76200
+         STH   R7,DBL         RESET -                    JOL30027 76200
+         MVC   0(2,R5),DBL    -STRING LENGTH NOW         JOL30027 76200
+         SPACE 2                                         JOL30027 76200
+S98FDBLQ EQU   *                                         JOL30027 76200
+         LH    R6,0(R5)    LOAD STRING LENGTH                     76200
+         SPACE 1                                         JOL30027 76200
+         LA    R1,2(R5)       LOAD START ADDRESS OF STR. JOL30027 76200
+         LA    R14,1          SET LOOP INCR=1            JOL30027 76200
+         LA    R15,1(R5,R6)   POINT TO END-1             JOL30027 76200
+S98LUP   CLC   0(2,R1),=C'''''' DOUBLE QUOTE PERHAPS?    JOL30027 76200
+         BE    S98DBL         YES ->                     JOL30027 76200
+         BXLE  R1,R14,S98LUP                             JOL30027 76200
+S98RETZ  STH   R6,DBL         END --- RESET LENGTH       JOL30027 76200
+         MVC   0(2,R5),DBL    DONE                       JOL30027 76200
+S98RETN  JOLRETN RC=0                                    JOL30027 76200
+         SPACE 2                                         JOL30027 76200
+S98DBL   EQU   *                                         JOL30027 76200
+* CALCULATE LENGTH TO SHIFT                              JOL30027 76200
+         LR    R9,R15         LOAD END POINTER           JOL30027 76200
+         SR    R9,R1          -CURRENT BYTE ADDRESS      JOL30027 76200
+         EX    R9,S98MVC2     SHIFT BACK A BYTE          JOL30027 76200
+         S     R6,ONE         -1 FOR LENGTH NOW          JOL30027 76200
+         BP    S98LUP         STILL DATA THERE?->CONTINUEJOL30027 76200
+         B     S98RETN        ELSE RETN                  JOL30027 76200
+         SPACE 3                                         JOL30027 76200
+S98MVC1  MVC   2(*-*,R5),3(R5)                           JOL30027 76200
+S98MVC2  MVC   0(*-*,R1),1(R1)                           JOL30027 76200
+         LTORG                                           JOL30027 76200
+         CNOP  0,8                                       JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+           END

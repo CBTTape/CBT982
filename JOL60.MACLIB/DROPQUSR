@@ -1,0 +1,6 @@
+         MACRO
+&NAME    DROPQUSR &PARM1
+&NAME    LA     R1,&PARM1
+         L      R15,=V(DROPQUSR)
+         BALR   R14,R15
+         MEND

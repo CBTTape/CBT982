@@ -1,0 +1,211 @@
+UJI00MN  TITLE 'ONCE OFF INITIALISATION OF JOL'                   75128
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1975,1976,1980
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+         FIX 'ADD SYSACCT,MOVEDATA RTN'
+         FIX 'ADD SETTTING UP OF OSSYS PROPERLY'
+         COPY JOLCOM
+           JOLSAVE CSECT=UJI00MN
+           PRINT DATA                                             75311
+           TITLE 'INITIALISE JOL'
+* THIS CSECT IS RESPONSIBLE FOR THE FIRST TIME INITALISATION OF JOL
+*    AND CONSEQUENTLY IS CALLED ONLY ONCE
+           SPACE 3
+* ITS DUTIES ARE FAIRLY SIMPLE
+*    IT MUST SAVE THE PARM(1) ADDRESS SO THAT THE PARM FIELD DECODER
+*    CAN DECODE IT
+*    IT MUST TEST IF ALTERNATE DDNAMES EXIST
+*    IT MUST TEST IF ALL THE REQUIRED DDNAMES EXIST
+           USING JOLCOM,R2
+           SPACE 3                                                75311
+*          $LINK  UJI01DAL     DEALLOCATE INTERNAL READER(SHELL)  08300
+           SPACE 3                                                75311
+         ST    R8,APARM                                           75128
+         L     R8,AJOLGEN                                        75128
+         USING  UJGENDET,R8
+         MVC DEFCOPY(256),DEFAULTS  SAVE DEFAULTS AS SPECIFIED AT
+         MVC DEFCOPY+256(LDEFAULT-256),DEFAULTS+256
+*                             GENERATION TIME
+         L    R12,ASYSPRIN                                        75128
+         USING SYSPRINT,R12                                       75128
+         EXTRACT CALLAREA+12,'S',FIELDS=(TIOT),MF=(E,CALLAREA)    87150
+         L     R1,CALLAREA+12  GET RETURN FROM EXTRACT            J52
+*        MVC   JCTJNAME,0(R1)  SHIFT JOBNAME IN FOR MESSAGES      J52
+         MVC   SYSUID,0(R1)    SHIFT JOBNAME IN FOR MESSAGES      J52
+* NOW LET'S SEE IF WE ARE EXECUTING UNDER VS AND SET A BIT ON     74303
+           MVI OSSYS,C'V'      SET TO MVT  INITIALLY              80290
+           L   R1,16           CVT                                74303
+           TM  116(R1),X'02'   VS?                                74303
+           BZ  I00TTSO         NO, TEST TSO BITS                  74303
+           OI  THISSYS,X'80'   ON BIT 0                           74303
+           MVI OSSYS,C'M'      SET TO MVS  INITIALLY              80290
+         TM    116,X'11'       IS IT MVS?                         80290
+         BO    I00TTSO         YES, GO TEST TSO BITS NOW          80290
+         SPACE 2                                                  80290
+           MVI OSSYS,C'1'      SET TO VS1 THEN (NOTE,NO CHECK SVS)80290
+           SPACE 3
+I00TTSO    EQU   *
+* CHECK IF RUNNING UNDER TSO NOW                                  80290
+         EXTRACT CALLAREA+12,'S',FIELDS=(TSO),MF=(E,CALLAREA)
+         L     R1,CALLAREA+12 GET RETURN ADDRESS FROM EXTRACT
+         TM    0(1),X'80'     IF THE BIT IS ON, IT IS TSO/TSS
+         BNO   I00NOTTS       NOT TSO                             80290
+         MVI   IFTSO,C'T'     IS TSO, SET TO 'T'                  80290
+         CALL  P27INIT           FIND SCREEN TYPE ETC             J51
+I00NOTTS DS    0H                                                 80290
+** TEST IF $JPRINT ETC DDNAMES ARE PRESENT, AND IF SO ALTER       75311
+*    THE 'DCBDDNAM' ENTRY IN THE DCB.                             75311
+           TEST$DD SYSPRINT,$$JPRINT                              75311
+           TEST$DD SYSIN,$$JIN
+           TEST$DD DATA,$$JWORK1                                  75311
+           TEST$DD WORKFILE,$$JWORK2                              75311
+           TEST$DD PROCLIB,$$JINCL                                75311
+           TEST$DD MACRODCB,$$JMACRO                              75311
+           TEST$DD JCL,$$JCL                                      75311
+* NOW FIND OUT IF ALTERNATE DD-NAMES APPLY,AND IF SO FIX'EM UP
+         L R1,APARM
+           CLI 0(R1),X'80'
+           BE  NOALTS                          NO ALTERNATE NAMES
+           SPACE
+           L   R3,4(R1)                        GET ADDR OF THE ALTERNAT
+*                                              DDNAMES
+           USING ALTDDS,R3
+           LA  R5,ALTDD                        LOAD START ADDR FOR BXLE
+*                                              LOOP
+           LR  R7,R5                           FIX UP STOP ADDR
+           AH  R7,#ALTDD                       FIX UP STOP ADDR
+           LA  R6,16                           BXLE INCREMENT
+           SR  R7,R6                           SO WE DON'T GO TOO FAR
+           SPACE
+         USING IHADCB,R9                                          75128
+CLCLOOP  CHNGDCB SYSPRINT                                         75128
+           USING IHADCB,R9
+TRYDDS     EQU *
+           CHNGDCB SYSIN
+           CHNGDCB DATA
+           CHNGDCB PROCLIB
+           CHNGDCB WORKFILE                                       74303
+           CHNGDCB JCL
+           CHNGDCB MACRODCB                                       74303
+           USING THISDDX,R5
+         L     R1,APRINTLN
+         MVC   5(8,R1),=C'DDNAME '''
+         MVC   13(8,R1),THISDD
+         MVC   21(40,R1),=C''' CANNOT BE CHANGED,DOES NOT EXIST IN JOL'
+         MVC   0(4,R1),=AL2(62,0)
+         JOLPRINT
+           DROP R5
+LOOP1      BXLE R5,R6,CLCLOOP
+* NOW CHECK IF WE HAVE DYNAMICALLY SET UP A JOLGEN.               76200
+         TM     4(R1),X'80' ANY THIRD PARM?                       76200
+            BE  NOALTS     NO                                     76200
+            MVC AJOLGEN,8(R1) SHIFT ADDRESS TO AJOLGEN            76200
+NOALTS   DS    0H
+         MVC   WORK2DCB+DCBDDNAM-IHADCB(8),WORKFILE+DCBDDNAM-IHADCB    .
+                       WHATEVER DDNAME WAS DECIDED WE USE HERE    88010
+           SR  R10,R10     CLEAR ERROR INDICATOR
+* NOW WE MUST DO A FEW DEVICE TYPE OPERATIONS TO ENSURE THAT THE
+*    DDNAMES DO EXIST
+           SPACE
+         TDDNAM SYSPRINT,SYSPRINT                                 75128
+         LTR   R10,R10                                            75128
+         BZ    TSYSIN
+         WTO   'JOL COMPILER HAS NO SYSPRINT DD CARD',ROUTCDE=(11)
+ABEND    ABEND 16,DUMP
+TSYSIN   DS    0H
+         SR    R10,R10                         SET ERROR INDICATOR TO 0
+         TDDNAM SYSIN,SYSIN
+         TDDNAM DATA,SYSUT1
+         TDDNAM PROCLIB,PROCLIB
+*        TDDNAM TOKEN,SYSUT2
+         TDDNAM  MACRODCB,MACRODCB                                75311
+         TDDNAM JCL,JCL
+* NOW SET UP THE CORRECT JCL DDNAME SO THAT WE CAN ENQUE ON       76200
+*  IT LATER.                                                      76200
+         LA    R9,JCL                                             76200
+         MVC   JCLDDNAM,DCBDDNAM                                  76200
+         LTR   R10,R10
+         BZ    DDSOK
+         WTO   'JOL COMPILER:ONE OR MORE DD STATEMENTS MISSING'
+IRETN16  DS    0H                                                 75311
+         JOLRETN RC=16
+DDSOK    DS    0H
+         L     R9,ACATCNTL
+         USING ACATBUF,R9
+* NOW WE MUST SET UP SOME BLOCKSIZES FOR THE VARIOUS 'FILES'      75128
+*  WE WILL BE USING                                               75128
+*** NOTE *** LATER, WE MAY TAKE A LITTLE MORE CARE OVER THE       75128
+*   ACTUAL SIZE WE ALLOCATE FOR THESE - TAKING CURRENT CORE INTO  75128
+*   ACCOUNT ***                                                   75128
+         MVC   LCATBUF,=AL2(0000+*-*)   * GIVES NEW LITERAL ALWAYS75128
+         MVC   LWORKBUF,=AL2(((4990+*-*)/8)*8)                  C51342
+         MVC   LPRBUF,=AL2(((2000+*-*)/8)*8)
+         MVC   LINSTBUF,=AL2(((4990+*-*)/8)*8)                  C51342
+         FIX 'AND P$ CNTL'
+* NOW SHIFT IN TO 'JOLCOM' THE SIZES OF VARIOUS TABLES
+* TO GET (SYMTABLE,IDTABLE)
+         MVC SYMLEN(2),LSYMTBL+2
+         MVC MAXSYMS(2),MAXSYM
+         MVC IDLEN(2),LNAMETBL+2
+         MVC MAXIDS(2),MAXNAME
+         SPACE 3
+* THE FOLLOWING IS ONE OF MANY TESTS ON THE DATE.
+         TIME
+         FIX 'TURN ON AGAIN'
+         B     I00IDENT
+         ST    R1,CALLAREA
+         CP    CALLAREA,=P'83300'
+         BH    IRETN16                                             DASD
+         CP    CALLAREA,=P'83000'
+         BH    IRETN16                                             DASD
+I00IDENT IDENTIFY ENTRY=JOLCOM,EP=JOLCOM
+         IFOS  ¬=X8,I00DONE                                       88020
+         LOAD  EP=IKJEFF18                                      2008300
+I00EFF   ST    R0,AEFF18                                          88020
+         MVC   EFF18(6),=X'58F0F00607FF' L 15,6(,15)/BR 15        88020
+         IDENTIFY ENTRY=EFF18,EPLOC==CL8'IKJEFF18'                88020
+I00DONE  DS    0H                                                 88020
+         JOLRETN
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+         DC S(*,*,*,*)
+           LTORG
+         PRINT NOGEN                                              75128
+           DCBD   DSORG=PS,DEVD=DA
+ALTDDS     DSECT
+#ALTDD     DS  H
+ALTDD      DS  CL100
+THISDDX    DSECT
+THISDD     DS  CL8
+         END

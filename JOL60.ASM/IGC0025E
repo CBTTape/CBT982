@@ -1,0 +1,13 @@
+**
+*
+*  IGC0025E: SVC 255
+*
+*  THIS IS AN EXAMPLE OF HOW TO GET INTO PK 0
+*
+**
+IGC0025E CSECT
+         BALR  12,0
+         USING *,12
+         LM    2,13,40(5)
+         BR    1
+         END

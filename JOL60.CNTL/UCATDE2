@@ -1,0 +1,36 @@
+//CLARKEU JOB  (SETUP),
+//             'BUILD A USERCAT',
+//             MSGCLASS=X,
+//             MSGLEVEL=(1,1),
+//             CLASS=A,
+//             REGION=1024K
+//*********************************************************************
+//*
+//* TAKEN FROM MVS0140 OF HERCULES SETUP - JAN 2010 - CLEM CLARKE
+//*
+//* NAME: SYS1.SETUP.CNTL(MVS0140)
+//*
+//* DESC: CREATE A USER CATALOG
+//*
+//*********************************************************************
+//CLEANUP EXEC PGM=IDCAMS
+//SYSPRINT DD  SYSOUT=*
+//MVSCAT   DD  UNIT=3380,VOL=SER=JOL53,DISP=SHR
+//SYSIN    DD  *
+ DELETE CLARKEO.UCAT.MVS USERCATALOG FORCE   FILE(MVSCAT)
+ SET LASTCC = 0
+ SET MAXCC  = 0
+ EXPORT CLARKEO.UCAT.MVS DISCONNECT
+ SET LASTCC = 0
+ SET MAXCC = 0
+//DEFUCAT EXEC PGM=IDCAMS
+//SYSPRINT DD  SYSOUT=*
+//MVSCAT   DD  UNIT=3380,VOL=SER=JOL53,DISP=SHR
+//SYSIN    DD  *
+  DEFINE UCAT ( NAME (CLARKEC.UCAT.MVS) -
+                FILE (MVSCAT)            -
+                VOL (JOL53)              -
+                CYL (20)                 -
+                BUFSP (8192)             -
+                NRVBL                    -
+              )

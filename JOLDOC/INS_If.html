@@ -1,0 +1,1513 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>IF</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>IF</u></font><font size="5"><u><span
+ style="font-weight: normal;"> </span></u></font><u>- </u><font
+ size="5"><i><u><span style="font-weight: normal;">Execute and
+Immediate Instruction</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">IF </span>Statement can:<br>
+      <br>
+      <ul>
+        <li>Compare the values of return codes from executed programs
+with either constants or other program return codes.</li>
+        <li>Compare the current value of symbolic variables with
+constants or other symbolic variables.</li>
+        <li>Test if a program has executed or if a symbolic is declared.</li>
+        <li>Test if End-Of-File (<span style="font-weight: bold;">EOF</span>)
+has
+been
+reached
+on an input file opened by <span style="font-weight: bold;">OPENFILE</span></li>
+        <li>Test if an <span style="font-weight: bold;">ERROR</span>
+has occurred.</li>
+        <li>Test the <span style="font-weight: bold;">LAST</span>
+and/or <span style="font-weight: bold;">MAXIMUM</span> completion code.</li>
+      </ul>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <p><b>&nbsp;<br>
+      </b></p>
+      <br>
+      <table style="text-align: left; width: 574px; height: 249px;"
+ border="0" cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td colspan="1" rowspan="8"
+ style="vertical-align: top; font-weight: bold;"><big><br>
+            <br>
+            <br>
+            <br>
+IF</big></td>
+            <td colspan="1" rowspan="8"
+ style="vertical-align: top; font-family: Arial Narrow;"><big><big><big><big><big><big><big>{</big></big></big></big></big></big></big></td>
+            <td colspan="1" rowspan="8" style="vertical-align: top;"><span
+ style="font-weight: bold;"><small><br>
+            </small>ANY</span><span style="font-style: italic;"><br>
+C</span><span style="font-style: italic;">onstant</span><br>
+            <span style="font-weight: bold;">ERROR</span><br>
+            <span style="font-style: italic;">label-of-a-run</span><br>
+            <span style="font-weight: bold;">LASTCC</span><br>
+            <span style="font-weight: bold;">MAXCC</span><br>
+            <span style="font-style: italic;">program-name</span><br>
+            <span style="font-style: italic;">Symbolic-variable</span><br>
+            <span style="font-weight: bold;">EOF</span>(<span
+ style="font-style: italic;">file-name)</span><br>
+            </td>
+            <td colspan="1" rowspan="8"
+ style="vertical-align: top; font-family: Times New Roman,Times,serif;"><big><big><big><big><big><big><big><span
+ style="font-family: Arial Narrow;">}</span> <br>
+            </big></big></big></big></big></big></big></td>
+            <td colspan="1" rowspan="8"
+ style="vertical-align: middle; font-family: Arial Narrow;"><big><big><big><big><big><big>[</big></big></big></big></big></big></td>
+            <td colspan="1" rowspan="1" style="vertical-align: top;"><br>
+            </td>
+            <td colspan="1" rowspan="8" style="vertical-align: middle;"><big><big><big><big><big><big>{</big></big></big></big></big></big></td>
+            <td colspan="1" rowspan="1" style="vertical-align: top;"><br>
+            </td>
+            <td colspan="1" rowspan="8" style="vertical-align: middle;"><big><big><big><big><big><big><span
+ style="font-family: Arial Narrow;">}</span></big></big></big></big></big></big></td>
+            <td colspan="1" rowspan="8" style="vertical-align: middle;"><big><big><big><big><big>]</big></big></big></big></big></td>
+          </tr>
+          <tr>
+          </tr>
+          <tr>
+            <td colspan="1" rowspan="2" style="vertical-align: top;"><br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-style: italic;">Symbolic-variable</span></td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">operator</td>
+            <td style="vertical-align: top;"><span
+ style="font-style: italic;">Program-name</span></td>
+          </tr>
+          <tr>
+            <td colspan="1" rowspan="3" style="vertical-align: top;"><br>
+            </td>
+            <td style="vertical-align: top;"><span
+ style="font-style: italic;">Label-of-a-run</span></td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-style: italic;">Constant</span></td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+          </tr>
+        </tbody>
+      </table>
+      <p style="margin-left: 40px;"><b><br>
+THEN <span style="font-style: italic;">unit-1</span>&nbsp; ;<br>
+      </b></p>
+      <div style="margin-left: 40px;"><b>[ELSE] <span
+ style="font-style: italic;">unit-2</span> ;</b><br>
+      <br>
+&nbsp;The fields between the <span style="font-weight: bold;">IF</span>
+and the <span style="font-weight: bold;">THEN</span> are known as the
+'expression'.&nbsp; The comparison operator may be one of the following:<br>
+      <br>
+      </div>
+      <br>
+      <table
+ style="width: 334px; height: 329px; text-align: left; margin-left: auto; margin-right: auto;"
+ border="1" cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="font-weight: bold; text-align: center;">Operator</td>
+            <td style="font-weight: bold;">Meaning</td>
+          </tr>
+          <tr>
+            <td style="text-align: center;">=</td>
+            <td>equal to</td>
+          </tr>
+          <tr>
+            <td style="text-align: center;">&not;=</td>
+            <td>not equal to</td>
+          </tr>
+          <tr>
+            <td style="text-align: center;">^=</td>
+            <td>not equal to</td>
+          </tr>
+          <tr>
+            <td style="text-align: center;">&lt;</td>
+            <td>less than</td>
+          </tr>
+          <tr>
+            <td style="text-align: center;">&lt;=</td>
+            <td>less than or equal to</td>
+          </tr>
+          <tr>
+            <td style="text-align: center;">&not;&lt;</td>
+            <td>not less than</td>
+          </tr>
+          <tr>
+            <td style="text-align: center;">^&lt;</td>
+            <td>not less than</td>
+          </tr>
+          <tr>
+            <td style="text-align: center;">&gt;</td>
+            <td>greater than</td>
+          </tr>
+          <tr>
+            <td style="text-align: center;">&gt;=</td>
+            <td>greater than or equal to</td>
+          </tr>
+          <tr>
+            <td style="text-align: center;">&not;&gt;</td>
+            <td>not greater than</td>
+          </tr>
+          <tr>
+            <td style="text-align: center;">^&gt;</td>
+            <td>not greater than</td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      </td>
+      <td align="left" valign="top">
+      <p><br>
+Depending on the result of the comparison or test, one or more of the
+statements can be either executed or bypassed.<br>
+      </p>
+      <p>The instructions in '<span style="font-style: italic;">unit-1</span>'
+and
+'<span style="font-style: italic;">unit-2</span>' may be:<br>
+      </p>
+      <ul>
+        <li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Any Jol instruction</li>
+        <li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Any <span
+ style="font-weight: bold;">MACRO</span> command (set of instructions
+enclosed by <span style="font-weight: bold;">MACRO/END</span>)<br>
+        </li>
+        <li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Any group of Jol
+instructions enclosed within a <span style="font-weight: bold;">DO/END</span>
+pair.</li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td
+ style="vertical-align: top; background-color: rgb(204, 204, 204);"><br>
+Meaning of the operands:<br>
+      <br>
+      <table style="text-align: left; width: 100%;" border="0"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">ANY</span><br>
+            </td>
+            <td style="vertical-align: top;">means if any program so
+far executed (via <span style="font-weight: bold;">RUN</span>s&nbsp;
+or as part of a Jol command) meets the criteria, then the result is
+true. For example:<br>
+            <br>
+            <div style="margin-left: 40px;"><span
+ style="font-weight: bold;">IF ANY=8 THEN . . .</span><br>
+            <br>
+            </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">ERROR</td>
+            <td style="vertical-align: top;">means if an Abend&nbsp;
+(either a System or User Abend) has occurred, then the result is true.
+For example:<br>
+            <br>
+            <div style="margin-left: 40px;"><span
+ style="font-weight: bold;">IF ERROR THEN . . .</span><br>
+            <br>
+            </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-style: italic;">constant</td>
+            <td style="vertical-align: top;">is any numeric or
+character constant. If a program return code is being compared with a
+constant, the constant must be a number in the range 0-4095. For
+example:<br>
+            <br>
+            <br>
+            <div style="margin-left: 40px;"><span
+ style="font-weight: bold;">IF %A ='CHARACTER STRING' THEN</span><br
+ style="font-weight: bold;">
+            <br style="font-weight: bold;">
+            <span style="font-weight: bold;">IF %X='STRING' THEN . . .</span><br
+ style="font-weight: bold;">
+            <br style="font-weight: bold;">
+            <span style="font-weight: bold;">IF SORT &gt; 16 THEN .</span>
+. .<br>
+            <br>
+            </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-style: italic;">label-of-a-run</td>
+            <td style="vertical-align: top;">is the <span
+ style="font-style: italic;">label</span> coded on <span
+ style="font-weight: bold;">RUN</span> statements or Commands.<br>
+            <br>
+For example:<br>
+            <br>
+            <br>
+            <span style="font-weight: bold;">A:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+RUN
+VALIDATE;</span><br>
+            <br>
+            <span style="font-weight: bold;">SORTRUN:</span><br>
+            <div style="margin-left: 80px;"><span
+ style="font-weight: bold;">SORT INPUT TO OUTPUT USING PARM;</span><br>
+            </div>
+            <br>
+            <div style="margin-left: 80px;"><span
+ style="font-weight: bold;">IF A=20 &amp; SORTRUN&lt;8 THEN . . .</span><br>
+            <br>
+            </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">LASTCC</td>
+            <td style="vertical-align: top;">is the return code from
+the last executed program, whether the program was part of a Jol
+command or a problem program executed with the <span
+ style="font-weight: bold;">RUN</span> instruction. The number will be
+in the range 0-4095. For example:<br>
+            <br>
+            <div style="margin-left: 40px;"><span
+ style="font-weight: bold;">IF LASTCC &gt; 24 THEN . . .</span><br>
+            </div>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">MAXCC</td>
+            <td style="vertical-align: top;">is the highest return code
+issued up to this point in the Jol procedure, whether from programs
+executed by the <span style="font-weight: bold;">RUN</span>
+instruction or as part of a Jol command. For example:<br>
+            <br>
+            <div style="margin-left: 40px; font-weight: bold;">IF
+MAXCC=0 THEN . . .<br>
+            </div>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-style: italic;">symbolic-variable</td>
+            <td style="vertical-align: top;">is any <span
+ style="font-style: italic; font-weight: bold;">symbolic variable</span>
+name preceded by an <span style="font-weight: bold;">optional %</span>
+symbol. For example:<br>
+            <br>
+            <div style="margin-left: 40px; font-weight: bold;">IF a=10
+then ...<br>
+            <br>
+IF %Symbolic &lt; 10 | %Symbolic &gt; 25 THEN . . .<br>
+            <br>
+IF %RESTART THEN . . .<br>
+            <br>
+IF %RESTART='STEP10' THEN . . .<br>
+            </div>
+            <br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">The IF Statement</span><br>
+      </td>
+      <td style="vertical-align: top;">The<span
+ style="font-weight: bold;"> IF</span> statement provides conditional
+execution of statements.&nbsp; It takes the form:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+expression
+THEN
+statement-1;</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">[ ELSE statement-2; ]</span><br>
+      </div>
+      <br>
+The reserved word <span style="font-weight: bold;">THEN</span> and the
+statement following it are called the <span style="font-weight: bold;">"THEN
+part"</span>, while the <span style="font-weight: bold;">ELSE</span>
+and the statement following it are the optional <span
+ style="font-weight: bold;">"ELSE part"</span>.<br>
+      <br>
+The result of any <span style="font-weight: bold;">IF</span> statement
+is either '<span style="font-weight: bold;">true</span>' or '<span
+ style="font-weight: bold;">false</span>'.&nbsp; That is, the result is
+      <span style="font-weight: bold; font-style: italic;">true </span>if
+the
+value
+to
+the left of the comparison operator bears a true
+relationship to the value to the right of the comparison operator
+(where the relationship is dictated by the comparison operator).&nbsp;
+Conversely, if the relationship does not hold, then the result is <span
+ style="font-style: italic; font-weight: bold;">false</span>.&nbsp; If
+the result is '<span style="font-weight: bold;">true</span>', then the
+instruction(s) in '<span style="font-weight: bold;">unit-1</span>' are
+executed.&nbsp; If the result is '<span style="font-weight: bold;">false</span>',
+then
+the
+instruction(s)
+in '<span style="font-weight: bold;">unit-2</span>'
+are executed if the <span style="font-weight: bold;">ELSE</span>
+option is used.<br>
+      <br>
+The instructions in '<span style="font-weight: bold;">unit-1</span>' or
+'<span style="font-weight: bold;">unit-2</span>' may be:<br>
+      <br>
+      <ul>
+        <li>any Jol instruction</li>
+        <li>any MACRO Command</li>
+        <li>any group of Jol instructions within a DO/END pair.</li>
+      </ul>
+      <br>
+Consider the following program segment:<br>
+      <br>
+      <span style="font-weight: bold;">IF&nbsp;&nbsp;&nbsp;&nbsp;
+%RUNTYPE='PRODUCTION'</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">|&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+%RUNTYPE='PROD'</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">|&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+%RUNTYPE='TEST'</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN&nbsp; &nbsp;&nbsp;&nbsp;
+%RUNTYPE=SUBSTR(RUNTYPE,1,1);</span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">ELSE&nbsp; &nbsp;&nbsp;&nbsp;
+STOP 'RUNTYPE INVALID - %RUNTYPE';</span><br>
+      <br>
+The symbolic variable <span style="font-weight: bold;">%RUNTYPE</span>
+is checked to see if it contains the characters <span
+ style="font-weight: bold;">PRODUCTION, PROD,</span> or T<span
+ style="font-weight: bold;">EST</span>. If it does, then the same
+symbolic variable <span style="font-weight: bold;">%RUNTYPE</span>
+will be assigned the first character of the string via the <span
+ style="font-weight: bold;">SUBSTR</span> function.&nbsp; Thus, <span
+ style="font-weight: bold;">%RUNTYPE</span> will have a <span
+ style="font-weight: bold;">P</span> or a <span
+ style="font-weight: bold;">T</span> as its value.<br>
+      <br>
+If <span style="font-weight: bold;">%RUNTYPE </span>does not contain
+the characters <span style="font-weight: bold;">PRODUCTION, PROD</span>,
+or
+
+
+      <span style="font-weight: bold;">TEST</span>, the <span
+ style="font-weight: bold;">THEN</span> part of the instruction is
+skipped, and the <span style="font-weight: bold;">ELSE STOP</span>
+instruction is executed.&nbsp; This will stop the job even starting to
+execute.<br>
+      <br>
+Note that the <span style="font-weight: bold;">ELSE</span> part of the
+instruction is optional.&nbsp; If it is not present, the next
+instruction is executed.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">DO/END Blocks</span><br>
+      </td>
+      <td style="vertical-align: top;">The power of the IF statement is
+enhanced by using <span style="font-weight: bold;">DO</span> blocks in
+the <span style="font-weight: bold;">THEN </span>and <span
+ style="font-weight: bold;">ELSE </span>parts.&nbsp; Since a <span
+ style="font-weight: bold;">DO</span> block is allowed wherever a
+single statement is allowed, each of the two statements in an <span
+ style="font-weight: bold;">IF</span> statement may be a <span
+ style="font-weight: bold;">DO</span> block.&nbsp; For example:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+VALIDATE=0</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN DO;</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">RUN
+UPDATE;</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">CATALOG TRANSFIL, MASTER;</span><br
+ style="font-weight: bold;">
+      </div>
+      <span style="font-weight: bold;">END;</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">ELSE DO;</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">TYPE
+'ERROR
+IN
+VALIDATION';</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">STOP 'CALL SUPERVISOR, CORRECT
+AND RE-RUN';</span><br style="font-weight: bold;">
+      </div>
+      <span style="font-weight: bold;">END;</span><br>
+      </div>
+      <br>
+Within a <span style="font-weight: bold;">DO/END</span> pair you may
+have more <span style="font-weight: bold;">DO</span> blocks, <span
+ style="font-weight: bold;">IF</span> statements and declarations,
+assignments and so on.&nbsp; There is a maximum of twelve levels of
+nesting allowed.<br>
+      <br>
+You must be very careful when mixing <span style="font-weight: bold;">Symbolic
+IF</span> statements and <span style="font-weight: bold;">Execution IF</span>
+statements.&nbsp; <span style="font-weight: bold;">Symbolic IF</span>
+statements are all executed during the preprocessor phase of Jol.&nbsp;
+No declares (symbolic, program, etc.) can be done at execution time.
+Therefore, any declare, assign, etc. statements following an execution <span
+ style="font-weight: bold;">IF</span> are not allowable.<br>
+      <br>
+For example:<br>
+      <br>
+      <div style="margin-left: 40px; font-weight: bold;">IF %A THEN
+DECLARE INPUT DS etc.,<br>
+      </div>
+      <br>
+is allowable, but<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+PROGRAM=0
+THEN
+DECLARE
+etc;</span><br>
+      </div>
+      <br>
+is not because it is attempting to Declare a variable after an <span
+ style="font-style: italic;">execute</span> oriented <span
+ style="font-weight: bold;">IF</span>.<br>
+      <br>
+Similarly:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+%A</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN DO;</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+PROGRAM=0</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN DECLARE etc;</span><br
+ style="font-weight: bold;">
+      </div>
+      <span style="font-weight: bold;">END;</span><br>
+      </div>
+      <br>
+is also not valid, because the Declare follows an <span
+ style="font-weight: bold; font-style: italic;">execute oriented IF</span>.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Nested IF Statements</span><br>
+      </td>
+      <td style="vertical-align: top;">An <span
+ style="font-weight: bold;">IF</span> statement (including the<span
+ style="font-weight: bold;"> ELSE</span> part, if any) may be
+considered a single Jol statement, and so <span
+ style="font-weight: bold;">IF</span> statements may be nested within
+one another.<br>
+      <br>
+There is only one restriction when an<span style="font-weight: bold;">
+IF</span> statement is nested in an outer <span
+ style="font-weight: bold;">IF</span> statement, the outer<span
+ style="font-weight: bold;"> IF</span> statement may not have an <span
+ style="font-weight: bold;">ELSE</span> part.<br>
+      <br>
+In other words, the construction<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+condition-1THEN</span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">IF condition-2THEN statement-1;</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">ELSE statement-2;</span><br>
+      </div>
+      <br>
+is ambiguous because it is not possible to determine to which <span
+ style="font-weight: bold;">IF</span> statement the <span
+ style="font-weight: bold;">ELSE</span> part belongs. Because of the
+restriction, it is illegal for the <span style="font-weight: bold;">ELSE
+
+
+
+      </span>part to belong to the outer <span
+ style="font-weight: bold;">IF</span> statement, and so it must belong
+to the inner one.&nbsp; The construction above is equivalent to:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+condition-1
+THEN</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">DO;</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+condition-2
+THEN
+statement-1;</span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">ELSE
+statement-2;</span><br style="font-weight: bold;">
+      </div>
+      <span style="font-weight: bold;">END;</span><br>
+      </div>
+      <br>
+and it should be noted that if it is written this way it is much more
+readable and offers less opportunity for error.<br>
+      <br>
+If the intention is for the <span style="font-weight: bold;">ELSE</span>
+part to belong to the outer <span style="font-weight: bold;">IF </span>statement,
+then
+the
+nesting
+must be done by means of a <span style="font-weight: bold;">DO</span>
+block:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+condition-1
+THEN</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">DO;</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+condition-2
+THEN
+statement-1;</span><br style="font-weight: bold;">
+      </div>
+      <span style="font-weight: bold;">END;</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">ELSE statement-2;</span><br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Combining Tests</span><br>
+      </td>
+      <td style="vertical-align: top;">Tests may be combined by using
+the following two logical operators:<br>
+      <br>
+      <span style="font-weight: bold;">OPERATOR&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; MEANING</span><br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&amp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;
+&nbsp;
+&nbsp;
+&nbsp; &nbsp; &nbsp; 'AND'</span> the
+previous and following tests<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;
+&nbsp;
+&nbsp;
+&nbsp; &nbsp; &nbsp; &nbsp; 'OR'</span> the
+previous and following tests<br>
+      </div>
+      <br>
+The format of a combined test is the same as for a single test except
+that a logical operator follows the first expression which is then
+followed by the second expression and so on.&nbsp; Where the '<span
+ style="font-weight: bold;">AND</span>' operator is used, it means: the
+test is true if either the previous test '<span
+ style="font-weight: bold;">OR</span>' the following test are true.<br>
+      <br>
+For example:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+%A=1
+&amp;
+%B=2</span><br>
+      </div>
+      <br>
+means if both tests are true<br>
+      <br>
+and&nbsp; &nbsp; <span style="font-weight: bold;">IF %A=1 | %B=2</span><br>
+      <br>
+means if either test is true.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Parentheses</span><br>
+      </td>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">Parentheses</span>
+may be used to order the evaluation of tests. Where parentheses are
+used, the conditions are evaluated for the innermost set of parentheses
+outward, in the case of nested conditions, and from left to right for
+non-nested conditions.<br>
+      <br>
+For example:<br>
+      <br>
+      <div style="margin-left: 40px;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+(
+%VAR1='RUNNO'
+&amp;
+( %VAR2='RERUN' | %VAR2='' ) )</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">&amp; STEP3=0</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN</span><br
+ style="font-weight: bold;">
+      </div>
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">STEP4:</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">RUN
+STEP4;</span><br style="font-weight: bold;">
+      </div>
+      </div>
+      <br>
+This example is evaluated as follows:-<br>
+      <br>
+      <div style="margin-left: 40px;">If and only if, the symbolic
+variable&nbsp; <span style="font-weight: bold;">%VAR1</span> has the
+value <span style="font-weight: bold;">RUNNO</span><br>
+      </div>
+and<br>
+      <div style="margin-left: 40px;">the symbolic variable <span
+ style="font-weight: bold;">%VAR2 </span>has either a 'null' value (no
+value) or the value <span style="font-weight: bold;">RERUN</span><br>
+      </div>
+and<br>
+      <div style="margin-left: 40px;">at execution time, the return
+code issued by <span style="font-weight: bold;">STEP3</span> is zero<br>
+      </div>
+then<br>
+      <div style="margin-left: 40px;">the statement is evaluated as <span
+ style="font-weight: bold;">TRUE</span>, and so the <span
+ style="font-weight: bold;">RUN STEP4</span> is executed.<br>
+      </div>
+      <br>
+If the value of <span style="font-weight: bold;">%VAR1</span> was,
+say, <span style="font-weight: bold;">DATE</span>, then the <span
+ style="font-weight: bold;">AND</span>ed test would have failed at
+compile time - <span style="font-weight: bold;">STEP4</span> would not
+even be considered for running at execution time and indeed no JCL
+would have been produced for it to do so.&nbsp; Had all the '<span
+ style="font-weight: bold;">AND</span>' operators been '<span
+ style="font-weight: bold;">OR</span>' operators, then <span
+ style="font-weight: bold;">STEP3 </span>would be checked at execution
+time to determine whether or not <span style="font-weight: bold;">STEP4
+
+
+
+      </span>is to run.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Compile Time or
+Immediate Interpretation of Statements</span><br>
+      </td>
+      <td style="vertical-align: top;">All symbolic variables are
+compile time oriented and are resolved (replaced by their current
+value) during the initial phases of the compilation.<br>
+      <br>
+When symbolic variables are found in <span style="font-weight: bold;">IF</span>
+statements, the <span style="font-weight: bold;">IF</span> statement
+is said to be <span style="font-style: italic; font-weight: bold;">compile
+time
+oriented</span> and is <span style="font-weight: bold;">evaluated
+immediately</span>.&nbsp; If the statement is found to be<span
+ style="font-weight: bold;"> true</span>, then the instructions
+associated with '<span style="font-style: italic;">unit-1</span>' are
+compiled; if the statement is <span style="font-weight: bold;">false</span>,
+then
+the
+instructions
+associated with '<span style="font-style: italic;">unit-_1</span>'
+are
+ignored
+and the instructions associated with '<span style="font-style: italic;">unit-2</span>',
+if
+any, are compiled.<br>
+      <br>
+If an <span style="font-weight: bold;">IF</span> statement contains
+references to program steps (program return codes) then the statement
+is said to be execution time oriented.&nbsp; That is, the evaluation of
+the statement occurs when the job is being executed.&nbsp; As with the
+compile oriented <span style="font-weight: bold;">IF</span>,
+statements are ignored or executed depending on the result of the
+test.&nbsp; Therefore, it is logically incorrect to, say, assign a
+value to a symbolic variable depending on the result of an execution
+time oriented <span style="font-weight: bold;">IF</span> statement.<br>
+      <br>
+If an <span style="font-weight: bold;">IF</span> statement contains
+references to both symbolic variables and program step return codes
+then, at compile time, the symbolic variable portion of the statement
+is evaluated and if the result is 'true' then the remaining execution
+oriented tests are left to be resolved at execution time unless the <span
+ style="font-weight: bold;">logical operator '|' (OR)</span> is
+contained within the statement, in which case the statement may be
+fully evaluated at compile time.<br>
+      <br>
+For example:<br>
+      <br>
+      <div style="margin-left: 40px; font-weight: bold;">IF%VAR='RUN' |
+STEP2=0 THEN<br>
+      <br>
+RUN STEP3;<br>
+      </div>
+      <br>
+If <span style="font-weight: bold;">%VAR</span> has the value <span
+ style="font-weight: bold;">RUN</span>, then no further testing is
+required at execution time.<br>
+      <br>
+If <span style="font-weight: bold;">%VAR</span> does not have the
+value <span style="font-weight: bold;">RUN</span>,then the test must
+be completed at execution time because the '|' (OR)connector connects
+the next test which is an execution oriented test, and therefore must
+be done at execution time.<br>
+      <br>
+Had the <span style="font-weight: bold;">'|' (OR)</span> been an <span
+ style="font-weight: bold;">'&amp;' (AND) </span>and <span
+ style="font-weight: bold;">%VAR</span> not contained the value<span
+ style="font-weight: bold;"> 'RUN'</span>, then the 'unit-1' (RUN
+STEP3) would have been totally ignored because the entire <span
+ style="font-weight: bold;">IF</span> statement would have been false,
+and this would have been determined at <span
+ style="font-style: italic; font-weight: bold;">Compile Time</span>
+rather than <span style="font-weight: bold; font-style: italic;">Execution
+Time</span>.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-style: italic; font-weight: bold;">Using the IF Statement</span><br>
+      </td>
+      <td style="vertical-align: top;">The<span
+ style="font-weight: bold;"> IF</span> statement can be used to test
+situations at<br>
+      <br>
+      <div style="margin-left: 40px;"><span
+ style="font-weight: bold; font-style: italic;">execution time</span><br>
+      </div>
+or<br>
+      <div
+ style="margin-left: 40px; font-style: italic; font-weight: bold;">pre-processor
+time.<br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Testing Execution
+Variables or Programs</span><br>
+      </td>
+      <td style="vertical-align: top;">Every program that executes as
+part of a Jol procedure returns a value to the operating system, or it
+Abends.&nbsp; If the program ends normally, it returns a number between
+zero and 4095.&nbsp; If it Abends, the rest of the job is usually not
+executed, thus saving machine resources.&nbsp; However, the <span
+ style="font-weight: bold;">IF ERROR</span> allows you to continue
+processing after an Abend.<br>
+      <br>
+Even if an Abend does not occur, a program may have detected an error
+that would make further processing wasteful.&nbsp; For example, a
+program may validate transactions before they are applied to a master
+file. If the validate program returns zero when the transactions are
+acceptable, or a four if the update is not to be run, code similar to
+this may be used so that the update will not run if an error occurred.<br>
+      <br>
+For example:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">RUN
+VALIDATE;</span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">IF VALIDATE=0&nbsp;&nbsp;&nbsp;
+/* VALIDATE RUN OK? */</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN RUN UPDATE;</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">ELSE STOP 'UPDATE NOT RUN -
+TRANSACTION ERRORS';</span><br>
+      </div>
+      <br>
+Similiarly, there may be little point in executing a program that fails
+to compile and link edit without errors, and so <span
+ style="font-weight: bold;">IF </span>tests may be used to check that
+the compile and link of a program did work successfully.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Determining if a
+program executed</span><br>
+      </td>
+      <td style="vertical-align: top;">You may also test if a program
+executed by simply coding the program name without a comparison
+operator.<br>
+      <br>
+For example:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+VALIDATE
+THEN
+. . .</span><br>
+      </div>
+      <br>
+means if program <span style="font-weight: bold;">VALIDATE</span> ran
+then execute the next instruction.<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+VALIDATE
+&amp;
+UPDATE THEN . . .</span><br>
+      </div>
+      <br>
+means if programs <span style="font-weight: bold;">VALIDATE</span> and
+      <span style="font-weight: bold;">UPDATE</span> both ran then
+execute the next instruction.<br>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Comparing Return Codes</span><br>
+      </td>
+      <td style="vertical-align: top;">You may also test a program
+return code with another return code.<br>
+      <br>
+For example:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+A&gt;B
+THEN
+. . .</span><br>
+      </div>
+      <br>
+means if program <span style="font-weight: bold;">A</span> <span
+ style="font-style: italic;">executed</span> and program <span
+ style="font-weight: bold;">B</span> <span style="font-style: italic;">executed</span>
+and program <span style="font-weight: bold;">A</span>'s <span
+ style="font-style: italic;">return code</span> was greater than that
+of program<span style="font-weight: bold;"> B</span>.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">ANY </span><br
+ style="font-weight: bold; font-style: italic;">
+      <span style="font-weight: bold; font-style: italic;">LASTCC</span><br
+ style="font-weight: bold; font-style: italic;">
+      <span style="font-weight: bold; font-style: italic;">MAXCC</span><br>
+      </td>
+      <td style="vertical-align: top;">The <span
+ style="font-weight: bold;">ANY, LASTCC</span> and <span
+ style="font-weight: bold;">MAXCC</span> special return codes can be
+used to test return codes, too.&nbsp; Because program return code tests
+happen at execution time,you may not have a declarative or an
+assignment statement as its subject; only execution instructions may be
+executed.<br>
+      <br>
+For example:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+A=1
+THEN
+SORT . . .&nbsp;&nbsp;</span>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; is acceptable,<br>
+      </div>
+      <br>
+but&nbsp; &nbsp;<span style="font-weight: bold;">&nbsp; IF A=0 THEN
+DECLARE . . .&nbsp;</span>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; is not.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-style: italic; font-weight: bold;">Testing
+SymbolicVariables</span><br>
+      </td>
+      <td style="vertical-align: top;">Just as you can test program and
+command codes, you can test the values of <span
+ style="font-style: italic; font-weight: bold;">symbolic variables</span>
+and, depending on the result, <span style="text-decoration: underline;">generate
+instructions
+to
+run programs or execute commands, declare and after
+other symbolic variables or signal error conditions.</span><br>
+      <br>
+When you test a symbolic variable, the test occurs in the pre-processor
+phase of Jol.&nbsp; Later, the output from the pre-processor is input
+to the main compiler phase of Jol and sent on to the execution
+phase.&nbsp; It is during the pre-processor phase that youcan declare
+and after symbolic variables, and use the symbolic variables as
+replacements in your Jol text.&nbsp; You can also insert or delete
+whole statements from the compiler text.<br>
+      <br>
+For example:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+%TYPERUN
+='MONTH'</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN DO;</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">RUN
+MNTHUPDT;</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">RUN MNTHREPT;</span><br
+ style="font-weight: bold;">
+      </div>
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">END;</span><br
+ style="font-weight: bold;">
+      </div>
+      <br>
+If <span style="font-weight: bold;">%TYPERUN</span> does not contain
+the characters <span style="font-weight: bold;">MONTH</span>, then
+statements <span style="font-weight: bold;">RUN MNTHUPDT</span> and <span
+ style="font-weight: bold;">RUN MNTHREPT </span>will not be output to
+the compiler phase, and hence those two programs will not execute.<br>
+      <br>
+If <span style="font-weight: bold;">%TYPERUN</span> does contain<span
+ style="font-weight: bold;"> MONTH</span> then the <span
+ style="font-weight: bold;">RUN </span>statements are output to the
+main compile phase because they are execute oriented instructions.<br>
+      <br>
+Consider this code:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+%X</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN DO;</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">%Y=1;</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">TYPE 'MESSAGE';</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">RUN Z;</span><br
+ style="font-weight: bold;">
+      </div>
+      <span style="font-weight: bold;">END;</span><br
+ style="font-weight: bold;">
+      </div>
+      <br>
+The above states that if <span style="font-weight: bold;">%X</span>
+has been declared, the instructions within the <span
+ style="font-weight: bold;">DO/END </span>pair are to be
+interpreted.&nbsp; The assignment (<span style="font-weight: bold;">%Y=1</span>)
+is
+itself
+a pre-processor statement and so it is immediately
+interpreted and executed.&nbsp; The next statements (<span
+ style="font-weight: bold;">TYPE</span> and <span
+ style="font-weight: bold;">RUN</span>) are execute oriented
+instructions and so they are output to the main compile phase and will
+be done at execute time.<br>
+      <br>
+The following statements are compile oriented, and will be done there -
+any others will be output to the compile phase for it to interpret and
+execute.<br>
+      <br>
+&middot; &nbsp;&nbsp;&nbsp; All <span style="font-weight: bold;">DECLARES</span><br>
+      <br>
+&middot; &nbsp;&nbsp;&nbsp; Assignment Statements<br>
+      <br>
+&middot; &nbsp;&nbsp;&nbsp; Compile time <span
+ style="font-weight: bold;">STOP</span>s and <span
+ style="font-weight: bold;">SIGNAL ERROR</span>s.<br>
+      <br>
+To test if a symbolic variable has been declared, simply specify the
+symbolic variable name.&nbsp; For example:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+%X
+THEN
+. . .</span><br>
+      </div>
+      <br>
+means if the symbolic name<span style="font-weight: bold;"> X</span>
+has been declared, then execute the next instruction.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td align="left" valign="top">
+      <ol>
+        <li>Symbolic variable testing and return code testing may be
+combined into one <span style="font-weight: bold;">IF</span> statement.</li>
+      </ol>
+      <ul style="margin-left: 40px;">
+        <li>If the entire <span style="font-weight: bold;">IF</span>
+statement is found to be false, the next statement or group of
+statements is skipped.</li>
+        <li>If the <span style="font-weight: bold;">IF</span>
+statement is found to be true, the next statement(s)
+are passed to the main compiler phase, unless it, or they in the case
+of a group of instructions, are found to be statements for the
+pre-processor; for instance, a symbolic variable declaration or
+assignment.</li>
+        <li>If the <span style="font-weight: bold;">IF</span>
+statement was found to contain references to program
+return codes, the <span style="font-weight: bold;">IF</span> statement
+is simplified, re-constructed and passed
+to the main compiler phase, along with the next instruction or group of
+instructions.</li>
+      </ul>
+      <ol start="2">
+        <li>Two or more expressions may be <span
+ style="font-weight: bold;">AND</span>ed using the operator <span
+ style="font-weight: bold;">&amp;</span>,
+and two or more expressions may be <span style="font-weight: bold;">OR</span>ed
+using
+the
+operator
+          <span style="font-weight: bold;">|</span>.</li>
+        <li>Expressions may be enclosed in parentheses to give
+precedence in the evaluation.</li>
+        <li>Testing return codes issued by steps within a macro command
+is
+achieved by placing a '<span style="font-weight: bold;">label</span>'
+on the macro statement and testing this
+label in the IF statement.&nbsp; The return code issued by the macro
+command
+is the highest return code issued by any step within the macro.</li>
+        <li>When symbolic variables are tested, the following procedure
+takes place:-</li>
+      </ol>
+      <div style="margin-left: 40px;">a)&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;Quotes are placed around any symbolic variable names. This is
+so values containing special characters or blanks will not upset the
+comparison.<br>
+      <br>
+b)&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;The symbolic variable names are
+replaced by the contents of the variables.<br>
+      <br>
+c)&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;Any numbers are converted to numeric
+form and compared
+arithmetically.&nbsp; Numbers longer than 13 digits or any character
+strings
+are compared character by character.&nbsp; All character strings
+(including
+null strings) are padded with blanks to a length of 253 characters
+before any comparisons take place.<br>
+      <br>
+To differentiate between null and blank you must use the <span
+ style="font-weight: bold;">LENGTH</span>
+function of the assignment statement and then test that the length of
+the string is zero.&nbsp; Null strings have a length of zero, blank
+strings
+do not.<br>
+      </div>
+      <br>
+      <ol start="6">
+        <li>When testing symbolic variables it is not necessary to code
+quotes around them; Jol will automatically do this. However, this means
+that the following statements will be evaluated at preprocessor time
+rather than execute time.</li>
+      </ol>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">%PROG
+='IEFBR14';</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">RUN %PROG;</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">IF %PROG=0 THEN </span>. . .<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;">To have the <span
+ style="font-weight: bold;">IF</span> evaluated at execute time, the
+following must be done:<br>
+      </div>
+      <br>
+      <div style="margin-left: 80px;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">%PROG='IEFBR14';</span><br
+ style="font-weight: bold;">
+      </div>
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">STEPNAME:</span><br
+ style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 80px;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">RUN
+%PROG;</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">IF STEPNAME . . .</span><br>
+      </div>
+      </div>
+      <div style="margin-left: 40px;"><br>
+In other words, the <span style="font-style: italic;">label</span> or <span
+ style="font-style: italic;">step-name </span>is being tested, not the
+Symbolic variable,<br>
+      </div>
+      <br>
+      <ol start="7">
+        <li>The maximum number of tests that may be performed in one <span
+ style="font-weight: bold;">IF</span>
+statement based on the normal Jol statement limits of 512 tokens, and a
+maximum statement length of 2048 characters.&nbsp; Thus approximately
+512/4
+(i.e. 128) comparisons may be made as each name, comparison operator,
+comparand and connector count one token, for example:</li>
+      </ol>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">IF
+A=1
+|
+B=2
+is 8 tokens.</span><br style="font-weight: bold;">
+      </div>
+      <br>
+      <div style="margin-left: 40px;">If the test you are making is too
+complex to code in one IF statement, code multiple IFs, for example,<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+.
+.
+.</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN IF . . .</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN . . . .</span><br>
+      </div>
+      </div>
+      <br>
+      <ol start="8">
+        <li>The <span style="font-weight: bold;">STOP WHEN</span>
+instruction may be used to apply continuous (and overriding) tests to
+all program return codes.</li>
+        <li>If steps are bypassed with a <span
+ style="font-weight: bold;">STARTAT</span> instruction, any test
+referring to them will be marked False.</li>
+        <li>After an Abend the <span style="font-weight: bold;">ERROR</span>
+may be used to execute another
+instruction, or group of instructions. Should that instruction also
+Abend another <span style="font-weight: bold;">IF ERROR</span> may be
+used to recover from the second level
+error.&nbsp; This process may be repeated as many as eight times.&nbsp;
+Some
+examples:</li>
+      </ol>
+      <br>
+      <div style="margin-left: 40px; font-weight: bold;">a)&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;A:&nbsp;&nbsp; &nbsp; RUN IEBGENER;<br>
+      <div style="margin-left: 80px;">IF ERROR THEN . . .<br>
+      </div>
+      <br>
+b)&nbsp; &nbsp;&nbsp;&nbsp; A:&nbsp;&nbsp; &nbsp;RUN IEBGENER;<br>
+      </div>
+      <div style="font-weight: bold;">
+      <div style="margin-left: 80px;">B:&nbsp;&nbsp; &nbsp;RUN IEGBENER;<br>
+      </div>
+      </div>
+      <div style="margin-left: 40px; font-weight: bold;"><br>
+      <div style="margin-left: 80px;">IF A &amp; ERROR THEN . . . /*
+DID STEP A ABEND */<br>
+IF B &amp; ERROR THEN . . . /* OR STEP B? */<br>
+      </div>
+      <br>
+c)&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;IF A=10 &amp; (B=49 | B=32) &amp;
+ERROR THEN . . .<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;">Note that the <span
+ style="font-weight: bold;">ERROR</span> condition will give
+unpredictable results if it is
+coded within a parenthesized expression as it is given precedence over
+any other condition test within an <span style="font-weight: bold;">IF</span>
+statement.<br>
+      </div>
+      <br>
+      <ol start="11">
+        <li>Because an <span style="font-weight: bold;">INCLUDE</span>
+instruction is effectively replaced by
+whatever instructions are in the included member, it must be placed in
+a <span style="font-weight: bold;">DO</span> group if an <span
+ style="font-weight: bold;">ELSE</span> clause is used.&nbsp; For
+example:</li>
+      </ol>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">IF
+%X</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN DO;</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">INCLUDE MEMB1;</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">END;</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">ELSE . . .</span><br
+ style="font-weight: bold;">
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      <span style="font-weight: normal;">Examples of the IF Instruction<br>
+      <br>
+      <span style="font-weight: bold;">1 &nbsp;&nbsp;&nbsp; IF %A THEN
+. . .&nbsp;&nbsp;&nbsp;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+true
+if
+the
+symbolic variable <span style="font-weight: bold;">A</span>
+is declared.<br>
+      <br>
+      <span style="font-weight: bold;">2 &nbsp;&nbsp;&nbsp; IF %A=10
+THEN . . .&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>true if the
+symbolic variable <span style="font-weight: bold;">A</span> is
+declared and equal to 10.<br>
+      <br>
+      <span style="font-weight: bold;">3 &nbsp;&nbsp;&nbsp; IF PROGRAM1
+THEN . . .</span> true if <span style="font-weight: bold;">PROGRAM1</span>
+executed.<br>
+      <br>
+      <span style="font-weight: bold;">4</span> &nbsp;&nbsp;&nbsp;<span
+ style="font-weight: bold;"> IF PROGRAM1=50 THEN . . .</span> true if <span
+ style="font-weight: bold;">PROGRAM1</span> executed and returned a
+value of <span style="font-weight: bold;">50</span>.<br>
+      <br>
+      <span style="font-weight: bold;">5 &nbsp;&nbsp;&nbsp; IF %A=10
+&amp; PROGRAM1=50 THEN . . .</span> true if the symbolic variable <span
+ style="font-weight: bold;">A</span> was declared and currently held a
+value of <span style="font-weight: bold;">10</span> and <span
+ style="font-weight: bold;">PROGRAM1</span> executed and returned a
+value of <span style="font-weight: bold;">50</span>.This is the
+equivalent to coding<span style="font-weight: bold;"> IF %A=10 THEN IF
+PROGRAM1=50</span>.<br>
+      <br>
+      <span style="font-weight: bold;">6 &nbsp;&nbsp;&nbsp; IF
+(%VAR1='RUNNO'</span><br style="font-weight: bold;">
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">&amp; (%VAR2='RERUN' | %VAR2=''))</span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: normal;"></span></div>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">&amp; STEP3=0 THEN</span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br style="font-weight: bold;">
+      <span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+STEP
+4:
+RUN
+COPY;</span><br style="font-weight: bold;">
+      <br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">True,
+if
+the
+symbolic
+variable <span style="font-weight: bold;">%VAR1 </span>has
+the
+value <span style="font-weight: bold;">RUNNO</span> and the
+symbolic variable <span style="font-weight: bold;">%VAR2</span> has
+either a 'null'value (no value) or the value <span
+ style="font-weight: bold;">RERUN</span> and at execution time the
+return code issued by <span style="font-weight: bold;">STEP3</span> is
+zero.</span><br>
+      <span style="font-weight: normal;"></span><br>
+      <span style="font-weight: normal;">If true, run <span
+ style="font-weight: bold;">STEP4 </span>.If the value of <span
+ style="font-weight: bold;">%VAR1</span> was not <span
+ style="font-weight: bold;">RUNNO</span>, then the <span
+ style="font-weight: bold;">AND</span>ed test would have failed at
+compile time and <span style="font-weight: bold;">STEP4</span> would
+not even be considered for running at execution time - indeed, no
+instructions to the operating system would have been generated.</span><br>
+      <span style="font-weight: normal;"></span><br>
+      <span style="font-weight: normal;">Note If all the '<span
+ style="font-weight: bold;">AND</span>' operators had been '<span
+ style="font-weight: bold;">OR</span>' operators, then <span
+ style="font-weight: bold;">STEP3</span> would be checked at execution
+time to determine whether or not <span style="font-weight: bold;">STEP4</span>
+is to run.</span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      <span style="font-weight: bold;">7</span> &nbsp;&nbsp;&nbsp; A
+more complex example is:<br>
+      <br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+(PROGRAM1
+=
+10
+| PROGRAM1 = 20)</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">&amp; (PROGRAM5 &lt; PROGRAM6)</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">| PROGRAM3</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;"></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN STOP 'INVALID RETURN CODES
+FOUND, JOB ABORTED';</span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">It
+means
+true</span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"></span>
+      <ul style="margin-left: 40px;">
+        <li><span style="font-weight: normal;">if<span
+ style="font-weight: bold;"> PROGRAM1</span> executed and returned a
+return code of 10 or 20</span></li>
+      </ul>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">and</span></div>
+      <ul style="margin-left: 40px;">
+        <li><span style="font-weight: normal;">the return code of <span
+ style="font-weight: bold;">PROGRAM5</span> is less than the return
+code of <span style="font-weight: bold;">PROGRAM6</span> and they both
+executed</span></li>
+      </ul>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">or</span></div>
+      <ul style="margin-left: 40px;">
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">PROGRAM3</span> executed at all.</span></li>
+      </ul>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">If
+the
+IF
+is
+true, the <span style="font-weight: bold;">STOP</span>
+instruction will execute thus terminating the job.&nbsp; The <span
+ style="font-weight: bold;">STOP</span> will notify the operator that
+an error was detected in one or more of the return codes.</span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+8<span style="font-weight: bold;"> &nbsp;&nbsp; &nbsp; &nbsp; IF %DAY =
+'MONDAY'</span><br style="font-weight: bold;">
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">&amp; %MONTH= 'JUNE'</span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: normal;"><span
+ style="font-weight: bold;">THEN SUBMIT JUNEJOB;</span></span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">If
+the
+current
+day
+is Monday and it is June, then the <span style="font-weight: bold;">SUBMIT</span>
+command is executed, and the
+job known as <span style="font-weight: bold;">JUNEJOB</span> will be
+submitted to the operating system to run.</span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      <span style="font-weight: bold;">9 &nbsp;&nbsp; &nbsp;&nbsp; IF
+%DAY = 'FRIDAY'</span><br style="font-weight: bold;">
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">&amp; (%DAYNO&gt;8 &amp; %DAYNO&lt;5)</span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: normal;"><span
+ style="font-weight: bold;">&amp; %MONTH = 'JUNE'</span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: normal;"><span
+ style="font-weight: bold;">THEN DO</span></span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">any
+instructions,
+eg
+
+      <span style="font-weight: bold;">RUN, SUBMIT, INCLUDE;</span></span><br>
+      </div>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">END;</span></span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">If
+the
+current
+day
+is Friday, and the date is between the eighth and the
+fifteenth of June (that is, <span style="font-style: italic;">the
+second Friday in June</span>), then <span style="font-weight: bold;">DO</span>
+the next group of instructions.&nbsp; Using the <span
+ style="font-weight: bold;">IF</span> in this manner gives one the
+ability to schedule jobs on a calendar basis.</span><br>
+      <span style="font-weight: normal;"></span></div>
+      <span style="font-weight: normal;"><br>
+      <br>
+      </span><br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

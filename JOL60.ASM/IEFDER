@@ -1,0 +1,172 @@
+*        %GOTO DERBSL;                                               /*
+         MACRO
+         IEFDER &DSECT=
+*  MODULE-NAME=IEFDER(OS/VS1)MACRO                             @X048E6A
+*  DESCRIPTIVE-NAME=DISK ENTRY RECORD MAPPING MACRO            @X048E6A
+*  COPYRIGHT=NONE                                              @X048E6A
+*  LAST UPDATE 11/5/73                                         @X04AA68
+         AIF   ('&DSECT' EQ 'NO').NODST
+IEFDER   DSECT
+.NODST   ANOP
+         DS    0F
+DERDSKAD DS    XL4                     TTRL OF THIS DER         XL03120
+DERNXT   DS    XL4                     TTRL OF JMR              XL03120
+DERIDSD  DS    XL4                     TTR OF INPUT DSD
+DERODSD  DS    XL4                     TTR OF OUTPUT DSD
+DERIJCM  DS    XL4                     TTR OF INPUT JCM
+DEROJCM  DS    XL4                     TTR OF OUTPUT JCM
+DERRCT   DS    XL4                     TTRL OF FIRST RECORD CONTROL
+*                                        TABLE                  XL03120
+DERJCT   DS    XL4                     TTRL OF JCT ON SYSWADS
+*                                        OR SWADS               XL03120
+DERINJCT DS    XL4                     TTRL OF INITIATOR JFCB   XL03120
+DERSTDCB DS    A                       ADDRESS OF STDS DCB
+DERSTAWR DS    XL2                     NO. OF ASSIGN/WRITES TO STDS
+DERDSBCT DS    H                       NO. OF DSB CHAINS ENQUEUED
+*                                        FOR JOB                XL03120
+DERLOG   DS    XL1                     LOG STATUS BYTE
+DERLOGID EQU   X'80'                   DER FOR LOG DATA SETS
+DERLOGXO EQU   X'40'                   LOG X OPENED
+DERLOGXE EQU   X'20'                   LOG X ENQUEUED
+DERLOGYO EQU   X'10'                   LOG Y OPENED
+DERLOGYE EQU   X'08'                   LOG Y ENQUEUED
+DERCJLP2 DS    0XL5                    COMPRESSED JLPA FOR LOG  XL03120
+*                                      PROCESSING               XL03120
+DERFREC2 DS    XL4                     TTRL OF FIRST BLOCK      XL03120
+DERNBLK2 DS    XL1                     NUMBER OF BLOCKS         XL03120
+         ORG   DERCJLP2                DUAL USAGE OF FIELDS     XL03120
+DERCQMP2 DS    0XL5                    COMP QMPA FOR RSTRT COPY XL03120
+DERQFLT2 DS    XL2                     1ST LOGICAL TRK          XL03120
+DERQTID2 DS    XL2                     QUEUE ENTRY IDENT        XL03120
+DERQNOT2 DS    XL1                     NO. TRKS ASSIGNED        XL03120
+         DS    CL2                     RESERVED                 XL03120
+DERSTREC DS    XL4                     TOTAL NUMBER OF STDS RECORDS
+DERSTRTK DS    XL2                     NUMBER OF STDS RECORDS/TRACK
+DERINREV DS    XL2                     NO. OF SWADS OVERFLOW RECORDS
+DERJCLDF DS    CL40                    JCL DEFAULTS
+DERFLAGS DS    XL1                     DER FLAGS - BYTE 1
+DERJOBRS EQU   X'80'                   JOB TO BE RESTARTED
+DERWMST  EQU   X'40'                   WARM START CONDITION
+DERJOBF  EQU   X'20'                   JOB FAIL BIT
+DERINTRP EQU   X'10'                   INTERPRETATION COMPLETE
+DERTERM  EQU   X'08'                   TERMINATION COMPLETE
+DERGSTRT EQU   X'04'                   GENERALIZED START IDENT.
+DERPROCS EQU   X'02'                   PROCEDURE SPOOLED INDICATOR
+DERTMRT  EQU   X'01'                   TERMINATION HAS PERFORMED ROUTE
+DERCJLPA DS    0XL5                    COMPRESSED JLPA          XL03120
+DERFREC  DS    XL4                     TTRL OF FIRST BLOCK      XL03120
+DERNBLK  DS    XL1                     NUMBER OF BLOCKS         XL03120
+         DS    CL2                     RESERVED                 XL03120
+DERJACT  DS    XL4                     TTRL OF JACT RECORD      XL03120
+DERSCDTR DS    XL4                     TTRL OF SCD              XL03120
+DERJOBID DS    0CL12                   JOB IDENTIFICATION
+DERJOBNM DS    CL8                     JOB NAME-EBCDIC- 8 BYTES
+DERJOBNO DS    BL4                     JOB NUMBER-BINARY- 4 BYTES
+DERTTRRT DS    XL4                     TTRL OF ROUTE TABLE      XL03120
+DERQID   DS    H                       QID OF SUBMITTER
+DERFLAG1 DS    XL1                     DER FLAGS-BYTE 2        @XA05623
+DERDSO   EQU   X'80'                   JOB SELECTED BY DSO WTR
+DERSYSTK EQU   X'40'                   JOB IS A SYSTEM TASK
+DERREINT EQU   X'20'                   JOB BEING REINTERPRETED  XL03940
+DERSWA   EQU   X'10'                   JOB UNDER SWA OPTION     XL03051
+DERSM0   EQU   X'08'                   SM STEP 0 CREATED       @XA05623
+DERASG   EQU   X'04'                   ASSIGN SPACE FLAG       @XA08521
+         ORG   DERDSKAD+176
+         MEND    ,   */
+ /* MODULE-NAME=IEFDER(OS/VS1)MACRO                          @X04AA6A*/
+ /* DESCRIPTIVE-NAME=DISK ENTRY RECORD MAPPING MACRO         @X04AA6A*/
+ /* COPYRIGHT=NONE                                           @X04AA6A*/
+ /*   LAST UPDATE  11/05/73                                  @X04AA68*/
+ %DERBSL   :   ;
+ %IF DSECT¬='NO'  %THEN
+    %GOTO DERLVL1;                                         /*@X04AA68*/
+ %ELSE
+    %GOTO DERLVL2 ;                                        /*@X04AA68*/
+ %DERLVL2:;                                                /*@X04AA68*/
+   2 IEFDER   BDY(WORD,1),        /* IN-LINE SECTION         @X04AA68*/
+ %GOTO DERMAIN;                                            /*@X04AA68*/
+ %DERLVL1:;                                                /*@X04AA68*/
+
+ DECLARE
+   1 IEFDER   BDY(WORD,1) BASED(IEFDEPTR), /* MAPPING        @X04AA68*/
+ %DERMAIN:  ;                                              /*@X04AA68*/
+
+      4 DERDSKAD   CHAR(4),           /* TTRL OF THIS DER    @X04AA68*/
+      4 DERNXT     CHAR(4),           /* TTRL OF JMR         @X04AA68*/
+      4 DERIDSD     CHAR(4),          /* TTR OF INPUT DSD    @X04AA68*/
+    4 DERODSD     CHAR(4),            /* TTR OF OUTPUT DSD   @X04AA68*/
+    4 DERIJCM     CHAR(4),            /* TTR OF INPUT JCM    @X04AA68*/
+    4 DEROJCM     CHAR(4),            /* TTR OF OUTPUT JCM   @X04AA68*/
+    4 DERRCT      CHAR(4),            /* TTRL OF FIRST RECORD
+                                          CONTROL TABLE       XL03120*/
+    4 DERJCT      CHAR(4),             /* TTR OF JCT ON SYSWADS OR
+                                          SWADS               XL03120*/
+    4 DERINJCT    CHAR(4),         /* TTRL OF INITIATOR JFCB  XL03120*/
+    4 DERSTDCB    PTR(31),            /* ADDRESS OF STDS DCB @X04AA68*/
+    4 DERSTAWR    CHAR(2),            /* NO. OF ASSIGN/WRITES TO
+                                          STDS               @X04AA68*/
+    4 DERDSBCT  FIXED(15),             /* NO. OF DSB CHAINS   XL03120
+                                          ENQUEUED FOR JOB    XL03120*/
+    4 DERLOG      CHAR(1),              /* LOG STATUS BYTE   @X04AA68*/
+     6 DERLOGID BIT(1),             /* DER FOR LOG DATA SETS @X04AA68*/
+     6 DERLOGXO BIT(1),               /* LOG X OPENED        @X04AA68*/
+     6 DERLOGXE BIT(1),               /* LOG X ENQUEUED      @X04AA68*/
+     6 DERLOGYO BIT(1),               /* LOG Y OPENED        @X04AA68*/
+     6 DERLOGYE BIT(1),               /* LOG Y ENQUEUED      @X04AA68*/
+     6 *        BIT(1),               /* RESERVED            @X04AA68*/
+     6 *        BIT(1),               /* RESERVED            @X04AA68*/
+     6 *        BIT(1),               /* RESERVED            @X04AA68*/
+    4 DERCJLP2    CHAR(5),            /* COMPRESSED QMPA FOR LOG
+                                         PROCESSING           XL03120*/
+      6 DERCQMP2  CHAR(5),            /* COMPRESSED QMPA FOR RESTART
+                                         COPY                 XL03120*/
+        8 DERFREC2 CHAR(4),           /* TTRL OF FIRST BLOCK  XL03120*/
+          9 DERQFLT2 CHAR(2),          /* 1ST LOGICAL TRACK   XL03120*/
+          9 DERQTID2 CHAR(2),          /* Q ENTRY IDENT       XL03120*/
+        8 DERNBLK2 CHAR(1),            /* NUMBER OF BLOCKS    XL03120*/
+          9 DERQNOT2 CHAR(1),         /* NO. TRACKS ASSIGNED  XL03120*/
+    4 *           CHAR(2),               /* RESERVED          XL03120*/
+    4 DERSTREC    CHAR(4),               /* TOTAL NUMBER OF STDS
+                                            RECORDS          @X04AA68*/
+    4 DERSTRTK    CHAR(2),               /* NUMBER OF STDS   @X04AA68
+                                            RECORDS/TRACK    @X04AA68*/
+    4 DERINREV CHAR (2),               /* NO. OF SWADS OVERFLOW REC  */
+    4 DERJCLDF    CHAR(40),              /* JCL DEFAULTS     @X04AA68*/
+    4 DERFLAGS CHAR (1),               /* DER FLAGS BYTE 1   @X04AA68*/
+     6 DERJOBRS BIT(1),               /* JOB TO BE RESTARTED @X04AA68*/
+     6 DERWMST  BIT(1),              /* WARM START CONDITION @X04AA68*/
+     6 DERJOBF  BIT(1),                  /* JOB FAIL BIT     @X04AA68*/
+     6 DERINTRP BIT(1),           /* INTERPRETATION COMPLETE @X04AA68*/
+     6 DERTERM  BIT(1),              /* TERMINATION COMPLETE @X04AA68*/
+     6 DERGSTRT BIT(1),           /* GENERALIZED START IDENT @X04AA68*/
+     6 DERPROCS BIT(1),                   /* PROCEDURE SPOOLED
+                                            INDICATOR        @X04AA68*/
+     6 DERTMRT BIT (1),         /* TERM. HAS PERFORMED ROUTE @X04AA68*/
+    4 DERCJLPA    CHAR(5),               /* COMPRESSED JLPA   XL03120*/
+      6 DERFREC   CHAR(4),            /* TTRL OF FIRST BLOCK  XL03120*/
+      6 DERNBLK   CHAR(1),               /* NUMBER OF BLOCKS  XL03120*/
+    4 *           CHAR(2),               /* RESERVED          XL03120*/
+    4 DERJACT     CHAR(4),            /* TTRL OF JACT RECORD  XL03120*/
+    4 DERSCDTR CHAR(4),                /* TTRL OF SCD         XL03120*/
+    4 DERJOBID    CHAR(12),            /* JOB IDENTIFICATION @X04AA68*/
+      6 DERJOBNM    CHAR(8),           /* JOB NAME-EBCDIC- 8 BYTES */
+      6 DERJOBNO CHAR (4),             /* JOB NO. BINARY-4 BYTES  */
+    4 DERTTRRT CHAR (4),              /* TTRL OF ROUTE TABLE  XL03120*/
+    4 DERQID CHAR (2),                 /* QID OF SUBMITTER   @X04AA68*/
+    4 DERFLAG1 CHAR (1),               /* DER FLAGS BYTE 2   @XA05623*/
+      6 DERDSO BIT (1),                /* JOB SELECTED BY DSO WTR */
+      6 DERSYSTK BIT (1),              /* JOB IS A SYSTEM TASK  */
+      6 DERREINT BIT (1),              /* JOB BEING REINT.    XL03940*/
+      6 DERSWA BIT (1),                /*JOB UNDER SWA OPTION XL03051*/
+      6 DERSM0 BIT(1),                 /* SM STEP 0 CREATED  @XA05623*/
+      6 DERASG   BIT(1),           /* ASSIGN SPACE FLAG      @XA08521*/
+      6 * BIT (2),                     /* RESERVED           @XA08521*/
+ %IF DSECT ¬= 'NO' %THEN               /*                    @X04AA68*/
+ %GOTO DERDSECT;                                           /*@X04AA68*/
+                   %ELSE %GOTO DERINLIN;                   /*@X04AA68*/
+ %DERINLIN:;                                               /*@X04AA68*/
+     4  *        CHAR(41),             /* FILLER             @X04AA68*/
+ %GOTO DEREND;                                             /*@X04AA68*/
+ %DERDSECT:;                                               /*@X04AA68*/
+     4  *        CHAR(41);             /* FILLER             @X04AA68*/
+ %DEREND:;                                                 /*@X04AA68*/

@@ -1,0 +1,60 @@
+           MACRO
+&NAME      IFVALUE
+.*   THIS MACRO TESTS THAT A LOCN IS BLANK,OR 0
+.* ANY NUMBER OF PARAMETERS MAY BE SUPPLIED TO IT,THE LAST IS THE
+.*   LABEL
+           LCLA &NOPARMS,&THIS,&PLEN
+           LCLC &PTYPE,&LABEL,&PCHAR1
+&NOPARMS   SETA N'&SYSLIST
+           AIF ('&NAME' EQ '').NONAME
+&NAME      EQU *
+.NONAME    ANOP
+&THIS      SETA 1
+           AIF (&NOPARMS LT 2).TOOFEW  MUST HAVE 1 LOCN & LABEL
+&LABEL     SETC '&SYSLIST(&NOPARMS)'
+.NEXT      AIF (&THIS EQ &NOPARMS).END
+&PTYPE     SETC T'&SYSLIST(&THIS)
+&PCHAR1    SETC '&SYSLIST(&THIS)'(1,1)
+           AIF ('&PCHAR1' EQ '#').VARSTG
+           AIF ('&PTYPE' EQ 'C').CHAR
+           AIF ('&PTYPE' EQ 'F').FULL
+           AIF ('&PTYPE' EQ 'A').FULL
+           AIF ('&PTYPE' EQ 'R').FULL
+           AIF ('&PTYPE' EQ 'H').HALF
+           AIF ('&PTYPE' EQ 'X').BIT
+           AIF ('&PTYPE' EQ 'G').BIT
+           MNOTE 8,'&SYSLIST(&THIS) IS AN UNKNOWN DATA TYPE'
+           AGO .ADD1
+.FULL      ANOP
+.HALF      ANOP
+           CLC &SYSLIST(&THIS),=F'0'
+           AIF (&NOPARMS EQ 2).BE
+           BNE &LABEL          NOT BLANK OR 0,BYPASS OTHER TESTS
+           AGO .ADD1
+.VARSTG    ANOP
+           CLC &SYSLIST(&THIS).(2),=F'0'
+           AIF (&NOPARMS EQ 2).BE
+           BNE &LABEL          NOT BLANK OR 0,BYPASS OTHER TESTS
+           AGO .ADD1
+.BIT       ANOP
+&PLEN      SETA L'&SYSLIST(&THIS)
+           AIF (&PLEN NE 1).FULL
+           CLI &SYSLIST(&THIS),X'00'
+           AIF (&NOPARMS EQ 2).BE
+           BNE &LABEL          NOT BLANK OR 0,BYPASS OTHER TESTS
+.ADD1      ANOP
+&THIS      SETA &THIS+1
+           AGO .NEXT
+.CHAR      ANOP
+&PLEN      SETA L'&SYSLIST(&THIS)
+           CLC &SYSLIST(&THIS),BLANKS
+           AIF (&NOPARMS EQ 2).BE
+           BNE &LABEL          NOT BLANK OR 0,BYPASS OTHER TESTS
+           AGO .ADD1
+.BE        ANOP
+           BNE &LABEL          NOT BLANK OR 0,BYPASS OTHER TESTS
+           MEXIT
+.END       ANOP
+           MEXIT
+.TOOFEW    MNOTE 8,'MUST HAVE 2 PARAMETERS AT LEAST'
+           MEND

@@ -1,0 +1,18 @@
+         PUNCH '               PAGE T'                           88036
+T        CSECT                                                   88036
+         USING T,12                                              88036
+         LR    12,15                                             88036
+         LA    1,RBPTR                                           88036
+         SVC   99                                                88036
+         EX    0,*                                               88036
+         DS    0D                                                88036
+RBPTR    DC    A(*+X'80000004')                                  88036
+         DC    AL1(20,1),6X'00',A(TUS),2F'0'                     88036
+TUS      DC    A(TU1,TU2,TU3)
+         DC    A(TU4+X'80000000')
+TU1      DC    Y(1,1,8),CL8'DD '                                 88036
+TU2      DC    Y(2,1,26),CL26'CLARKE.JCS.JOL'                    88036
+TU3      DC    Y(3,1,8),CL8'FRED'
+         ORG   T+4094                                            88036
+TU4      DC    Y(X'E2')                                          88036
+         END   T                                                 88036

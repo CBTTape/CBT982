@@ -1,0 +1,1587 @@
+$JOLCP50   TITLE 'JOL MAIN LINE CODE'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974
+* COPYRIGHT CCS 1975,1976,1980
+* COPYRIGHT CCS 1981,1982.
+* COPYRIGHT CLEM CLARKE 1983.
+* COPYRIGHT CCS-JOL 1986,1987.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+*
+*
+*
+******************************************************************
+*
+* MODIFIED BY C. V. CLARKE JAN, 1984
+*    JOL NOW PRINTS THE JOL COMPILER LISTING WITH THE GENERATED
+*    CONTROL STATEMENTS AT EXECUTION TIME.
+*
+******************************************************************
+*
+******************************************************************
+*
+*
+* MODIFIED BY C. V. CLARKE TO INCLUDE XA SUPPORT DEC, 1983
+*    THIS SUPPORT MERELY STOPS THE LOADING OF DEVNAMET IF
+*    WE ARE RUNNING ON AN XA SYSTEM.
+*
+*
+******************************************************************
+*
+* FOLLOWING CHANGES MADE 3.0 -> 3.1
+*
+* JOL30013:-
+* JOL30014:-
+* JOL30082:-   TYPRUN='H' GENERATED INSTEAD OF 'HOLD'
+* 82049  FIX 014 ON X8 CLOSING NON-EXISTANT JOLLOAD
+* 830810 FIX ERROR MESSAGE FORMAT TO REMOVE MESSAGE TRUNCATION
+*
+******************************************************************
+         SPACE 3
+*        PUNCH ' ALIAS $JOLCP35'
+*        PRINT OFF
+         COPY JOLCOM
+*        PRINT ON,DATA
+         TITLE 'JOL COMPILER MAINLINE INITIALISATION'
+M00SAVE  DSECT
+         DS    18F
+TEMPDCBA DS    A
+TEMPWORK DS    CL8
+         JOLSAVE CSECT=UJM00MN
+JOL      EQU   UJM00MN
+         ENTRY JOL
+* THIS IS THE MAIN CONTROL MODULE OF 'JOL'
+*    ITS DUTIES ARE NOT TERRIBLY COMPLEX AS WE SHALL SEE.
+*                                                                 75128
+*OSAVES  EQU  11                                                  75128
+* ROOM FOR 18 CONCURRENT SAVE AREAS S/B ENOUGH                    75128
+*                                                                 75128
+SAVESIZE EQU   4096  (USED TO BE -NOSAVES*18*4)
+NOSAVES  EQU   SAVESIZE/72     APPROX NUMBER OF SAVES (REDUCED IF 87150.
+                               PEOPLE WANT WORK AREAS TOO         87150
+*                                                                 75128
+         ORG UJM00MN
+         SAVE (14,12),,JOL/XA.COMPILER.COPYRIGHT.CCS.DATE.&SYSDATE.&SYS*
+               TIME
+         USING UJM00MN,R11                                        74303
+         LR    R11,R15         SWAP BASE REGISTER                 74303
+         LR    R8,R1           SAVE REGISTER 1                    74303
+         GETMAIN R,LV=SAVESIZE
+         ST    R13,4(R1)                                          74303
+         ST    R1,8(R13)                                          74303
+         LR    R13,R1          SET UP NEW SAVE REGISTER           74303
+         MVC   0(4,R13),=F'84' SET UP LENGTH OF 1ST SAVE AREA     87150
+         SPACE 3
+         USING M00SAVE,R13
+         SPACE 3
+* NOW WE MUST GET SOME CORE FOR THE 'JOLLOAD' DCB, AND SHIFT IT TO
+* THE CORE OBTAINED, THEN OPEN IT NICELY, SO THAT BEFORE WE
+* ATTEMPT TO LOAD ANY ROUTINES ETC, WE CAN ACTUALLY GET TO THE
+* DATA SET THAT CONTAINS THEM.
+****NOTE, THIS HAPPENS EVEN BEFORE WE CALL UJI00MN TO CHANGE DDNAMES,
+* THEREFORE THE ONLY WAY TO CHANGE THIS DDNAME IS BY A ZAP (LATER, WE
+* MAY CHANGE THIS)
+         SPACE
+         LA    R0,LJOLDCB
+         GETMAIN R,LV=(0)
+         ST    R1,TEMPDCBA
+         MVC   0(LJOLDCB,R1),JOLLOAD    SHIFT DCB AWAY
+* NOW ALTER DDNAME TO '$$JLOAD' IF PRESENT.
+*        DEVTYPE =CL8'$$JLOAD',80(R13)
+         FINDDD =CL8'$$JLOAD',   USE NEW FAST SRCHTIOT ROUTINE    J50  .
+               ERRET=M00NJLOA
+         USING IHADCB,R1
+         L     R1,TEMPDCBA    RESTORE ADDRESS OF THE DCB
+         MVC   DCBDDNAM,=CL8'$$JLOAD'
+M00NJLOA EQU *
+         L     R1,TEMPDCBA    RESTORE ADDRESS OF THE DCB
+         MVI   TEMPDCBA,X'80' OPEN FOR INPUT
+* NEW CODE--- CHECK IF THERE IS A LOAD DCB AT ALL, IF NOT, DON'T OPEN
+*  AND ATTEMPT TO LOAD THE MODULES FROM THE LINK PACK AREA OR
+*  SYS1.LINKLIB.
+*        DEVTYPE DCBDDNAM,80(R13) D WHATEVER DCB NAME WE ARE USING
+         FINDDD DCBDDNAM            USE NEW FAST SRCHTIOT ROUTINE 87150
+         LTR   R15,R15       IS '$$JLOAD' OR 'JOLLOAD' DDNAME THERE?
+         BZ    M00LOAD       YES, TRY TO OPEN IT
+* NO DCB , SO  DO A LOAD FOR JOLCOM
+         LOAD  EP=UJCOMMON
+         LR    R2,R0         SAVE ITS ADDRESS FOR THE LIFE       75128
+*                            OF THE JOL COMPILE                  75128
+         ST    R2,AJOLLOAD-4 FOR LINK MACRO
+         MVC   AJOLLOAD,ZERO CLEAR DCB ADDRESS SO THAT $LINK WORKS
+         B     M00FXSVE      FIX UP SAVE AREA ADDRESS
+         DROP  R1
+M00LOAD  LA    R1,TEMPDCBA   THERE IS A DCB, SO TRY TO OPEN IT
+         OPEN  MF=(E,(1)) OPEN
+         SPACE 3
+         L     R1,TEMPDCBA   DCB ADDR IN R1
+         USING IHADCB,R1
+         TM    DCBOFLGS,X'10' CHECK IF DCB OPEN
+         DROP  R1
+         BO    OPENOK        OPEN OK SO CONTINUE
+         ABEND 16
+OPENOK   DS    0H
+         SPACE 3
+* NOW LOAD JOLCOM *********
+         SPACE 3
+         MVC   TEMPWORK,=CL8'UJCOMMON'
+         LA    R0,TEMPWORK
+         MVI   TEMPDCBA,0     SET A POINTER TO 0
+         L     R1,TEMPDCBA
+         SVC   8              LOAD JOLCOM
+         LR    R2,R0          SAVE ITS ADDRESS FOR THE LIFE       75128
+*                             OF THE JOL COMPILE                  75128
+         ST    R2,AJOLLOAD-4  FOR LINK MACRO
+         MVC   AJOLLOAD,TEMPDCBA SHIFT DCB ADDRESS TO PROPER HOME
+* NOW WE MUST SET UP THE LAST SAVE AREA ADDRESS FOR THE SAVE RTNS
+M00FXSVE DS    0H
+         L     R1,=A(SAVESIZE)                                    87150
+         ALR   R1,R13                                             87150
+*        LA    R1,SAVESIZE(R13) CALC END ADDRESS                  87150
+         ST    R1,ASAVEND     AND STORE THE RESULT
+* SEE IF DYNAMIC JOLGEN IS BEING USED.                            76200
+         L     R0,AJOLGEN     LOAD(WILL BE 0 | ADDR)              76200
+         LTR   R0,R0          =0?                                 76200
+         BNZ   M00NLOAD       NO,DON'T LOAD UJGENDET THEN         76200
+         $LOAD UJGENDET       LOAD GENERATION DETAILS             75128
+         ST    R0,AJOLGEN
+M00NLOAD EQU   *                                                  76200
+         LR    R10,R0          SAVE ADDRESS OF JOLGEN DETAILS
+         USING GENDETS,R10
+         SPACE 3
+         SR    R0,R0          SET ADDRESS OF DEVNAMET TO ZERO FOR A MO
+         L     R1,16          GET CVT ADDRESS                       XA
+*        L     R1,0(R1)       R1-> CVT NOW  REALLY, CLEM            XA
+         TM    116(R1),X'80'      MVS/XA ?                          XA
+         BO    M00STDEV       YES, DON'T LOAD DEVNAMET THEN         XA
+         LOAD  EP=DEVNAMET
+M00STDEV ST    R0,ADEVNAME
+         DROP  R10
+         MVC   UJSPRINT,=V(UJSPRNT)  SET UP ADDRESS FOR OTHER RTN 75128
+         MVC   ATNUM,=V(UJTNUM)                                   75311
+         MVC   ATNUMV,=V(UJTNUMV)                                 75311
+         MVC   VSAMOPN(8),=V(UJA01OPN,UJA03CLS)                   J50
+         MVC   ASRGETKN,=V(UJCGETKN) SHIFT VCON FOR UJCGETKN      J60
+         MVC   ASRERROR,=V(UJS13ER)                               J60
+         SPACE 3                                                  J60
+         MVC   AUJS30OP,=V(UJS30OP)
+         MVC   AUJS98QU,=A(UJS98QU)  SHIFT IN QUOTE ROUTINE HANDLER J60
+         $LOAD UJI00MN        LOAD TO INITIALISATION ROUTINES     J60
+         LR    R15,R0
+         BALR  R14,R15
+         LR    R10,R15        SAVE RETURN CODE FOR TESTING       75311
+         $DELETE UJI00MN      UJI00MN IS RE-ENTRANT, AND I WANT TO
+*                             MAKE SURE IT GOES FROM CORE
+         LTR   R10,R10        TEST RETURN CODE OF INITIALISATION  75311
+         BC  0,UJMRET16       WAS BNZ                             74303
+         SPACE 3
+         L     R8,ADCBS                                           75128
+         USING DCBS,R8                                            75128
+         L     R9,AJOLGEN                                         75128
+         USING GENDETS,R9                                         75128
+         L     R10,ACATCNTL
+         USING ACATBUF,R10
+         USING JOLCOM,R2                                          74303
+         L     R4,ASYSPRIN                                        75128
+         USING SYSPRINT,R4                                        75128
+*
+* BECAUSE THE DATA FILE IS KEPT OPEN MOST OF THE TIME, THE
+* CORE OBTAINED FOR THE BUFFER SHOULD BE OBTAINED FIRST SO
+*THAT IT WILL NOT FRAGMENT THE CORE, SO WE'LL OPEN IT HERE
+*
+         MVI   ADATA,X'8F'    OPEN AS OUTPUT
+         LA    R1,ADATA
+         SVC   19             OPEN THE FILE AS OUTPUT
+         SPACE 3
+*
+* GET STORAGE FOR THE COPY OF THE JOL COMPILER LISTING FILE.
+*
+         LA    R0,2660       LENGTH OF PRINT BUFFER               84022
+         STH   R0,LP$BUFF    STORE IT AS A DEFAULT LENGTH         84022
+         GETMAIN R,LV=(0)    GET STORAGE                          84022
+         ST    R1,P$CNTL     STORE THE ADDRESS OF THE BUFFER      84022
+         SPACE 3
+*
+* X8 ***************** CANNOT OPEN MULTIPLE DATA SETS AT ONCE.
+* THEREFORE .....
+         IFOS ¬=X8,MULTIOPN
+         MVI   ASYSIN,X'80'     OPEN AS INPUT              X8 ******
+         LA    R1,ASYSIN     POINT TO FIRST ENTRY IN LIST
+         SVC   19             OPEN THE FILES
+         MVI   ASYSIN,X'00'     RESET TO ZEROS             X8 ******
+         MVI   ASYSPRIN,X'8F'  OPEN AS OUTPUT
+         LA    R1,ASYSPRIN   POINT TO FIRST ENTRY IN LIST
+         SVC   19             OPEN THE FILES
+         MVI   ASYSPRIN,X'00'  OPEN AS OUTPUT
+         MVI   AJCL,X'8F'       OPEN AS OUTPUT
+         LA    R1,AJCL       POINT TO FIRST ENTRY IN LIST
+         SVC   19             OPEN THE FILES
+         MVI   AJCL,X'00'       RESET TO ZEROES
+         MVI   APROCLIB,X'80'   OPEN AS INPUT
+         LA    R1,APROCLIB   POINT TO FIRST ENTRY IN LIST
+         SVC   19             OPEN THE FILES
+         MVI   APROCLIB,X'00'   RESET TO ZEROES
+         MVI   AMACRODC,X'80'   OPEN AS INPUT
+         LA    R1,AMACRODC   POINT TO FIRST ENTRY IN LIST
+         SVC   19             OPEN THE FILES
+         MVI   AMACRODC,X'00'   RESET TO ZEROES
+         MVI   AWORKFIL,X'87' OPEN AS OUT/IN
+         LA    R1,AWORKFIL   POINT TO FIRST ENTRY IN LIST
+         SVC   19             OPEN THE FILES
+         MVI   AWORKFIL,X'00'   RESET TO ZEROES
+         MVI   AWORK2DC,X'8F' OPEN AS OUT/IN
+         LA    R1,AWORK2DC   POINT TO FIRST ENTRY IN LIST
+         SVC   19             OPEN THE FILES
+         MVI   AWORK2DC,X'00'   RESET TO ZEROES
+*        DEVTYPE =CL8'SYSTERM',CALLAREA
+         LA    R1,=CL8'SYSTERM'     USE NEW FAST SRCHTIOT ROUTINE 87150
+         L     R15,=V(SRCHTIOT)                                   87150
+         BALR  R14,R15                                            87150
+         LTR   R15,R15        IS SYSTERM THERE?
+         BNZ   X8NSYSTM
+         MVI   ASYSTERM,X'8F' SET LAST PARAMETER ADDRESS, AND OUTPUT
+         LA    R1,ASYSTERM   POINT TO FIRST ENTRY IN LIST
+         SVC   19             OPEN THE FILES
+         MVI   ASYSTERM,X'00' RESET TO ZEROES
+X8NSYSTM B     M00JDETS       ALL OPEN, GET JOBDETS NOW
+*** END X8 SPECIAL OPEN CODE * ************************
+        SPACE 3
+MULTIOPN DS    0H
+*        MVC   WORK2DCB+40(8),WORKFILE+40    COPY DDNAME          88010
+*                                MOVED INTO UJI00MN JCS           88010
+*        FIX   'ALTER ABOVE SOMETIME'
+         MVI   ASYSIN,X'00'   OPEN AS INPUT FOR ORDINARY OS ******
+         MVI   ASYSPRIN,X'0F' OPEN AS OUTPUT
+         MVI   AJCL,X'0F'     OPEN AS OUTPUT
+         MVI   APROCLIB,X'00' OPEN AS INPUT
+         MVI   AMACRODC,X'00' OPEN AS INPUT
+         MVI   AWORKFIL,X'07' OPEN AS OUT/IN
+*        DEVTYPE =CL8'SYSTERM',CALLAREA
+         LA    R1,=CL8'SYSTERM'     USE NEW FAST SRCHTIOT ROUTINE 87150
+         L     R15,=V(SRCHTIOT)                                   87150
+         BALR  R14,R15                                            87150
+         LTR   R15,R15        IS SYSTERM THERE?
+         BNZ   M00NOTRM
+         MVI   ASYSTERM,X'8F' SET LAST PARAMETER ADDRESS, AND OUTPUT
+         B     M00OPENA       DO OS STANDARD OPEN
+M00NOTRM OI    AJCL,X'80'     LAST ENTRY
+M00OPENA LA    R1,ASYSPRIN    POINT TO FIRST ENTRY IN LIST
+         SVC   19             OPEN THE FILES
+* TEST IF FILES ARE OPEN.  NEED TO DO THIS ON Z/OS ?  WHY?          J60
+         SPACE 3
+         L     R1,ASYSIN      DCB ADDR IN R1                        J60
+         USING IHADCB,R1      SYSIN
+         TM    DCBOFLGS,X'10' CHECK IF DCB OPEN
+         BO    M00SYSIN      OPEN OK SO CONTINUE
+         WTO  'JOL/UJM00MN: SYSIN FAILED TO OPEN',                     +
+               ROUTCDE=(2,11)
+         ABEND 30,DUMP
+M00SYSIN L     R1,ASYSPRIN    DCB ADDR IN R1                        J60
+         TM    DCBOFLGS,X'10' CHECK IF DCB OPEN
+         BO    M00SYSPR      OPEN OK SO CONTINUE
+         WTO  'JOL/UJM00MN: SYSPRINT FAILED TO OPEN',                  +
+               ROUTCDE=(2,11)
+         ABEND 30,DUMP
+M00SYSPR L     R1,AJCL        DCB ADDR IN R1                        J60
+         TM    DCBOFLGS,X'10' CHECK IF DCB OPEN
+         BO    M00JCLOK      OPEN OK SO CONTINUE
+         WTO  'JOL/UJM00MN: JCL FAILED TO OPEN',                       +
+               ROUTCDE=(2,11)
+         ABEND 30,DUMP
+M00JCLOK L     R1,APROCLIB    DCB ADDR IN R1                        J60
+         TM    DCBOFLGS,X'10' CHECK IF DCB OPEN
+         BO    M00PRCOK      OPEN OK SO CONTINUE
+         WTO  'JOL/UJM00MN: PROCLIB FAILED TO OPEN',                   +
+               ROUTCDE=(2,11)
+         ABEND 30,DUMP
+M00PRCOK L     R1,AMACRODC    DCB ADDR IN R1                        J60
+         TM    DCBOFLGS,X'10' CHECK IF DCB OPEN
+         BO    M00MACOK      OPEN OK SO CONTINUE
+         WTO  'JOL/UJM00MN: MACRO   FAILED TO OPEN',                   +
+               ROUTCDE=(2,11)
+         ABEND 30,DUMP
+M00MACOK L     R1,AWORKFIL    DCB ADDR IN R1                        J60
+         TM    DCBOFLGS,X'10' CHECK IF DCB OPEN
+         BO    M00WRKOK      OPEN OK SO CONTINUE
+         WTO  'JOL/UJM00MN: MACRO   FAILED TO OPEN',                   +
+               ROUTCDE=(2,11)
+         ABEND 30,DUMP
+M00WRKOK DS    0H
+         MVI   AWORK2DC,X'8F' SET LAST PARAMETER ADDRESS, AND OUTPUT
+         DROP  R1
+         LA    R1,AWORK2DC    OPEN WORK FILE
+         SVC   19             OPEN THE FILES
+         MVI   AWORK2DC,X'00' SET LAST PARAMETER ADDRESS, AND OUTPUT
+         AGO   .NOOS1
+           OPEN (SYSIN,(INPUT),              INPUT CARD FILE           *
+               JCL,(OUTPUT),                   JCL PRODUCED            *
+               PROCLIB,(INPUT),                                        *
+               SYSPRINT,(OUTPUT),                                 75128*
+               MACRODCB,(INPUT),                                  74303*
+               WORKFILE,(OUTIN),                                  75128*
+               JOLLOAD,(INPUT)),                                  75128*
+               MF=(E,CALLAREA)                                    75128
+.NOOS1    ANOP
+         MVI   ASYSIN,X'00'   RESET TO ZEROES            X8 ******
+         MVI   ASYSPRIN,X'00'
+         MVI   AJCL,X'00'
+         MVI   APROCLIB,X'00'
+         MVI   AMACRODC,X'00'
+         MVI   AWORKFIL,X'00'
+         MVI   ASYSTERM,X'00'
+         SPACE 3                                                  75128
+M00JDETS L     R12,AJOBDETS   STORE ADDRESS                       75128
+         USING JOBDETS,R12
+         SPACE 3
+         USING TKNX,R3
+         FIX 'THIS NEXT CODE TO SAVE RECOMPILING JOLCOM'
+         MVC   DROPQUOT(XXXECODE-XXXCODE),XXXCODE
+         B     NOTE1
+XXXCODE  LR    R0,R1          SAVE R1
+         ST    R14,USER5       SAVE R14
+         LA    R1,#TKN
+         ST    R1,CALLAREA+20
+         LA    R1,CALLAREA+20
+         L     R15,AUJS98QU
+         BALR  R14,R15
+         LR    R1,R0         RELOAD R1
+         L     R14,USER5         AND R14
+         BR    R14
+XXXECODE EQU   *
+         SPACE 3
+NOTE1    NOTE WORKFILE        NOTE FIRST OUTPUT POSN
+*                                  OF THE WORK FILE
+         ST    R1,SYS1NOTE
+         SR    R5,R5           # JOBS SUCCESSFULLY COMPILED       74303
+         SPACE 3
+* PREVIOUSLY IN THIS AREA WE USED TO READ THE FIRST CARD.         75311
+* NOW WE MERELY SET THE 'CP' INDICATOR HIGH, AND LET THE PREPROC 75311
+* WORRY ABOUT IT.                                                 75311
+         SPACE 1                                                  75311
+         MVI   CP,X'7F'                                           75311
+         TITLE 'PROCESS NEW JOB'
+NEWJOB   EQU *
+         CLEAR RUNINDIC,ERRCNT                                    75311
+* NOW CLEAR OUT ALL THE FILE CONTROL BLOCKS
+         CLEAR CATBLKN,WORKBLKN,WORK2BLK,PRBLKN,INSTBLKN,P$BLKN
+         XC    CATTTR1(256),CATTTR1                               80290
+         XC    CATTTR1(CATTTRE-CATTTR1-256),CATTTR1               80290
+         XC    WORKTTR1(256),WORKTTR1 CLEAR FIRST PART            76200
+         XC    WORKTTR1+256(256),WORKTTR1+256                     86200
+         XC    WORKTTR1+512(256),WORKTTR1+512                     86200
+         XC    WORKTTR1+768(WORKTTRE-WORKTTR1-768),WORKTTR1+768   86200
+         XC    PRTTR1(256),PRTTR1 CLEAR FIRST PART                76200
+         XC    PRTTR1+256(256),PRTTR1+256                         86200
+         XC    PRTTR1+512(256),PRTTR1+512                         86200
+         XC    PRTTR1+768(PRTTRE-PRTTR1-768),PRTTR1+768           86200
+         XC    INSTTTR1(256),INSTTTR1 CLEAR FIRST PART            76200
+         XC    INSTTTR1+256(256),INSTTTR1+256                     86200
+         XC    INSTTTR1+512(256),INSTTTR1+512                     86200
+         XC    INSTTTR1+768(INSTTTRE-INSTTTR1-768),INSTTTR1+768   86200
+         XC    P$TTTR1(256),P$TTTR1                               80290
+         XC    P$TTTR1(P$TTTRE-P$TTTR1-256),P$TTTR1               80290
+         MVC   SYS1NEXT,SYS1NOTE MOVE IN FIRST TTR WE WILL WRITE TO
+         IFVALUE SYS1NEXT,M00FINDX IF A VALUE PASSED, DO A POINT  86210
+         B     M00NOPNT          DON'T POINT MVS PROBLEM SEP 87   87150
+         MVC   SYS1NEXT,=X'00000100' SET A VALID TTR              86210
+M00FINDX POINT WORKFILE,SYS1NOTE      POINT IT BACK TO THE
+*                                     BEGINNING OF THE WORK
+*                                     DATA SET.
+         SPACE 3
+M00NOPNT DS    0H                                                 87150
+         MVC   AUJSPLIT,=V(UJSPLIT)                               87150
+         SPACE 3                                                  75128
+* NOW CALCULATE HOW MUCH STORAGE TO GET FOR THE PRE-PROCESSOR     75128
+         L     R0,=A(TKNSIZE+P52DCBL+BLDLL)  FIRST AREA IS TKNX   80290
+* FIX FOR SYMBOLIC TABLES >32K IN LENGTH                          87150
+         SR    R1,R1           CLEAR R1                           87150
+         ICM   R1,3,SYMLEN     LENGTH OF SYMBOLIC TABLE.          75128
+         AR    R0,R1           ADD WHAT MAY BE A MINUS NUMBER     87150
+         LA    R1,PROCLIB     GET A(PROCLIB) DCB                  75128
+         USING IHADCB,R1      USING SET FOR IT                    75128
+         LH    R15,DCBBLKSI   GET INCLUDE BLOCKSIZE               75128
+         LA    R1,MACRODCB    NOW SWITCH TO MACRO-LIB             75128
+         CH    R15,DCBBLKSI   WHICH DATA SET HAS THE BIGGER BLK ? 75128
+         BH    M00PROCB       GET BIGGEST                         75128
+         LH    R15,DCBBLKSI                                       75128
+M00PROCB EQU   *                                                  75128
+         STH   R15,LREADBUF                                       75128
+         AR    R0,R15         THAT'S SYMBOLIC+BLKSIZE CALC'D      75128
+* NOW TKN WORK AREA                                               75128
+         AH    R0,LPRBUF                                          75128
+         MVC   LMACBUF,=H'1004' LENGTH OF WORK BUFFER FOR         75128
+*                               INSTREAM MACROS AND DYNAM RTNS    75128
+         AH    R0,LMACBUF     ADD SIZE FOR GET MAIN               75128
+         ST    R0,LGOTTEN     SAVE LENGTH FOR FREE-MAIN LATER     75128
+         GETMAIN R,LV=(0)                                         75128
+         ST    R1,AGOTTEN     SAVE ADDRESS FOR FREEMAIN           75128
+         ST    R1,ATKN1       STORE IN TKNX ADDRESS HOLE
+         AH    R1,=AL2(TKNSIZE) CALCULATE NEXT SPOT               80290
+         ST    R1,AP52DCBS
+         LA    R1,P52DCBL+BLDLL(R1) CALC NEXT HOLE
+         ST    R1,ASYMTBL     1ST PART = SYMBOLIC TABLE           75128
+* FIX FOR SYMBOLIC TABLES >32K IN LENGTH                          87150
+         SR    R0,R0           CLEAR R0                           87150
+         ICM   R0,3,SYMLEN     LENGTH OF SYMBOLIC TABLE.          75128
+         AR    R1,R0           ADD WHAT MAY BE A MINUS NUMBER     87150
+*        AH    R1,SYMLEN      + L'SYMBOLIC                        75128
+         ST    R1,APRBUF      2ND PART  PREP TEXT BUF             75128
+         AH    R1,LPRBUF      + L'PREP TEXT                       75128
+         ST    R1,AREADBUF    3RD PART BUF FOR INCLUDE/MACROS     75128
+         AH    R1,LREADBUF         4 TH AREA USED FOR BUFFER      75128
+         ST    R1,AMACBUF            FOR INLINE MACROS + DYNAMRTNS75128
+         NOP   M00NCLR
+         L     R0,AGOTTEN     CLEAR CORE (TEST ONLY ***)          *****
+         LR    R1,R0                                              *****
+         L     R15,LGOTTEN                                        *****
+         S     R15,=F'8'                                          *****
+         STH   R15,0(R1)                                          *****
+         MVI   2(R1),C' '                                         *****
+         LA    R1,1(R1)                                           *****
+         BAL   R14,MOVEDATA                                       *****
+M00NCLR  EQU   *
+         LH    R0,MAXSYMS     MAXIMUM NUMBER OF SYMBOLICS ALLOWED 87150
+         MH    R0,=Y(15*2)    15 LEVELS * TWO BYTES FOR POINTERS  87150
+*
+* MAIN TABLES ALLOCATED AND INITIALISED
+*
+         MVI   ADATA,X'8F'    OPEN DATA AS OUTPUT
+         LA    R1,ADATA       SET R1
+         SVC   19             OPEN FILE AS OUTPUT
+         SPACE 2                                                  75128
+         L     R1,APRBUF     ADDRESS OUTPUT PREPROCESSOR BUFFER   75128
+         MVC   0(4,R1),=AL2(4,0) INITIALISE BUFFER FOR OUTPUT     75128
+         SPACE 3
+         L     R1,P$CNTL     ADDRESS OUTPUT COPY OF LISTING BUFFER84022
+         MVC   0(4,R1),=AL2(4,0) INITIALISE BUFFER FOR OUTPUT     84022
+         SPACE 3
+* NOW CLEAR ERROR INDICATORS
+         MVI   JOLERRIN,0     CLEAR JOLERR INDICATORS             75128
+         CLEAR TITLE2
+         L     R1,AJOBDETS    GET A(JOBDETS)                      75128
+         USING JOBNAME,R1     USE IT                              75128
+         LA    R0,JOBNAME      CLEAR JOB DETAILS                  87150
+         LA    R1,JOBDETSE-JOBNAME  GET LENGTH TO CLEAR           87150
+         LA    R15,C' '        FILL CHARACTER                     87150
+         SLL   R15,24
+         MVCL  R0,R14          CLEAR IT ALL
+         CLEAR JOBPERFO,JOBLIB#,JOBCAT#  SPECIAL BINARY CLEAR     75128
+         DROP  R1                                                 75128
+         TIME  DEC
+         ST    R0,UJPSTART    STORE START TIME                   75311
+         SRL   R0,4           DROP HUNDREDTHS OF A SECOND
+         ST    R0,DBL
+         OI    DBL+3,X'0F'    SIGN IT  (SIGNATURE?)
+         UNPK  STARTIME,DBL(4) UNPACK IT
+         OI    STARTIME+7,X'F0' FOR UNPACKING LATER
+         MVI   LINECNT,X'7F'  SET LINECNT VERY HIGH               75128
+         MVC   TITLE1,BLANKS                                      87150
+         MVI   PHASE,C'P'     TELL US PREPROCESSOR FOR ERROR RTN  75311
+         $LINK UJP00MN        LINK TO PREPROCESSOR                75128
+         LR    R7,R15         SAVE RETURN CODE                    75128
+         L     R1,AGOTTEN                                         75128
+         L     R0,LGOTTEN                                         75128
+         FREEMAIN R,LV=(0),A=(1)                                  75128
+         CH    R7,=H'16'                                          75128
+         BE    M00P00FL       P00 FAILED                          87080
+         CH    R7,=H'20'      DID WE EXECUTE AN 'EXIT' INSTRUCTION87080
+         BE    TEND           YES, SKIP AND TEST IF WE HAVE FINISHED080
+         B     M00C00         CONTINUE AT UJC00MN NOW             87080
+M00P00FL $DELETE UJSPLIT                                          75311
+         BAL   R6,M00NRNM     OUTPUT 'JOB NOT RUN' IF TEST NOT ON.75128
+         B     TEND                                               75128
+M00C00   EQU   *                                                  75128
+*        L     R1,AWORKFIL
+*        MVI   AWORKFIL,X'90'
+*        SVC   20
+* NOW CALCULATE STORAGE FOR COMPILE PHASE
+         LH    R0,=AL2(TKNSIZE)
+         AH    R0,LWORKBUF    LENGTH OF 1 WORK BUFFER             75128
+         AH    R0,LWORKBUF    + L'2ND WORK BUFFER                 75128
+         AH    R0,LPRBUF      +L'PREPROCESOOR BUFFER              75128
+         AH    R0,LINSTBUF    +L'INSTRUCTION BUFFER               75128
+         AH    R0,IDLEN       +L'TABLE FOR NAMES
+         AH    R0,LPROGWRK         FOR PROGRAM DECLARE ROUTINES
+* FOR REAL JCL WE HAVE TO GET EXTRA STORAGE TO STORE THE          75311
+*  CONDITION CODES AND THE 'DO' EXTRA STEPS WE HAVE GENERATED.    75311
+* ALSO, WE NEED A TABLE FOR THE STEPNAMES WE HAVE BEEN OUTPUTTING 75311
+*    SO WE DONT OUTPUT DUPLICATE STEPS                            75311
+         AH    R0,=AL2((200*8)+(18*8)) 200 REAL STEP NAMES        77300
+*                                     18 LEVELS OF DO AND MACROS  75311
+         SPACE 1                                                  75311
+         ST    R0,LGOTTEN     SAVE LENGTH FOR NOW
+         GETMAIN R,LV=(0)     GET STORAGE
+         ST    R1,AGOTTEN     FOR FREEMAIN
+         ST    R1,ATKN1       FIRST AREA FOR TKNX
+         AH    R1,=AL2(TKNSIZE) CALC NEXT HOLE
+         ST    R1,AWORKBUF    2ND AREA FOR WORK BUFFER 1
+         L     R1,AGOTTEN                                         75128
+         NOP   M00NCLR2        *************
+         LR    R0,R1                                              *****
+         L     R15,LGOTTEN                                        *****
+         S     R15,=F'8'                                          *****
+         STH   R15,0(R1)                                          *****
+         MVI   2(R1),C' '                                         *****
+         LA    R1,1(R1)                                           *****
+         BAL   R14,MOVEDATA                                       *****
+M00NCLR2 EQU   *
+         L     R1,AWORKBUF                                        75128
+         MVC   0(4,R1),=AL2(4,0)   INITIALISE BUFFER FOR OUTPUT   75128
+         AH    R1,LWORKBUF
+         ST    R1,AWORK2BF    2ND AREA FOR INPUT WORK BUFFER
+         MVC   0(4,R1),=AL2(4,0)   INITIALISE BUFFER FOR OUTPUT   75128
+         AH    R1,LWORKBUF
+         ST    R1,APRBUF
+         AH    R1,LPRBUF
+         ST    R1,AINSTBUF
+         MVC   0(4,R1),=AL2(4,0) INITIALISE BUFFER FOR OUTPUT     75128
+         AH    R1,LINSTBUF
+         ST    R1,APROGWRK       FOR PROGRAM DECLARE RTN
+         AH    R1,LPROGWRK
+         ST    R1,AIDTBL
+         SR    R15,R15        SET R15=0  (A REAL TABLE)           75311
+         ST    R15,AREALTBL   SET ADDRESS=0                       75311
+         AH    R1,IDLEN       ADD LENGTH OF LAST TABLE            75311
+         ST    R1,ASTEPTBL    STORE ADDRESS IN ASTEPTBL           75311
+         LA    R1,200*8(R1)   SKIP STEP NAME OUTPUT TABLE         77300
+         ST    R1,AREALTBL    STORE ADDRESS IN AREALTBL           75311
+*
+* MAIN TABLES ALLOCATED AND INITIALISED
+*
+         MVI   PHASE,C'C'     TELL ERROR RTN COMPILER PHASE NOW   75311
+         TIME  DEC            GET START TIME OF-                  75311
+         ST    R0,UJCSTART      COMPILER PHASE                    75311
+         $LOAD UJUEXIT                                            75128
+         ST    R0,ACOMPEXI                                        75128
+         $LINK UJC00MN                                            75128
+         LR    R7,R15                                             75128
+         $DELETE UJUEXIT                                          75128
+         L     R0,LGOTTEN                                         75128
+         L     R1,AGOTTEN                                         75128
+         FREEMAIN R,LV=(0),A=(1)                                  75128
+         SPACE 3
+         $DELETE UJSPLIT                                          75128
+         CH    R7,=H'16'      SEVERE ERRORS FOUND ?               75128
+         BNE   M00V00         NO CATASTROPHIC ERRORS, CALL V00    75128
+         BAL   R6,M00NRNM     OP NO RUN MSSG IF 7 TEST            75128
+         B     TEND           GO SEE IF MORE JOBS                 75128
+M00V00   EQU   *                                                  75128
+         MVI   PHASE,C'O'      TELL US WE ARE IN OPTIMISE PHASE   75311
+         TIME  DEC                                                75311
+         ST    R0,UJOSTART                                        75311
+         $LOAD UJUVALID                                           75128
+         ST    R0,AUVALID                                         75128
+         $LINK UJV00RD        READ TEXT INTO STORAGE              84100
+         LTR   R7,R15         DID WE READ IT OR NOT?              84100
+         BNE   M00VRDER       ERRORS, DON'T CALL NEXT PHASE       84100
+         $LINK UJV00MN                                            75128
+         LR    R7,R15         SAVE RETURN CODE                    75128
+M00VRDER $DELETE UJUVALID                                         75128
+         CH    R7,=H'16'      ALL GO WELL ?                       75128
+         BNE   M00G00T        NO ERRORS (MAJOR),TEST,CALL G00     75128
+         BAL   R6,M00NRNM     OP NO RUN MESSAGE                   75128
+         B     FREEV00        GO FREE V00 GOTTEN STORAGE          75128
+M00G00T  EQU   *                                                  75128
+         TM     THISSYS,X'08' LET ON ?                            75311
+         BO    GENERATE       YES, SO GENERATE JCL                75128
+* NOW SEE IF ANY MAJOR ERRORS THAT COULD STOP EXECUTION
+         TM    JOLERRIN,B'00000100' ANY HOLD TYPE ERRORS          75128
+         BZ    M00NOHLD                                           75128
+         MVC   JOBHOLD,=C'HOLD' TURN ON HOLD             JOL30082 76200
+*****************************************************************
+**     SHUT OFF ANY POSSIBLE EXECUTION OF HOLD TYPE ERRORS     **
+*****************************************************************
+         B     M00HOLD        BRANCH TO SHUT OFF GENERATE PHASE
+M00NOHLD TM    JOLERRIN,B'00011000' TEST FOR SEVERE ERRORS        75128
+         BZ    GENERATE       NO, SO GO GENERATE JCL              75128
+M00HOLD  BAL   R6,M00NRNM     OP NO RUN MESSAGE                   75128
+         B     FREEV00        GO SEE IF MORE JOBS TO COMPILE      75128
+GENERATE EQU   *
+****                                                              84023
+* NOW, TELL THE OUTPUT ROUTINES TO FLUSH THE 'PRINT' BUFFER       84023
+****                                                              84023
+         LA    R0,P$CNTL      GET THE ADDRESS OF THE COMPILER 'PRINT'
+         LA    R1,=H'-1'      NEGATIVE RECORD JUST FLUSHES BUFFERS84022
+         $CALL UJS30OP        OUTPUT DATA TO THE WORK FILE        84022
+****                                                              84023
+* DONE .......                                                    84023
+****                                                              84023
+         MVI   PHASE,C'G'     TELL US WE ARE IN GENERATE PHASE    75311
+         TIME  DEC                                                75311
+         ST    R0,UJGSTART                                        75311
+         LA    R5,1(R5)       ADD 1 TO COUNTER OF GOOD JOBS       74303
+         $LOAD UJG90OP        LOAD JCL OUTPUT ROUTINE             75128
+         ST    R0,AUJG90      STORE ADDRESS FOR OTHERS            75128
+         $LINK UJG01JOB       GENERATE JOB DETAILS                75128
+         $LINK UJG00MN                                            74303
+         $DELETE UJG90OP      DELETE OP RTN                       75128
+         TM    JOLERRIN,B'00000100' ANY TYPE 3 ERRORS?            75128
+         BZ    FREEV00        FREE V00 CORE                       75128
+         TM    THISSYS,X'08'  LET  TURNED ON ?                    75128
+         BNZ   FREEV00        YES, NO ERROR MESSAGE THEN          75128
+         BAL   R6,M00MRNM     OP MAY RUN-ON HOLD QUEUE MESSAGE    75128
+*FREEV00  IFNULL AGOTTEN,TEND  (NO CORE TO FREE)                  7SOCO
+FREEV00  CLC   AGOTTEN,ZERO AMOUNT GOTTEN=0 ??  (ELIMINATE RC=8    SOCO
+         BE    TEND   IF YES, GO TO TEND          IN THE ASSEMBLY) SOCO
+         FREEMAIN  V,A=AGOTTEN,MF=(E,CALLAREA),SP=0               75128
+TEND     EQU   *                                                  75128
+         $LINK UJF00MN                                            75128
+         CLI EOFSYSIN,C' '
+         BE  NEWJOB
+         TM    UJFLAG1,UF1DBOPN                                   J50
+         BZ    ZZ                                                 J50
+         L     R6,VSAMCBS                                         J50
+         USING VSAMINFO,R6                                        J50
+         VSCLOSE (JOLDSDB),                                            .
+               MF=(E,CALLAREA)
+         DROP  R6                                                 J50
+ZZ       DS    0H                                                 J50
+* THERE USED TO BE AN OS CLOSE HERE BUT THE MF VERSION DOESN'T WORK
+         MVI   ASYSIN,0
+         MVI   AJCL,0
+         MVI   APROCLIB,0
+         MVI   AMACRODC,0
+         MVI   AWORKFIL,0
+         MVI   ASYSPRIN,0
+         MVI   ASYSTERM,0                                JOL30014 80290
+         MVI   ADATA,X'80' LAST ENTRY - DATA (SYSUT1)    JOL30014 80290
+*                                                                 J50
+*        LA    R1,=C'CLOSING SYSPRINT'                            J50
+*        TPUT  (1),16                                             J50
+*        LA    R1,CALLAREA                                        J50
+*        TGET  (1),4                                              J50
+         CLOSE MF=(E,ASYSPRIN) CLOSE FILES
+*        STM   R0,R1,DBL                                          J50
+*        ST    R15,CALLAREA+4                                     J50
+         MVI   AWORK2DC,X'80' OPEN AS OUT/IN
+         CLOSE MF=(E,AWORK2DC) CLOSE FILES
+*        ST    R15,CALLAREA+8                                     J50
+*        LA    R1,=C'CLOSED SYSPRINT'                             J50
+*        TPUT  (1),15                                             J50
+*        LA    R1,CALLAREA                                        J50
+*        TGET  (1),4                                              J50
+         LA    R1,SYSTERM                                         80290
+         BAL   R6,FREEPOOL                                        80290
+         LA    R1,JCL                                             74303
+         BAL   R6,FREEPOOL                                        74303
+         LA    R1,SYSIN                                           74303
+         BAL   R6,FREEPOOL                                        74303
+         LA    R1,SYSPRINT                                        75128
+         BAL   R6,FREEPOOL                                        75128
+* NEW EXIT FOR STANDARD OIL AUGUST 26 1976                        76200
+         ST    R2,CALLAREA                                        76200
+         LR    R1,R2                                              76200
+         $LINK UJM90EXT    LINK TO EXIT ROUTINE                   76200
+         CH    R15,=H'9'                                          76200
+         BL    M00TR15                                            76200
+         LR    R9,R15                                             76200
+         ABEND (9),DUMP                                           76200
+M00TR15  B     *+4(R15)                                           76200
+         B     M00TRDR                                            76200
+         B     M00TLET4                                           76200
+         B     UJMRET16                                           76200
+M00TLET4 TM    THISSYS,X'08'   LET  ON?                           76200
+         BNO   UJMRET16      NO,RETURN 16                         77200
+M00TRDR  EQU   *                                                  76200
+         SPACE 2                                                  75128
+         TM    THISSYS,2       DO WE START A READER               74303
+         BO    UJMSTRTR        YES                                74303
+UJMRET0  SR    R9,R9                                              74303
+UJMRETN  EQU   *                   SET UP CLOSE
+*
+* FREE STORAGE OBTAINED FOR THE COPY OF THE JOL COMPILER LISTING FILE.
+*
+         LH    R0,LP$BUFF    LOAD LENGTH OF THE BUFFER            84022
+         L     R1,P$CNTL     GET THE ADDRESS OF THE BUFFER        84022
+         FREEMAIN R,LV=(0),A=(1)   AND FREE IT                    84022
+         SPACE 3
+         OC    AJOLLOAD,AJOLLOAD   Q... A DCB TO CLOSE?           82049
+         BZ    UJMRETNA            A... NO                        82049
+         MVI   AJOLLOAD,X'80'      SET UP CLOSE
+*        LA    R1,AJOLLOAD         GET R1=AJOLLOAD
+         JOLCLOSE MF=(E,AJOLLOAD)  CLOSE THE FILE
+         L     R1,AJOLLOAD         GET A(DCB)
+         LA    R0,LJOLDCB          GET LENGTH OF DCB
+         FREEMAIN R,LV=(0),A=(1)   AND FREE IT
+UJMRETNA DS    0H
+         SPACE 3
+*************************************************************
+**                                                         **
+**  SETUP RETURN CODE BASED ON CONTENTS OF JOLERRIN        **
+**                                                         **
+** TERMINAL ERROR = 20                                     **
+** SEVERE ERROR   = 16                                     **
+** HOLD SEVERITY  = 12                                     **
+** ERROR          = 08                                     **
+** WARNING        = 04                                     **
+** INFORMATION    = 00                                     **
+**                                                         **
+*************************************************************
+          LTR  R9,R9          IS REG-9 SETUP ALREADY ?
+          BNZ  UJMRTNED       YEP ALL DONE HERE
+          LA   R9,20          SETUP RETURN CODE OF 20
+          TM   JOLERRIN,X'10'
+          BO   UJMRTNED
+          LA   R9,16          SETUP RETURN CODE OF 16
+          TM   JOLERRIN,X'08'
+          BO   UJMRTNED
+          LA   R9,12          SETUP RETURN CODE OF 12
+          TM   JOLERRIN,X'04'
+          BO   UJMRTNED
+          LA   R9,08          SETUP RETURN CODE OF 08
+          TM   JOLERRIN,X'02'
+          BO   UJMRTNED
+          LA   R9,04          SETUP RETURN CODE OF 04
+          TM   JOLERRIN,X'01'
+          BO   UJMRTNED
+          LA   R9,0           SETUP RETURN CODE OF 0
+UJMRTNED  EQU   *
+* NOW GET RID OF  UJCOMMON,UJGENDET
+         $DELETE    UJGENDET                                      75128
+         CLC   ADEVNAME,ZERO                                         XA
+         BE    M00TOOS                                            J50
+         $DELETE DEVNAMET
+M00TOOS  DS    0H
+         $DELETE    UJCOMMON     JCS WOZ HEREQ                    75128
+         L     R10,4(R13)    GET PREVIOUS SAVE AREA ADDR          74303
+         LR    R1,R13                                             74303
+         FREEMAIN R,A=(1),LV=SAVESIZE                             74303
+         LR    R13,R10                                            74303
+         LR    R15,R9                                             74303
+         RETURN (14,12),T,RC=(15)                                 74303
+UJMSTRTR LTR   R5,R5           DID ANY JOBS WORK PROPERLY?        74303
+         BZ    UJMRET0          NO->                              74303
+         LA    R1,JCL                                             74303
+         FIX   'DEC 1983. CHECK WHO ALTERED NEXT TWO LINES'
+*        MVC   CALLAREA(8),=CL8'UJERDR'                           75128
+*        MVC   CALLAREA+6(1),SPOOL  (H,A,1,2,3)                   75128
+         $LINK UJERDRH
+         B     UJMRET0                                            74303
+UJMRET16 LA    R9,16                                              74303
+         B     UJMRETN                                            74303
+         SPACE 3                                                  75128
+M00NRNM  EQU   *                                                  75128
+         MVI   RUNINDIC,C'N' TELL UJF00MN TO PRINT N0RUN MSSGE    75311
+         BR    R6            RETURN                               75311
+         SPACE 2                                                  75128
+M00MRNM  MVI   RUNINDIC,C'M' TELL UJF00MN 'MAY' RUN               75311
+         BR    R6             AND RETURN                          75128
+         SPACE 3                                                  75128
+FREEPOOL TM    23(1),1     DID SOMEONE DOIT ALREADY ????
+         BOR   R6          OK THEN LETS GET OUT OF HERE
+         FREEPOOL (1)
+         BR    R6                                                 74303
+         PRINT NOGEN
+JOLLOAD  DCB   DDNAME=JOLLOAD,MACRF=R,DSORG=PO
+         PRINT GEN,DATA
+LJOLDCB  EQU *-JOLLOAD
+         LTORG
+         DROP R13,R8,R9,R4,R12
+         DC   42S(*,*,*,*)
+         EJECT
+         TITLE 'JOL PRINT SUBROUTINE'
+         JOLSAVE CSECT=UJSPRNT,SIZE=80+133                       75128
+* THIS CSECT GETS CONTROL WHEN-EVER A LINE IS TO BE PRINTED       75128
+* TITLE1 AND TITLE2 ARE TWO LINES TO BE PRINTED ON THE TOP
+*    OF EVERY PAGE
+         USING JOLCOM,R2
+         SPACE 1                                                  75311
+         L     R9,AJOLGEN                                         75311
+         USING GENDETS,R9                                         75311
+         L     R10,ACATCNTL                                       84022
+         USING ACATBUF,R10                                        84022
+         SPACE 1                                                  75311
+* NOW WE WANT TO SET R8=1 IF WE HAVE TO DO A 'WTO' FOR ANY        75311
+*    ERROR MESSAGES, AS WELL AS PRINTING THEM.                    75311
+* WE DO THIS IF CALLED FROM 'UJS13ER' AND THE 'NOPRINT' OPTION    75311
+*    IS ON                                                        75311
+         SR    R8,R8           SET=0 INITIALLY                    75311
+         TM    PARMPRNT,B'00000010' NOPRINT OPTION ON?            75311
+         BZ    UJSNWTO         NO, WE DO PRINT                    75311
+* NOW SEE IF CALLED FROM UJS13ER                                  75311
+         L     R15,4(R13)      GET OLD SAVE                       75311
+         L     R15,(17-1)*4(R15) R15= OLD R11                     75311
+         CLC   5(7,R15),=C'UJS13ER'                               75311
+         BNE   UJSCLEAR        NOPE, JUST RETURN (NO PRINT)       75311
+         TM    PARMPRNT,B'00001000' TEST OPTION ON?               75311
+         BO    UJSNWTO              YES, NO WTO, DO PRINT
+         LA    R8,1            YES, SET R8 NON ZERO               75311
+UJSNWTO  EQU   *                                                  75311
+         L     R7,ADCBS                                           75128
+         USING DCBS,R7                                            75128
+         TM    SYSPRINT+48,X'10'   SYSPRINT OPEN ?
+         BO    FILEOPEN
+         MVI   CALLAREA,X'80' OPEN DOESN'T SET HIGH ORDER BIT ...
+         OPEN  (SYSPRINT,(OUTPUT)),MF=(E,CALLAREA)
+         TM    SYSPRINT+48,X'10'   OPEN YET ?
+         BO    FILEOPEN
+         L     R15,4(R13)      GET OLD SAVE                         J60
+         L     R7,(17-1)*4(R15) R15= OLD R11                        J60
+         DC    H'0' CVC FIX
+         ABEND 16,DUMP
+FILEOPEN L     R4,APRINTLN    LOAD THE ADDRESS OF THE PRINT LINE  75128
+         LA    R1,1           SET R1= 1 LINE WE ARE TO OUTPUT     75128
+         CLI   4(R4),C'0'     DOUBLE SPACE ?                      75128
+         BE    SDBLSP         YES, SO DO IT                        DASD
+         CLI   4(R4),C'-'     TRIPLE SPACE ?                       DASD
+         BE    STRPLSP        YES, SO DO IT                        DASD
+         CLI   4(R4),C'1'     PAGE EJECT ?                         DASD
+         BE    SPROFLO        YES, SO OVERFLOW THE PAGE            DASD
+SPR1LINE AH    R1,LINECNT     ADD CURRENT LINE COUNT              75128
+         STH   R1,LINECNT     AND STORE IT                        75128
+         L     R15,AJOLGEN
+         USING GENDETS,R15
+         CLC   LINECNT,MAXLINE WILL WE OVER-FLOW THE PAGE ?       75128
+         DROP  R15
+         BH    SPROFLO        YES                                 75128
+         B     UJSOPREA      GO CHECK FOR REAL OUTPUT              DASD
+SDBLSP   LA    R1,2          SET FOR DOUBLE SPACE                  DASD
+         B     SPR1LINE      GO INCR LINECNT                       DASD
+STRPLSP  LA    R1,3          SET FOR TRIPLE SPACE                  DASD
+         B     SPR1LINE      GO INCR LINECNT                       DASD
+         SPACE 2                                                   DASD
+UJSOPREA EQU   *               REAL OUTPUT ?                      75311
+* NOW SEE IF CALLED FROM UJS13ER
+         L     R15,4(R13)        GET OLD SAVE
+         L     R15,(17-1)*4(R15) R15= OLD R11
+         CLC   5(7,R15),=C'UJS13ER'
+         BNE   UJSOTRMO          NOPE, NOT A ERROR MESSAGE
+******************************************************************
+**                                                              **
+**  SYSTERM OPTION IS ACTIVE ONLY IF DDCARD IS PRESENT          **
+**                                                              **
+******************************************************************
+         TM    SYSTERM+48,X'10'    IS SYSTERM OPEN ??
+         BNO   UJSOTRMO      NO, JUST PRINT TO SYSPRINT
+         PUT   SYSTERM,(R4)  OUTPUT ERRORS ONLY
+UJSOTRMO EQU    *
+         PUT   SYSPRINT,(R4)  OUTPUT NON-OVERFLOW RECORD          75128
+* IF WE ARE NOT IN THE GENERATE PHASE, WE SHALL COPY THE CONTENTS 84023
+*  OF THIS PRINT LINE TO THE WORK FILE FOR SPOOLING TO THE        84023
+*  GENERATED JCL LATER. THE GENERATE PHASE PRINT WE IGNORE.       84023
+         CLI   PHASE,C'G'     GENERATE PHASE ?
+         BE    SPNO1
+**** OPERATIONAL CONSIDERATIONS SAY IGNORE PREPROCESSOR TOO!      84051
+         CLI   PHASE,C'P'     PREPROCESSOR PHASE?                 84051
+         BE    SPNO1                                              84051
+         LA    R0,P$CNTL      GET THE ADDRESS OF THE COMPILER 'PRINT'
+         LR    R1,R4          GET ADDRESS OF DATA TO GO OUT       84022
+         $CALL UJS30OP        OUTPUT DATA TO THE WORK FILE        84022
+SPNO1    LTR   R8,R8           DO WE ALSO HAVE TO DO A 'WT0'      75311
+         BZ    UJSCLEAR        NOPE                               75311
+         LH    R1,0(R4)        GET LENGTH OF RECORD               75311
+         AR    R1,R4           NOW POINT TO END OF IT             75311
+         MVC   0(4,R1),=X'04004020' DESC 6,ROUTE 11,2             75311
+         MVI   2(R4),X'80'     INDICATE TO SVC 35 INFO AT RECORD  75311
+*                              END                                75311
+         MVI   4(R4),C' '   BLANK OUT LINE FEED BYTE              75311
+         WTO   MF=(E,(R4))   WTO                                  75311
+UJSCLEAR EQU   *
+         L     R1,APRINTLN   LOAD PRINT LINE ADDRESS              75128
+         MVC   0(4,R1),=AL2(5,0) SET LENGTH                       75128
+         MVI   4(R1),C' '                                         75128
+         MVC   5(120,R1),4(R1)   CLEAR LINE                       75128
+         JOLRETN RC=0        AND RETURN                           75128
+         SPACE 3                                                  75128
+SPROFLO  EQU   *                                                  75128
+         AP    PAGENO,=P'1'
+         LA    R5,80(R13)     POINT TO OUR WORK AREA(PAST SAVE)   75128
+         MVI   4(R5),C'1'     JUMP TO NEW PAGE                    75128
+         MVC   5(L'TITLE1,R5),TITLE1                              75128
+         MVC   5+L'TITLE1(6,R5),=C' PAGE '                        75128
+         UNPK  5+L'TITLE1+6(3,R5),PAGENO   SHIFT IN PAGENO        75128
+         OI    5+L'TITLE1+6+2(R5),C'0' MAKE PRINTABLE             75128
+         MVC   0(4,R5),=AL2(L'TITLE1+4+6+3+1,0)                   75128
+         PUT   SYSPRINT,(R5)  OUTPUT FIRST BIT OF HEADING         75128
+* IF WE ARE NOT IN THE GENERATE PHASE, WE SHALL COPY THE CONTENTS 84023
+*  OF THIS PRINT LINE TO THE WORK FILE FOR SPOOLING TO THE        84023
+*  GENERATED JCL LATER. THE GENERATE PHASE PRINT WE IGNORE.       84023
+         CLI   PHASE,C'G'     GENERATE PHASE ?                    84023
+         BE    SPNO2                                              84023
+**** OPERATIONAL CONSIDERATIONS SAY IGNORE PREPROCESSOR TOO!      84051
+         CLI   PHASE,C'P'     PREPROCESSOR PHASE?                 84051
+         BE    SPNO2                                              84051
+         LA    R0,P$CNTL      GET THE ADDRESS OF THE COMPILER 'PRINT'
+         LR    R1,R5          GET ADDRESS OF DATA TO GO OUT       84022
+         $CALL UJS30OP        OUTPUT DATA TO THE WORK FILE        84022
+         SPACE 3
+SPNO2    L     R15,AJOLGEN
+         USING GENDETS,R15
+         PUT   SYSPRINT,OWNER
+         L     R15,AJOLGEN    RELOAD R15 BEACUSE PUT DESTOYED IT  84022
+* IF WE ARE NOT IN THE GENERATE PHASE, WE SHALL COPY THE CONTENTS 84023
+*  OF THIS PRINT LINE TO THE WORK FILE FOR SPOOLING TO THE        84023
+*  GENERATED JCL LATER. THE GENERATE PHASE PRINT WE IGNORE.       84023
+         CLI   PHASE,C'G'     GENERATE PHASE ?                    84023
+         BE    SPNO3                                              84023
+**** OPERATIONAL CONSIDERATIONS SAY IGNORE PREPROCESSOR TOO!      84051
+         CLI   PHASE,C'P'     PREPROCESSOR PHASE?                 84051
+         BE    SPNO3                                              84051
+         LA    R0,P$CNTL      GET THE ADDRESS OF THE COMPILER 'PRINT'
+         LA    R1,OWNER       GET ADDRESS OF DATA TO GO OUT       84022
+         $CALL UJS30OP        OUTPUT DATA TO THE WORK FILE        84022
+         DROP  R15
+         SPACE 3                                                  75128
+* NOW PRINT THE PHASE WE ARE IN
+SPNO3    MVI   4(R5),C'0'     DOUBLE SPACE
+         MVC   5(L'TITLE2,R5),TITLE2
+         MVI   1(R5),L'TITLE2+5
+         PUT   SYSPRINT,(R5)  OUTPUT IT
+* IF WE ARE NOT IN THE GENERATE PHASE, WE SHALL COPY THE CONTENTS 84023
+*  OF THIS PRINT LINE TO THE WORK FILE FOR SPOOLING TO THE        84023
+*  GENERATED JCL LATER. THE GENERATE PHASE PRINT WE IGNORE.       84023
+         CLI   PHASE,C'G'     GENERATE PHASE ?                    84023
+         BE    SPNO4                                              84023
+**** OPERATIONAL CONSIDERATIONS SAY IGNORE PREPROCESSOR TOO!      84051
+         CLI   PHASE,C'P'     PREPROCESSOR PHASE?                 84051
+         BE    SPNO4                                              84051
+         LA    R0,P$CNTL      GET THE ADDRESS OF THE COMPILER 'PRINT'
+         LR    R1,R5          GET ADDRESS OF DATA TO GO OUT       84022
+         $CALL UJS30OP        OUTPUT DATA TO THE WORK FILE        84022
+         SPACE 3
+SPNO4    MVC   4(22,R5),=C'0JOL COMPILER VERSION '                75128
+         MVC   26(80,R5),BLANKS  CLEAR REST OF LINE               75128
+         MVC   26(L'VERSION,R5),VERSION                           75128
+         MVC   32(9,R5),DAY   SHIFT IN 'MONDAY' ETC
+         MVC   42(9,R5),MONTH
+         MVC   52(2,R5),DAYNO
+         MVC   55(4,R5),YEAR
+         MVC   0(4,R5),=AL2(4+59+L'VERSION,0)                     75128
+         PUT   SYSPRINT,(R5)                                      75128
+* IF WE ARE NOT IN THE GENERATE PHASE, WE SHALL COPY THE CONTENTS 84023
+*  OF THIS PRINT LINE TO THE WORK FILE FOR SPOOLING TO THE        84023
+*  GENERATED JCL LATER. THE GENERATE PHASE PRINT WE IGNORE.       84023
+         CLI   PHASE,C'G'     GENERATE PHASE ?                    84023
+         BE    SPNO5                                              84023
+**** OPERATIONAL CONSIDERATIONS SAY IGNORE PREPROCESSOR TOO!      84051
+         CLI   PHASE,C'P'     PREPROCESSOR PHASE?                 84051
+         BE    SPNO5                                              84051
+         LA    R0,P$CNTL      GET THE ADDRESS OF THE COMPILER 'PRINT'
+         LR    R1,R5          GET ADDRESS OF DATA TO GO OUT       84022
+         $CALL UJS30OP        OUTPUT DATA TO THE WORK FILE        84022
+         SPACE 3
+SPNO5    MVI   4(R4),C'0'     MAKE REAL LINE WE WANTED TO PRINT   75128
+*                             DOUBLE SPACE FIRST                  75128
+         SPACE 1                                                  75128
+         MVC   LINECNT,=AL2(9) RESET LINE-COUNT                   7DASD
+         B     UJSOPREA        OUTPUT (PRINT)                     75311
+         LTORG
+         DROP  R7,R9                                              75128
+         DC    15S(*,*,*,*)
+         TITLE 'JOL ERROR MESSAGE HANDLER'
+***********************************************************************
+*
+* THIS IS A NEW CSECT FOR 'UJS13ER'
+* PREVIOUSLY, ALL ERROR MESSAGES WERE PUT AT THE BACK OF THE
+*  JOL COMPILE.
+* NOW, TO HELP WITH TSO USAGE, THE ALL APPEAR AS THE OCCUR ON
+*  THE TERMINAL, OR IN THE PRINTED OUTPUT
+*
+* TODAY IS JUNE 16, 1975
+*
+***********************************************************************
+S13PARM  DSECT
+S13CSECT DS    CL1            IF UJC03DS CALLED US, WOULD CONTAIN
+*                             A 'C'
+S13CNO   DS    AL1            AS ABOVE, WOULD CONTAIN (03)
+S13SEV   DS    AL1            SEVERITY (0-5)
+S13ERRNO DS    AL1            ERROR NUMBER (0-99)
+S13STMT  DS    S              S(STMT NO VARIABLE)
+S13EPARM EQU   *
+         SPACE 3
+ERRTEXT  DSECT
+ERRLEN   DS    H
+         DS    H
+         DS    CL1
+ERRUJ    DS    CL2
+ERRCSECT DS    CL1
+ERRCNO   DS    CL2
+ERRDASH  DS    CL1
+ERRNO    DS    CL2
+         DS    CL1
+ERRTEXT1 DS    CL50
+S13SAVE  DSECT
+         DS    18F            REGISTER SAVE AREA FOR 'JOLPRINT'
+OLDR11   DS    A              CALLERS R11 (NEEDED,BECAUSE MOST
+*                             OF THE EXECUTES WILL USE R11 AS A
+*                             BASE REGISTER, AND THEREFORE IT
+*                             IS IMPORTANT TO RE-LOAD THIS BEFORE
+*                             WE DO ANY 'EXECUTES'
+OLDR14   DS    A              THIS IS UPDATED, BUT ORIGINALLY
+*                             POINTS TO THE PARAMETER LIST
+S13BASE  DS    A              OUR BASE IS SAVED HERE (R11) WHEN
+*                             WE DO AN EXECUTE MENTIONED ABOVE
+*                             (SEE COMMENTS 'OLDR11').
+OLDDBL   DS    CL8            'DBL' OFTEN HAS PARTS OF THE ERROR
+*                             TEXT TO BE PRINTED, AND AS WE MUST USE
+*                             'DBL' FOR CVD, WE MUST SAVE CONTENTS
+S13MVCEX DS    CL6            A MVC INSTRUCTION IS SET UP HERE
+*                             AT ODD TIMES.
+S13SAVEL EQU   *-S13SAVE      LENGTH OF SAVE + WORK AREA
+         SPACE 3
+         JOLSAVE CSECT=UJS13ER,SIZE=S13SAVEL
+* NOW THE PARAMETERS TO THIS CSECT ARE A LITTLE PECULIAR
+* ON ENTRY,R14 (RETURN ADDRESS) POINTS TO THE FOLLOWING:-
+*
+*        DC    CL1            CONTAINS ALPHA CHAR (S FOR EXAMPLE)
+*        DC    AL1            CSECT NUMBER (CALLER)
+*        DC    AL1            SEVERITY CODE (0-5)
+*        DC    AL1            ERROR NUMBER (0-99)
+*        DS    S(STMT)        STATEMENT NUMBER IN ERROR
+         USING JOLCOM,R2      R2 ALWAYS POINTS TO JOLCOM
+         USING S13SAVE,R13    USE SAVE AREA+WORK AREA
+         ST    R14,OLDR14     SAVE R14
+         ST    R11,S13BASE    SAVE OUR BASE REGISTER
+         MVC   OLDDBL,DBL     SAVE CONTENTS OF 'DBL' WHICH WE NEED
+*                             FOR CVD INSTRUCTIONS
+         L     R15,4(R13)     GET OLD SAVE AREA ADDRESS
+         MVC   OLDR11,(17-1)*4(R15) SHIFT IN CALLERS R11
+         MVC   S13MVCEX(4),=X'D2001000' SET UP PART OF MVC INSTRUCTION
+         SPACE 3
+* NOW POP OUT ANYTHING THAT MAY ALREADY BE IN THE PRINT BUFFER.
+         L     R1,APRINTLN
+         CLC   0(2,R1),=AL2(5) ANYTHING THERE TO PRINT ?
+         BNH   S13NOPRN       NOPE, DON'T CALL UJSPRINT           75311
+         JOLPRINT             OUTPUT WHATEVER IS THERE
+S13NOPRN EQU   *                                                  75311
+         SPACE 1                                                  75311
+* NOW SEE IF WE HAVE TO CHECK IF THIS IS A SEVERE ERROR OR NOT,   75311
+*  AND WHETHER WE HAVE TO IGNORE THIS ERROR BECAUSE OF FLAG SETTINGS
+         SPACE 1                                                  75311
+         L     R14,OLDR14                                         75311
+         USING S13PARM,R14                                        75311
+         L     R1,AJOLGEN                                         75311
+         USING GENDETS,R1
+         CLI   S13SEV,2        ERROR OR ABOVE?
+         BL    S13001
+         LH    R15,ERRCNT
+         LA    R15,1(R15)      ADD TO ERROR COUNT
+         STH   R15,ERRCNT
+S13001   EQU   *
+         CLC   S13SEV,PFLAG    ERROR TOO LOW TO PRINT             75311
+         BL    S13SKIPE        YES                                75311
+         CLI   PHASE,C'P'      PREPROCESSOR PHASE ?
+         BE    S13TSTMT        YES
+         CLI   PHASE,C'C'      COMPILER PHASE ?
+         BNE   S13TEST         NO
+* HERE PREPROCESSOR OR COMPILER PHASE
+S13TSTMT EQU   *
+* CHECK IF STMT BEEN PRINTED, IF NOT, PRINT A BIT OF IT (IT MAY BE
+*  A BIT GARBLED THO).
+         CLI   THISPRNT,C' '   THIS STATEMENT ALREADY BEEN PRINTED?
+         BNE   S13TEST         YES, DON'T DO IT AGAIN.
+         MVI   THISPRNT,C'1'   MARK IT PRINTED
+* IF STOP ETC, DON'T PRINT THE STATEMENT
+         CLC   =C'STOP ',ICOMMAND                                87150
+         BE    S13TEST                                           87150
+         CLC   =C'SIGNAL ',ICOMMAND                              87150
+         BE    S13TEST                                           87150
+         USING TKNX,R3
+         LH    R15,#TKNSTRG
+         S     R15,ONE
+         BNP   S13TEST
+         L     R1,APRINTLN     LOAD ADDRESS OF PRINT BUFFER.
+         MVC   5(11,R1),=C'ERROR STMT '
+         MVC   16(4,R1),STMT
+         CH    R15,=H'96'                                JOL30013 76200
+         BL    *+8                                       JOL30013 76200
+         LA    R15,96                                    JOL30013 76200
+         EX    R15,S13MVPRN
+         MVI   1(R1),125
+         JOLPRINT
+S13TEST  EQU   *
+         L     R14,OLDR14
+         USING S13PARM,R14
+         L     R1,APRINTLN
+         USING ERRTEXT,R1
+* INITIALISE THE FIRST LINE
+         MVI   4(R1),C'0'     DOUBLE SPACE (FIX LATER)
+         MVC   ERRUJ,=C'UJ'   SET UP 'UJ'
+         MVI   ERRDASH,C'-'   SET UP '-'
+         MVC   ERRCSECT,S13CSECT SHIFT IN CSECT NO
+         SR    R15,R15        CLEAR R15
+         IC    R15,S13ERRNO   GET ERROR NUMBER
+         CVD   R15,DBL        DEC PKD
+         UNPK  ERRNO,DBL      EBCIDIC
+         OI    ERRNO+L'ERRNO-1,C'0' MAKE PRINTABLE
+         IC    R15,S13CNO     GET CSECT NUMBER
+         CVD   R15,DBL
+         UNPK  ERRCNO,DBL
+         OI    ERRCNO+L'ERRCNO-1,C'0'
+* NOW PUT IN 'WARNING' ETC
+         IC    R15,S13SEV     LOAD SEVERITY
+         MH    R15,=H'6'      LENGTH OF MVC INSTRUCTION TO BE 'EX'
+         LA    R1,ERRTEXT1    RESET R1 A BIT
+         EX    R0,S13MSS(R15) SHIFT REQ'D INFO IN
+         IC    R15,S13SEV     RELOAD SEVERITY
+         SLL   R15,2          MULTIPLY BY 4
+         EX    R0,S13RESET(R15) ADD TO R1 L'MESSAGE JUST SHIFTED
+         MVC   1(2,R1),=C'AT' AT (STMT)
+         MVC   DBL(2),=X'41F0' LA R15
+         MVC   DBL+2(2),S13STMT
+         EX    R0,DBL         LA  R15,STMT
+         MVC   4(4,R1),0(R15) SHIFT IN STATEMENT NUMBER
+         LA    R1,10(R1)      RESET R1
+         L     R15,APRINTLN   LOAD A(PRINTBUF)
+         SR    R1,R15         GET LENGTH OF LINE TO GO OUT
+         STH   R1,0(R15)      SET LENGTH
+         LA    R14,S13EPARM   STEP TO END OF PARM LIST
+         ST    R14,OLDR14     SAVE ADDRESS FOR NOW
+         B     NOFIRST   ******************************
+         JOLPRINT             PRINT FIRST LINE OF ERROR TEXT
+* OK, FIRST LINE GONE, GONE, GONE
+         SPACE 3
+         DROP  R1,R14
+         SPACE 1
+NOFIRST  EQU  *     **********************************
+         MVC   DBL,OLDDBL     RESET DBL COS WE'VE FINISHED WITH IT
+* LETS SEE IF THERE IS ANY ERROR TEXT
+         L     R14,OLDR14
+         CLI   0(R14),0
+         BNE   S13LOOP1       YES THERE IS SOME TEXT
+         L     R1,APRINTLN
+         AH    R1,0(R1)        POINT TO NEXT HOLE               75128
+         MVC   5(33,R1),=C'NO MESSAGE TEXT WITH THIS MESSAGE'
+         MVI   1(R1),38
+         JOLPRINT
+S13RETN  L     R1,OLDR14
+         LA    R1,2(R1)           SKIP 0 AT END OF LIST
+         L     R14,4(R13)     GET OLD SAVE AREA ADDRESS
+         ST    R1,12(R14)     STORE NEW R14 ADDRESS IN SAVE AREA
+         JOLRETN              RC=0
+         SPACE 3
+S13LOOP1 L     R14,OLDR14     LOAD CURRENT PARM POINTER
+         CLI   0(R14),0       END OF PARMS ?
+         BNE   S13TLA         NO,TEST IF LA INSTRUCTION
+         L     R1,APRINTLN
+         CLI   1(R1),5        ANY THING TO PRINT ?
+         BE    S13RETN        NOPE, JUST RETURN
+         JOLPRINT             OUTPUT LINE
+         B     S13RETN
+S13TLA   CLI   0(R14),X'41'   LA INSTRUCTION ?
+         BNE   S13TMVC        NOPE -> TEST IF MVC INSTRUCTION
+         SPACE 3
+* HERE TIS AN LA
+         SPACE 3
+         L     R11,OLDR11     RELOAD USERS BASE
+         EX    R0,0(R14)      R1 NOW -> VARYING STRING
+         L     R11,S13BASE    RELOAD OUR BASE REGISTER
+         LH    R15,2(R14)     LOAD BASE ADDRESS OF VARYING STRING
+         AH    R15,=H'2'      ADD 2 (TO SKIP FIRST 2 BYTES OF
+*                             VARYING CHARACTER STRING)
+         STH   R15,S13MVCEX+4 STORE IN DUMMY MVC INSRUCTION
+* NOW RESET R14 TO POINT TO NEXT PARM
+         LA    R14,4(R14)
+         ST    R14,OLDR14
+* DONE
+         SPACE 1
+         LH    R1,0(R1)       GET LENGTH OF VARYING STRING        75128
+         SH    R1,=H'1'       -1 FOR MVC (R1=CURRENT LENGTH OF STRING)
+         BM    S13LOOP1       NO DATA TO MOVE,SO DON'T DO ANYTHING
+         CH    R1,=H'255'          > 255
+         BL    *+8                 NOPE - BRANCH
+         LA    R1,255              YES, TOO BIG, REDUCE STRING SIZE
+         STC   R1,S13MVCEX+1       SET LENGTH IN CREATED MVC
+         B     S13DOMVC            OK, NOW DO MOVE
+         SPACE 3
+S13TMVC  CLI   0(R14),X'D2'        MVC ?
+         BNE   S13ABEND            HAVE TO ABEND,COS NOTHING ELSE
+*                                  WE CAN DO.
+         MVC   S13MVCEX(6),0(R14)  SHIFT MVC TO AREA WE CAN PLAY WITH
+         LA    R14,6(R14)          RESET R14
+         SPACE
+         ST    R14,OLDR14          DONE
+S13DOMVC EQU   *
+* NOW, S13MVCEX CONTAINS AN MVC INSTRUCTION TO MOVE DATA TO THE
+*  PRINT BUFFER
+* 1. IF THE DATA WILL FIT, MOVE IT
+* 2. IF THE DATA WON'T FIT, DO DIFFICULT THINGS MY FRIEND
+         SPACE 3
+         L     R15,APRINTLN   LOAD A(PRINTBUF)
+         LH    R1,0(R15)      LOAD CURRENT LINE LENGTH.
+         SR    R0,R0
+         IC    R0,S13MVCEX+1  LOAD MVC LENGTH
+         AR    R0,R1          R0=LENGTH IF MOVE DONE
+         CH    R0,=H'119'     WILL IT FIT ? TEST LENGTH  DJD
+         BL    S13WILLG       OK, WILL FIT, GO DO THE MOVE
+* HERE, IT WILL NOT FIT WITHOUT SPLITTING INTO SEVERAL LINES
+* HOWEVER, LETS SEE IF IT WILL FIT ON A LINE BY ITSELF.
+         CLI   S13MVCEX+1,110 WILL IT FIT ON A LINE BY ITSELF?
+         BH    S13SPLIT       NOPE
+* THE INFO TO GO OUT WILL FIT ON A LINE BY ITSELF.
+         JOLPRINT             GET RID OF LINE IN BUFFER
+         B     S13DOMVC       BRANCH BACK TO DO THE MXC
+         SPACE 3
+S13SPLIT EQU   *
+* HERE WE HAVE TO SPLIT THE MVC INTO SEVERAL
+* R1 CONTAINS CURRENT LINE LENGTH, SO NOW CALCULATE HOW MUCH WE CAN
+*  GET OUT ON THE CURRENT LINE.
+         MVC   OLDDBL(1),S13MVCEX+1 SAVE AMOUNT THAT REALLY HAS TO GO
+         LA    R0,119                                 DJD
+         SR    R0,R1          RO=AMOUNT THAT CAN GO OUT
+         STC   R0,S13MVCEX+1  RESET LENGTH IN MVC INSTRUCTION
+         MVI   1(R15),125     SET LINE LENGTH=125
+         AR    R1,R15         R1-> NEXT AVAILABLE HOLE NOW IN PRINTBUF
+         L     R11,OLDR11     RESET R11
+         EX    R0,S13MVCEX    SHIFT DATA
+         L     R11,S13BASE    RESET OUR BASE REGISTER
+         JOLPRINT             OUTPUT CURRENT LINE
+         SR    R1,R1
+         IC    R1,S13MVCEX+1  LOAD LENGTH THAT JUST WENT OUT
+         LR    R15,R1         POP IN R15
+         AH    R15,S13MVCEX+4 ADD CURRENT DISPLACEMENT
+         STH   R15,S13MVCEX+4 RESTORE IN MVC(BASE REGISTER MAY GO
+*                             UP BY 1,DOESN'T MATTER AS UJC03DS IS THE
+*                             ONLY MULTI-BASE CSECT AND THE BASE REG-
+*                             ISTERS ARE CONSEQECTIVE)
+         SR    R15,R15
+         IC    R15,OLDDBL     LOAD LENGTH THAT SHOULD HAVE GONE OUT.
+         SR    R15,R1         - LENGTH THAT DID GO OUT
+         STC   R15,S13MVCEX+1 AND RESET LENGTH IN MVC
+         B     S13DOMVC       AND ROUND AGAIN.
+         SPACE 3
+S13WILLG EQU   *
+* HERE THE LINE WILL FIT ALL BY ITSELF, WITH NO SPLITTING.
+         AR    R1,R15         R1-> NEXT HOLE IN PRINTLINE
+         L     R11,OLDR11     GET USERS R11
+         EX    R0,S13MVCEX    SHIFT DATA
+         L     R11,S13BASE    GET OUR BASE AGAIN
+         SR    R1,R1
+         IC    R1,S13MVCEX+1  LOAD LENGTH THAT GOT MOVED
+         L     R15,APRINTLN   POINT TO PRINTBUF
+         AH    R1,0(R15)      + LENGTH OF LINE BEFORE MOVE
+         LA    R1,1(R1)       +1 COS MVC IS ONE LESS
+         STH   R1,0(R15)      RESET LINE LENGTH
+         B     S13LOOP1       BACK TO MAIN LOOP
+         SPACE 3
+S13SKIPE   EQU *                                                  75311
+* HERE WE MUST SKIP THE PARAMETERS POINTED TO BY R14, COS WE      75311
+*  AREN'T GOING TO PRINT THE ERROR MESSAGE BECAUSE THE SEVERITY   75311
+*  IS TOO LOW TO PRINT.                                           75311
+         SPACE 1                                                  75311
+         USING S13PARM,R14
+         LA    R14,S13STMT+L'S13STMT                              75311
+         DROP  R14
+* NOW WE LOOP ROUND TILL R14 POINTS TO H'0', ADD 2 TO SKIP THE    75311
+*  H'0', AND RETURN                                               75311
+S13CLC0  CLC   0(2,R14),ZERO   END ?                              75311
+         BE    S13EEND1        YES                                75311
+         LA    R14,2(R14)      NO, ADD 2 TO R14                   75311
+         B     S13CLC0         CHECK 0 AGAIN                      75311
+         SPACE 1
+S13EEND1 ST    R14,OLDR14                                         75311
+         B     S13RETN                                            75311
+         SPACE 3                                                  75311
+S13MSS   MVC   0(L'S13MSS0,R1),S13MSS0
+         MVC   0(L'S13MSS4,R1),S13MSS4
+         MVC   0(L'S13MSS8,R1),S13MSS8
+         MVC   0(L'S13MSS12,R1),S13MSS12
+         MVC   0(L'S13MSS16,R1),S13MSS16
+         MVC   0(L'S13MSS20,R1),S13MSS20
+S13RESET LA    R1,L'S13MSS0(R1)
+         LA    R1,L'S13MSS4(R1)
+         LA    R1,L'S13MSS8(R1)
+         LA    R1,L'S13MSS12(R1)
+         LA    R1,L'S13MSS16(R1)
+         LA    R1,L'S13MSS20(R1)
+S13MSS0  DC    C'INFORMATION'
+S13MSS4  DC    C'* WARNING *'
+S13MSS8  DC    C'** ERROR **'
+S13MSS12 DC    C'*** SEVERE ERROR ***'
+S13MSS16 DC    C'**** TERMINAL ERROR ****'
+S13MSS20 DC    C'***** INTERNAL COMPILER ERROR *****'
+S13MVPRN MVC  21(*-*,R1),TKNSTRG
+         DC    11S(*,*,*,*)
+S13ABEND ABEND   19,DUMP
+         TITLE 'JOL REPOINT-REREAD ROUTINE'
+         JOLSAVE CSECT=UJS30REP
+* ALL THIS LITTLE GUY IS ABOUT TO DO IS
+* REREAD THE WORK FILE BACK TO ITS READ POSITION
+* WHICH HAS CHANGED DO TO A WRITE TO IT
+* THIS COULD HAVE BEEN DONE IN THE UJS30OP MODULE
+* BUT I DIDN'T WANT TO UPSET ANY REGISTERS
+*
+*
+* WRITING WHILE READING IS THE PROBLEM
+*
+*
+         L      R8,ADCBS
+         USING DCBS,R8
+         L      R4,AP52DCBS
+         USING P52DCBS,R4
+         L     R5,AREADBUF    LOAD BUFFER ADDRESS
+         L     R9,AWORKFIL    LOAD WORKFILE DCB ADDRESS
+         L     R3,0(R1)       LOAD PASSED TTRC ADDRESS
+         USING S3REPARM,R3
+         IFVALUE S3REPTTR,S30FINDX IF A VALUE PASSED, DO A FIND  86210
+         MVC   S3REPTTR,=X'00001000' SET A VALID TTR             86210
+S30FINDX FIND  (9),S3REPTTR,C POINT BACK TO INPUT BLOCK
+         XC    CALLAREA(20),CALLAREA
+         READ  CALLAREA,SF,(9),(5),MF=(E,CALLAREA)  DO A READ ON HIM
+         CHECK CALLAREA       WAIT FOR OS
+         CLI   CALLAREA,X'7F' DID IT WORK OK ?
+         BE    UJS30RPE       YES, SO RETURN A ZERO               86210
+         MVI   CP,X'7F'       WHAT DO I DO NOW? SET CP HIGH       86210
+UJS30RPE NOP   *
+UJSREPOT JOLRETN RC=0         RETURN TO THE UJS30OP ROUTINE
+         DC    3S(*,*,*,*)
+         DC    3S(*,*,*,*)
+S3REPARM DSECT
+S3REPTTR DS     F      TTRC LOCATION OF WORKFILE BEFORE WRITE
+         TITLE 'JOL OUTPUT ROUTINE'                             74303
+         JOLSAVE CSECT=UJS30OP,SIZE=84                            75128
+* NEW MODULE, DEC 1,1974
+* THIS CSECT RECEIVES CONTROL FROM VARIOUS AREAS AND IS RESPONSIBLE
+*    FOR OUTPUTTING TO THE WORKFILE
+* ALL THE FILES ARE SEQUENTIAL,WITH THE EXCEPTION OF THE FILE WHICH
+*    CONTAINS THE DECODED DECLARES. THIS FILE IS DIRECT,AND
+*    INFORMATION MAY BE READ AND WRITTEN.
+           SPACE 1
+* ON ENTRY, R0 -> CONTROL AREA                                    75128
+*           R1 -> AREA TO GO OUT                                  75128
+           SPACE 1
+* THE CONTROL AREA LOOKS LIKE:-
+*          A(BUFFER)
+*          AL2(L'BUFFER)
+*          AL2(CURRENT BLOCK NUMBER)
+*          AL2(MAX NUMBER OF BLOCKS)
+*          H'LENGTH OF BLOCK JUST WRITTEN'
+*          DC  MAX NUMBER OF BLOCKS TIMES A FULLWORD TO CONTAIN
+*                              TTRS OF BLOCKS WRITTEN OUT.
+         LR    R4,R0          SWAP CALLING REGISTERS              75128
+         LR    R5,R1                                              75128
+*NOW 1F WE ARE WRITING OUT 'INSTRUCTIONS' WHICH HAVE TO BE
+*    READ BACK LATER AS A BIG TABLE, WE WANT TO MAKE SURE THAT
+*    EVERY RECORD IS A MULTIPLE OF 2
+         USING JOLCOM,R2
+         USING S30PARM,R4
+         USING S30OP,R5
+         USING S30SAVE,R13                                        75128
+S30START L     R7,S30ABUF     LOAD ADDRESS OF THE BUFFER          75128
+         MVC   S30WORK(2),#S30REC SHIFT REC SIZE SO NO 0C6        75128
+         LH    R6,S30WORK     LOAD LENGTH OF REC TO GO OUT        75128
+         LTR   R6,R6          IF NEG, MERELY -                    75128
+         BM    S30EMPTY       *  OUTPUT THE BLOCK                 75128
+         SPACE 1                                                  75128
+         C     R4,AINSCNTL   OUTPUT FOR AN INSTRUCTION ?          75311
+         BNE   S30NOTIN
+* HERE AN INSTRUCTION HAS TO GO OUT,SO ROUND UP IF NEC.
+         TM    #S30REC+1,1   RECORD LENGTH ODD ?                  75311
+         BZ    S30NORND
+         LA    R6,1(R6)       ROUND UP                            75128
+         STH   R6,S30WORK                                         75128
+         MVC   #S30REC,S30WORK                                    75128
+S30NORND EQU   *
+S30NOTIN EQU   *
+         CLC   S30LBUF,#S30REC IS RECORD TO GO OUT TOO LONG?
+         BL    S30ERR1         YES,ABEND
+* LETS SEE IF THE RECORD WILL FIT IN THE CURRENT BLOCK.
+         LH    R8,0(R7)        LOAD CURRENT LENGTH OF BLOCK.
+         AR    R8,R6           ADD LENGTH OF RECORD TO GO OUT.
+         LA    R14,2(R8)       TO ALLOW FOR 2 BYTE RECORD LENGTH  75128
+         CH    R14,S30LBUF      WILL THE RECORD FIT IN THE CURRENT75128
+*                              BLOCK ?
+         BH    S30OUTPT        NO -> OUTPUT BLOCK.
+         LH    R1,0(R7)        LOAD CURRENT BLOCK LENGTH
+         LR    R9,R1           SAVE OFFSET IN BLOCK TO RETN TO CALLER
+         AR    R1,R7           R1 -> NEXT LOCN IN BLOCK TO SHIFT
+*                              RECORD TO.
+         STH   R8,0(R7)        SET NEW BLOCK LENGTH
+         LA    R0,#S30REC      R0-> RECORD
+         BAL   R14,MOVEDATA    SHIFT DATA (LOOKS AFTER>256 BYTES)
+* WELL,THATS ABOUT IT
+         L     R1,4(R13)       LOAD OLD SAVE AREA
+         ST    R9,24(R1)       STORE OFFSET IN SAVE AREA
+         MVC   24(2,R1),S30BLKNO
+         JOLRETN RC=0
+         SPACE 3
+S30EMPTY EQU   *
+* OK,LET'S OUTPUT THE CURRENT BLOCK.
+* HOWEVER, IF THE CURRENT BLOCK LENGTH IS 4,THEN THERE IS NO DATA
+*    TO OUTPUT,SO WE WON'T
+         CLC   0(2,R7),=H'4'
+         BNE   S30OUTPT
+         L     R1,4(R13)
+         SR    R0,R0
+         ST    R0,24(R1)
+         JOLRETN RC=4
+         SPACE 3
+S30OUTPT EQU *
+         SPACE 1
+S30OK    EQU *
+* NOW R0=LENGTH OF RECORD
+*     R14=BLOCK LENGTH
+*    R7=A(BLOCK)                                                  75128
+* HERE WE WERE ASKED TO OUTPUT THE CURRENT BLOCK AND RETURN,
+*    OR OUTPUT THE BLOCK BECAUSE THE NEXT RECORD WON'T FIT
+* NOW WE MUST ALSO NOTE THE CURRENT POSITION OF THE WORK FILE
+* IN CASE WE ARE READING FROM IT IN OUR READ ROUTINE
+* AND REPOSITION TO IT AGAIN AFTER THE CURRENT BLOCK GOES OUT
+*THIS PROBLEM HAS CAUSED JOL TO GO CRAZY
+         CLI   PHASE,C'P'     IS THE PREPROCESSER RUNNING
+         BNE   S30NOPE1       NOPE
+         L     R14,AP52DCBS
+         USING P52DCBS,R14
+         L     R15,AWORKFIL   GET WORKFILE DCB ADDRESS
+         CLC   AWORKFIL+1(3),CURRDCB+1  Q/-READING FROM THE WORKFILE
+         BNE   S30NOPE1       NOPE LET LEAVE
+         NOTE  (15)           GET CURRENT TTR POSITION
+         L     R14,AP52DCBS
+         USING P52DCBS,R14
+         ST    R1,S30TTRC     SAVE THIS GUY FOR LATER
+         DROP  R14
+*        L     R1,SYS1NEXT    GET CURRENT WORKFILE O/P TTR
+*        LA    R1,256(R1)     UP IT BY 1 BLOCK
+*        ST    R1,SYS1NEXT    PUT IT BACK
+S30NOPE1 EQU   *
+         LR    R1,R7          SET R1 -> AREA TO BE WRITTEN        75128
+         BAL   R14,OPBLOCK    OUTPUT THE BLOCK                    75128
+         L     R15,AWORK2DC   LOAD DCB ADDRESS OF OUTPUT WORKFILE
+         B     S30NOTE
+         IFOS  =X8,S30NOTE
+         L     R15,AWORKFIL
+S30NOTE  NOTE  (R15)          NOTE LAST POSITION JUST WRITTEN OUT 75128
+         ST    R1,SYS1NEXT    RESET NEXT TTR LOCN
+* SET SYS1NOTE TO THE ADDRESS OF THE FIRST BLOCK OUTPUT           87150
+*  +++++++ MVS PROBLEM, SPET 1987 ++++++++++++++++++++++++++++++  87150
+         IFVALUE SYS1NOTE,S30TPREP                                87150
+         ST    R1,SYS1NOTE                                        87150
+* NOW REPOSITION THE WORK FILE BACK TO WHERE IT WAS BEFORE THE WRITE
+S30TPREP CLI   PHASE,C'P'     IS PREPROCESSER RUNNING
+         BNE   S30NOPE2       NOPE
+         L     R14,AP52DCBS
+         USING P52DCBS,R14
+         L     R15,AWORKFIL   GET WORKFILE DCB ADDRESS
+         CLC   AWORKFIL+1(3),CURRDCB+1  Q/-READING FROM THE WORKFILE
+         BNE   S30NOPE2       NOPE LET LEAVE
+         DROP  R14
+         $CALL UJS30REP,(S30TTRC) OK GOOOOD CALL REPOSITITION MODULE
+S30NOPE2 L     R1,SYS1NEXT    RELOAD CURRENT TTR
+* NOW STORE TTR IN BUFFER CONTROL BLOCK.
+         LH    R14,S30BLKNO   LOAD CURRENT NUMBER OF BLOCKS
+         LA    R14,1(R14)     ADD 1
+         CH    R14,S30MAXBL   TOO MANY ?
+         BH    S30ERR2        YES,ABEND
+         STH   R14,S30BLKNO   RESET BLOCK NUMBER                  75128
+         SLL   R14,2           * 4
+         ST    R1,S30TTR1-4(R14)
+         MVC   S30LASTL,0(R7) SHIFT LENGTH OF BLOCK JUST WRITTEN
+*                             SO INPUT RTNS CAN KNOW LAST LENGTH
+         MVC   0(4,R7),=AL2(4,0) RESET BLOCK LENGTH TO 4
+         LTR   R6,R6
+         BP    S30START       RELOAD SOME REGISTERS
+         JOLRETN RC=0        (WE WERE CALLED TO MERELY EMPTY
+*                              THE BUFFERS).
+S30ERR1  LA    R1,#S30REC
+         WTO  'JOL/UJS30OP: INTERNAL ERROR: RECORD TOO LARGE',         +
+               ROUTCDE=(2,11)
+         WTO  'SEE AREA WHERE REGISTER 1 IS POINTING TO',              +
+               ROUTCDE=(2,11)
+         ABEND 20,DUMP
+S30ERR2  WTO  'JOL/UJS30OP: TOO MANY RECORDS IN INTERMEDIATE FILE',    +
+               ROUTCDE=(2,11)
+         WTO  'SEE YOUR SYSTEM PROGRAMMER',                            +
+               ROUTCDE=(2,11)
+         ABEND 21,DUMP
+         LTORG
+         DC    9S(*,*,*,*)
+         SPACE 3
+S30SAVE  DSECT
+         DS    18F
+S30TTRC  DS    F
+S30WORK  DS    H
+         DS    H
+S30DSIZE EQU   *-S30SAVE
+S30PARM  DSECT
+S30ABUF  DS    A               ADDRESS OF BUFFER
+S30LBUF  DS    H               LENGTH OF BUFFER
+S30BLKNO DS    H               CURRENT BLOCK NUMBER
+S30MAXBL DS    H               MAX NO OF BLOCKS
+S30LASTL DS    H               LAST BLOCK LENGTH
+S30TTR1  DS    A               TTRS OF BLOCKS
+S30OP    DSECT
+#S30REC  DS    H               LENGTH OF RECORD TO GO OUT
+S30REC   DS    CL1             RECORD
+         LTORG
+         JOLSAVE CSECT=UJS98QU                                    76200
+* THIS CSECT HAS A PARAMETER -> VARYING CHARACTER STRING.         76200
+* THE IDEA IS TO DROP QUOTES FROM EITHER END, THEN CHECK FOR      76200
+* DOUBLE QUOTES IN THE MIDDLE AND MAKE THEM 1, IF ANY ARE FOUND.  76200
+         SPACE 2                                                  76200
+         L     R5,0(R1)       POINT TO PARM              JOL30027 76200
+         CLC   0(2,R5),ZERO   ZERO LENGTH ?              JOL30027 76200
+         BE    S98RETN                                   JOL30027 76200
+         MVC   DBL(2),0(R5)   SHIFT LENGTH SO NO 0C6     JOL30027 76200
+         LH    R6,DBL         LOAD ITS LENGTH.           JOL30027 76200
+         CLI   2(R5),C''''    QUOTE ON START OF STRING ? JOL30027 76200
+         BNE   S98FDBLQ       NO,SO JUMP INTO DBL QUOTE  JOL30027 76200
+         SPACE 2                                         JOL30027 76200
+         BCTR  R6,0           -1 FROM R6                 JOL30027 76200
+         BCTR  R6,0           -1 FROM R6 =-2             JOL30027 76200
+         LTR   R7,R6          SAVE NEW LENGTH            JOL30027 76200
+         BZ    S98RETZ        IF ZERO NOW, STORE LEN, RET OL30027 82200
+         BCTR  R6,0           -1 FOR MVC EXECUTE         JOL30027 76200
+****************************************************************** DASD
+* ABEND 002 OCCURED BY A MINUS VALUE IN REG-6 WHICH SHIFTED      * DASD
+* THE BUFFER ADDRESS (WHICH IS GETMAINED AFTER THE TKN AREA)       DASD
+* ONE BYTE WHICH LEFT A BIG RDW IN THE VB LENGTH                 * DASD
+* A TEST HERE FOR A MINUS VALUE SHOULD DO IT                     * DASD
+****************************************************************** DASD
+         LTR   R6,R6   DID REGISTER 6 GO NEGATIVE  ??              DASD
+         BM    S98RETN YEP   LETS NOT DO ANY MORE                  DASD
+         EX    R6,S98MVC1     MOVE AND DROP 1ST QUOTE    JOL30027 76200
+         LA    R8,3(R5,R6)    POINT TO LAST QUOTE-1      JOL30027 76200
+         MVC   0(2,R8),BLANKS BLANK THEM OUT             JOL30027 76200
+         STH   R7,DBL         RESET -                    JOL30027 76200
+         MVC   0(2,R5),DBL    -STRING LENGTH NOW         JOL30027 76200
+         SPACE 2                                         JOL30027 76200
+S98FDBLQ EQU   *                                         JOL30027 76200
+         LH    R6,0(R5)    LOAD STRING LENGTH                     76200
+         SPACE 1                                         JOL30027 76200
+         LA    R1,2(R5)       LOAD START ADDRESS OF STR. JOL30027 76200
+         LA    R14,1          SET LOOP INCR=1            JOL30027 76200
+         LA    R15,1(R5,R6)   POINT TO END-1             JOL30027 76200
+S98LUP   CLC   0(2,R1),=C'''''' DOUBLE QUOTE PERHAPS?    JOL30027 76200
+         BE    S98DBL         YES ->                     JOL30027 76200
+         BXLE  R1,R14,S98LUP                             JOL30027 76200
+S98RETZ  STH   R6,DBL         END --- RESET LENGTH       JOL30027 76200
+         MVC   0(2,R5),DBL    DONE                       JOL30027 76200
+S98RETN  JOLRETN RC=0                                    JOL30027 76200
+         SPACE 2                                         JOL30027 76200
+S98DBL   EQU   *                                         JOL30027 76200
+* CALCULATE LENGTH TO SHIFT                              JOL30027 76200
+         LR    R9,R15         LOAD END POINTER           JOL30027 76200
+         SR    R9,R1          -CURRENT BYTE ADDRESS      JOL30027 76200
+         EX    R9,S98MVC2     SHIFT BACK A BYTE          JOL30027 76200
+         LA    R1,1(R1)       SKIP OVER THE SECOND OF THE TWO
+*                             QUOTES WE HAVE JUST CONDENSED TO ONE.
+         S     R6,ONE         -1 FOR LENGTH NOW          JOL30027 76200
+         BP    S98LUP         STILL DATA THERE?->CONTINUEJOL30027 76200
+         B     S98RETN        ELSE RETN                  JOL30027 76200
+         SPACE 3                                         JOL30027 76200
+S98MVC1  MVC   2(*-*,R5),3(R5)                           JOL30027 76200
+S98MVC2  MVC   0(*-*,R1),1(R1)                           JOL30027 76200
+         LTORG                                           JOL30027 76200
+         CNOP  0,8                                       JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DCBD  DSORG=PS,DEVD=DA                                   75128
+         END

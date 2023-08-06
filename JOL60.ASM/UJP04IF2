@@ -1,0 +1,921 @@
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974
+* JOL COPYRIGHT CCS-JOL  1986.
+* DONE TO LINE 29100 HAS BEEN INDENTED  PROPERLY ***********
+*    CVC JULY 21, 1986
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+         JOLSAVE CSECT=UJP04IF
+  TITLE 'UJP04IF:-PREPROCESSOR IF STATEMENT HANDLER'
+* THIS MODULE IS GIVEN CONTROL WHEN AN IF STATEMENT HAS BEEN FOUND
+*    WHILE PERFORMING THE PREPROCESSOR FUNCTION.
+         SPACE 2
+* IT WILL HANDLE THE FOLLOWING TYPES OF STATMENT:-
+*    IF (%A=1 |%C ='A' | '%D'='D' | ERROR & A=0 | B¬=10)
+*       & X.RECFM='VB' THEN .....
+         SPACE 2
+* ON ENTRY,R1 POINTS TO A PARAMETER LIST CONTAINING
+*    1. ADDRESS OF JOLCOM
+*    2. ADDRESS OF TOKEN DESCRITOR DSECT
+         SPACE 2
+* THE RETURN CODES ARE
+*    0 IF THE STATEMENT WAS TRUE
+*    4 IF THE STATEMENT WAS FALSE
+*    8 IF THE STATEMENT WAS COMPLEX AND STILL HAS INFORMATION TO BE
+*              TESTED,EG A RETURN CODE.THE STATEMENT IS THE PUSHED
+*              OUT TO THE MAIN COMPILER PHASE TO BE DEALT WITH THERE.
+*    12 NOT USED
+*    16 IF AN ERROR CONDITION AROSE
+         USING JOLCOM,R2
+         USING TKNX,R3
+         SR    R1,R1                           COUNTER OF BRACKETS
+         LH    R7,TKNNO                        NO. OF TKNS
+         SLL   R7,2                            * 4
+         LA    R5,TKNDESC                      START ADDRESS FOR LOOP
+*                                              LOOP.
+         LA    R15,0(R5,R7)                    STOP ADDR FOR LOOP
+         LA    R14,4                           LENGTH OF DESCRIPTOR
+*                                              FIELD
+P04BRAC1 LH    R4,2(R5)                        GET TOKEN OFFSET   74303
+         LA    R4,TKNSTRG(R4)                  GET ADDRESS OF THE TOKEN
+         CLI   0(R4),C'('                      RIGHT BRACKET ?
+         BNE   P04TLEFT                        NO,SEE IF ')'      74303
+         A     R1,ONE         ADD 1 TO BRACKET COUNTER OF '('     75128
+         B     P04BRAXL                         -> BXLE           74303
+P04TLEFT CLI   0(R4),C')'                       ')' ?             74303
+         BNE   P04BRAXL                        NO,DO BXLE         74303
+         S     R1,ONE         -1 FOR ')'                          75128
+P04BRAXL BXLE  R5,R14,P04BRAC1                 CONTINUE CHECKING  74303
+*                                              BRACKETS.
+         LTR   R1,R1
+         BZ    P04BRACS                        THERE WERE AN = NUM74303
+*                                              OF LEFT AND RIGHT
+*                                              BRACKETS OR SUBFIELDS
+*                                              OR MAYBE NONE AT ALL
+         BM    P04TOOMR                                           75128
+         JOLERR 401,'TOO MANY ''('''                              75128
+         JOLRETN RC=16                                            75128
+P04TOOMR JOLERR 402,'TOO MANY '')'''                              75128
+         JOLRETN RC=16                                            74303
+         TITLE   'REPLACE SYMBOLIC PARAMETERS'
+P04BRACS EQU   *                                                  74303
+* NOW WHAT I INTEND TO DO HERE IS TO COPY TO THE AREA 'WORK' THE TOKEN
+*    STRING PRETTY WELL AS IS EXCEPT THAT ANY SYMBOLIC PARAMETER
+*    IS GOING TO HAVE QUOTES DROPPED AROUND IT
+*    IF %A ='A' WILL THEN LOOK LIKE IF'%A'¬ 'A'.THIS IS NECESSARY
+* BECAUSE I DON'T WANT THE PROGRAMMER TO BE FORCED TO SAY IF '%A'='A'
+*** NOTE THAT THIS DOES LIMIT THE IF STATMENT A LITTLE BECAUSE
+*    BY RIGHT HE SHOULD BE ABLE TO SAY'IF %X' WHERE %X='X ¬=0' BUT
+*    THIS MINOR PROBLEM WILL BE FIXED UP IN A LATER RELEASE
+           MVC #WORK,=H'2'
+         LA    R1,WORK                                          80290
+         USING WORK,R1                                       80290
+         CLEAR WORK
+         DROP  R1
+         MVC   TKNCURR,=H'2'                 START AT TKN(2) TO DROP
+*                                            THE 'IF' WHICH IS NO
+*                                            LONGER REQUIRED
+         SPACE 2
+* NOW SET UP A FEW INITAL VALUES
+         SR    R6,R6                           USED AS A TEMPORARY
+*                                              HOLDING AREA FOR THE
+*                                              PREVIOUS TKNTYPE SO
+*                                              THAT WHEN CONCATENATING
+*                                              I CAN CHECK THAT IF
+*                                              EITHER TOKEN IS A SPECIA
+*                                              L CHARACTER NO INTERVEN-
+*                                              ING BLANKS ARE REQUIRED
+         SR   R6,R6                            SET INITIALLY TO SPECIAL
+*                                              FOR THE ABOVE REASON.
+         LA   R7,WORK                          R7 IS USED TO CONTAIN
+*                                              THE ADDRESS OF THE
+*                                              NEXT POSITION TO MOVE
+*                                              A TOKEN TO IN WORK STRIN
+*                                              -G
+         LA    R8,L'WORK(R7)                   R8 IS THE STOP ADDR
+P04QELUP CLC   TKNCURR,TKNNO                   DONE THEM ALL?     74303
+         BH    P04QUEND                        YEP,ADJUST #WORK OR74303
+*                                            LENGTH OF WORK
+         GETTKN LOCN=TKNCURR
+         STH   R1,TKNCURR
+         CH    R6,=H'1'                        PREVIOUS TOKEN A SPECIAL
+*                                            CHARACTER ?
+         BE    P04SPEC1                                           74303
+         CLI   TKNTYPE,1                       IS THIS ONE A SPECIAL ?
+         BE    P04SPEC1                                           74303
+* WELL I THINK WE HAD BETTER MOVE A BLANK IN TO BE SAFE
+         MVI   0(R7),C' '
+         LA    R7,1(R7)
+P04SPEC1 EQU *                                                    74303
+         IC    R6,TKNTYPE                      SAVE THIS TOKENS TYPE
+         CLI   TKN,C'%'                        SYMBOLIC PARM ?
+         BNE   P04CONTK                        NO,SO MERELY ||    74303
+*                                              IT INTO WORK AFTER TEST-
+*                                              ING THAT IT WILL FIT OK
+         MVI   0(R7),C''''
+         LA    R7,1(R7)
+P04CONTK LH    R14,#TKN                        LENGTH OF TKN      74303
+         LA    R15,0(R7,R14)                   ADDR AREA NEXT + L'TKN
+         CR    R15,R8                           WILL IT FIT
+         BH    P04TOOB                         -NO,GIVE ERROR     74303
+         BCTR  R14,0                           -1 FOR MOVE
+         EX    R14,P04MUV2                     MOVE OR ||         74303
+*                                            #TKN TO #WORK
+         LR    R7,R15
+         CLI   TKN,C'%'                        SYMBOLIC PARM ?
+         BNE   P04QELUP                                           74303
+* NOW WE MUST SEE IF THIS SYMBOLIC IS A %LIST,AND IF SO
+*   TAKE SPECIAL ACTION
+         CLC   =C'%LIST',TKN
+         BE    P04LIST1                                           75311
+         CLC   =C'%CARD ',TKN                                     75311
+         BNE   P04NLIST                        NO,SHIFT IN QUOTE
+P04LIST1 EQU *                                                    75311
+         GETTKN TKNCURR                     GET THE '('
+         CLI   TKN,C'('
+         BNE   P04NLIST
+         MVI   0(R7),C'('
+***************************************************
+***** TAKING A CHANCE THAT STRING WONT GET TOO BIG
+***************************************************
+         LA    R7,1(R7)
+         GETTKN (1)
+P04SIGNC EQU *                                                    75311
+         STH   R1,TKNCURR
+         LH    R14,#TKN
+         LA    R15,0(R7,R14)                   ADDR AREA NEXT + L'TKN
+         CR    R15,R8                           WILL IT FIT
+         BH    P04TOOB                         -NO,GIVE ERROR     74303
+         BCTR  R14,0                            -1 FOR MOVE
+         EX    R14,P04MUV2                     MOVE OR ||         74303
+*                                            #TKN TO #WORK
+         LR    R7,R15
+         GETTKN TKNCURR
+         STH   R1,TKNCURR
+         CLI   TKN,C')'
+         BE    P04ELIST        END OF LIST | CARD ITEM            75311
+         CLI   TKN,C'+'                                           75311
+         BE    P04SIGN                                            75311
+         CLI   TKN,C'-'                                           75311
+         BNE   P04NLIST                                           75311
+P04SIGN  MVC   0(1,R7),TKN                                        75311
+         LA    R7,1(R7)                                           75311
+         GETTKN (R1)                                              75311
+         B     P04SIGNC                                           75311
+P04ELIST EQU *                                                    75311
+         BNE   P04NLIST
+         MVI   0(R7),C')'
+         LA    R7,1(R7)
+P04NLIST EQU   *
+         MVI   0(R7),C''''
+         LA    R7,1(R7)
+         B     P04QELUP                                           74303
+P04MUV2  MVC   0(*-*,R7),TKN                   *** EXECUTED ***   74303
+         SPACE 3
+P04TOOB  JOLERR 403,'IF TOO LONG WHILE PUTTING '' '' ROUND SYMBOLICS'
+         JOLRETN RC=16                                            74303
+P04QUEND LA    R8,WORK                                            74303
+         SR    R7,R8
+         STH   R7,#WORK
+         MVC   #TKNSTRG(256),#WORK
+         MVC   #TKNSTRG+256(256),#WORK+256
+         MVC   #TKNSTRG+512(256),#WORK+512
+         MVC   #TKNSTRG+768(232),#WORK+768
+        $CALL  UJS20REP,(#TKNSTRG)                                74303
+         LTR   R15,R15
+         BZ    P04DOSYM                                           74303
+         JOLERR 405,'ERROR AFTER REPLACING SYMBOLICS'
+         JOLRETN RC=16                                            74303
+         TITLE 'PERFORM SYMBOLIC PARAMETER TESTS'
+P04DOSYM   EQU *                                                  74303
+* NOW CALL THE TOKEN SPLITTER AGAIN AFTER MOVING #WORK BACK TO #TKNSTRG
+         MVC   #TKNSTRG(256),#WORK
+         MVC   #TKNSTRG+256(256),#WORK+256
+         MVC   #TKNSTRG+512(256),#WORK+512
+         MVC   #TKNSTRG+768(232),#WORK+768
+        $CALL  UJSPLIT                                            74303
+         LTR   R15,R15                                            76200
+         BZ    P04DOREP                                           74303
+         JOLERR 404,'ERROR AFTER REPLACING SYMBOLICS'
+         JOLRETN RC=16                                            74303
+P04DOREP EQU *                                                    74303
+         XC    #OP,#OP
+*        CLEAR OP
+         MVC   OP(80),BLANKS
+         MVC   TKNCURR,=H'1'     SKIP THE 'IF'
+         LH    R4,TKNCURR                                         75128
+         CLC   TKNCURR,TKNNO   HAVE WE REACHED THE END OF THE STACK ?
+         BH    P04ENDP1        YES,NOW GO TO THE EVALUATE ROUTINES.
+         GETTKN LOCN=TKNCURR GET A TOKEN
+         STH   R1,TKNCURR
+P04MAINB EQU   *                                                  75128
+         CLI   TKN,C'&&'       AND ?
+         BE    P04OPEN        OPEN OF SUB-EXPRESSION              75128
+         CLI   TKN,C'|'
+         BE    P04OPEN        OPEN OF SUB-EXPRESSION              75128
+         CLI   TKN,C'('
+         BE    P04OPEN        OPEN OF SUB-EXPRESSION              75128
+         CLI   TKN,C')'
+         BNE   P04TIDNT       TEST IF IT IS AN IDENTIFIER THEN    75128
+* HERE IT IS A ')'                                                75128
+         BAL   R10,P04CONC    MOVE IT INTO THE WORK STRING        75128
+         MVC   #WORK(4),#TKN  SAVE FOR ERROR MESSAGES             75128
+P04MAINA GETTKN TKNCURR       GET NEXT TOKEN                      75128
+         STH   R1,TKNCURR                                         75128
+* NOW AFTER A ')' WE CAN ONLY HAVE                                75128
+*  1. ' ' END                                                     75128
+*  2. '&' MORE                                                    75128
+*  3. '|' MORE                                                    75128
+*  4. ')' ANOTHER CLOSE                                           75128
+         CLI   TKN,C' '       END OF 'IF'                         75128
+         BE    P04ENDP1       YES                                 75128
+         CLI   TKN,C'&&'      MORE ?                              75128
+         BE    P04MAINB       YES                                 75128
+         CLI   TKN,C'|'       MORE ?                              75128
+         BE    P04MAINB       YES                                 75128
+         CLI   TKN,C')'       ANOTHER CLOSE ?                     75128
+         BE    P04MAINB       YES, OK TOO                         75128
+P04ERR24 JOLERR 320,'AFTER ''',#WORK,''' ''',#TKN,''' IS INVALID' 75128
+         B     P04MAINA       IGNORE AND CONTINUE                 75128
+         SPACE 1                                                  75128
+P04OPEN  EQU   *                                                  75128
+P04MUV1  BAL   R10,P04CONC   MOVE ()|& INTO STRING
+         MVC   #WORK(4),#TKN  SAVE FOR AN ERROR MESSAGE MAYBE     75128
+         GETTKN TKNCURR       GET NEXT TOKEN                      75128
+         STH   R1,TKNCURR                                         75128
+* NOW AFTER A '(' | '|' | '&' WE CAN ONLY HAVE                    75128
+*  1. '('                                                         75128
+*  2. LITERAL                                                     75128
+*  3. IDENTIFIER                                                  75128
+*  4. NUMBER                                                      75128
+* ANYTHING ELSE IS INVALID                                        75128
+         CLI     TKN,C'('       ANOTHER SUB-EXPRESSION START?     75128
+         BE    P04MAINB       YES, OK                             75128
+* NOW IF IT IS A BLANK, IT'S AN ERROR, AND IF IT IS A SPECIAL     75128
+*  CHARACTER OTHER THAN '(' IT IS ALSO AN ERROR, BUT ANYTHING     75128
+*  ELSE IS ACCEPTABLE HERE                                        75128
+         CLI   TKN,C' '       ' '                                 75128
+         BE    P04ERR24       YEP -> ERROR                        75128
+         CLI   TKNTYPE,1      SPECIAL CHAR ?                      75128
+         BE    P04ERR24       ERROR                               75128
+P04TIDNT CLI   TKNTYPE,2      <IDENTIFIER> ?
+         BNE   P04NIDNT       NO
+         LH    R4,TKNCURR                                         75128
+         BCTR  R4,0            BACK OFF ONE TOKEN                 75128
+         GETTKN LOCN=TKNCURR GET THE NEXT TOKEN
+         BAL   R10,P04TOP      TEST IF IT IS AN OPERATOR
+         LTR   R15,R15
+         BNZ   P04NOP1          NOT AN OPERATOR
+         STH   R1,TKNCURR                                         74303
+* HERE <IDENTIFIER> <OPERATOR>
+         GETTKN REG=R1
+         STH   R1,TKNCURR
+         CLI   TKNTYPE,0         <NUMBER> ?
+         BE    P04RTOK1        RETURN CODE TEST OK 1
+         CLI   TKNTYPE,2         <IDENTIFIER> ?
+         BE    P04RTOK1
+* HERE IT IS INVALID COS HE SAID SOMETHING LIKE IF A¬='B' WHICH
+*    JUST TAIN'T VALID OLD FRUIT
+         JOLERR 306,'SYMBOL ''',#TKN,''' INVALID AFTER AN OPERATOR'
+           MVC #TKN(4),=XL4'0002C640'  'F'
+           BAL R10,P04CONC
+           B   P04MAINA        GET THE NEXT TOKEN ETC
+P04RTOK1    EQU *              <IDENTIFIER> <OPERATOR> <IDENTIFIER> OR
+*                              <IDENTIFIER> <OPERATOR> <NUMBER>
+*                              <NUMBER> <OPERATOR> <IDENTIFIER>
+           STH R1,TKNCURR
+           STH R4,TKN
+           MVI TKN,3
+           MVC #TKN,=H'2'
+           BAL R10,P04CONC
+           B  P04MAINA
+*END OF RETURN CODE TESTING AT PRESENT
+P04NIDNT   EQU *
+* HERE FIRST TOKEN OF GROUP NOT ()|& OR <IDENTIFIER>
+           CLI TKNTYPE,0       <NUMBER> ?
+           BE  P04NUM1         CHECK IF <NUMBER> <OPERATOR> <IDENT>
+*                            OR<NUMBER> <OPERATOR> <NUMBER>
+           CLI TKNTYPE,3       <LITERAL> ?
+           BE P04SYM1
+         JOLERR 307,'SYMBOL ''',#TKN,''' IGNORED'
+           B   P04MAINA        BACK INTO THE LOOP
+            SPACE 3
+P04NOP1   EQU *
+           STH R4,TKN         <IDENT> NOT FOLLOWED BY <OPRTR>
+           MVI TKN,1
+           BAL R10,P04CONC
+           B  P04MAINA
+           SPACE 3
+P04NUM1    EQU *
+           MVC #WORK(L'TKN),#TKN
+           GETTKN REG=R1
+           STH R1,TKNCURR
+           BAL R10,P04TOP      TEST IF <OPERATOR>
+           LTR R15,R15
+           BZ  P04TNUM2
+         JOLERR 408,'NUMBER ',#WORK,' NOT FOLLOWED BY AN OPERATOR BUT '*
+               ,OPERATOR
+           B   P04MAINA        REJOIN THE MAIN LOOP
+           SPACE 3
+P04TNUM2   GETTKN REG=R1
+           CLI TKNTYPE,0       <NUMBER> ?
+           BE  P04EVAL1        <NUMBER> <OPERATOR> <NUMBER> WE CAN
+*                              PROCESS IN THIS MODULE
+           CLI TKNTYPE,2       <IDENTIFIER>
+           BE P04RTOK1         <IDENTIFIER> <OPERATOR> <IDENTIFIER>
+         JOLERR 409,'SYMBOL ''',#TKN,''' INVALID AFTER AN OPERATOR'
+           B P04MAINA
+P04SYM1    MVC #WORK(120),#TKN SAVE TKN COS WE WILL BE NEEDING IT
+           GETTKN LOCN=TKNCURR GET THE OPERATOR HOPEFULLY
+           BAL R10,P04TOP
+           LTR R15,R15
+           BZ  P04SYMOP        IT IS AN OPERATOR
+* NOT AN OPERATOR HERE THOUGH
+           CLI WORK+1,0        WAS IT AN IF %X AND IT WASN'T DECLARED
+*                              AND THE REPLACE SYMBOLIC ROUTINE SET IT
+*                              TO HEX 0??
+* IF IT WAS TRUE,IE THE SYMBOLIC PARM HAD A VALUE,THIS TEST WOULDN'T
+* WORK UNLESS HE CODED HEX 0 IN HIS SYMBOLIC PARM *********************
+***********************************************************************
+           BE P04SYMF          FALSE
+* HERE IT IS TRUE
+P04SYMT    EQU *
+TRUE       EQU *
+           MVC #TKN(4),=XL4'0002E340'          MOVE 'T' IN
+           BAL R10,P04CONC
+           B   P04MAINA
+P04SYMF    MVC #TKN(4),=XL4'0002C640'          MOVE 'F' IN
+           BAL R10,P04CONC
+           B  P04MAINA
+           SPACE 3
+P04EVAL1   STH R1,TKNCURR
+           B   P04SYMTX        DO THE COMPARISONS,ETC             74303
+P04SYMOP   EQU *               <SYMBOLIC PARM><OPERATOR>
+           STH R1,TKNCURR
+           GETTKN LOCN=TKNCURR   GET THE OTHER END OF THE COMPARE
+           CLI TKNTYPE,0     <NUMBER> ?
+           BE   P04EVAL1       YES GO AND STORE R1 AND DO THE EVALUATN
+           CLI  TKNTYPE,3      <LITERAL> ?
+           BE   P04EVAL1       YES GO AND STORE R1 AND DO THE EVALUATN
+           CLI TKNTYPE,2       <IDENTIFIER> ?
+           BE  P04INVID
+* HERE <SYMBOLIC> <OPERATOR> <?> SO MARK IT FALSE AND GIVE ERROR
+           BCTR  R1,0          BACKTRACK 1 TOKEN SO THIS ONE CAN
+*                              BE VETTED MORE FULLY
+           STH R1,TKNCURR
+         JOLERR 410,'SYMBOL ''',#TKN,''' INVALID AFTER AN OPERATOR'
+           JOLRETN RC=16                                          74303
+P04INVID   STH  R1,TKNCURR
+         JOLERR 118,'SYMBOL ''',#TKN,''' SHOULD BE IN QUOTES'
+           TITLE 'PROCESS OPERATORS ETC'
+P04SYMTX   EQU *                                                  74303
+*                                                                 74303
+* NOW FIX UP THE OPERATORS,IE LOAD THE ADDRESS OF A BE OR BNH ETC TYPE
+*    INSTRUCTION THAT IS TO BE EXECUTED AFTER THE COMPARE
+           LA  R1,OPS
+           LA  R15,OPS+OPSLEN
+           LA  R14,8
+P04TSTOP   CLC OPERATOR(2),0(R1)                                  74303
+           BE  VALIDOP
+           BXLE R1,R14,P04TSTOP                                   74303
+         JOLERR 411,'''',OPERATOR,''' IS AN INVALID OPERATOR'
+           JOLRETN RC=16                                          74303
+OPS        DS  0F
+           DC  CL4'= ',A(EQ)
+           DC  CL4'¬=',A(NE)
+           DC  CL4'> ',A(GT)
+           DC  CL4'< ',A(LT)
+           DC  CL4'¬>',A(NG)
+           DC  CL4'¬<',A(NL)
+           DC  CL4'>=',A(GE)
+           DC  CL4'<=',A(LE)
+OPSLEN     EQU *-OPS
+EQ         BE  TRUE
+NE         BNE TRUE
+GT         BH  TRUE
+LT         BL  TRUE
+NG         BNH TRUE
+NL         BNL TRUE
+GE         BNL TRUE            SAME AS ¬<
+LE         BNH TRUE            SAME AS ¬>
+VALIDOP    L   R4,4(R1)        ADDRESS OF INSTRUCTION TO EXECUTE AFTER
+*                              THE COMPARE
+           SPACE 2
+* NOW TEST IF WE ARE DEALING WITH A NUMBER OR NOT
+           CLI TKN,C''''       CHARACTER STRING ?
+           BE  P04CHCMP                                           74303
+           CLI WORK,C''''
+           BE  P04CHCMP                                           74303
+           SR R10,R10
+           TNUM #WORK                          CONVERT TO NUMERIC ?
+         LR    R10,R1         SAVE CONVERTED VALUE                75128
+         LTR   R15,R15        DID IT CONVERT ?                    75128
+         BNZ   P04CHCMP       NO, DO A CHARACTER COMPARISON       75128
+           TNUM #TKN
+* NOW R10 CONTAINS THE CONVERTED '#WORK'
+*      AND R15 THE CONVERTED '#TKN'
+           SPACE
+           LTR R15,R15
+         BNZ   P04CHCMP       DIDN'T CONVERT -> CHAR COMPARISON   75128
+******************************************************
+* NOW WE HAVE TWO NUMBERS TO TEST
+P04NUMCO   EQU *                                                  74303
+         CR    R10,R1                                             75128
+           EX R0,0(R4)         ****** BRANCH ON CONDITION TRUE
+           B   P04SYMF         MARK IT FALSE IN THE #STRING
+           SPACE 3
+         AGO   .NOP0401
+ONENOT     EQU *
+* TKN(I) WAS NOT A NUMBER SO NOW WE SHALL TRY TKN(I+2)
+           TNUM #TKN
+           LTR R15,R15
+           BM  P04CHCMP        NEITHER A NUMBER SO DO             74303
+*                                              A CHARACTER STRING COMPR
+TWONOT     EQU *
+           SR R15,R15
+           CLC WORK(L'BLANKS),BLANKS
+           BE  P04NUMCO                                           74303
+           MVC #TKN(L'TKN),#WORK
+*          B   NUMERR                          T NUMERIC
+NUMERR   JOLERR 415,'CANNOT CONVERT ''',#TKN,''' TO NUMERIC'
+           B  P04SYMF
+.NOP0401 ANOP
+P04CHCMP   EQU *                                                  74303
+* NOW WE COULD RIGHT JUSTIFY THE CHARACTER STRINGS
+***********BUT NOT NOW
+           CLI TKN,C''''
+           BNE P04TKNOK
+           LH R1,#TKN
+           LA R15,TKN-1(R1)
+           MVI 0(R15),C' '
+           SH R1,=H'2'
+           STH R1,#TKN
+           MVC TKN(L'TKN-1),TKN+1
+P04TKNOK   EQU   *
+           CLI WORK,C''''
+           BNE P04WKOK
+           LH R1,#WORK
+           LA R15,WORK-1(R1)
+           MVI 0(R15),C' '
+           SH R1,=H'2'
+           STH R1,#WORK
+           MVC WORK(L'TKN-1),WORK+1
+P04WKOK    EQU  *
+           CLC =X'0040',TKN    UNDEFINED SYM PARM?
+           BNE P04TKNNU        NU =NOT UNDEFINED
+           MVI TKN,C' '
+P04TKNNU   EQU  *
+           CLC =X'0040',WORK
+           BNE P04WKNU
+           MVI WORK,C' '
+P04WKNU    EQU  *
+           TNUM #WORK
+         LTR   R15,R15        DID IT CONVERT ?                    75128
+         BNZ   P04CLC         NO -> CLC                           75128
+         LR    R10,R1         YES, SAVE CONVERTED NUMBER          75128
+           TNUM #TKN
+           LTR R15,R15
+         BZ    P04NUMCO       CR                                  75128
+P04CLC    EQU  *
+           CLC WORK(100),TKN
+           EX R0,0(R4)         ******* BRANCH ON CONDITION TRUE
+           B   P04SYMF         MARK IT FALSE IN THE #STRING
+*                                                                 74303
+           SPACE 3
+P04TOP     EQU *
+*THIS LITTLE ROUTINE IS CALLED WHEN I SUSPECT A THING COULD BE AN
+*    OPERATOR
+           MVC OPERATOR,TKN
+           CLC TKN(2),=C'= '
+           BE  P04ISOP
+           CLC TKN(2),=C'¬='
+           BE  P04ISOP
+           CLC TKN(2),=C'> '
+           BE  P04ISOP
+           CLC TKN(2),=C'< '
+           BE  P04ISOP
+           CLC TKN(2),=C'>='
+           BE  P04ISOP
+           CLC TKN(2),=C'<='
+           BE  P04ISOP
+           CLC TKN(2),=C'¬<'
+           BE  P04ISOP
+           CLC TKN(2),=C'¬>'
+           BE  P04ISOP
+           LA R15,4
+           BR R10
+P04ISOP    EQU *
+           SR  R15,R15
+           BR R10
+P04CONC    EQU *
+* CONCATENATE TWO BYTES FROM #TKN TO #STRING
+           LH  R15,#OP    CURRENT LENGTH
+           LR R14,R15
+           LA  R15,2(R15) +2 BYTES
+           CH  R15,=AL2(L'OP) WILL IT BE TOO LONG ?
+           BH  P04IFCOM PLEX
+           STH R15,#OP    NEW LENGTH STORED
+           LA R15,OP(R14) GET ABSOLUTE ADDRESS OF WHERE THESE TWO
+*                                BYTES ARE GOING TO GO
+           MVC 0(2,R15),TKN    THEY ARE NOW IN
+           BR  R10             GO BACK TO WHERE I CAME FROM
+P04IFCOM   EQU *
+         JOLERR 412,'IF TOO COMPLEX TO EVALUATE'
+           JOLRETN RC=16                                          74303
+P04ENDP1   EQU *
+           TITLE 'SIMPLIFY IF AND ATTEMP TO DETERMINE IF TRUE OR FALSE'
+* AT THIS STAGE WE HAVE REAL IDEA HOW COMPLEX THE IF STATEMENT IS
+* DISREGARDING BRACKETS THOUGH IT CANNOT HAVE MORE THAN
+*    F|T TYPE INFORMATION
+           SPACE 3
+* NOW THE STRING WE HAVE BUILT UP LOOKS SOMETHING LIKE THIS:-
+*    (T|NO) & (F&T|NO)
+*    THE 'NO' FIELD IS A TWO BYTE FIELD CONTAINING THE TKN NUMBER.
+*          THIS IS USED LATER TO PICK UP THE 3 TOKENS REQUIRED
+*          TO RECONSTRUCT THE 'IF' STATEMENT SHOULD WE BE UNABLE
+*          TO DETERMINE IF THE STATEMENT WAS TRUE OR FALSE
+*          THE FIRST HAS VALUES 0,1,2,3 INDICATING THE NUMBER
+*          OF TOKENS IN THAT SEGMENT,AND THE SECOND BYTE CONTAINS
+*          THE TOKEN NUMBER.
+* NOW THE BASIC IDEA OF THIS SECTION OF CODE IS TO REPLACE ANY
+*    F & T WITH AN F(ETC) THEN REDUCE THE STRING SIZE UNTIL WE
+*    FINALLY END UP WITH AN 'F','T' OR A NUMBER WHICH INDICATES
+*    THAT THE'IF' HAS TO BE RE-BUILT AND SENT OF TO THE NEXT
+*    MODULE
+           SPACE 3
+* NOW :-
+*          F & T = F
+*          F & F = F
+*          F & ? = F
+*
+*          T & T = T
+*          T & F = F
+*          T & ? = ?
+*
+*          ? & T = ?
+*          ? & F = F
+*          ? & ? = ? & ? UNTOUCHED
+*
+*          F | T = T
+*          F | F = F
+*          F | ? = ?
+*
+*          T | T = T
+*          T | F = T
+*          T | ? = T
+*
+*          ? | T = T
+*          ? | F = ?
+*          ? | ? = ? | ? UNTOUCHED
+*
+* AS AND'S USUALLY HAVE PRECEDENCE I'LL GO FOR THEM FIRST
+* BRACKETED EXPRESSIONS CAN ALSO BE REDUCED AS ABOVE
+*    EG IF TRUCE | (X=0 | Y=0) CAN BE REDUCE TO'TRUE'
+*    OR IF FALSE | (X=0 | Y=0) CAN BE REDUCE TOIF X=0 | Y=0
+* OK,I THINK WE SHALL START
+REDUCL0    EQU  *
+           LA R1,OP
+           LH R15,#OP
+           LA R15,OP(R15)
+           MVC 0(6,R15),BLANKS
+           LA  R14,2
+           USING XDSECT,R1
+REDUCL     CLC X(2),=C'    '   DON'T DO ANYTHING IF ANY
+           BE ENDREDCL         SYMBOLS ARE BLANK
+           CLC X+2(2),=C'  '
+           BE ENDREDCL
+           CLC X+4(2),=C'  '
+           BE ENDREDCL
+           CLC FANDT,X                         F & T =F
+           BE  MAKEF
+           CLC FANDF,X                         F & F =F
+           BE  MAKEF
+           CLC TANDT,X                         T & T =T
+           BE  MAKET
+           CLC TANDF,X                         T & F =F
+           BE MAKEF
+           CLC FORT,X                          F | T =T
+           BE  MAKET
+           CLC FORF,X                          F | F =F
+           BE  MAKEF
+           CLC TORT,X                          T | T =T
+           BE  MAKET
+           CLC TORF,X                          T | F =T
+           BE  MAKET
+* NOW DO THE F | ? TYPE ONES,PROVIDED THAT EITHER SIDE OF WHERE
+*    WE ARE AT THE MOMENT DOESN'T CONTAIN A LEFT OR A RIGHT BRACKET
+********* NOTE *** THE ONLY SYMBOLS THAT CAN BE IN THE STRING ARE:-
+*    1. T
+*    2. F
+*    3. &
+*    4. |
+*    5. (
+*    6. )
+*    7. THE TWO BYTE INDICATORS (WHICH CANNOT BE CONFUSED WITH THE
+*              ABOVE).
+           SPACE 3
+           CLI X,C'('
+           BE  TX4CLOSE
+*          CLI X,C')'
+*        BNE   TX4CLOSE       TEST IF X+4=')'                     75128
+* HERE X HAS A ')' IN IT.                                         75128
+* LETS SEE IF THE NEXT 4 BYTES ARE  |T,|F,&T OR &F AND GO TO      75128
+*  'TESTFQ' IF SO                                                 75128
+         CLI   X+2,C'|'       NEXT CHAR '|' ?                     75128
+         BE    P04TX4FT       YES,NOW TEST 'F' | 'T'              75128
+         CLI   X+2,C'&&'      NEXT CHAR '&' ?                     75128
+         BNE   ENDREDCL       NOPE, IGNORE THIS                   75128
+P04TX4FT CLI   X+4,C'F'       3RD BYTE 'F'                        75128
+         BE    TESTFQ         YES, SO WE HAVE ') | F' OR ') & F'  75128
+         CLI   X+4,C'T'       3RD BYTE 'T'                        75128
+         BE    TESTFQ         YES, SO WE CAN REDUCE IT TOO        75128
+           BE  ENDREDCL
+           CLI X+4,C')'
+           BE  ENDREDCL
+          CLI X+4,C'('
+         BNE   TESTFQ         NOPE -> GO TO TESTFQ
+* HERE X+4 ='('
+* LETS SEE IF WE HAVE T|(,T&(,F|( OR F&(
+         CLI   X,C'T'         1ST CHAR =T ?
+         BE    P04TX2OR       YES
+         CLI   X,C'F'         1ST CHAR =F THEN ?
+         BNE   ENDREDCL       NOPE, CAN DO NOTHING
+P04TX2OR CLI   X+2,C'|'       T OR F AND | ?
+         BE    TESTFQ         YES
+         CLI   X+2,C'&&'      T OR F AND & ?
+         BNE   ENDREDCL       NOPE CAN DO NOTHING
+           B   TESTFQ
+TX4CLOSE   CLI X+4,C')'                        (  ) SPECIAL CASE,
+           BNE ENDREDCL                        WE CAN REDUCE IT
+           MVI X,C' '
+           MVI X+4,C' '
+           B   ENDREDCL
+TESTFQ     CLC X(2),=C'  '     DON'T DO ANYTHING IF ANY
+           BE ENDREDCL         SYMBOLS ARE BLANK
+           CLC X+2(2),=C'  '
+           BE ENDREDCL
+           CLC X+4(2),=C'  '
+           BE ENDREDCL
+           CLC X(4),FANDF                                         74303
+           BE  MAKEF
+           CLC X+2(4),FANDF+2                  ? & F
+           BE  MAKEF
+           CLC X(4),TANDT                      T & ?
+           BE  MAKEQ2
+           CLC X+2(4),TANDT+2                  ? & T
+           BE  MAKEQ1
+           CLC X(4),FORF                       F | ?
+           BE  MAKEQ2
+           CLC X(4),TORT                       T | ?
+           BE  MAKET
+           CLC X+2(4),TORT+2                   ? | T
+           BE  MAKET
+           CLC X+2(4),FORF+2                   ? | F
+           BE  MAKEQ1
+* WELL THAT ABOUT WRAPS UP THIS SET  OF TRIPLES
+ENDREDCL   BXLE R1,R14,REDUCL
+* IF WE FELL OUT HERE WE HAVE BEEN ALONG THE STRING (OR DOWN THE STACK
+*              IF YOU WANT TO THINK OF IT THAT WAY)
+           SPACE
+* NOW WE SHALL COMPRESS THE BLANK SPOTS OUT OF THE STRING
+*    IF THE LENGTH DOESN'T CHANGE,THAT MEANS AS FAR AS WE ARE
+*          CONCERNED WE CANNOT REDUCE THE STRING ANY MORE.
+*    THE FIRST POSITION SHOULD CONTAIN A 'T' | 'F' OR ELSE WE
+*    HAVE TO PUMP THE'IF' OUT TO BE EVALUTED AT RUN TIME.
+           LA R1,OP
+           LA R14,2
+           LH R15,#OP
+           LA R15,OP(R15)
+           LR  R12,R1
+REDUCL2    CLC X(2),=C'  '
+           BNE REDCNOTB
+REDUCL3    BXLE R1,R14,REDUCL2
+* END LOOP
+           LA R0,OP
+           LR R1,R12
+           SR  R1,R0
+           STH R1,#OP
+           LTR R1,R1
+           BM  P04ERR1
+           CLC #OP,=AL2(L'OP-4)
+           BH P04ERR2
+           CR  R12,R15
+           BE EVALUATE                         NO REDUCTION
+           B   REDUCL0
+REDCNOTB   MVC 0(2,R12),X
+           LA  R12,2(R12)
+           B   REDUCL3
+EVALUATE   EQU *
+* THE MOMENT OF TRUTH
+           CLC #OP,=H'2'
+           BNE P04RETN8        BLAST,COULDN'T EVALUATE IT
+           CLI OP,C'T'
+           BE  P04RETN0        GOOD
+           CLI OP,C'F'
+           BNE P04RETN8
+           B   P04RETN4        GOOD
+           DS  0H
+FANDT      DC  CL6'F && T '
+FANDF      DC  CL6'F && F '
+TANDT      DC  CL6'T && T '
+TANDF      DC  CL6'T && F '
+FORF       DC  CL6'F | F'
+TORF       DC  CL6'T | F '
+TORT       DC  CL6'T | T '
+FORT       DC  CL6'F | T '
+MAKET    BAL   R10,P04DRPEP                                       75128
+         MVC   X,=CL6'T'                                          75128
+           B   ENDREDCL
+MAKEF    BAL   R10,P04DRPEP                                       75128
+         MVC   X,=CL6'F'                                          75128
+           B   ENDREDCL
+MAKEQ1     MVC X+2(4),=CL4' '
+           B   ENDREDCL
+MAKEQ2     MVC X(4),=CL4' '
+           B   ENDREDCL
+         SPACE 1
+P04DRPEP EQU   *
+* WE HAVE TO SEE IF EITHER SIDE IS A BRACKETD EXP
+*  EG  T | (A7=0 & C=10)
+*  IF SO, WE MUST BLANK OUT EVERYTHING INSIDE, AND INCLUDING,
+*  THE BRACKETS
+         CLI   X,C')'                                             75128
+         BE    P04DRPCL       DROP CLOSING SUB-EXPRESSION         75128
+         CLI   X+4,C'('       OPEN EXPRESSION TO BE DELETED ?     75128
+         BNE   0(R10)         NO,RETURN TO CALLER THEN            75128
+* HERE WE HAVE TO DROP ANYTHING IN AN OPENING EXPRESSION          75128
+         SPACE 1                                                  75128
+         SR    R8,R8          COUNTER OF BRACKETS OUTSTANDING     75128
+         LA    R7,X+4         POINT TO START                      75128
+P04DOPN1 CLI   0(R7),C'('                                         75128
+         BNE   P04DOPN2       TEST ')'                            75128
+         LA    R8,1(R8)       ADD 1 TO '(' OUTSTANDING            75128
+P04DOPN3 MVC   0(2,R7),BLANKS BLANK OUT THAT FIELD                75128
+         BXLE  R7,R14,P04DOPN1 DO NEXT ITEM                       75128
+         BR    R10            BACK TO CALLER                      75128
+         SPACE 1                                                  75128
+P04DOPN2 CLI   0(R7),C')'     CLOSE TO MATCH OPENS ?              75128
+         BNE   P04DOPN3       NO,MUST BE SOMETHING INSIDE THE     75128
+*                             SUB-EXPRESSION, JUST DELETE IT      75128
+         S     R8,ONE         ')', -1 TO SEE IF WE HAVE ENDED     75128
+         BP    P04DOPN3       NO, CLEAR OUT ')'                   75128
+* HERE IS THE END                                                 75128
+         MVI   0(R7),C' '     CLEAR ')'                           75128
+         BR    R10            BACK TO CALLER NOW                  75128
+         SPACE 3                                                  75128
+P04DRPCL EQU   *                                                  75128
+* HERE WE HAVE TO GO BACKWARDS DOWN THE STRING TO FIND THE        75128
+* BEGINNING OF THE SUB-EXPRESSION JUST CLOSED BY THE ')'          75128
+* 'X' -> ')'                                                      75128
+* SO WHAT WE MUST DO IS LOOP ROUND, BLANKING OUT EVERYTHING       75128
+*  UNTIL WE FIND THE '(' THAT CORRESPONDS TO THE ')'              75128
+         SR    R8,R8          NUMBER OF '(' OUTSTANDING           75128
+         LA    R7,X                                               75128
+         LA    R9,OP          (SO WE CAN CHECK WHEN WE HAVE REACHE75128
+*                             -D THE START OF THE STRING          75128
+         SPACE 1                                                  75128
+P04DCL1  CLI   0(R7),C')'     ')' ?                               75128
+         BNE   P04DCL3        NOPE, TRY '('                       75128
+         S     R8,ONE         -1                                  75128
+P04DCL2  MVC   0(2,R7),BLANKS CLEAR IT OUT                        75128
+         SR    R7,R14         -2                                  75128
+         CR    R7,R9          REACHED START OF STRING MAYBE ?     75128
+         BNL   P04DCL1        NO,SO CONTINUE TO LOOP              75128
+         BR    R10            BACK TO CALLER, WE'VE FINISHED      75128
+         SPACE 1                                                  75128
+P04DCL3  CLI   0(R7),C'('     OPEN ?                              75128
+         BNE   P04DCL2        NO, JUST SHIFT BLANKS IN            75128
+         A     R8,ONE         ADD 1 TO BRACKET COUNTER            75128
+         BNZ   P04DCL2        GOT MATCH YET ? NO, GO CLEAR,CONTINU75128
+         MVI   0(R7),C' '     SHIFT A BLANK IN                    75128
+         BR    R10            BACK TO CALLER                      75128
+         SPACE 3                                                  75128
+P04RETN0   JOLRETN
+P04RETN4   JOLRETN RC=4
+P04ERR1  JOLERR 513,'#OP -VE'
+           JOLRETN RC=16                                          74303
+P04ERR2  JOLERR 514,'#OP TOO BIG'
+           JOLRETN RC=16                                          74303
+P04RETN8   EQU *
+* NOW HERE WE WERE NOT ABLE TO DETERMINE IF THE IF WORKED OUT
+*     TO BE TRUE OR FALSE
+* WHAT WE HAVE TO DO NOW IS FORM UP THE TOKEN STRING AGAIN SO
+*     THAT THE MODULE THAT CALLED US CAN OUTPUT IT (IF IT WANTS
+*     TO) TO THE NEXT PHASE
+      SPACE
+* SO WHAT WE HAVE TO DO OF COURSE IS SKIP DOWN THE STRING
+*     CALLED'OP' AND OUTPUT BRACKETS,OPERATORS ETC UNTIL
+*     WE FIND A TOKEN AND THEN GET IT AND CONCATENATE IT TO THE
+*     WORK STRING AND FINALLY RESPLIT THE TOKENS.WOW WHAT A
+*     SENTENCE.
+           DROP R1
+         MVC #WORK,=H'3'
+           LA  R1,WORK                                          80290
+           USING  WORK,R1                                       80290
+           CLEAR WORK
+           DROP R1
+           MVC WORK(3),=C'IF '
+           LA  R5,#OP+2
+           LR  R7,R5
+           AH  R7,#OP
+           LA  R6,2
+           SR  R7,R6           SO LOOP WON'T GO TO FAR
+           USING XDSECT,R5
+* NOW STEP DOWN AND RECONSTRUCT THE TOKENS IN #WORK
+P04TRYXX   LA R1,=C'( ) | && = ¬=> < >=<='
+           LA R15,18(R1)
+           LA R14,2
+P04RECX1   CLC X(2),0(R1)
+           BE  P04REC01
+           BXLE R1,R14,P04RECX1
+* NOW HERE THIS IS SUPPOSEDLY A TOKEN DESCRIPTOR NUMBER
+*     AND WE ARE SUPPOSED TO GET THE TOKEN WHOSE NUMBER IS
+*     REPRESENTED IN THE LOWER BYTE OF X,IN FACT GET THE
+*     NUMBER REPRESENTED IN THE TOP BYTE.
+           CLI X,C'F'          ANY F'S LEFT,IE INVALID 'PARSE'
+           BE  P04ERSYN
+           CLI X,C'T'          ANY T'S LEFT,IE INVALID 'PARSE'
+           BE  P04ERSYN
+           SR R1,R1
+           IC R1,X+1      GET START TOKEN NUMBER
+           CH R1,=H'150'  IS IT >150
+           BH P04ER419    ERROR
+            SR R10,R10         NOW PICK UP NUMBER OF TOKENS
+           IC R10,X            GOT IT
+           CH R10,=H'4'        >4 (SHOULDN'T BE)
+           BH P04ER420    ERROR
+           AR R10,R1           CALC STOP
+P04GETMR   EQU  *
+           GETTKN REG=R1  GET A TOKEN
+           LH R14,#WORK   LENGTH OF WORK
+           LR R15,R14      SAVED
+           LA R14,WORK(R14) ADDRESS TO MOVE TOKEN TOO
+           AH R15,#TKN    CALC NEW LENGTH OF TOKEN
+           CH R15,=AL2(L'WORK) TOO LONG ?
+           BH P04ER421    YES,ERROR
+           STH R15,#WORK  NO,STORE NEW LENGTH
+           LH R15,#TKN    LOAD LENGTH OF TOKEN
+           BCTR R15,0     -1 FOR MOVE
+           EX R15,P04MUV20 MOVE THE TOKEN IN.
+           CR R1,R10           SEE IF MORE
+           BE  P04CONTR        CONTINUE RECONSTRUCTION            74303
+           B   P04GETMR
+           SPACE 3
+P04REC01   LH R1,#WORK
+           LA R1,2(R1)
+           STH R1,#WORK
+           LA  R1,WORK-2(R1)   ABSOLUTE ADDRESS-2(COS WE JUST ADDED)303
+           MVC 0(2,R1),X
+P04CONTR   BXLE R5,R6,P04TRYXX
+P04END8  EQU   *                                                  75128
+           LH R14,#WORK   LENGTH OF WORK
+           LR R15,R14      SAVED
+           LA R14,WORK(R14) ADDRESS TO MOVE TOKEN TOO
+         LA    R15,6(R15)     (=L'=C' THEN '                      75128
+           CH R15,=AL2(L'WORK) TOO LONG ?
+           BH P04ER421    YES,ERROR
+           STH R15,#WORK  NO,STORE NEW LENGTH
+         MVC   0(6,R14),=C' THEN '                                75128
+           MVC #TKNSTRG(256),#WORK
+           MVC #TKNSTRG+256(256),#WORK+256
+           MVC #TKNSTRG+512(256),#WORK+512
+           MVC #TKNSTRG+768(232),#WORK+768
+           JOLRETN RC=8
+P04ER419 JOLERR 515,'> 150 TOKENS'
+           JOLRETN RC=16
+P04ER420 JOLERR 516,'> 3 TOKENS TO RE-CREATE'
+           JOLRETN RC=16
+P04ER421 JOLERR 517,'RE-CREATED STRING TOO LONG'
+           JOLRETN RC=16
+P04ERSYN   EQU   *
+         JOLERR 519,'INVALID PARSE ''',#OP,''''
+           JOLRETN RC=16
+P04MUV20   MVC 0(*-*,R14),TKN
+P04ZAPS    DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+EZAP       DC S(*)
+           LTORG
+XDSECT     DSECT
+X          DS  CL6
+           DROP R5                                                74303
+***** END P04IF MODULE ******                                     74303
+         EJECT

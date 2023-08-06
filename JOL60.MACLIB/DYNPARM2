@@ -1,0 +1,383 @@
+         MACRO
+&NAM     DYNPARM &DDNAME=,&DSN=,&MEMB=,&DISP=,&SPACE=,&VOL=,           X
+               &UNIT=,&SYSOUT=,&OUTLIM=,&FREE=,&COPIES=,&LABEL=,       X
+               &DUMMY,&FCB=,&QNAME=,&TERM=,&UCS=,&DCB=,&VRB=AL,        X
+               &PASSWD=,&ALLOC=,&UNALLOC=,&DDNRT=,&DSNRT=,&DSORGRT=,   X
+               &VOLSRT=,&DEST=,&HOLD=,&MSGVP=,&FLAGS1=,&FLAGS2=,       X
+               &DISPRT=,&TASK=,&DUMMYRT=,&MEMBRT=,&LIMRT=,&ALLOCRT=,   X
+               &LASTERT=,&DSTYPRT=,&RQNUM=,&MSG=YES,&DEBUG=NO,&ID=,    X
+               &CPPL=,&PROTECT=
+.* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.*  MACROS FOR DYNAMIC ALLOCATION
+.*   WRITTEN BY A. J. LEGG
+.*   ELECTRONICS RESEARCH LABORATORY,
+.*      DEFENCE RESEARCH CENTRE SALISBURY, SOUTH AUSTRALIA.
+.*
+.*   JOHN SUMMERFIELD HAS MADE A CHANGE OR TWO HERE AND THERE
+.*
+.*   FOLLOWING MACROS CALLED BY DYNPARM
+.*        DYNPA     DYNPB     DYNPC     DYNPD     DYNPE     DYNPF
+.*        DYNP1     DYNP1A    DYNP1B    DYNP2     DYNP3     DYNP4
+.*        DYNP5     DYNP6     DYNERR
+.*   ALSO REQUIRES PROGRAM DYNDUMP IN STEPLIB OR SYS1.LINKLIB
+.*      AND TSO ERROR MESSAGE ROUTINE IKJEFF18
+.* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+.* IS AND ISU DSORG REMOVED 7 NOV 79
+.* PROTECT KEYWORD ADDED 14 DEC 79
+         GBLA  &K,&T,&S,&KCP
+         GBLA  &II,&JJ
+         GBLA  &SUM
+         GBLC  &R,&B,&ADR
+         GBLB  &NUM
+         GBLC  &PDCB(40),&PS,&PP
+         LCLA  &I,&J
+         LCLC  &C
+         LCLC  &JCS                                               J40B
+&KCP     SETA  &KCP+1          COUNT EM                           J40B
+&JCS     SETC  '&ID            '(1,6) ID INFO
+&C       SETC  '&KCP'                                             J40B
+         AIF   (K'&C GT 1).NS                                     J40B
+&C       SETC  '0'.'&C'                                           J40B
+.NS      ANOP                                                     J40B
+&JCS     SETC  '&JCS'.'&C'                                        J40B
+         AIF   ('&ID' NE '').IDED                                 J40B
+&JCS     SETC  '&SYSECT        '(3,6).'&C'                        J40B
+.IDED    ANOP                                                     J40B
+&C       SETC  ''              FOR THE NEXT GUY                   J40B
+&K       SETA  1
+&T       SETA  0
+&S       SETA  0
+&R       SETC  '&SYSNDX'
+&B       SETC  '      '
+&PDCB(1) SETC  'AL'         ALLOCATE
+&PDCB(2) SETC  'UN'         UNALLOCATE
+&PDCB(3) SETC  'C'          CONCATENATE
+&PDCB(4) SETC  'DC'         DECONCATENATE
+&PDCB(5) SETC  'RI'         REMOVE IN USE
+&PDCB(6) SETC  'DN'         DDNAME ALLOCATION
+&PDCB(7) SETC  'IN'         INFORMATION RETRIEVAL
+.VRB     ANOP
+&I       SETA  &I+1
+         AIF   ('&VRB'EQ'&PDCB(&I)').VRB1
+         AIF   (&I LT 7).VRB
+         MNOTE 8,'**INVALID VRB &VRB'
+         AGO   .ZZ
+.VRB1    SPACE 1
+&NAM     B     D&R&S               ** DYNPARM VER 3.1 APR 79 **
+         DS    0F
+RBPT&R   DC    X'80',AL3(RB&R)
+RB&R     DC    AL1(20,&I)&B&B&VRB       REQUEST BLOCK
+         DYNP6 &FLAGS1,(ONCVN,NOCVN,NOMNT,JBSYS,CNENQ),FLAGS1
+         DC    F'0'                     ERROR AND INFO CODES
+         DC    A(TUPL&R)                TEXT POINTERS ADDRESS
+         DC    F'0'                     RESERVED
+         DYNP6 &FLAGS2,(WTVOL,WTDSN,NORES,WTUNT,OFFLN,TIONQ,CATLG,     X
+               MOUNT,UDEVT,PCINT),FLAGS2
+         DC    X'0000'                  END OF REQUEST BLOCK
+         AIF   ('&DEBUG'NE'NO').VRB11
+         AIF   ('&MSG'EQ'NO').VRB12
+.VRB11   ANOP
+         DC    CL8'&JCS'       A REAL EYECATCHER                  J40B
+DCR&R    DS    F                   SAVE AREA FOR RETURN CODE
+.VRB12   ANOP
+         AIF   (&I NE 3).VRBRI
+&I       SETA  N'&DDNAME
+         AIF   ('&DDNAME'EQ'').VRBC0
+         AIF   ('&DDNAME(1)'(1,1) EQ'(').VRBC1
+&J       SETA  K'&DDNAME(1)
+&T       SETA  &T+1
+TU&R&T   DC    AL2(1,&I,&J),C'&DDNAME(1)'    DDNAME LIST
+&J       SETA  2
+         AIF   (&I GE 2).VRBC
+.VRBC0   MNOTE 8,'** AT LEAST 2 DDNAMES REQUIRED'
+         AGO   .VRBC2
+.VRBC    ANOP
+&I       SETA  K'&DDNAME(&J)
+         DC    AL2(&I),C'&DDNAME(&J)'
+&J       SETA  &J+1
+         AIF   (&J LE N'&DDNAME).VRBC
+         AGO   .VRBC2
+.VRBC1   ANOP
+&PS      SETC  '&DDNAME(1)'.',,,'
+         DYNPF
+         DYNP1 (&PDCB(1),&PDCB(2)),DDNAMES,L=0,N=2
+.VRBC2   ANOP
+&K       SETA  4
+         DYNP3 &ALLOC,PERMC,' PERMANENTLY CONCATENATED'
+         AGO   .Z0
+.VRBRI   AIF   (&I NE 5).VRB2
+         DYNP4 &TASK,4,' TCB ADR',,T,ALT=CURRENT,TYP=X
+         DYNP3 &TASK,CURRENT,' TASK',NUMOK=OK
+         AIF   ('&TASK'NE'').Z0        VRB=RI FINISHED
+         MNOTE 8,'** TASK OPERAND REQUIRED WITH VRB=RI'
+         AGO   .Z0
+.VRB2    DYNP1 &DDNAME,DDNAME
+         AIF   (&I NE 4).VRB21
+.VRB22   AIF   ('&DDNAME'NE'').Z0                 FINISHED
+         MNOTE 8,'** DDNAME NECESSARY WITH VRB=&VRB'
+         AGO   .Z0
+.VRB21   AIF   (&I NE 6).VRB3
+         DYNP5 &DUMMYRT,1,DUMMY,6
+         AGO   .VRB22
+.VRB3    DYNP1 &DSN,DSN
+         AIF   (K'&DSN LE 2).VRB31
+         AIF   ('&DSN'(1,2) NE'*.').VRB31
+         MNOTE 8,'** BACKWARD REF NOT ALLOWED WITH DSN'
+.VRB31   AIF   (&I NE 7).VRB4
+&K       SETA  4
+         DYNP5 &DDNRT,8,DDNAME,4
+         DYNP5 &DSNRT,44,DSN,4
+         DYNP5 &MEMBRT,8,MEMBER,4
+         DYNP5 &DISPRT(1),1,STATUS,6
+         DYNP5 &DISPRT(2),1,DISP,6
+         DYNP5 &DISPRT(3),1,COND.DISP,6
+         DYNP5 &DSORGRT,2,DSORG,6
+         DYNP5 &LIMRT,2,LIMIT,6
+         DYNP5 &ALLOCRT,1,DS.ATTRIBUTE,6
+         DYNP5 &LASTERT,1,LAST.ENTRY,6
+         DYNP5 &DSTYPRT,1,DS.TYPE,6
+         DYNP4 &RQNUM,2,' REQUEST NUM',H
+         AGO   .Z0
+.VRB4    DYNP1 &MEMB,MEMB
+         AIF   ('&MEMB'EQ'' OR '&DSN'NE'').VRB41
+         MNOTE 8,'** DSN REQUIRED IF MEMB IS SPECIFIED'
+.VRB41   AIF   (&I NE 2).VRB5
+&K       SETA  5
+         DYNP2 &DISP(1),(UNCATLG,CATLG,DELETE,KEEP),(01,02,04,08,00),  X
+               ' OVERRIDING DISP'
+&K       SETA  7
+         DYNP3 &UNALLOC,(YES,REMOVE.IN.USE),' UNALLOCATE'
+         DYNP3 &UNALLOC,(REMOVE.IN.USE,YES),' ATTRIBUTE'
+         AIF   ('&SYSOUT'EQ'').VRBUN
+&K       SETA  24
+         AIF   ('&SYSOUT(1)'NE'*').VRB42
+         DYNP3 THE,THE,' DEFAULT SYSOUT CLASS OVERRIDING'
+         AGO   .VRBUN
+.VRB42   DYNP2 &SYSOUT(1),(0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F,G,H,I,J,K,L,X
+               M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z),(0,1,2,3,4,5,6,7,8,9,A,B,C,X
+               D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0),       X
+               ' OVERRIDING SYSOUT CLASS',TYP=C
+.VRBUN   ANOP
+&K       SETA  88
+&C       SETC  'OVERRIDING SYSOUT REMOTE STATION'
+         DYNP1 &DEST,&C
+         DYNP3 &HOLD,(YES,NO),' HOLD SYSOUT (OVERRIDING)'
+&K       SETA  10
+         DYNP3 &HOLD,(NO,YES),' HOLD SYSOUT (OVERRIDING)'
+         AGO   .Z0
+.VRB5    DYNP2 &DISP(1),(OLD,MOD,NEW,SHR),(01,02,04,08,00),' STATUS'
+         DYNP2 &DISP(2),(UNCATLG,CATLG,DELETE,KEEP),(01,02,04,08,00),  X
+               ' NORMAL DISP'
+         DYNP2 &DISP(3),(UNCATLG,CATLG,DELETE,KEEP),(01,02,04,08,00),  X
+               ' COND DISP'
+         AIF   ('&SPACE'EQ'').V0
+         DYNP3 &SPACE(1),(TRK,CYL),' SPACE',NUMOK=OK
+         DYNP3 &SPACE(1),(CYL,TRK),' SPACE',NUMOK=OK
+         DYNP4 &SPACE(1),3,' BLOCK SPACE',CM,B,ALT=(CYL,TRK)
+         AIF   ('&SPACE(2)'EQ'').A1
+         AIF   ('&SPACE(2)'(1,1) EQ'(').A0
+&PS      SETC  '&SPACE(2)'.',,,,'
+         AGO   .A
+.A0      ANOP
+&PS      SETC  '&SPACE(2)'(2,K'&SPACE(2)-2).',,,,'
+.A       DYNPB
+         DYNP4 &PP,3,' PRIME ALLOC',CM
+         DYNPB
+         DYNP4 &PP,3,' 2NDARY ALLOC',CM
+         DYNPB
+         DYNP4 &PP,3,' DIRECTORY BLOCKS',CM
+.A1      ANOP
+&K       SETA  13
+         DYNP3 &SPACE(3),RLSE,' UNUSED SPACE'
+         DYNP2 &SPACE(4),(ALX,MXIG,CONTIG),(02,04,08,00),' SP FORMAT'
+         DYNP3 &SPACE(5),ROUND,' WHOLE CYL'
+.V0      AIF   ('&VOL'EQ'').V14
+         DYNPE (&VOL(1),&VOL(2),&VOL(3),&VOL(4),&VOL(5)),5,            X
+               TEST=(SER=,REF=)
+&K       SETA  17
+         DYNP3 &PDCB(1),PRIVATE,' VOLUME'
+         DYNP4 &PDCB(3),2,' VOL SEQ NO',H
+         DYNP4 &PDCB(4),1,' VOL COUNT',C
+         AIF   (&II EQ 0).V14    SER OR REF NOT SPECIFIED
+         DYNPF
+         AIF   (&JJ EQ 0).V14      NO PARAMS
+         AIF   (&II EQ 1).V12      VOL=REF
+         AIF   ('&PDCB(1)'(1,1) NE'(').V10
+&PDCB(1) SETC  '&PDCB(1)'(2,K'&PDCB(1)-1)
+&PDCB(&JJ) SETC  '&PDCB(&JJ)'(1,K'&PDCB(&JJ)-1)
+         AIF   (&JJ EQ 1).V10
+&C       SETC  'VOL SER NOS'
+&K       SETA  16
+         DYNP1 (&PDCB(1),&PDCB(2)),&C,L=0,N=2
+         AGO   .V14
+.V10     ANOP
+&J       SETA  K'&PDCB(1)          VOL=SER=
+&T       SETA  &T+1
+TU&R&T   DC    AL2(16,&JJ,&J),C'&PDCB(1)'     VOL SER NO
+.V11     AIF   (&II GT &JJ).V14
+&J       SETA  K'&PDCB(&II)
+         DC    AL2(&J),C'&PDCB(&II)'
+&II      SETA  &II+1
+         AGO   .V11
+.V12     AIF   ('&PDCB(1)'(1,2) EQ'*.').V13     VOL=REF
+&C       SETC  'VOL REF TO DSN'
+         DYNP1A &PDCB(1),&PDCB(2),&C
+         AGO   .V14
+.V13     MNOTE 8,'** VOL REF TO DDNAME NOT ALLOWED'
+.V14     ANOP
+&K       SETA  21
+         DYNP1 &UNIT(1),UNIT
+         DYNP4 &UNIT(2),1,' UNIT COUNT',C,C,ALT=P
+         DYNP3 &UNIT(2),P,' PARALLEL MOUNT',NUMOK=OK
+         AIF   ('&SYSOUT'NE'').S0
+&K       SETA  &K+3
+         AGO   .S3
+.S0      AIF   ('&SYSOUT(1)'NE'*').S1
+         DYNP3 THE,THE,' SYSOUT DEFAULT CLASS'
+         AGO   .S2
+.S1      DYNP2 &SYSOUT(1),(0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F,G,H,I,J,K,L,X
+               M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z),(0,1,2,3,4,5,6,7,8,9,A,B,C,X
+               D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z,0),       X
+               ' SYSOUT CLASS',TYP=C
+.S2      DYNP1B &SYSOUT(2),WRITER
+         DYNP1B &SYSOUT(3),FORM
+.S3      DYNP4 &OUTLIM,3,' OUTPUT LIMIT',CM
+         DYNP3 &FREE,CLOSE,' UNALLOCATE'
+         DYNP4 &COPIES,1,' COPIES',C
+         AIF   ('&LABEL'EQ'').L2
+         DYNPE (&LABEL(1),&LABEL(2),&LABEL(3),&LABEL(4),&LABEL(5)),    X
+               5,TEST=(EXPDT=,RETPD=)
+         DYNP2 &PDCB(2),(NL,SL,NSL,SUL,BLP,LTM,AL,AUL),                X
+               (01,02,04,0A,10,21,40,48,00),' LABEL TYPE'
+         DYNP4 &PDCB(1),2,' DS SEQ NUM',H
+         DYNP2 &PDCB(3),(PASSWORD,NOPWREAD),(10,30,00),' PROTECTION'
+         DYNP2 &PDCB(4),(OUT,IN),(40,80,00),' INPUT/OUTPUT'
+         AIF   (&II EQ 0).L2
+         DYNPF
+         AIF   (&JJ EQ 0).L2
+         AIF   (&II EQ 1).L1
+         DYNP1A &PDCB(1),&PDCB(2),EXPIRY.DATE
+         AGO   .L2
+.L1      ANOP
+&K       SETA  35
+         DYNP4 &PDCB(1),2,' RETENTION PERIOD',H
+.L2      ANOP
+&K       SETA  36
+         DYNP3 &DUMMY,DUMMY,' DATA SET'
+         DYNP1 &FCB(1),IMAGE-ID
+         DYNP2 &FCB(2),(VERIFY,ALIGN),(04,08,00),' REQUEST'
+         DYNP1 &QNAME,QNAME
+         DYNP3 &TERM,TS,' TSO TERMINAL'
+         DYNP1 &UCS(1),CHARACTERS
+         DYNP3 &UCS(2),FOLD,' MODE'
+         DYNP3 &UCS(3),VERIFY,' REQUEST'
+         AIF   ('&DCB'EQ'').B4
+         AIF   (N'&DCB NE 1).B2
+&PS      SETC  '&DCB(1)'.',,,'
+         AGO   .B3
+.B2      ANOP
+&PS      SETC  '&DCB'(2,K'&DCB-2).',,,'
+.B3      DYNPC (BFALN,BFTEK,BLKSIZE,BUFIN,BUFL,BUFMAX,BUFNO,BUFOFF,    X
+               BUFOUT,BUFRQ,BUFSZ,CODE,CPRI,DEN,DSORG,EROPT,GNCP,INTVL,X
+               KEYLEN,LIMCT,LRECL,MODE,NCP,OPTCD,PCI,PCI,PRTSP,RECFM,  X
+               RESERVE,RESERVE,SOWA,STACK,THRESH,TRTCH,IPLTXTID,       X
+               IPLTXTID,DIAGNS,FUNC,FRID)
+&K       SETA  46
+         DYNP2 &PDCB(1),(F,D),(01,02,00),' BUFFER ALIGN'
+         DYNP2 &PDCB(2),(D,E,R,S,A),(08,10,20,40,60,00),               X
+               ' BUF TECHNIQUE'
+         DYNP4 &PDCB(3),2,' BLOCK SIZE',H
+         DYNP4 &PDCB(4),1,' INPUT BUFS',C
+         DYNP4 &PDCB(5),2,' BUF LENGTH',H
+         DYNP4 &PDCB(6),1,' MAX BUFS',C
+         DYNP4 &PDCB(7),1,' NUM OF BUFS',C
+         DYNP2 &PDCB(8),(L),(80,00),' BUF OFFSET'
+         DYNP4 &PDCB(9),1,' OUTPUT BUFS',C
+         DYNP4 &PDCB(10),1,' BUF REQUEST',C
+         DYNP4 &PDCB(11),2,' BUF SIZE',H
+         DYNP2 &PDCB(12),(T,A,C,B,F,I,N),(02,04,08,10,20,40,80,00),    X
+               ' PAPER TAPE CODE'
+         DYNP2 &PDCB(13),(S,E,R),(01,02,04,00),' SEND/RECEIVE PRIORITY'
+         DYNP2 &PDCB(14),(0,1,2,3,4),(03,43,83,C3,D3,00),              X
+               ' MAG TAPE DENSITY'
+         DYNP2 &PDCB(15),(3705,VSAM,TQ,TX,GS,PO,POU,MQ,CQ,CX,DA,DAU,   X
+               PS,PSU),(0004,0008,0020,0040,0080,0200,0300,0400,0800,  X
+               1000,2000,2100,4000,4100,0000),' DSORG',                X
+               L=2,IN=H,IN2=LH
+         DYNP2 &PDCB(16),(T,ABE,SKP,ACC),(10,20,40,80,00),' EROPT'
+         DYNP4 &PDCB(17),1,' GNCP',C
+         DYNP4 &PDCB(18),1,' INTVL',C
+         DYNP4 &PDCB(19),1,' KEY LENGTH',C
+         DYNP4 &PDCB(20),3,' LIMCT, SEARCH LIM',CM
+         DYNP2 &PDCB(21),(X),(8000,0000),' LRECL',L=2,IN=H,IN2=LH
+         DYNP2 &PDCB(22),(E,ER,EO,C,CR,CO),(40,50,60,80,90,A0,00),     X
+               ' MODE'
+         DYNP4 &PDCB(23),1,' NCP',C
+         DYNP2 &PDCB(24),(R,T,Z,A,Q,O,F,H,C,E,U,B,W),(01,02,04,08,08,  X
+               10,10,10,20,20,40,40,80,00),' OPTCD'
+         DYNP2 &PDCB(25),(R,N,A,X),(02,08,20,80,00),' PCI RECEIVE'
+         DYNP2 &PDCB(26),(R,N,A,X),(01,04,10,40,00),' PCI SEND'
+         DYNP2 &PDCB(27),(0,1,2,3),(01,09,11,19,00),' PRTSP'
+         DYNPD &PDCB(28),(U,V,F,D,B,S,T,M,R,A,G),(192,64,128,32,16,8,  X
+               32,2,2,4,4)           PUT RECFM CODE IN &SUM
+         AIF   (&NUM).R1
+         DYNP2 &PDCB(28),0,(0,00),' RECFM'
+         AGO   .R2
+.R1      DYNP2 &SUM,,,'  RECFM=&PDCB(28)'
+.R2      DYNP4 &PDCB(29),1,' 1ST BUF RESERVE',C
+         DYNP4 &PDCB(30),1,' 2ND BUF RESERVE',C
+         DYNP4 &PDCB(31),2,' SOWA',H
+         DYNP2 &PDCB(32),(1,2),(01,02,00),' STACK'
+         DYNP4 &PDCB(33),1,' THRESH',C
+         DYNP2 &PDCB(34),(C,E,ET,T),(13,23,2B,3B,00),' TRTCH'
+&K       SETA  &K+1
+         DYNP1A &PDCB(35),&PDCB(36),IPLTXTID
+&K       SETA  84
+         DYNP3 &PDCB(37),TRACE,' DIAGNS'
+&K       SETA  90
+         DYNP2 &PDCB(38),(W,WT,WX,WXT,P,PW,PWX,PWXT,R,RW,RWT,PWX,PWXT, X
+               RP,RPD,RPW,RPWX,RPWXT,RPWD,I),(10,12,14,16,20,30,34,36, X
+               40,50,52,54,56,60,68,70,74,76,78,80,00),' FUNC'
+         DYNP1A &PDCB(39),&PDCB(40),FRID
+.B4      ANOP
+&K       SETA  88
+&C       SETC  'SYSOUT REMOTE STATION'
+         DYNP1 &DEST,&C
+         DYNP3 &HOLD,(YES,NO),' HOLD SYSOUT'
+&K       SETA  94
+         DYNP1 &MSGVP,MSGVP
+&K       SETA  97
+         DYNP3 &PROTECT,YES,' RACF PROTECT'
+&K       SETA  80
+         DYNP1 &PASSWD,PASSWORD
+&K       SETA  82
+         DYNP3 &ALLOC(1),PERM,' ALLOCATED'
+         AIF   ('&ALLOC(1)'EQ'PERM' OR '&ALLOC(2)'EQ'').AL1
+         MNOTE '**      CONV ATTRIBUTE DEFAULTS IF PERM NOT SPECIFIED'
+.AL1     DYNP3 &ALLOC(2),CONV,' ATTRIBUTE'
+&K       SETA  85
+         DYNP5 &DDNRT,8,DDNAME,4
+         DYNP5 &DSNRT,44,DSN,4
+         DYNP5 &DSORGRT,2,DSORG,6
+&K       SETA  93
+         DYNP5 &VOLSRT,6,VOLSER,4
+.Z0      AIF   (&T LE 0).Z2
+&I       SETA  1
+TUPL&R   DC    A(TU&R&I)    TEXT UNIT POINTER LIST
+.Z       AIF   (&I EQ &T).Z1
+&I       SETA  &I+1
+         DC    A(TU&R&I)
+         AGO   .Z
+.Z1      ANOP
+D&R&S    OI    *-4,X'80'    END OF LIST MARKER
+         LA    1,RBPT&R            ADDR OF REQUEST BLOCK POINTER
+         SR    0,0
+         ST    0,RB&R+4            RESET ERROR AND INFO CODES
+         $SVC99                        CALL DYNAMIC ALLOCATION   J40B
+         DYNERR &DEBUG,&MSG,&JCS,&CPPL    ERROR PROCESSING
+         AGO   .ZZ
+.Z2      DS    0H
+         MNOTE 8,'** NO TEXT UNITS'
+D&R&S    EQU   *
+.ZZ      SPACE 1
+         MEND

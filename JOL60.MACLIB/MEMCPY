@@ -1,0 +1,8 @@
+         MACRO
+&NAME    MEMCPY &A,&B,&C
+* THIS Macro is used instead of the 370 EX, MVC to move variable
+* amounts of data.
+&NAME    DS    0H                                                 J50
+         EX    &C,*+4
+         MVC   &A.(*-*),&B
+         MEND

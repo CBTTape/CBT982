@@ -1,0 +1,343 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Dcl Card File</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u><span style="font-style: italic;">Declaring Card Image
+Data Sets</span></u></font><font size="5"><i><u><span
+ style="font-weight: normal;"></span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">Declare *</span> instruction defines the
+beginning of card image data.&nbsp; The actual data cards images follow
+the definition, and to inform the system where the last card image is,
+an <span style="font-weight: bold;">EOF;</span> is coded in columns
+one to four.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <p><b><br>
+      </b></p>
+      <div style="margin-left: 40px;"><b>{
+DECLARE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</b><br>
+      </div>
+      <div style="margin-left: 40px;"><b>{
+DEFINE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+}&nbsp;&nbsp;
+
+
+      </b><span style="font-style: italic;">dsid-name</span><b>&nbsp;&nbsp;
+*&nbsp;
+[</b><span style="font-style: italic;">options</span><b>] ;</b><br>
+      <span style="font-weight: bold;">{
+DCL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+}</span><br>
+      </div>
+      <p><b><span style="text-decoration: underline;">followed by</span>
+EOF;</b><span style="font-style: italic;"><span
+ style="font-weight: bold;"><br>
+      </span></span></p>
+      <p style="margin-left: 40px;"><span style="font-style: italic;"><span
+ style="font-weight: bold;"></span>options</span><b> are:</b><br>
+      </p>
+      <div style="margin-left: 40px;"><br>
+      <b>[&nbsp; REPLACE&nbsp; ]</b><br>
+      <b>[&nbsp; PRINTNONE | PRINTALL&nbsp; ]</b><br>
+      <b>[&nbsp; SPLIT | NOSPLIT | JOL&nbsp; ]</b><br>
+      <br>
+      <b>{ FB&nbsp;&nbsp;&nbsp; }&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {
+recordsize,blocksize&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</b><br>
+      <b>{ VB&nbsp;&nbsp; }&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {
+blocksize,recordsize&nbsp;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp; }</b><br>
+      <b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;
+{
+recordsize&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+}</b><br>
+      <br>
+      <b>&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; </b><br>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Card Image Input</h4>
+      </td>
+      <td align="left" valign="top">
+      <p>Card image files are one of a number of methods of inputting
+information to a computer.&nbsp; Card image data sets are used to input
+data to processing programs, or instructions to utility programs. Small
+or large files may be included within your Jol program, but on some
+occasions large card image files are better read directly from a disk
+data set while the job is executing.<br>
+      <br>
+Note:&nbsp;&nbsp; Card image data sets can be placed in Jol <span
+ style="font-weight: bold;">INCLUDE</span> or command source
+code.&nbsp;&nbsp; <span style="text-decoration: underline;">This
+effectively allows you to store data in JCL cataloged procedures.</span><br>
+&nbsp;<br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">
+      <h4>Card Images Containing Varying Information - REPLACE Option</h4>
+      </td>
+      <td style="vertical-align: top;">Some programs, usually
+utilities, require instructions and parameters on card image
+files.&nbsp; The <span style="font-weight: bold;">SORT</span>&nbsp;
+program is such a utility program; it requires, for example, the sort
+control field information in <span style="font-weight: bold;">FB 80, nn</span>
+format.<br>
+      <br>
+To provide maximum flexibility, you may write symbolic variable names
+on card image files, and the current value of the symbolic variable
+will replace the name.&nbsp; After replacement of symbolic data, the
+card image may exceed 71 characters in which case a continuation card
+will be created with data commencing in column 16, after placing an
+asterisk in column 71 of the first card.&nbsp; Other options described
+below can alter the action taken if a card image exceeds 71 or 80
+characters.<br>
+      <br>
+To create a card file with the day and date in the first card, code
+similar to:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">DCL
+CARDFILE
+*
+REPLACE;</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">%DAY%DAYNO</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">EOF;</span><br
+ style="font-weight: bold;">
+      </div>
+      <br>
+If the day was <span style="font-weight: bold;">MONDAY</span> the
+14th, then the card would be:<br>
+      <br>
+      <span style="font-weight: bold;">MONDAYbb14</span><br>
+      <br>
+The program can read the card image file and use the day and day number
+for any purpose it desires, for example to print headings.&nbsp; This
+facility is most often used in Jol commands to create utility control
+cards from variable parameters used in the command.&nbsp; However, this
+facility of text replacement is not restricted to to creating parameter
+files for utility programs - it can be used for any program.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td align="left" valign="top">
+      <ol>
+        <li>The first twenty cards are listed unless the card file
+definition is made in a Macro Command, whereupon no cards are
+printed.&nbsp; <span style="font-weight: bold;">PRINTALL</span> will
+list all the cards, <span style="font-weight: bold;">PRINTNONE</span>&nbsp;
+will
+not
+list
+any cards.</li>
+        <li>If the <span style="font-weight: bold;">DECLARE name *</span>;
+is
+bypassed
+after
+an immediate <span style="font-weight: bold;">IF</span>
+statement, the cards are totally ignored.</li>
+        <li>The declared cards are copied to a temporary data set and
+therefore may be read more than once.</li>
+        <li>The <span style="font-weight: bold;">EOF;</span> statement
+must be coded in columns one to four (1-4) of the card following the
+last data card.&nbsp; Otherwise all subsequent cards, including any Jol
+statements, are appended to the data cards and lost.</li>
+        <li>The <span style="font-weight: bold;">VB</span> or <span
+ style="font-weight: bold;">FB</span> parameters indicate the record
+format in which the processing program expects the file.&nbsp; If <span
+ style="font-weight: bold;">FB</span> is chosen, the record length may
+not be greater than 80.&nbsp; Similarly if <span
+ style="font-weight: bold;">VB</span> is chosen as the record format,
+the maximum record size is 84.</li>
+        <li>The <span style="font-weight: bold;">REPLACE</span> option
+specifies that all symbolic variable names found in the input stream
+are to be replaced with the current contents of the variables.&nbsp;
+If, after symbolic variable replacement, the length of the information
+on a card is greater than 71 characters, the following occurs:</li>
+      </ol>
+      <ul style="margin-left: 40px;">
+        <li>If <span style="font-weight: bold;">SPLIT</span> is coded,
+the card image is truncated at column 80, and any excess information is
+copied to the second and subsequent card images.</li>
+        <li>If <span style="font-weight: bold;">NOSPLIT</span> is
+coded, the card image is truncated at column 80.</li>
+        <li>If <span style="font-weight: bold;">JOL</span> is coded,
+the card image is split at column 72 and the excess information copied
+to the second and subsequent card images.</li>
+        <li>Otherwise, two or more card images are created, the first
+card terminating with a convenient comma and an asterisk placed in
+column 72, and the remaining information commencing in column 16 on any
+subsequent cards.</li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      <span style="font-weight: normal;"><span
+ style="font-style: italic; font-weight: bold;"></span></span>1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+DECLARE
+CARDIN
+*;<br>
+      <div style="margin-left: 40px;">CARD1<br>
+      </div>
+      <div style="margin-left: 40px;">EOF;<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">This
+declaration
+defines
+a data set identifier (<span style="font-weight: bold;">DSID</span>)
+which may be read or
+printed.&nbsp; It contains one card.</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+DCL
+CARDS
+* VB 84,30;</span><br style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">THIS
+CARD
+IMAGE
+FILE WILL BE MADE</span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">INTO
+VARIABLE
+LENGTH
+RECORDS</span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">EOF;</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">This
+declaration
+defines
+a data set identifier (DSID) that will have the
+characteristics of a Variable Blocked data set when a program reads it.</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+DECLARE
+%SYMBOL
+INIT '%DAY';</span><br style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">EDIT
+SYMBOL
+SYMBOL
+A(3);</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">DCL CONTROL * REPLACE;</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">%SYMBOL%DAYNO%MONTHNO%YEAR</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">EOF;</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">These
+statements
+create
+a <span style="font-weight: bold;">DSID</span>
+called <span style="font-weight: bold;">CONTROL</span> which will
+have:-</span><br style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">Columns&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Data</span><br style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">1-3&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+day,
+e.g.
+      <span style="font-weight: bold;">THU</span></span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">4-5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+day
+number,
+e.g. <span style="font-weight: bold;">09</span></span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">6-7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+month
+number,
+e.g. <span style="font-weight: bold;">07</span></span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">8-11&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+year
+number,
+e.g. <span style="font-weight: bold;">2009</span></span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">&nbsp;</span><br
+ style="font-weight: normal;">
+For example:<br>
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">THU09072009</span><br
+ style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">This control file can be used
+by a program to print headings on a report.</span><br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

@@ -1,0 +1,192 @@
+UJE50RD  TITLE 'READ A STATEMENT FROM JOL INSTRUCT FILE'         '
+* JOL COPYRIGHT CCS-JOL PTY LTD 1988
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+         SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+* LAST SOURCE UPDATE
+*   CHANGES:-
+*     1.
+         COPY  JOLGLOBL
+         $UJEPARM
+&TYPE    SETC  'SCHED'                                           88036
+         PRINT ON,DATA
+UJECOMM  DSECT
+         USING UJECOMM,R3,R5
+         COPY  UJECOMM
+         EJECT                                                    J40B
+E50WORK  DSECT                                                    J40B
+         DS    18F                                                J40B
+E50WORD  DS    F                                                  J40B
+E50WORKS EQU   *-E50WORK                                          J40B
+         JOLSAVE CSECT=UJE50RD,SIZE=E50WORKS                      J40B
+         USING E50WORK,R13                                        J40B
+         USING INST,R4                                           88036
+         USING RETNAREA,R6                                       88036
+         L     R4,AWINST                                         88036
+         L     R6,ARETN                                          88036
+* THIS CSECT IS CALLED WHEN A NEW INSTRUCTION HAS TO BE
+*    READ FROM THE INSTRUCT FILE.
+         MVC   #VOL,=H'0'     STOP SPURIOUS 0C4                  75311
+         CLC   TTR$INST,=A(0)  FIRST TIME IN,I.E. WE HAVEN'T
+*                              EVEN REALLY STARTED YET ?
+         BNE   E50NOTF
+         MVC   RUNNAME,=CL8'$$INST'
+         L     R1,AFINSTR      LOAD ADDRESS OF INSTRUCTION FILE  88036
+         $BLDL (1),RUNBLDL
+         B     E5002R(R15)
+E5002R   B     E50GOTIT
+         B     E5002R4
+         B     E5002R8
+E5002R4  JOLERR 501,'MEMBER $$INST ABSENT'
+E5002R8  JOLERR 502,'INTERNAL ERROR READING DIRECTORY'
+         DS    0D
+E50GOTIT DS    0H
+         MVC   TTR$INST,RUNTTRK
+         MVI   TTR$INST+3,0     SET Z=0 FIRST
+         L     R1,AFINSTR      LOAD ADDRESS OF INSTRUCTION FILE  88036
+         $POINT (1),TTR$INST
+         B     E50RD
+E50NOTF  DS    0H
+*        L     R1,AFINSTR      LOAD ADDRESS OF INSTRUCTION FILE  88036
+*        $POINT (1),TTR$INST
+E50RD    DS    0H
+         L     R15,AFINSTR                                       88036
+         MVC   33(3,R15),=AL3(EOF)
+         L     R15,ATKNSTRG
+         USING #TKNSTRG,R15
+         L     R7,ATKN
+         USING #TKN,R7
+         CLEAR TKNSTRG
+         DROP  R15
+         LA    R2,INSTRDA
+*        USING INSTRDA,R2
+         L     R1,AFINSTR                                        88036
+         $READ (1),(R2)
+* IF EOF WOULD HAVE GONE ELSE-WHERE
+*******************************************************************DASD
+*   THIS CALL TO MODULE $$JOLBUG WILL PRINT THE INSTRUCTION        DASD
+*   JUST READ TO DDNAME '$JOL$BUG$' IF IT'S PRESENT                DASD
+*   -----MAYBE A GOOD TRACE FACILITY----                           DASD
+*   YOU MIGHT DO A JOLOPT CARD1='//JOLBUG DD SYSOUT=A'             DASD
+*   IN THE COMPILE TO GET THIS DD IN EVERY STEP                    DASD
+****************************************************02-23-78*******DASD
+         CALL  $$JOLBUG,((2)),  CALL PRINT MODULE                 DASD .
+               MF=(E,E50WORD)                                     J40B
+         SPACE 3
+         MVC   INST(IBODY),INSTRDA
+         MVC   DDDSNDET(256),INSTRDA
+         MVC   STMT,ISTMT
+         MVC   GOTOLAB,=CL8'$$'
+         CLI   DDDD1,C'E'      EXEC PGM ?
+         BNE   E50TDD
+         MVC   ICOMMAND,=CL8'RUN'
+         MVC   STMT,PGMESTMT
+         MVC   GOTOLAB,PGMSTEP SHIFT STEPNAME FOR 'REAL' STEPNAME 75311
+         JOLRETN
+E50TDD   DS    0H
+         CLI   DDDD1,C'J'      JOBLIB TYPE ENTRY?
+         BE    E50NTEMP
+         CLI   DDDD1,C'D'      DD-CARD TYPE ENTRY?
+         BNE   ISALABEL
+*      IF TEMPORARY DSN, USE OUR TEMPORARY DSNAME AS THERE ARE
+*      SOME PROBLEMS WITH SVC 99 DELETING TEMPORARIES BEFORE
+*      IT SHOULD
+         CLI   DDDSNAME,C'&&'   TEMPORARY DSNAME?
+         BNE   E50NTEMP         NO.
+         SLR   R15,R15                                            J40B
+         LH    R15,#TEMPDSN     GET LENGTH OF OUR TEMP DSN
+         ICM   R15,3,#TEMPDSN     GET LENGTH OF OUR TEMP DSN
+         BZ    E50NTEMP          ON THE OTHER HAND...             J40B
+         LA    R15,TEMPDSN(R15) POINT TO SPOT TO MOVE &&DSN
+         MVI   0(R15),C'.'
+         CLI   DDDSNAME+1,C'&&' DOUBLE & CODED ?
+         BNE   E20ONEA
+         MVC   1(8,R15),DDDSNAME+2 DROP 2ND
+         B     E20TEMPF        TEMPORARY IS FIXED
+E20ONEA  MVC   1(8,R15),DDDSNAME+1 SET UP REAL DSNAME
+E20TEMPF MVC   DDDSNAME,TEMPDSN
+E50NTEMP DS    0H
+* NOW FOR DD-CARD TYPE ENTRIES,WE DON'T SPLIT INTO TOKENS.
+* SET UP SHORT DSNAME FOR ERROR MESSAGES
+         MVC   DSNAME,DDDSNAME
+         LA    R15,L'DDDSNAME-1
+E50TEDSN DS    0H
+         LA    R14,DDDSNAME(R15)
+         CLI   0(R14),C' '
+         BNE   E50DSNOK
+         BCT   R15,E50TEDSN
+E50DSNOK DS    0H
+         LA    R15,1(R15)
+         STH   R15,#DSN
+         MVC   STMT,DDSTMT     SAVE IN CASE OF ERRORS
+         CLI   DDDDNAME,C'%'   CATLG, DELETE ETC INSTRUCTION?
+         BNE   E50LEAVS        LEAVE STATEMENT NUMBER
+         MVC   STMT,DDDDNAME+2 CATLG STAT NUMBERS ARE DIFFERENT !
+E50LEAVS MVC   GOTOLAB(2),=C'$$'
+         MVC   GOTOLAB+2(6),DDDDNAME+2
+         MVC   #TKN,=H'8'
+         MVC   TKN(8),BLANKS
+         MVC   TKN(1),DDDDNAME+1
+         MVC   ICOMMAND,TKN
+         CLI   DDDDNAME,C'%'
+         BE    E50RETN0
+         MVI   TKN,C'F'     INDICATE FREE COMMAND
+         MVI   ICOMMAND,C'F'
+         CLI   DDDD1,C'J'                                         J40B
+         BNE   E50RETN0                                           J40B
+         MVI   TKN,C'J'     INDICATE FREE COMMAND
+         MVI   ICOMMAND,C'J'
+E50RETN0 DS    0H
+         JOLRETN
+ISALABEL DS    0H
+         CLC   INST,=AL2(IBODY+1)
+         BH    E50SPLIT
+         L     R15,ATKNSTRG
+         USING #TKNSTRG,R15
+         XC    #TKNSTRG,#TKNSTRG
+         DROP  R15
+E50SPLIT DS    0H
+* THE DOUBLE QUOTE ROUTINE IN THE COMPILER NOW REMOVES            76200
+* ALL QUOTES FROM THE STRING, AND THEREFORE IF                    76200
+* SOMEONE HAS QUOTES IN A STRING FOR A PARM, THERE                76200
+* WILL NOW ONLY BE ONE. THIS CAUSES ALL SORTS OF                  76200
+* PROBLEMS WHEN THE TOKEN SPLITTER GETS IT.                       76200
+         CLC   ICOMMAND,=CL8'PARM' PARM?                          76200
+         BNE   E50SPL2                                            76200
+         JOLRETN RC=0                                             76200
+E50SPL2  DS    0H                                                 76200
+         CALL  UJCTKN,MF=(E,ATKNX)                               88036
+         B     *+4(R15)                                            DASD
+         B     GOTINSTR  SUPER INSTRUCTION IS CLEAN                DASD
+         B     E50BINST  STMT > 1000 BYTES   CANN"T HANDLE THIS    DASD
+         B     GOTINSTR  TOO MANY TOKENS > 150                     DASD
+         B     GOTINSTR  TOKEN > 120 BYTES                         DASD
+         B     GOTINSTR  NO ENDING QUOTE                           DASD
+E50BINST JOLERR 503,'ERROR IN INSTRUCTION: INTERNAL FORM EXCEEDS 1000 BY
+               YTES'                                              J40B
+GOTINSTR DS    0H
+         GETTKN 1
+         JOLRETN
+EOF      DS    0H
+         JOLERR 000,'END OF INSTRUCTIONS'                        88036
+         JOLRETN RC=4
+         DROP  R4,R6                                             88036
+         DC    40S(*)
+         LTORG
+         END

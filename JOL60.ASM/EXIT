@@ -1,0 +1,77 @@
+EXIT     TITLE 'JOL EXIT INSTRUCTION'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1981.
+* JOL COPYRIGHT CCS-JOL 1987.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+         COPY  JOLCOM
+* THE FOLLOWING SOURCE CODE  CONTAINS THE ADD_ONS:-
+*
+*  1. EXIT     QUIT, OR EXIT AT LEVEL 0 - RETURN TO OS IMMEDIATELY
+*  2. EXIT     NUMBER - SET %LASTCC, EXIT FROM MACRO
+*  3. EXIT     TEXT   - DISPLAY TEXT, EXIT FROM MACRO
+*
+*
+*
+UJP47EXI JOLSAVE
+         ORG    UJP47EXI
+EXIT     EQU    *
+         ENTRY  EXIT
+         ORG
+         MVC    ICOMMAND,=CL8'\' SET TO SPECIAL EXIT CODE
+         GETTKN 3              GET LABEL NAME
+         CLI    TKN,C' '       TOO MANY TOKENS?
+         BE     P47TJOB        NO, PRESS ON
+         JOLERR 401,'TOO MANY PARAMETERS ON EXIT. CHECK SEMI-COLONS'
+P47TJOB  GETTKN 2              GET LABEL NAME
+         CLI    TKNTYPE,3      LITERAL STRING (A MESSAGE ?)
+         BNE    P47NLIT        NO, SO TRY NEXT
+         BAL    R14,DROPQUOT   DROP QUOTES FROM THE MESSAGE
+         LA     R1,TKN         GET MESSAGE AREA ADDRESS.
+         LH     R0,#TKN        GET LENGTH TO GO TO SCREEN.
+         SVC    93             GET VALUE FROM THE SCREEN.
+         B      P47TLEVL       TEST HOW WE EXIT
+P47NLIT  CLI    TKNTYPE,0      IS THIS A NUMBER ? IE SET %LASTCC ?
+         BNE    P47NNUM        NO, SO TRY NEXT
+         MVC    ICOMMAND,=CL8'MACRO' MAKE ASSIGN BETTER.
+         MVC    SYMBOLIC,=CL8'LASTCC'
+         MVC    #WORK(15),#TKN SET LASTCC TO VALUE SPECIFIED
+         $CALL  UJP85ASN       STORE IN %LASTCC
+         MVC    ICOMMAND,=CL8'\' SET TO SPECIAL EXIT CODE
+         B      P47TLEVL       TEST HOW WE EXIT
+P47NNUM  CLC    =C'JOB ',TKN   IS THIS EXIT THIS JOB ONLY?
+         BE     P47JOB         YES
+         CLC    =C'QUIT ',TKN  IS IT QUIT TOTALLY?
+         BE     P47QUIT        YES, SO TERMINATE JOB TOTALLY.
+         CLI    TKN,C' '       JUST QUIT BY ITSELF ?
+         BE     P47TLEVL
+         JOLERR 402,'INVALID PARAMETER IN EXIT:''',             ********
+               #TKN,''''
+P47QUIT  MVC    ICOMMAND,=CL8'\\' SET TO SPECIAL EXIT CODE
+         JOLRETN ,             ON RETURN, MAIN-LINE CHECKS FOR EXIT
+*                              IN 'ICOMMAND' AND IF STILL THERE, IT
+*                              REALLY DOES EXIT FOR US.
+*                              THIS IS THE BEST WAY TO DO IT BECAUSE
+*                              ALL THE SAVE AREAS ETC ARE THEN CORRECT.
+P47TLEVL DS     0H             HERE, WE MUST EXIT OUT OF A MACRO
+         JOLRETN
+P47JOB   MVC    ICOMMAND,=CL8'\/' SET TO SPECIAL EXIT CODE
+         JOLRETN ,             ON RETURN, MAIN-LINE CHECKS FOR EXIT
+         LTORG
+         END

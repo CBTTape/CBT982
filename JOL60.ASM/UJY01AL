@@ -1,0 +1,212 @@
+        PRINT OFF
+        COPY  JOLCOM
+        PRINT ON,GEN,DATA
+* THIS ROUTINE ALLOCATES 3 WORK DATA SETS FOR BUILDJOB
+*
+* NOTE  THESE ARE FOR BUILDJOB USE ONLY *******
+*
+* THEY WILL NOT BE DOCUMENTED AS THEY WILL BE REPLACED LATER
+* BY MORE CONVENTIAL ROUTINES.*******
+          JOLSAVE CSECT=UJY01AL
+* ALLOCATION ROUTINE ONLY
+          L    R8,ADCBS
+          USING DCBS,R8
+           LA    R9,SPRDCB2
+           USING  IHADCB,R9
+           MVI   DCBRECFM,0
+           MVC   DCBLRECL,=H'0'
+           MVC   DCBBLKSI,=H'0'
+           LA    R9,SPRDCB3
+           USING  IHADCB,R9
+           MVI   DCBRECFM,0
+           MVC   DCBLRECL,=H'0'
+           MVC   DCBBLKSI,=H'0'
+           LA    R9,SPRDCB4
+           USING  IHADCB,R9
+           MVI   DCBRECFM,0
+           MVC   DCBLRECL,=H'0'
+           MVC   DCBBLKSI,=H'0'
+           LA    R9,SPRDCB5
+           USING  IHADCB,R9
+           MVI   DCBRECFM,0
+           MVC   DCBLRECL,=H'0'
+           MVC   DCBBLKSI,=H'0'
+          DYNPARM DDNAME=SPARE2,SPACE=(TRK,(5,5)),DISP=(NEW,DELETE),  ==
+               DCB=(RECFM=FB,LRECL=80,BLKSIZE=1600) UNIT=SYSDA
+          LTR  R15,R15
+          BNZ  YUK
+          DYNPARM DDNAME=SPARE3,SPACE=(TRK,(5,5)),DISP=(NEW,DELETE),  ==
+               DCB=(RECFM=FB,LRECL=80,BLKSIZE=1600) UNIT=SYSDA
+          LTR  R15,R15
+          BNZ  YUK
+          DYNPARM DDNAME=SPARE4,SPACE=(TRK,(5,5)),DISP=(NEW,DELETE),  ==
+               DCB=(RECFM=FB,LRECL=80,BLKSIZE=1600) UNIT=SYSDA
+          LTR  R15,R15
+          BZ   Y01OK1
+YUK       JOLERR 402,'CANNOT WORK ALLOCATE FILES FOR BUILDJOB'
+          JOLRETN RC=16
+Y01OK1    L    R8,ADCBS
+          USING DCBS,R8
+*         OPEN (SPRDCB2,(OUTPUT),SPRDCB3,(OUTPUT),SPRDCB4,(OUTPUT))
+          LA   R1,SPRDCB2
+          ST   R1,CALLAREA
+          LA   R1,SPRDCB3
+          ST   R1,CALLAREA+4
+          LA   R1,SPRDCB4
+          ST   R1,CALLAREA+8
+          MVI  CALLAREA+8,X'8F'
+          MVI  CALLAREA,X'0F'
+          MVI  CALLAREA+4,X'0F'
+          LA   R1,CALLAREA
+          SVC  19
+          LTR  R15,R15
+          BZ   R010
+          JOLERR 101,'CANNOT OPEN OUTPUT FILES FOR BUILDJOB'
+          LA   R15,4
+R010      DS   0H
+R010      JOLRETN RC=(15)
+          DROP  R8
+          EJECT
+          JOLSAVE  CSECT=UJY02P
+* OUTPUT CARD IMAGE TO 'SPRDCB2'
+*        LA    1,=C'UJY02P'                                      88036
+*        LA    0,6                                               88036
+*        SVC   93                                                88036
+          L    R1,ASPR2DCB
+          $CALL UJY05P
+          JOLRETN
+          JOLSAVE  CSECT=UJY03P
+*        LA    1,=C'UJY03P'                                      88036
+*        LA    0,6                                               88036
+*        SVC   93                                                88036
+* OUTPUT CARD IMAGE TO 'SPRDCB3'
+          L    R1,ASPR3DCB
+          $CALL UJY05P
+          JOLRETN
+          JOLSAVE  CSECT=UJY04P
+*        LA    1,=C'UJY04P'                                      88036
+*        LA    0,6                                               88036
+*        SVC   93                                                88036
+* OUTPUT CARD IMAGE TO 'SPRDCB4'
+          L    R1,ASPR4DCB
+          $CALL UJY05P
+          JOLRETN
+          JOLSAVE CSECT=UJY05P
+* THIS ROUTINE SIMPLY PUTS A CARD IMAGE TO THE DCB 'SPRDCB2'
+          LR    R8,R1      SAVE DCB ADDRESS
+          GETTKN  3
+          CLI   TKN,C' '    IS IT BLANK?
+          BE    Y05OK1
+          JOLERR 101,'TOO MANY PARAMETERS ON UJY05P ''',#TKN,''''
+          JOLRETN  RC=4
+Y05OK1    GETTKN 2
+          CLC   =H'80',#TKN
+          BH    Y05OK2
+          JOLERR 102,'LENGTH OF TOKEN ''',#TKN,''' > 80 CHARS'
+Y05OK2    BAL   R14,DROPQUOT
+          PUT   (R8),TKN
+          JOLRETN
+          JOLSAVE  CSECT=UJY06E
+          L    R8,ADCBS
+          USING DCBS,R8
+*         CLOSE (SPRDCB2,(REREAD),SPRDCB3,(REREAD),SPRDCB4,(REREAD))
+          LA   R1,SPRDCB2
+          ST   R1,CALLAREA
+          LA   R1,SPRDCB3
+          ST   R1,CALLAREA+4
+          LA   R1,SPRDCB4
+          ST   R1,CALLAREA+8
+          MVI  CALLAREA+8,X'80'
+          LA   R1,CALLAREA
+          SVC  20
+*         OPEN (SPRDCB2,(INPUT),SPRDCB3,(INPUT),SPRDCB4,(INPUT))
+          LA   R1,SPRDCB2
+          ST   R1,CALLAREA
+          LA   R1,SPRDCB3
+          ST   R1,CALLAREA+4
+          LA   R1,SPRDCB4
+          ST   R1,CALLAREA+8
+          MVI  CALLAREA+8,X'80'
+          LA   R1,CALLAREA
+          SVC  19
+          LTR  R15,R15
+          BZ   Y06OK1
+          JOLERR 101,'CANNOT OPEN INPUT FILES FOR BUILDJOB'
+          JOLRETN RC=4
+Y06OK1    DS   0H
+* NOW ALLOCATE OUTPUT FILE FOR BUILDJOB OUTPUT TO GO TO
+*
+           GETTKN 2
+           BAL   R14,DROPQUOT
+           MVC  #WORK(50),#TKN   SAVE DSNAME
+           GETTKN 3              GET MEMBER NAME
+           $CALL  UJY08ALL       ALLOCATE WITH SHR (ENQ?)
+           LTR   R15,R15
+           BZ    Y06OK2
+           JOLERR 202,'CANNOT ALLOCATE DSN ''',#WORK,''' MEMBER ',  ++++
+               #TKN,''''
+           JOLRETN  RC=16
+Y06OK2     DS   0H
+*         OPEN  (SPRDCB5,(OUTPUT))
+          LA   R1,SPRDCB5
+          ST   R1,CALLAREA
+          MVI  CALLAREA,X'8F'
+          LA   R1,CALLAREA
+          SVC  19
+           LA    R9,SPRDCB2
+           USING  IHADCB,R9
+           MVC   DCBEODA,=AL3(Y06EOF1)
+Y06LUP1    GET   (R9),TKN
+           PUT   SPRDCB5,TKN
+           B     Y06LUP1
+Y06EOF1    DS    0H
+           LA    R9,SPRDCB3
+           USING  IHADCB,R9
+           MVC   DCBEODA,=AL3(Y06EOF2)
+Y06LUP2    GET   (R9),TKN
+           PUT   SPRDCB5,TKN
+           B     Y06LUP2
+Y06EOF2    DS    0H
+           LA    R9,SPRDCB4
+           USING  IHADCB,R9
+           MVC   DCBEODA,=AL3(Y06EOF3)
+Y06LUP3    GET   (R9),TKN
+           PUT   SPRDCB5,TKN
+           B     Y06LUP3
+Y06EOF3    DS    0H
+*         CLOSE (SPRDCB2,(REREAD),SPRDCB3,(REREAD),SPRDCB4,(REREAD), +
+*              SPRDCB5,(REREAD))
+          LA   R1,SPRDCB2
+          ST   R1,CALLAREA
+          LA   R1,SPRDCB3
+          ST   R1,CALLAREA+4
+          LA   R1,SPRDCB4
+          ST   R1,CALLAREA+8
+          LA   R1,SPRDCB5
+          ST   R1,CALLAREA+12
+          MVI  CALLAREA+12,X'80'
+          LA   R1,CALLAREA
+          SVC  20
+          FREEPOOL SPRDCB2
+          FREEPOOL SPRDCB3
+          FREEPOOL SPRDCB4
+          FREEPOOL SPRDCB5
+          DYNPARM DDNAME=SPARE2,VRB=UN
+          DYNPARM DDNAME=SPARE3,VRB=UN
+          DYNPARM DDNAME=SPARE4,VRB=UN
+          DYNPARM DDNAME=SPARE5,VRB=UN
+          DROP  R9
+          DROP  R8
+          JOLRETN
+          JOLSAVE CSECT=UJY08ALL
+          L    R8,ADCBS
+          USING DCBS,R8
+* DSNAME IS IN #WORK(50)
+* MEMBER NAME IS IN #TKN (IF PRESET)
+          DYNPARM DDNAME=SPARE5,DISP=(SHR),DSN=(44,#WORK),        ++++++
+               MEMB=(10,#TKN)
+          DROP  R8
+          JOLRETN
+          LTORG
+          DCBD DSORG=PS,DEVD=DA
+          END

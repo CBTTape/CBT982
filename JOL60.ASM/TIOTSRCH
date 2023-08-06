@@ -1,0 +1,76 @@
+         TITLE '&TITLE TIOT SCAN SOUBROUTINE'
+* THIS SUBROUTINE SEARCHES THE TIOT FOR A SPECIFIED DDNAME
+*  WHOSE ADDRESS IS PASSED IN REGISTER 1
+         SPACE
+SCHTIOT  DS    0H
+         L     R15,X'010'          ADDRESS OF CVT
+         L     R15,0(0,R15)        TCB WORDS
+         L     R15,4(,R15)         ADDRESS OF MY TCB
+         SLR   R00,R00
+         L     R15,TCBTIO-TCB(,R15) TIOT ADDRESS
+ST010    DS    0H
+         CLC   28(8,R15),0(R01)    Q... DDNAME MATCH?
+         BER   R14                 A... YES:RETURN
+         IC    R00,24(,R15)        LENGTH OF THIS ENTRY
+         AR    R15,R00
+         LTR   R00,R00             Q... END OF TIOT?
+         BNZ   ST010               A... NO: CHECK THE NEXT ENTRY
+         CLI   *,0                 SET CC TO SHOW NOT EQUALS
+         BR    R14
+         TITLE '&TITLE DYNAMIC ALLOCATION ERROR MESSAGE ROUTINE'
+S99MSG   ST    R14,S99MRET
+         LA    R01,S99RB
+         ST    R01,DFLIST          STORE S99 REQ BLK ADDR
+         OC    DFLIST+4(4),DFLIST+4 Q... BEEN HERE BEFORE?
+         BNZ   S99010              A... YES
+         ST    R15,S99RC           SAVE RETURN CODE FROM SVC 99
+         LA    R00,S99RC           SET POINTER
+         ST    R00,DFLIST+4
+         LOAD  EP=IKJEFF02
+         ST    R00,DFEFF02         STORE ADDRESS OF MSG ISSUER
+         LA    R00,DFEFF02
+         ST    R00,DFLIST+8
+         LA    R00,DFFLAGS         ADDRESS OF FLAGS
+         ST    R00,DFLIST+12
+         MVI   DFFLAGS+1,X'32'     SET CALLER ID
+         L     R01,4(0,R13)
+         MVC   DFLIST+16(4),24(R01) CPPL ADDRESS
+S99010   DS    0H
+         LINK  EP=IKJEFF18,MF=(E,DFLIST) CALL DAIRFAIL
+         LTR   R15,R15             Q... OK?
+         BZ    S99020               A... YES
+         CVD   R15,DOUBLE          ISSUE ERROR MSG
+         OI    DOUBLE+7,X'0F'
+         MVC   DFMSG,=C'DAIRFAIL RETURN CODE NN'
+         UNPK  DFMSG+21(2),DOUBLE
+         LA    R01,DFMSG
+         LA    R00,L'DFMSG
+         SVC   93
+S99020   DS    0H
+         L     R14,S99MRET
+         BR    R14
+         TITLE '&TITLE DYNAMIC DECONCATENATION SUBROUTINE'
+DECONC   STM   R02,R14,DCONCRGS    SAVE RETURN ADDRESS
+         LA    R01,ADDNAME
+         BAL   R14,SCHTIOT         Q... DDNAME ALLOCATED?
+         BNE   DNC090              A... NO
+         SLR   R00,R00
+         IC    R00,24(,R15)        LENGTH OF THIS DD ENTRY
+         AR    R15,R00             ADDRESS OF THE NEXT
+         CLC   =C'        ',28(R15)
+         BNE   DNC090              IS NOT CONCATENATED
+         BAL   R14,INITS99R        INITIALISE THE REQ BLK
+         MVI   S99VERB,X'04'       INDICATE DECONCATENATION
+         MVC   TUDDN(6),=X'000100010008' BUILD TEXT UNIT
+         MVC   TUDDN+6(8),0(R01)
+         LA    R00,TUDDN           BUILD TEXT UNIT LIST
+         ST    R00,S99TUPL
+         MVI   S99TUPL,X'80'       MARK ITS END
+         LA    R01,S99RBPTR
+SVC99C   SVC   99                  ISSUE THE REQUEST
+         LTR   R15,R15             Q... OK?
+         BZ    DNC090              A... YES
+         BAL   R14,S99MSG          ISSUE AN ERROR MSG
+DNC090   DS    0H
+         LM    R02,R14,DCONCRGS
+         BR    R14

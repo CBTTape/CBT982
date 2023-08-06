@@ -1,0 +1,8 @@
+UJCOMMON TITLE  'JOL GENERATION OF COMMUNICATION CSECT'
+         COPY JOLGLOBL
+         $UJEPARM                                                88036
+&SECTTYP SETC 'CSECT'
+&TYPE    SETC 'CSECT'
+         COPY  JOLCOMM
+         REGEQU
+         END

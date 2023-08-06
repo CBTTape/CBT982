@@ -1,0 +1,110 @@
+UJETYPE    START 0
+* THIS PROGRAM ACCEPTS A PARM FIELD LIKE THIS :-
+*   'WTO  MESSAGE'
+*   'WTP  MESSAGE'
+* OR 'DDNAME  MESSAGE'  AND WRITES THEM TO THE APPROPRIATE DEVICE
+           SPACE 3
+           COPY CVCSAVE
+           SPACE 3
+           L   R3,0(R1)        GET PARM
+           USING INPARM,R3
+           LH  R4,PARMLEN
+           MVI IN,C' '         CLEAR IN
+           MVC IN+1(99),IN
+           BCTR R4,0
+           EX  R4,MUV
+           B   GOTPARM
+MUV        MVC IN(0),INPARM+2
+GOTPARM    LA  R4,IN
+LOOP1      CLI 0(R4),C' '
+           BE  GOTINSTR
+           LA  R4,1(R4)
+           B   LOOP1
+GOTINSTR   EQU *
+           LR  R5,R4
+           S   R5,=A(IN)
+           SH  R5,=H'1'
+           EX  R5,MUV2         MOVE INSTRUCTION TO INSTRUCT
+           B   MOVEREST
+MUV2       MVC INSTRUCT(0),IN
+MOVEREST   EQU *
+           MVI MESSAGE,C' '
+           MVC MESSAGE+1(99),MESSAGE
+           MVC MESSAGE,0(R4)
+           LA  R4,MESSAGE
+           LA  R5,MESSAGE+99
+LOOP3      CLI 0(R5),C' '
+           BE  ENDMESS
+           CR  R4,R5
+           BE  NOMESS
+           SH  R5,=H'1'
+           B   LOOP3
+ENDMESS    SR  R5,R4
+           LA  R5,4(R5)
+           STH R5,MSSGLEN
+           CLC INSTRUCT,=C'WTO     '
+           BE  WTO
+           CLC INSTRUCT,=C'WTP     '
+           BE  WTP
+*    HERE INSTRUCT CONTAINS A DDNAME THAT THE MESSAGE MUST GO TO
+           LA  R2,OUTDD
+           USING IHADCB,R2
+           MVC DCBDDNAM,INSTRUCT
+           OPEN (OUTDD,OUTPUT)
+           TM  OUTDD+48,X'10'
+           BO  FILEOPN
+           L   R13,SAVE+4
+           RETURN (14,12),T,RC=3000
+FILEOPN    TM  DCBRECFM,B'01000000'            V ?
+           BO  V
+           PUT OUTDD,MESSAGE
+           B   CLOSE
+V          PUT OUTDD,MSSGLEN
+CLOSE      CLOSE (OUTDD,DISP)
+           FREEPOOL OUTDD
+NOMESS         EQU *
+RETN       L   R13,SAVE+4
+           RETURN (14,12),T,RC=0
+WTO        LA  R4,MSSGLEN
+           AH  R4,MSSGLEN      R4 POINTS TO NEXT LOCN AFTER MSSGE
+           MVC 0(2,R4),=H'0'
+           MVC MSSGFLAG,=H'0'
+           LA  R1,MSSGLEN
+           SVC 35
+           B   RETN
+WTP        LA  R4,MSSGLEN
+           AH  R4,MSSGLEN
+           MVC 0(2,R4),=H'0'   DESCRIPTOR CODES
+           MVC 2(2,R4),=X'0020'  ROUTING CODES
+           MVC MSSGFLAG,=X'8000' MCSFLAGS
+           LA  R1,MSSGLEN
+           SVC 35
+           B   RETN
+MYDCB      EQU *
+           USING IHADCB,R1
+           CLI DCBRECFM,0      NO RECFM ?
+           BNE ISARECFM
+           MVI DCBRECFM,X'44'  VA
+           CLC DCBBLKSI,=H'0'  ANY BLKSIZE ?
+           TM  DCBRECFM,X'80'
+           BO  FIXED
+           MVC DCBBLKSI,=H'130'
+           MVC DCBLRECL,=H'126'
+           BR  14
+FIXED      MVC DCBBLKSI,=H'133'
+           MVC DCBLRECL,=H'133'
+           BR  14
+IN         DS  CL110
+INSTRUCT   DC CL8' '
+MSSGLEN    DS  1H
+MSSGFLAG   DS  1H
+MESSAGE    DS  CL100
+OUTDD      DCB DDNAME=SYSPRINT,DSORG=PS,EXLST=DCBEXIT,                 *
+               MACRF=PM
+DCBEXIT    DC  A(DCBEX1)
+DCBEX1     DC  X'85'
+           DC  AL3(MYDCB)
+INPARM     DSECT
+PARMLEN    DS  0H
+           DCBD DSORG=PS
+           END

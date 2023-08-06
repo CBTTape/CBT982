@@ -1,0 +1,326 @@
+P27TBA   TITLE 'P27TBA  Test Menubar Hot Key'                    J51
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1980.
+* JOL COPYRIGHT CCS-JOL 1988      1990
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0  ^     ^   0        L
+*                   J         0  O     O   0        L
+*                   J         0            0        L
+*                   J         0     V      0        L
+*                   J         0            0        L
+*                   J         0   <____>   0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+         PRINT OFF                                                J50
+         COPY  JOLCOM
+*      COPY CPY/JOLCOMD.CPY
+         PRINT ON                                                 J50
+         COPY  P28PARMS                                           J50
+         TITLE 'P27TBA  Test Menubar Hot Key'                    J51
+UJP27TBR JOLSAVE CSECT=UJP27TBR
+*
+*
+* This routine gets called when the user specifies a MENUBAr, and the
+*     cursor is on the top line, or the returned key is in field 1.
+*
+*
+*       FIX     'Check for HOT KEY'                               PC
+*
+        CLI     WORK,C' '        Was a Hot Key entered?
+        BNE     GOTHOTK          Yes, so get the result
+*
+*  Here, a hot key hasn't been pressed, so we'll use the cursor
+*
+         L    R10,P27GBL
+         USING PANELWRK,R10
+*cvc    L       R6,=V(P29POPWK)
+*cvc    USING   P29POPWK,R6
+        LH      R1,WHEREX        Get the column.
+        LA      R1,0(R1)         Add 8 (no of attribute bytes in < >)
+        CH      R1,ITEMPOSN      Check if lower than lowest LHS posn
+        BL      BADHOT           or should we ignore it?
+* OK, check for correct position.
+        LH      R15,ITEMCNTL     Get Stop address
+        SLL     R15,1            *2
+        LH      R14,ITEMPOSN-2(R15) Get LAST posn
+        AH      R14,ITEMLEN-2(R15) Add LAST length
+        STH     R14,ITEMPOSN(R15) Fixes LAST item
+        SR      R14,R14          Point to Table
+GETHOTPN DS     0H
+* Here, the cursor position is greater than the item we are looking at.
+* BUT, does it fit in the range?
+        CH      R1,ITEMPOSN+2(R14)
+        BL      USEITEM          Use it.
+*       CH      R1,ITEMPOSN(R14) Check offset
+*       BH      BUMPNXT
+BUMPNXT LA      R14,2(R14)
+        CR      R14,R15
+        BH      BADHOT
+        B       GETHOTPN         Get the hot key posn
+USEITEM LH      R1,ITEMPOSN(R14) Load Offset into MENTXT
+        LA      R15,MENTXT(R1)   Get Address of start of item
+         CLI   VIDSFE,0          Can we use extensions?           J52
+         BNE   MENUITOK          yes, so all is OK                J52
+         SH    R15,=H'1'         -1 for video cntl characters     J52
+MENUITOK DS    0H                                                 J52
+        LH      R14,ITEMLEN(R14) Get the length
+        STH     R14,#WORK
+*cvc    MEMCPY  WORK,0(R15),R14
+        MVC     WORK(80),0(R15)
+        B       STRMEM           Store in Symbolic
+*
+        SLL     R1,1             Multiply by 2
+        LH      R15,ITEMPOSN(R1) Get start of Item Posn           J50
+        LH      R14,ITEMLEN(R1)  Get start of Item Posn           J50
+*                 if (Syspfk != 0)
+*
+*       HALT                                                      PC
+*
+*
+*FIX  ' OC      RETALTFL,BLANKS'
+*
+GOTHOTK DS      0H
+        CLC     #HOTKEYS,=H'0'
+        LA      R1,HOTKEYS                                        PC
+        LA      R14,1                                             PC
+        LR      R15,R1                                            PC
+        AH      R15,#HOTKEYS                                      PC
+TRYHOT  CLC     WORK(1),0(R1)                                     PC
+        BE      GOTHOT                                            PC
+        BXLE    R1,R14,TRYHOT                                     PC
+BADHOT  DS      0H                                                J60
+*       CALL$   BEEP
+        JOLRETN  RC=4              Bad Hot Key                    PC
+GOTHOT  DS      0H                                                PC
+        ENTRY   GOTHOT                                            PC
+*                 {
+*                    strcpy(Ret_Alt_Field,Menu_Bar_Items[i]);
+*
+        LA      R15,HOTKEYS
+        SR      R1,R15
+        LR      R14,R1
+        SLL     R14,1
+        B       USEITEM
+*cvc    LH      R1,I
+*cvc    SLL     R1,1
+*cvc    L       R1,MENBARIT(R1)
+*cvc    MVC     RETALTFL,0(R1)
+*cvc    OC      RETALTFL,BLANKS
+*
+STRMEM  DS      0H
+         STH   R1,MENUCOL                                         J52
+        MVC     SYMBOLIC,=CL8'SYSMENU'
+*
+*           x[1] = Ret_Alt_Field;
+*
+*cvc    MVC     #WORK(100),RETALTFL
+*
+*           ujp85asn();
+*
+         OC    WORK(L'BLANKS),BLANKS                             J52
+        CALL$   UJP85ASN
+*
+*
+*           disp_pokebox(scrn_save,0,0,24,79);
+*
+*
+        JOLRETN RC=0
+        LTORG
+         DC   140S(*)
+*
+*
+*
+*cvc         p27display(void)
+*{*int          jl, jk;
+*static char         *one_blank = " ";
+*
+*
+* /*  call curs_at(1,1);
+*   put skip edit('Control=',replycontrol,
+*     'Length=',rplylen,' xxxxx')(a);
+*   get list(syspfk);
+* /
+*
+*  if (menubar) {
+*          gotorc(0,0);
+*          menubar = false;
+*          display_str(blue_ascii); */
+*          display_str(white_ascii);
+*          display_str("[ ] ");
+*          display_str(outtext_with_attrs);
+*          Menu_Bar(outtext /*_with_attrs*/ );
+*
+*          replycontrol++;
+*
+*          cpylit(symname_pan[replycontrol] , "SYSMENU");
+*          cpylit(symvalue_pan[replycontrol], ""); /* Initialise to ''
+*          rplylen=1;
+*          rrow =0;
+*          rcol =1;
+*
+*          gotorc(0,1);
+*          Panel(" ", symvalue_pan[replycontrol],
+*              rplylen, symvalue_pan[replycontrol]);
+*
+*          return;
+*   }
+*
+*   if (helpline)
+*   {      char temp_bold[40];              /* Used if no attrs on help
+*          int j;
+*
+*          helpline = false;
+*/*        display_str(blue_ascii);
+*          display_str("[ ] ");
+*          display_str(outtext_with_attrs);
+*/
+*          if (length(outtext_with_attrs) == length(outtext))
+*          {
+*               strcpy (temp_bold,"\033[0;");
+*               strcat (temp_bold,videobackground);
+*               strcat (temp_bold,";");
+*               strcat (temp_bold , videohighlight);
+*               strcat (temp_bold , "m");
+*               display_str(temp_bold);
+*          }
+*
+*         display_ctr(outtext_with_attrs,23); */
+*          if (length(outtext) > 76)
+*          {
+*               length(outtext) = 76;
+*               length(outtext_with_attrs) = 76;
+*               outtext_with_attrs[length(outtext_with_attrs)] = '\0';
+*               outtext[length(outtext)] = '\0';
+*          }
+*
+*          j = length(outtext) / 2;
+*          j = 40 - j;
+*          gotorc(23, j-1);
+*          display_str(" ");
+*          display_str(outtext_with_attrs);
+*          display_str(" ");
+*
+*          return;
+*   }
+*
+* /* Ordinary Panel here */
+*
+*   curs_at(rowno, colno);
+*
+*   if (! menubar)   display_str(outtext_with_attrs);
+*
+*
+*   if (rplylen == -1)  return;/* Set >0 if a reply */
+*   curs_at(rrow, rcol);
+*
+*   Panel(" ", symvalue_pan[replycontrol],
+*              rplylen, symvalue_pan[replycontrol]);
+*   curs_at(rrow, rcol);
+*   display_str(default_with_attrs);
+*
+*/* fix cvc feb 29, 1988.  Oh for more code space */
+*/* fix cvc feb 29, 1988.  Adds attributes to rest of field if default
+*                          < field length */
+*
+*
+*   jk = rplylen - length(default_txt); /* Test for Blank on Right */
+*
+*test_jk:
+*   if (jk >0)
+*   {   if (jk < length(blanks))
+*       {   display_str(&blanks[length(blanks) - jk]);
+*           return;
+*       }
+*       else
+*       {
+*           display_str(blanks);
+*           jk= jk -length(blanks);
+*           goto test_jk;
+*       }
+*    }
+*
+*}*/* Procedure  */
+*
+*
+*
+*void         panel_read(void)
+*{
+*/* with screenwork DO */ {
+*{
+*
+*    if (nowait) return;
+*
+*    if (re_read_addr != NULL)
+*    {
+*        if (replycontrol != 0)
+*        for (i = 1; i <= replycontrol; i++)   /* Copy Changed Data */
+*        {
+*            getsym(symname_pan[i]);
+*            cpy(symvalue_pan[i] , op);
+*        }
+*        Read_Panel_From(re_read_addr);
+*    }
+*    else Read_Panel();
+*
+*        if (replycontrol != 0)
+*        for (i = 1; i <= replycontrol; i++)
+*        {
+*            cpy(symbolic , symname_pan[i]);
+*/*          cpy(op,        symvalue_pan[i]);*/
+*            x[1]=symvalue_pan[i];
+*            if (caps == true)
+*                strupr(x[1]);
+*            ujp85asn();
+*        }
+*    mvc(symbolic, "SYSPFK  ",8);
+*    x[1] = f2(Syspfk);
+*    ujp85asn();
+*
+*    mvc(symbolic, "SYSMENU ",8);
+*    x[1] = Ret_Alt_Field;
+*    ujp85asn();
+*
+*    mvc(symbolic, "SYSPOP  ",8);
+*    x[1] = "";
+*    ujp85asn();
+*
+*    curs_at(24, 1); /* CVC FEB 11, 87 : Pretty Screen */
+*
+*    /* Overriding attribute */
+*
+*    cpylit (text , "\033[0;");
+*    cat    (text , videobackground);
+*    catchar(text , ';');
+*    cat    (text , videolowlight);
+*    catchar(text , 'm');
+*
+*  /* MOD CVC FEB 11, 1987  : Don't Clear Screen unless input
+*                             from terminal */
+*/*     text:=videotempattr;  ( * +cls; * ) */
+*
+*     if (eofsysin)
+*     {  cat(text, cls);
+*     }
+*               /* last */
+*
+* /* fix */
+* /*  errtext='Handle='+handle;
+*      call jolerr('P27324');
+* */
+* /* END MOD */
+*
+*    display_str(text);
+*/*  call writescr;*/
+*} /* with */
+* } /* END WITH */
+*} /* Panel read */
+*$$$ end read

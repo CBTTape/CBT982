@@ -1,0 +1,31 @@
+         MACRO
+&L       $LOCATE
+         GBLB  &X8,&MVS,&MVSXA,&XA,&VS1
+         LCLC  &C,&D,&E
+&C       SETC  'KCP'.'&SYSNDX'.'A'
+&D       SETC  'KCP'.'&SYSNDX'.'B'
+&E       SETC  'KCP'.'&SYSNDX'.'C'
+&L       IHBINNRA &SYSLIST(1)
+         AIF   (&X8).X8
+         SVC   26
+         MEXIT
+.X8      ANOP
+         $CALL UJS03CTS
+         PUSH  USING                                              88036
+         USING VOLINFO,1
+         L     1,12(,1)          ADDRESS CATALOGUE WORK AREA
+         LTR   15,15             WAZIT OK
+         BNZ   &E                NOT EXACTLY
+         CLI   DDMBR+1,C'+'      WAZIT A GDG
+         BE    &E                ITWAZ: LEAVE IT ALONE
+         CLI   CATDEV+2,X'80'    IZIT A TAPE?
+         BNE   &D                ITZ NOT
+         MVC   DDUNIT,=CL8'MT'   ITZ A TAPE
+         MVI   DDUNITYP,X'09'    STILL
+         B     &E
+&D       DS    0H
+         MVC   DDUNIT,=CL8'DA'   MUST BE DISK
+         MVI   DDUNITYP,X'8B'
+&E       DS    0H
+         POP   USING                                              88036
+         MEND

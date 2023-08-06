@@ -1,0 +1,28 @@
+           MACRO
+&NAME      STAEDUMP &PARAM=,&XCTL=NO,&STAEDD=SYSPRINT
+           LCLC &CSECT
+&CSECT SETC '&SYSECT'
+.* THIS MACRO PERFORMS A STAE AND GENERATES A CSECT WHICH GAINS
+.*   CONTROL WHEN AN INTERRUPT OCCURS.
+           L 14,=A(STAEDUMP)
+           USING STAEDUMP,14
+           STAE STAEDUMP,CT,PARAM=&PARAM,XCTL=&XCTL,MF=(E,STAECALL)
+           DROP 14
+STAEDUMP    CSECT
+           USING STAEDUMP,4
+           LR  4,15            SWAP BASE
+           LR 10,14            SAVE RETURN
+           LR 9,1              KEEP HOLD OF R1
+           LR 8,0              AND R0
+           SPACE
+           OPEN (STAESNAP,OUTPUT)
+           SNAP DCB=STAESNAP,ID=99,PDATA=ALL,SDATA=CB
+           L 1,4(9)            LOAD ABEND CODE
+           LA 1,0(1)                           DROP DUMP AND STEP CODES
+           ABEND (1)
+STAESNAP   DCB DSORG=PS,RECFM=VBA,LRECL=125,BLKSIZE=882,MACRF=(W),     *
+               DDNAME=&STAEDD
+STAECALL      DS 2F
+           DROP 4
+&CSECT     CSECT
+           MEND

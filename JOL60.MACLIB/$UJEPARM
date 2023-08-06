@@ -1,0 +1,48 @@
+         MACRO
+         $UJEPARM
+         COPY  JOLGLOBL                                           88036
+         LCLA  &N,&L,&A
+         LCLC  &C,&PARM
+&PARM    SETC  '&SYSPARM'                                         88036
+&L       SETA  K'&PARM
+&C       SETC  '&PARM'
+         AIF   (&N GE K'&PARM).END
+         AIF   (K'&C LT 3).NOS  NOT OS=
+         AIF   ('&C'(1,3) NE 'OS=').NOS
+&N       SETA  &N+3          STEP PAST KNOWN CHARACTERS
+         AIF   (K'&C LT 4).OSBAD    IF NOT AT LEAST ONE CHARACTER *!?%
+.OSL     ANOP
+&JOLOS   SETC  '&JOLOS'.'&C'(&N+1,1)
+&N       SETA  &N+1
+         AIF   (&N EQ &L).END
+         AIF   ('&PARM'(&N,1) NE ',').OSL ANOTHER CHARACTER
+.OSBAD   MNOTE 12,'OS OMITTED AFTER OS KEYWORD'
+         MEXIT
+.NOS     ANOP
+.END     ANOP
+         SPACE 2
+         MNOTE 0,'OS = "&JOLOS" '
+         SPACE
+&X8      SETB  ('&JOLOS' EQ 'X8'  OR '&JOLOS' EQ 'OSIV/X8')
+&X8      SETB  (&X8 OR ('&JOLOS' EQ 'X8 '))
+&F4      SETB  ('&JOLOS' EQ 'F4'  OR '&JOLOS' EQ 'OSIV/F4')
+&F4      SETB  (('&JOLOS' EQ 'F4 ') OR &F4)
+&MVS     SETB  ('&JOLOS' EQ 'MVS' OR '&JOLOS' EQ 'OS/VS2'              .
+               OR '&JOLOS' EQ 'SP1' OR '&JOLOS' EQ 'MVS/SP1')
+&MVSXA   SETB  ('&JOLOS' EQ 'MVS/XA' OR '&JOLOS' EQ 'XA '              .
+               OR '&JOLOS' EQ 'SP2' OR '&JOLOS' EQ 'MVS/SP2')
+&MVSESA  SETB  ('&JOLOS' EQ 'MVS/ESA')
+&XA      SETB  (&MVSXA)
+&OSVS    SETB  (NOT &X8)                                          88036
+&DFAIL   SETC  (&X8)'KEQEFF18'.(1-&X8)'IKJEFF18'                  88036
+&RETNSIZ SETA  2560          SIZE OF RETURN-CODE AREA
+&RSVDRC  SETA  4000*(1-&X8)+50*&X8
+&DDPRT   SETC  (&X8)'JOLPRINT'.(1-&X8)'$$PRNT'
+&DDINST  SETC  (&X8)'JOLINST'.(1-&X8)'$$INST'
+&DDPRT   SETC  'JOLPRINT'                                         J40B
+&DDINST  SETC  'JOLINST'                                          J40B
+&SECTTYP SETC  'DSECT'                                            88036
+&DEBUG   SETB  0               `                                  J40B
+&VERSION SETC  '6.0 '                                             J60
+&MODID   SETC  '60'                                               J60
+         MEND

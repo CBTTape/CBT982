@@ -1,0 +1,6 @@
+         MACRO                                                          OPIN0100
+&NAME    OPINST &LOCN                                                   OPIN0200
+         LA    1,&LOCN                                                  OPIN0300
+         L     15,=V(UJC90OP)                                           OPIN0600
+         BALR  14,15                                                    OPIN0700
+         MEND                                                           OPIN0800

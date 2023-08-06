@@ -1,0 +1,137 @@
+           TITLE 'JOL END MODULE - TIDY UP - PRINT OPTIONS'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           TITLE 'JOL END MODULE - TIDY UP - PRINT OPTIONS'
+            PRINT OFF
+         COPY JOLCOM
+         PRINT ON,DATA
+           TITLE 'JOL END MODULE - TIDY UP - PRINT OPTIONS'
+SAVETIME DSECT                                                     DASD
+         DS  18F   REGS SAVED HERE                                 DASD
+THETIME DS 0CL9                                                    DASD
+HRS     DS CL3                                                     DASD
+MIN     DS CL2                                                     DASD
+SEC     DS CL2                                                     DASD
+HH      DS CL2                                                     DASD
+SVTIMEL  EQU *-SAVETIME                                            DASD
+         PRINT DATA
+         JOLSAVE CSECT=UJF00MN,SIZE=SVTIMEL                        DASD
+          USING  SAVETIME,R13                                      DASD
+* THIS MODULE PRINTS A FEW ERROR LINES, AND TIMINGS ETC           75311
+         L     R9,AJOLGEN                                        75128
+         USING GENDETS,R9                                         75128
+         L     R7,AJOBDETS
+         USING JOBDETS,R7
+           TIME DEC
+          SRL R0,4   DROP HUNDREDTHS OF A SECOND
+           ST  R0,DBL
+          OI  DBL+3,X'0F'    SIGN IT  (SIGNATURE?)
+          UNPK STOPTIME,DBL(4)  UNPACK IT
+           OI  STOPTIME+7,X'F0'
+         L     R1,APRINTLN
+         MVC   5(15,R1),=C'COMPILE STARTED'
+         MVC   21(8,R1),STARTIME
+         MVC   30(13,R1),=C'COMPILE ENDED'
+         MVC   44(8,R1),STOPTIME
+         MVC  21(2,R1),23(R1)                                      DASD
+         MVC  24(2,R1),25(R1)                                      DASD
+         MVI  23(R1),C':'                                          DASD
+         MVI  26(R1),C':'                                          DASD
+         MVC  44(2,R1),46(R1)                                      DASD
+         MVC  47(2,R1),48(R1)                                      DASD
+         MVI  46(R1),C':'                                          DASD
+         MVI  49(R1),C':'                                          DASD
+         MVC   0(4,R1),=AL2(52,0)
+         MVI   4(R1),C'0'     DOUBLE SPACE
+         CLC   USER4,ZERO   ANY INVOKE ROUTINES PROCESSED?         DASD
+         BE    NOINVOKE                                            DASD
+         MVI   53(R1),C','                                         DASD
+          L     R14,USER4                                          DASD
+        CVD     R14,DBL   CONVERT                                  DASD
+         OI    DBL+7,X'0F'  DO SIGN                                DASD
+         UNPK  55(3,R1),DBL                                        DASD
+     MVC   60(40,R1),=C'INVOKE ROUTINE(S) ENTERED, ELAPSED TIME='  DASD
+         MVC   100(13,R1),=X'402020207A20217A20204B2020'           DASD
+         L     R14,USER5   LOAD TOTAL BINARY TIME                  DASD
+         SRDA  R14,32                                              DASD
+         D     R14,=F'360000'   GET HOURS                          DASD
+        CVD   R15,DBL                                              DASD
+         UNPK  HRS,DBL                                             DASD
+         SRDA  R14,32                                              DASD
+         D     R14,=F'6000'    GET MINUTES                         DASD
+        CVD   R15,DBL                                              DASD
+         UNPK  MIN,DBL                                             DASD
+         SRDA  R14,32                                              DASD
+         D     R14,=F'100'     GET SECONDS                         DASD
+         CVD   R15,DBL                                             DASD
+        UNPK  SEC,DBL                                              DASD
+       CVD   R14,DBL      GET HUNDRETHS                            DASD
+        UNPK  HH,DBL                                               DASD
+         PACK  DBL,THETIME                                         DASD
+         ED    100(13,R1),DBL+3                                    DASD
+         MVC   0(4,R1),=AL2(130,0)                                 DASD
+          XC    USER1(20),USER1   CLEAR COMMON                     DASD
+NOINVOKE JOLPRINT                                                  DASD
+           SPACE 1                                                74303
+         CLI   RUNINDIC,C' '   DO WE HAVE TO MAKE A MESSAGE ?     75311
+         BNE   F00TERR         YES                                75311
+F00RETN  JOLRETN RC=0          NO                                 75311
+F00TERR  CLI   RUNINDIC,C'M'   MAY RUN ?                          75311
+         BE    M00MRNM         YES                                75311
+         SPACE 3                                                  75128
+M00NRNM  EQU   *                                                  75128
+         MVC   #OP(LNORUNM),NORUNM SHIFT FIRST PART OF MESSAGE    75128
+         B     M00MSET        SET UP THE REST                     75128
+         SPACE 2                                                  75128
+M00MRNM  MVC   #OP(LMAYRUNM),MAYRUNM                              75128
+M00MSET  MVC   #OP+13(8),JOBNAME                                  75128
+         TM    PARMPRNT,X'08' TEST OPTION ON ?                    75128
+           BO  F00TOPT                                            75311
+         LA    R1,#OP                                             75128
+         SVC   35             WT0                                 75128
+         LH    R15,#OP                                            75128
+         MVC   OP(60),OP+2+9                                      75128
+         SH    R15,=H'11'                                         75128
+         STH   R15,#OP                                            75128
+        JOLERR 301,#OP       GIVE MESSAGE TO USER ON COMPILE PRINT75128
+*                             TOO                                 75128
+           JOLRETN RC=0                                           75311
+         SPACE 3                                                  75128
+NORUNM   WTO   'UJM00-01          WILL NOT EXECUTE:-JOL ERROR',        *
+               ROUTCDE=(11,2),DESC=6,MF=L                         75128
+LNORUNM    EQU  *-NORUNM
+           B   F00TOPT                                            75311
+         SPACE 1
+MAYRUNM  WTO   'UJM00-02          HAS JOL ERRORS:-PLACED ON HOLD QUEUE'*
+               ,ROUTCDE=(11,2),DESC=6,MF=L                        75128
+LMAYRUNM EQU   *-MAYRUNM
+F00TOPT    EQU *                                                  75311
+******* WE COULD PRINT THE NUMBER OF ERRORS FOUND *******
+           TM  PARMPRNT,1                                         75311
+           BO  F00OPT                                             75311
+           JOLRETN RC=0                                           75311
+           SPACE 3                                                75311
+* NOW WE SHOULD (I GUESS) PRINT THE OPTIONS                       75311
+*                                                                 75311
+* I DONT KNOW IF THAT MEANS ALL THE UNIT NAMES ETC (I SUSPECT     75311
+*    THAT SHOULD BE A SEPERATE LITTLE PROGRAM)                    75311
+F00OPT     EQU *
+           JOLRETN
+            END

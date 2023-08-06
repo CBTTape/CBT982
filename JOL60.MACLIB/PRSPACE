@@ -1,0 +1,10 @@
+         MACRO                                                    88036
+&L       PRSPACE &N                                               88036
+         LCLA  &A                                                 88036
+&A       SETA  1                                                  88036
+         AIF   (T'&N EQ 'U').G                                    88036
+&A       SETA  &N                                                 88036
+.G       ANOP                                                     88036
+&L       AP    S23SKIPS,=P'&A' ADD TO THE NUMBER OF BLANK LINES TO LEAVE
+                                                                  88036
+         MEND                                                     88036

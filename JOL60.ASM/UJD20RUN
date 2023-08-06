@@ -1,0 +1,659 @@
+UJD20RUN TITLE 'RUN A PROGRAM WITH DYNAMIC ALLOCATION'
+* JOL COPYRIGHT CCS-JOL PTY LTD 1988
+* JOL COPYRIGHT CLEM CLARKE 2010
+* MODIFIED TO CALL D03 WITH A PARAMETER
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+         SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+* LAST SOURCE UPDATE
+*   CHANGES:-
+*     1.
+* MODIFIED TO CALL D03 WITH A PARAMETER                            J60
+         COPY  JOLGLOBL
+         $UJEPARM
+&TYPE    SETC  'SCHED'                                           88036
+         PRINT ON,DATA
+UJECOMM  DSECT
+         USING UJECOMM,R3,R5
+         COPY  UJECOMM
+         EJECT                                                    J40B
+D20WORK  DSECT                                                    J40B
+         DS    18F                                                J40B
+D20WORKS EQU   *-D20WORK                                          J40B
+         EJECT                                                    J40B
+         JOLSAVE CSECT=UJD20RUN,                                       .
+               SIZE=D20WORKS                                      J40B
+         USING INST,R4
+         USING INFMJFCB,R6                                       88036
+         USING RETNAREA,R7                                       88036
+         L     R4,AWINST
+         L     R6,AJFCB                                          88036
+         L     R7,ARETN                                          88036
+* HANDLE RUN STATEMENT
+         MVI   ISRUN,C'1'
+         MVC   RUNNAME,PGM
+         MVC   TASKNAME,PGM
+         MVC   TASKLABL,PGMLABEL
+         MVC   D20PRGN,PGM
+         MVC   D20STEPN,PGMLABEL
+         MVC   D20STMT,STMT
+         PRSPACE 3                        SPACE UP
+* GET THE SSI FOR PRINTING PURPOSES
+         BLDL  0,RUNBLDL
+         B     RUNBLD(R15)
+RUNBLD   B     RUNBLD0
+         B     RUNBLD4
+         B     RUNBLD8
+RUNBLD4  DS    0H
+         MVC   TASKSSI,=X'00000000'         CLEAR THE SSI INFO
+         MVC   D20SSI,=C'00000000'          CLEAR THE SSI INFO
+         B     D20PHD1                      PRINT HEADER
+RUNBLD8  JOLERR 402,'PERMANENT I/O ERR FINDING ',RUNNAME
+D20806   DS    0H
+         B     D20PHD1                      PRINT HEADER
+         SPACE 3
+RUNBLD0  LA    R15,RUNNAME                                        85199
+         USING PDS2,R15                                           85199
+         LA    R9,PDSBCEND+1           END OF BASIC SECTION       85199
+         TM    PDS2FTB1,PDS2SSI        IS THERE AN SSI FIELD?     85199
+         BNO   D20NOSSI                NO, MAKE IT ZEROS          85199
+         TM    PDS2ATR1,PDS2SCTR       SKIP SCATTER FIELD?        85199
+         BNO   D20NSCAT                YES                        85199
+         LA    R9,PDSS01LN(R9)         ADD TO AVOID WRONG FIELD   85199
+D20NSCAT TM    PDS2INDC,PDS2ALIS       ALIAS FIELD?               85199
+         BNO   D20NALIA                YES                        85199
+         LA    R9,PDSS02LN-1(R9)       ADD TO AVOID WRONG FIELD   85199
+D20NALIA MVC   TASKSSI,0(R9)                                      85199
+         B     D20SSSI
+D20NOSSI MVC   TASKSSI,=X'00000000'         CLEAR THE SSI INFO
+D20SSSI  UNPK  CALLAREA(9),TASKSSI(5)
+         TR    CALLAREA(8),HEX
+         MVC   D20SSI,CALLAREA
+D20PHD1  CALL  GETTIME
+         MVC   D20PRGT,CURRTIME
+         PRPUT D20PRGP                                           88036
+         PRSPACE 1                        SPACE UP
+         PRPUT D20HEAD1                                          88036
+* NOW SEE IF A PARM IS USED IN THIS RUN
+*
+* NOW BEFORE XCTL TO THE USER PROGRAM,WE MUST DETERMINE WHETHER
+*     OR NOT THERE ARE ANY DD-CARDS REFERRING TO THIS PROGRAM
+*     OR IF THERE IS A PARM FIELD OR NOT.
+*
+* IF THERE ARE NO DD-CARDS,WE MAY XCTL NOW,OTHERWISE WE
+*     MUST CHECK THAT THIS IS THE CORRECT OS STEP OR NOT
+*          L  R2,TTR$INST      SAVE TTR OF NEXT INSTRUCTION BECAUSE IF
+*                      WE DECIDE NOT TO DO THE USERS PROGRAM HERE WE
+*                      WILL HAVE TO RESET THE TTR SO THE NEXT OS STEP
+*                      THAT IS EXECUTED WILL START AT THE CORRECT STEP
+*        CLC   PGMNODDS,=A(0)    ARE THERE ANY DDCARDS?           75128
+*        BNE   D20AREDD        YES
+         CALL  UJE50RD        READ NEXT STATEMENT
+         LTR   R15,R15        EOF PERHAPS ?
+         BZ    D20TPARM
+* NO DD'S  AND NO PARM,RETURN A 0,SO WE WILL RUN THE PROBLEM PROGRAM.
+         L     R1,AFINSTR      LOAD ADDRESS OF INSTRUCTION FILE  88036
+         $NOTE (1)              SAVE ADDRESS SO THAT 94CLN CAN WORK
+         ST    R1,TTR$INST
+D20RETN0 DS    0H
+D20RETN  DS    0H
+         PRSPACE 1                        SPACE UP
+         OI    AFPRINT,X'80'                                     J60
+         JOLCLOSE MF=(E,AFPRINT)                                 J60
+*        SPEAK 'I JUST CLOSED THE PRINT FILE'                    J60
+*        PRSPACE 1                        SPACE UP
+*        JOLERR 120,'RETURNING FROM RUN'                         J60
+         JOLRETN RC=0
+         SPACE
+D20TPARM DS    0H
+         L     R1,AFINSTR      LOAD ADDRESS OF INSTRUCTION FILE  88036
+         $NOTE (1)           SAVE THIS ADDRESS, TO REPROCESS THE DDS
+         ST    R1,TTR$INST
+         CLC   =C'PARM ',ICOMMAND
+         BNE   D20TDD            NOT PARM, TRY DD
+         MVI   TTR$INST+3,1       CONTINUE WITH THE NEXT RECORD
+* FIX UP USER'S PARM FIELD
+         L     R1,ATASKPRM
+         L     R1,0(,R1)                                          J40B
+         L     R15,ATKNSTRG
+         USING  #TKNSTRG,R15
+         MVC   0(256,R1),#TKNSTRG
+         CLC   =X'00027D7D',0(R1)  FIX FOR BUG IN COMPILER
+         BNE   D20T10
+         XC    0(6,R1),0(R1)
+D20T10   DS    0H
+         DROP  R15
+         SPACE  3
+D20AREDD DS    0H
+* THE USER'S PROGRAM HAS DD-CARDS AND WE MUST DILIGENTLY ALLOCATE THEM
+         SPACE
+D20READD DS    0H
+         CALL  UJE50RD
+         LTR   R15,R15
+         BNZ   D20RETN0
+D20TDD   DS    0H           TEST FOR DD
+         CLI   DDDD1,C'D'
+         BNE   D20NOTDD
+         CLC   =C'$$VR',DDDDNAME IF IT'S A VOLREF TYPE OF DD      J40B
+         BE    D20READD             TREAT IT WITH CONTEMPT        J40B
+*        CLC   =C'**$$',DDVOLUME IF IT'S A VOLREF TYPE OF DD      J40B
+*        BE    D20READD             TREAT IT WITH CONTEMPT        J40B
+         CALL  GETTIME
+         MVC   D20DDNT,CURRTIME
+* IF NEW PASS, ALLOCATE WITHOUT A DDNAME SO WE CAN KEEP/PASS IT
+         MVC   D20WDSN,BLANKS              BLANK THE DSNAME WORK AREA
+         MVC   D20WVOL,BLANKS              BLANK THE VOLUME WORK AREA
+         MVC   ERETVOL,BLANKS                                    88036
+         XC    #ERETVOL,#ERETVOL                                 88036
+         TM    DDUSE,B'11000000'    NEW OR MOD?
+         BZ    D20NAL22             NO, SO SKIP THIS
+         CLI   DDDISP+1,C'P'        PASS ?
+         BNE   D20NAL2X
+*        BNE   D20NAL22
+         MVC   D20TDDN,DDDDNAME      SAVE FOR NEW DATA SETS
+         MVC   D20RDISP,DDDISP      SAVE JOL'S DISP(1) FIELD
+         TM    DDUNITYP,X'80'  TAPE?                             88036
+         BZ    D20DD20         YES                               88036
+         MVC   DDDDNAME,=CL8' '     BLANK DDNAME SO WE GET A SYSNNN
+         DBGMSG 1001,' DOING FIRST ONE '
+D20GO    DS    0H
+        $CALL  UJD21ALL,DDDSNDET    ALLOCATE THE DD AS NEW        J60
+         DBGMSG 1002,' FIRST ONE DONE'                           88036
+         DBGMSG 199,'I THINK IT''S ON ',ERETVOL                  88036
+         NI    DDUSE,B'00111111'   SET TO OLD FOR 2ND ALLOCATE
+*        MVI   DDDISP+1,C'D'                                      J40B
+*        MVI   DDDISP+2,C'D'                                      J40B
+         AIF   (NOT &X8).NX8010                                   J40B
+         MVC   DDVOLUME(6),ERETVOL                               88036
+         CLI   ERETVOL,C' '                                       J40B
+         BNE   D20DD20                                            J40B
+*        FINDDD ERETDDN,NRETURN=D20DD10                           J40B
+*        JOLERR 501,'INTERNAL ERROR LOCATING TIOT ENTRY FOR NEW TAPE', .
+               DDDSID,' ',DDDSNAME                                J40B
+*20DD10  DS    0H                                                 J40B
+*        SLR   R15,R15                                            J40B
+*        ICM   R15,7,X'011'(R1)  ADDRESS UCB                      J40B
+*        MVC   DDVOLUME(06),X'01C'(R15)                           J40B
+.NX8010  ANOP                                                     J40B
+         MVI   DDVOLUME,C' '                                      J40B
+         MVC   DDDDNAME,ERETDDN                                   J40B
+         CALL  UJD49VOL             READS JBCB'S, GETS VOLUMES ETC
+D20DD20  DS    0H                                                 J40B
+         AIF   (NOT &X8).NX8020                                   J40B
+         AGO   .NX8020                                            J40B
+         NI    DDUSE,B'00111111'   SET TO OLD FOR 2ND ALLOCATE
+         TM    DDUNITYP,X'80'  TAPE?                             88036
+         BO    D20BYP          NO                                88036
+*        MVC   DDUNIT,=CL8'SAME'                                 88036
+*        MVC   DDUNIT,=CL8'M0'                                   88036
+*        DYNPARM DDNAME=(8,#ERETDDN),VRB=UN,UNALLOC=REMOVE.IN.USE      .
+               DEBUG=YES                                         88036
+         DYNPARM DDNAME=(8,#ERETDDN),VRB=UN, NALLOC=YES VE.IN.USE      .
+               DISP=DELETE                                        J40B .
+               DEBUG=YES                                         88036
+D20BYP   DS    0H                                                88036
+.NX8020  ANOP                                                     J40B
+         MVC   DDDDNAME,D20TDDN     RESTORE DDNAME
+         FIX   'IF THIS DOESN''T WORK, TRY SKIPPING SECOND ALLOC' 8036
+        $CALL  UJD21ALL,DDDSNDET    ALLOCATE THE DD AS OLD        J60
+*        CALL  UJD03DS1,DDDSNDET
+         DBGMSG 1003,' SECOND ONE DONE'                          88036
+         MVC   DDDISP,D20RDISP      RESTORE JOL'S DISP FIELD
+         MVI   DDDISP+1,C'P'        RESTORE JOL'S DISP FIELD
+         TM    DDUSE,B'01000000'        NEW?
+         BO    D20JNEWD                    YES
+         OI    JFCBIND2,B'10000000' NO, MUST BE MOD - SET FOR PRINTING
+         B     D20PDDDN             GO PRINT DDNAME ETC
+D20JNEWD MVI   JFCBIND2,B'11000000'      SET TO NEW FOR PRINTING
+         B     D20PDDDN             GO PRINT DDNAME ETC
+D20NAL2X DS    0H
+         DBGMSG 1004,' IT IS NOT A PASSED DATASET'
+D20NAL22 DS    0H
+         DBGMSG 1005,DDDSNAME,                                         .
+               ' IS AN OLD OR PASSED D/S ON ',DDVOLUME
+        $CALL  UJD21ALL,DDDSNDET    ALLOCATE THE DD               J60
+         DBGMSG 1006,' GETTING VOLUME INFO FOR ',DDDSNAME
+         CALL  UJD49VOL             READS JBCB'S, GETS VOLUMES ETC
+         DBGMSG 1007,' GOT VOLUME INFO '
+         CLC   DDDDNAME,BLANKS      CONCATENATED?
+*        BNE   D20GVOL
+         BNE   D20PDDDN
+         MVC   DDNAME,SAVEDD
+         MVC   #DDNAME,=H'8'
+         LA    R1,DYNCONC
+         $SVC99
+*
+*  CHECK TO SEE IF ERRORS OCCURED.
+*
+         LTR   R15,R15
+         BNZ   D20ERR                RETURN CODE ZERO
+         L     R0,CONCERR            TEST ERR AND INFO CODE
+         LTR   R0,R0                 ERROR ?
+*        BZ    D20GVOL
+         BZ    D20PDDDN
+D20ERR   DS    0H
+         L     R1,DYNCONC
+         LR    R0,R15          R15
+         $CALL UJD03ERR        RECORD AN ERROR DURING CONCATENATION
+         DBGMSG 1010,' I HAD A PROBLEM CONCATENATING IT'
+* D20GVOL  DS    0H
+*        DBGMSG 1008,' GOT VOLUME INFO FOR '
+*        CALL  UJD49VOL             READS JBCB'S, GETS VOLUMES ETC
+*        DBGMSG 1009,' GOT VOLUME INFO FOR '
+D20PDDDN DS    0H
+         MVC   D20DDAL+9(D20ALSZ),D20DDAL+8 CLEAR THE PRINT LINE  J40B
+         MVC   D20DDN,DDDDNAME      SAVE FOR NEW DATA SETS
+         MVC   D20SECLP,D20SECLP-1                                J40B
+         MVC   D20DSID,DDDSID
+         CLI   DDTYPE,DDWORKDS
+         BNL   D20ISDSN
+* HERE, IT IS A PRINTER OR SPECIAL FILE
+         CLI   DDTYPE,DDSYSIN
+         BE    D20SYSIN
+* HERE, IT IS A PRINTER OR PUNCH FILE
+*                                                                 J50
+*        CLI   DDTYPE,DDSYSOUT                                    J50
+*        BE    D20SYSOU                                           J50
+* HERE, IT IS A PUNCH FILE                                        J50
+*        MVC   D20DSN(11),=C'PUNCH FILE='                         J50
+*        MVC   D20DSN+11(1),DDDSNAME                              J50
+*        B     D20DODCB                                           J50
+D20SYSOU MVC   D20DSN(7),=C'SYSOUT='
+         MVC   D20DSN+7(1),DDDSNAME
+         B     D20DODCB
+D20SYSIN MVC   D20DSN(16),=C'CARD IMAGE FILE='
+         MVC   D20DSN+16(8),DDDSNAME
+         B     D20DODCB
+D20ISDSN DS    0H
+* AFTER ALLOCATION, DDDSNAME MAY HAVE THE (GDG) NUMBER.
+* SET UP PROPER LENGTH DSNAME FOR MESSAGES NOW, AFTER ALLOC.
+         MVC   DSNAME,DDDSNAME
+         LA    R15,L'DDDSNAME-1
+D20TEDSN DS    0H
+         LA    R14,DDDSNAME(R15)
+         CLI   0(R14),C' '
+         BNE   D20DSNOK
+         BCT   R15,D20TEDSN
+D20DSNOK DS    0H
+         LA    R15,1(R15)
+         STH   R15,#DSN
+         MVC   D20WDSN,BLANKS              BLANK THE DSNAME WORK AREA
+         LA    R15,1(R15)                  PREPARE TO EXECUTE MVC
+         EX    R15,D20DSMVC                SHIFT IT.
+         B     D20TGDG
+D20DSMVC MVC   #D20WDSN(*-*),#DSNAME       COPY FIXED DSNAME
+D20TGDG  CLI   DDMBR,C'('                  GDG ?
+         BE    D20GDG1                     YES, FIND GEN NUMBER
+         CLI   DDMBR,C'+'                  GDG ?
+         BE    D20GDG1                     YES, FIND GEN NUMBER
+         CLI   DDMBR,C' '                  NO MEMBER, NO GDG ?
+         BE    D20IGNRX                    YES, SO LEAVE IT.
+         B     D20PMBR                     ELSE PRINT MEMBER NAME.
+D20GDG1  DS    0H
+* HERE WE HAVE A GENERATION DSNAME TO PRINT.
+*
+* TO SAVE PAPER ETC, SET UP DSNAME LIKE THIS :-
+*   PAYROLL.MASTER(0):-G0045V00
+*
+         LH    R15,#D20WDSN                GET LENGTH
+         LA    R14,D20WDSN(R15)            POINT TO END
+         LA    R15,10(R15)                 RESET LENGTH ** NOW **
+         STH   R15,#D20WDSN                  SO WE HAVE A FREE REGISTER
+         LH    R15,#ERETDSN                GET LENGTH OF SVC 99 DSN
+         LA    R15,ERETDSN-8(R15)          POINT TO G0000V00 NUMBER
+         MVC   1(2,R14),=C':-'             SET UP SEPERATOR
+         MVC   3(8,R14),0(R15)             SHIFT IN G0000V00
+         B     D20PDSN                     GO PRINT THE DSNAME NOW
+         SPACE 3
+D20PMBR  DS    0H
+* HERE WE HAVE A MEMBER NAME TO ADD TO THE DSNAME FOR PRINTING
+         MVC   #D20WDSN(46),#DSNAME        COPY RETURNED DSNAME
+         LH    R15,#D20WDSN                GET ITS LENGTH
+         LA    R14,D20WDSN-0(R15)          POINT TO END OF DSN
+         MVI   0(R14),C'('                 MEMBER START IND
+         MVC   1(8,R14),DDMBR              COPY IN MEMBER NAME
+         LA    R14,9(R14)                  POINT TO LAST CHAR MBR
+D20FENDM CLI   0(R14),C' '                 BLANK ?
+         BNE   D20ENDMB                    END OF MEMBER
+         SH    R14,=H'1'
+         B     D20FENDM                    FIND MEMBER END
+D20ENDMB DS    0H                          GOT IT
+         MVI   1(R14),C')'                 SHIFT IN ')'
+         LA    R15,D20WDSN                 CALCULATE LENGTH
+         SR    R14,R15                     GOT IT
+         STH   R14,#D20WDSN                SET LENGTH IN WORK DSN
+D20IGNRX DS    0H
+D20PDSN  DS    0H                          PRINT THE DSNAME NOW
+         MVC   D20DSN,D20WDSN              SHIFT FIRST 30 CHARACTERS
+* PRINT DISP FIELDS
+D20PDISP DS    0H
+*        MVC   D20DISP1(8),=CL8' '                                J50
+         TM    JFCBIND2,B'11000000'        NEW?
+         BO    D20NEWDS                    YES
+         TM    JFCBIND2,B'01001000'        SHR?
+         BO    D20SHRDS                    YES
+         TM    JFCBIND2,B'01000000'        OLD?
+         BO    D20OLDDS                    YES
+         TM    JFCBIND2,B'10000000'        MOD?
+         BO    D20MODDS                    YES
+         B     D20TREST                    TEST DISP(2)
+D20NEWDS MVC   D20DISP1,=C'NEW'
+         B     D20TREST                    TEST DISP(2)
+D20SHRDS MVC   D20DISP1,=C'SHR'
+         B     D20TREST                    TEST DISP(2)
+D20OLDDS MVC   D20DISP1,=C'OLD'
+         B     D20TREST                    TEST DISP(2)
+D20MODDS MVC   D20DISP1,=C'MOD'
+* DISP(2) FIELDS
+D20TREST DS    0H           TEST DISP(2)
+         CLI   DDDISP+1,C'P'               PASS ?
+         BNE   D20TLAST
+         MVC   D20DISP2,=C',PASS   '
+         B     D20TUNIT
+D20TLAST CLI   DDDISP+1,C'L'               LAST ?
+         BNE   D20TDEL
+         MVC   D20DISP2,=C',LAST   '
+         B     D20TUNIT
+D20TDEL  CLI   DDDISP+1,C'D'               DELETE ?
+         BNE   D20TOTHR
+         MVC   D20DISP2,=C',DELETE '
+         B     D20TUNIT
+D20TOTHR CLI   DDDISP+1,C' '               BLANK ?
+         BE    D20TUNIT                    YES
+         MVI   D20DISP2,C','
+         MVC   D20DISP2+1(1),DDDISP+1      ?????? COPY ANYWAY
+D20TUNIT MVC   D20UNIT,DDUNIT
+*        MVC   D20LABL,=CL8' '             BLANK IT
+         LH    R1,DDLABEL
+         LTR   R1,R1                                              J50
+         BZ    D20FSPC                                            J50
+         MVC   D20PRIM,=C'FILE='                                  J50
+         CVD   R1,DBL
+         ZAP   TEMP,DBL
+         MVC   D20LABL,=X'40202020202020'
+         ED    D20LABL,TEMP
+D20FSPC  DS    0H                                                 J50
+         CLC   DDOSVB,=AL2(DDCATLGS-DDOSVB+2)  SHORT RECORD ?
+         BNH   D20NSPC                         YES, SO NO SPACE
+         IFNULL DDPRIM,DDSEC,DDDIRECT,D20NSPC  NO SPACE
+         MVC   D20PRIM,=X'40202020202020'
+         MVC   D20SEC,=X'40202020202020'
+         MVC   D20DIR,=X'40202020202020'
+         LH    R1,DDPRIM
+         CVD   R1,DBL
+         ZAP   TEMP2,DBL
+         ED    D20PRIM,TEMP2
+         LH    R1,DDSEC
+         CVD   R1,DBL
+         ZAP   TEMP2,DBL
+         ED    D20SEC,TEMP2
+         LTR   R1,R1
+         BZ    D20NSPC1               E20-NO-SPACE-COMMA-1 !!!
+         MVI   D20SEC,C','            PUT COMMA IN 1ST BYTE OF FIELD
+D20NSPC1 LH    R1,DDDIRECT
+         CVD   R1,DBL
+         ZAP   TEMP2,DBL
+         ED    D20DIR,TEMP2
+         LTR   R1,R1
+         BZ    D20NSPC2               E20-NO-SPACE-COMMA-2 !!!
+         MVI   D20DIR,C','            PUT COMMA IN 1ST BYTE OF FIELD
+D20NSPC2 EQU   *
+         CLI   DDCYLTRK,C' '          NONE SPECIFIED (BLANK)
+         BE    D20ESPCC
+         CLI   DDCYLTRK,C'C'           CYLS ?
+         BNE   D20TTRK
+         MVC   D20SPC,=CL3'CYL'
+         B     D20ESPCC              END SPACE
+D20TTRK  CLI   DDCYLTRK,C'T'             NONE SPECIFIED (NODCB)
+         BNE   D20TBLK
+         MVC   D20SPC,=CL3'TRK'
+         B     D20ESPCC              END SPACE
+D20TBLK  CLI   DDCYLTRK,C'B'           BLKS?
+         BNE   D20TABS
+         MVC   D20SPC,=CL3'BLK'
+         B     D20ESPCC              END SPACE
+D20TABS  CLI   DDCYLTRK,C'A'           ABSTR?
+         BNE   D20OTHR4
+         MVC   D20SPC,=CL3'ABS'
+         B     D20ESPCC              END SPACE
+D20OTHR4 MVC   D20SPC(1),DDCYLTRK
+D20NSPC  DS    0H
+D20FVOL  MVC   D20VOLS,DDVOLUME
+         MVC   D20VOLS2,DDVOLUME+L'D20VOLS                        J50
+* THE FOLLOWING CODE PUTS 'VOLNAME(1,SL)' IF IT IS A TAPE.
+         CLC   JFCBFLSQ,=H'0' TEST IF TAPE                        87150
+         BE    D20DISK        NO, DON'T PUT OUT ON LABEL.         87150
+*        TM    DDUNITYP,X'80' TEST IF TAPE                        87150
+*        BO    D20DISK        NO, DON'T PUT OUT ON LABEL.         87150
+* HERE IS A TAPE VOLUME.                                          87150
+         MVC   D20WLBL,=X'40202020202020'
+         LH    R1,JFCBFLSQ     GET LABEL NUMBER
+         CVD   R1,DBL
+         ZAP   TEMP2,DBL
+         ED    D20WLBL(5),TEMP2
+         LA    R1,5
+D20FCHK1 CLI   D20WLBL,C' '    DROP STARTING BLANKS
+         BNE   D20EFILE
+         MVC   D20WLBL(5),D20WLBL+1 DROP LEADING BLANK
+         BCT   R1,D20FCHK1
+D20EFILE DS    0H
+         STH   R1,#D20WLBL     SET LENGTH OF STRING
+         LA    R15,D20WLBL(R1) POINT TO END OF STRING
+         NI    JFCBLTYP,X'7F'  DROP HIGH BIT
+         CLI   JFCBLTYP,JFCBAL AL ?
+         BNE   TJFCBLTM        TEST LTM
+         MVC   0(3,R15),=C',AL'
+         LA    R1,3(R1)
+         B     D20COPYV        COPY VOL INFO IN
+TJFCBLTM CLI   JFCBLTYP,JFCBLTM LTM ?
+         BNE   TJFCBBLP        TEST BLP
+         MVC   0(4,R15),=C',LTM'
+         LA    R1,4(R1)
+         B     D20COPYV        COPY VOL INFO IN
+TJFCBBLP CLI   JFCBLTYP,JFCBLP BLP ?
+         BNE   TJFCBSUL        TEST AUL
+         MVC   0(4,R15),=C',BLP'
+         LA    R1,4(R1)
+         B     D20COPYV        COPY VOL INFO IN
+TJFCBAUL CLI   JFCBLTYP,JFCBLP AUL ?
+         FIX   '?????????????? ?????????'
+         BNE   TJFCBSUL        TEST SUL
+         MVC   0(4,R15),=C',AUL'
+         LA    R1,4(R1)
+         B     D20COPYV        COPY VOL INFO IN
+TJFCBSUL CLI   JFCBLTYP,JFCSUL SUL ?
+         BNE   TJFCBNSL        TEST NSL
+         MVC   0(4,R15),=C',SUL'
+         LA    R1,4(R1)
+         B     D20COPYV        COPY VOL INFO IN
+TJFCBNSL CLI   JFCBLTYP,JFCNSL NSL ?
+         BNE   TJFCBSL         TEST SL
+         MVC   0(4,R15),=C',NSL'
+         LA    R1,4(R1)
+         B     D20COPYV        COPY VOL INFO IN
+TJFCBSL  CLI   JFCBLTYP,JFCSL  SL ?
+         BNE   TJFCBNL         TEST NL
+         MVC   0(3,R15),=C',SL'
+         LA    R1,4(R1)
+         B     D20COPYV        COPY VOL INFO IN
+TJFCBNL  CLI   JFCBLTYP,JFCNL  NL ?
+         BNE   TJFCBXX         TEST ???
+         MVC   0(3,R15),=C',NL'
+         LA    R1,4(R1)
+TJFCBXX  DS    0H
+D20COPYV DS    0H              COPY VOL INFO IN
+         STH   R1,#D20WLBL     RESET LENGTH OF STRING
+         MVC   D20WVOL(6),VOL   SHIFT TO PRINT LOCATION
+         MVI   D20WVOL+6,C'('  OPEN COMMENT FOR LABEL NUMBERS
+         MVC   D20WVOL(8),D20WLBL MOVE '1,SL'
+         LA    R15,D20WVOL(R1) GET END ADDRESS
+         MVI   0(R15),C')'     CLOSE COMMENT
+         B     D20ENDLB        FINISHED THAT BIT
+* FIX LATER
+* #VOLS CONTAINS LENGTH OF VOL STRING (CHANGE LATER?)
+D20DISK  CLC   #VOL,=H'6'         ONE OR MORE VOLS?
+         BH    D20NOSL            MORE, IGNORE FOR NOW
+         MVC   #D20WVOL(8),#VOL   SHIFT TO WORK LOCATION
+         LH    R15,#D20WVOL       GET THE LENGTH
+         B     D20NOSL            STORE VOLUMES
+D20ENDLB DS    0H
+D20NOSL  DS    0H
+D20ESPCC DS    0H
+D20DODCB DS    0H
+* DO RECORD FORMAT FIELD
+         MVI   D20COMA1,C' '            BLANK COMMA FIELD
+         CLC   DDOSVB,=AL2(DDCATLGS-DDOSVB+2)  SHORT RECORD ?
+         BNH   D20NODCB
+         IFNULL DDLRECL,DDBLKSZE,D20NODCB
+         LH    R1,DDBLKSZE
+         CVD   R1,DBL
+         MVC   D20BLKS,=X'40202020202020'
+         ZAP   TEMP,DBL
+         ED    D20BLKS,TEMP
+         MVI   D20COMA1,C','            PUT COMMA IN FIELD
+         LH    R1,DDLRECL
+         CVD   R1,DBL
+         MVC   D20LREC,=X'40202020202020'
+         ZAP   TEMP,DBL
+         ED    D20LREC,TEMP
+         CLC   DDRECFM,=CL5' '          NONE SPECIFIED (BLANK)
+         BE    D20NRECF
+         CLI   DDRECFM,C'%'             NONE SPECIFIED (NODCB)
+         BNE   D20RECFM
+D20NRECF MVC   D20DCB,=CL4'NONE'
+         B     D20REFDN
+D20RECFM MVC   D20DCB,DDRECFM
+D20REFDN DS    0H
+D20NODCB DS    0H
+         OC    D20UNIT,=CL8' '   THERE'S A BUG SOMEWHERE          J40B
+         PRPUT D20DDAL                                           88036
+* THE DSNAME FIELD CAN HOLD A MAXIMUM OF 30 CHARACTERS, SO WE MUST
+*     PRINT THE SECOND PART IF IT IS LONGER.
+         MVC   D20DSN2,D20WDSN+L'D20DSN   SHIFT SECOND PART OF DSN
+         CLC   D20DSN2,BLANKS             IS THERE MORE TO PRINT ?
+         BNE   D20CONT                    MUST WRITE SECOND LINE
+*        CLC   #D20WDSN,=AL2(L'D20DSN)     CHECK IF IT WILL FIT
+*        BH    D20CONT                    MUST WRITE SECOND LINE
+         B     D20READD                   GO FOR MORE
+D20CONT  DS    0H                         CONTINUE ALLOC MSSGE
+         PRPUT D20SECL                                           88036
+         B     D20READD                   GO FOR MORE
+*        MVC   #D20WDSN(L'D20WDSN+2),#ERETDSN  COPY RETURNED DSNAME
+D20NOTDD DS    0H
+         L     R1,AFINSTR      LOAD ADDRESS OF INSTRUCTION FILE  88036
+         $POINT (1),TTR$INST
+         B     D20RETN0        TO RUN THE PROGRAM
+         SPACE 3
+#D20WDSN DC    H'0'                       WORK AREA FOR DSNAMES
+D20WDSN  DC    CL54' '                    (DSN=44 + MEMBER=10 (XXXXXX))
+D20WDSNX DC    CL10' '                    *** DON'T MOVE THIS ***
+         SPACE
+#D20WVOL DC    H'0'                       WORK AREA FOR VOLUMES
+D20WVOL  DC    CL20' '                    (1 LINE AT A TIME)
+         SPACE
+#D20WLBL DC    H'0'                       WORK AREA FOR FILENOS
+D20WLBL  DC    CL10' '
+         SPACE
+#D20TDDN DC    H'8'
+D20TDDN  DC    CL8' '
+D20RDISP DC    XL1'0'                  SAVE DISP HERE FOR NEW
+TEMP     DS    PL3
+TEMP2    DS    PL2
+         SPACE 3
+* THE FOLLOWING LINES ARE USED TO PRINT OUT ALLOCATION MESSAGES
+*     FOR THE DYNAMIC ALLOCATION VERSION OF JOL.
+D20PRGP  DC    AL2(D20END1-*,0)
+         DC    AL2(D20END1-*,0),C' '
+D20PRGT  DC    CL8' '                  TIME GOES HERE
+         DC    C' ALLOCATION FOR INSTRUCTION NUMBER '
+D20STMT  DC    CL4' '
+         DC    C' STEP '
+D20STEPN DC    CL8' '
+         DC    C' PROGRAM '
+D20PRGN  DC    CL8' '
+         DC    C' SSI '
+D20SSI   DC    CL8' '
+D20END1  DS    0H
+          SPACE
+D20HEAD1 DC    AL2(D20END2-*,0)
+         DC    AL2(D20END2-*,0),C' '
+         DC    C'         --DSID--'
+         DC    C' -DDNAME- '
+         DC    C'------------DSNAME------------ '
+         DC    CL4' '                                            88036
+         DC    C'---DISP--- ------DCB------ '
+*        DC    C'--UNIT-- ---VOLUMES-------SPACE----'
+         DC    C'--UNIT-- ---VOLS ----SPACE----'
+D20END2  DS    0H
+         SPACE
+D20DDAL  DC    AL2(D20END3-*,0)
+         DC    AL2(D20END3-*,0),C' '
+D20DDNT  DC    CL8' '                  TIME GOES HERE
+         DC    C' '
+D20DSID  DC    CL8' '       DSID
+         DC    C' '
+D20DDN   DC    CL8' '       DDNAME
+         DC    C' '
+D20DSN   DC    CL34' '      DSNAME AND MEMBER MAYBE
+         DC    C' '
+D20DISP1 DC    CL3' '       DISPOSITION
+D20DISP2 DC    CL7' '       DISPOSITION
+         DC    C' '
+D20DCB   DC    CL4' '       DCB
+         ORG   *-1          FOR EDIT INSTRUCTION
+D20LREC  DC    CL6' '       LRECL
+D20COMA1 DS    0C
+D20BLKS  DC    CL6' '       BLOCKSIZE
+         DC    C' '
+D20UNIT  DC    CL8' '       UNIT
+         DC    C' '
+*20VOLS  DC    CL13' '      VOLUME INFORMATION (MAY BE CONTINUED)
+D20VOLS  DC    CL07' '      VOLUME INFORMATION (MAY BE CONTINUED)
+D20PRIM  DC    CL5' '       PRIMARY ALLOCATION
+D20LABL  DC    0CL5' '       LABEL NUMBER
+D20SEC   DC    CL5' '       SECONDAY ALLOCATION
+D20DIR   DC    CL5' '       DIRECTORY ALLOCATION
+D20SPC   DC    CL3' '       CYL, TRK
+D20END3  EQU   *
+D20ALSZ  EQU   *-D20DDAL-9                                        J40B
+         SPACE 3
+* FOR SECOND AND SUBSEQUENT LINES OF DSNAME AND VOLUMES.
+D20SECL  DC    AL2(D20END4-*,0)
+         DC    AL2(D20END4-*,0),C' '
+D20SECLP DC    CL100' '
+         ORG   D20SECL+(D20DSN-D20DDAL)
+D20DSN2  DC    CL24' '      DSNAME AND MEMBER MAYBE(54-30)
+         DC    C' '
+         ORG   D20SECL+(D20VOLS-D20DDAL)
+D20VOLS2 DC    CL13' '      VOLUME INFORMATION (CONTINUED)
+D20END4  EQU   *
+         ORG
+         DROP  R4,R6,R7                                          88036
+         SPACE
+         DC    40S(*)
+         LTORG
+         AIF   (&X8).X8140                                       88036
+         IHAPDS
+.X8140   ANOP                                                    88036
+         DS    0D
+         AIF  (NOT &X8).NOX8MAC
+         TITLE 'PDS DIRECTORY ENTRY'
+         KAAPDS
+.NOX8MAC ANOP
+         END

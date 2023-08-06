@@ -1,0 +1,34 @@
+         MACRO
+&L       X8JFCB &LIST=YES,&DSECT=YES
+         AIF   ('&DSECT' EQ 'YES').ND
+&L       DSECT
+.ND      ANOP
+INFMJFCB DS    0D
+JFCBDSNM DS    CL44            DATASET NAME
+JFCBELNM DS    CL8             MEMBER NAME
+         DS    4X
+JFCFCBID DS    CL6
+         DS    4X
+JFCBLTYP DS    B
+         DS    B
+JFCBFLSQ DS    H
+JFCBVLSQ DS    H
+         DS    17X
+JFCBIND2 DS    B
+JFCBUFNO DS    HL1
+JFCBFALN DS    B
+         DS    2X
+JFCEROPT DS    B
+JFCMODE  DS    B
+         DS    X
+JFCLIMCT DS    FL3
+JFCDSORG DS    BL2
+JFCRECFM DS    B
+         DS    X
+JFCBLKSI DS    H
+JFCLRECL DS    H
+JFCNCP   DS    HL1
+         DS    11X
+JFCBVOLS DS    6CL6
+         DS    (176+JFCBVOLS-INFMJFCB)X
+         MEND

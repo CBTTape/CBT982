@@ -1,0 +1,8 @@
+         MACRO
+&NAME    GENRETN &RC=0
+&NAME    L     R13,4(R13)     RESET SAVE ADDRESS
+         AIF   ('&SYSLIST(1)' EQ '').R1412
+         RETURN &SYSLIST(1),T,RC=&RC
+         MEXIT
+.R1412   RETURN (14,12),T,RC=&RC
+         MEND

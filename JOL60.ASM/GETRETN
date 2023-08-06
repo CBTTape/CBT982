@@ -1,0 +1,29 @@
+         LA    R0,READAREA
+         L     R1,=A(L'READAREA)
+         SLR   R15,R15        ZEROES TO ALL THE AREA
+         MVCL  R0,R14
+         MVI     COND,C' ' CLEAR COND TO BLANKS                    DASD
+         MVC     COND+1(L'COND-1),COND                             DASD
+         WRITE E98DEC9,SF,RETN,READAREA,'S'
+         CHECK E98DEC9
+         NOTE RETN
+         ST    R1,TTR$RETN
+         STOW RETN,STOWBLK,A
+         LTR   R15,R15
+         BZ    E98RDJCT
+         JOLERR 502
+         FIX ' THAT WAS JOLERR 503'                              88036
+E98GOTMB DS    0H
+* WE HAVE NOW FOUND THE $$RETN MEMBER OF THE DATA SET
+         LH R2,INSTRUCT+X'3E'
+         MVC   INSTRUCT+X'3E',=Y(&RETNSIZ)                         DASD
+         READ E98DECBX,SF,INSTRUCT,RETNAREA
+         CHECK E98DECBX
+         STH   R2,INSTRUCT+X'3E'
+         NOTE INSTRUCT
+         ST    R1,TTR$RETN     FOR REWRITING
+* FIND OUT HOW MUCH DATA WE READ (ALSO USED FOR REWRITING)
+         L  R1,E98DECBX+16     IOB ADDRESS
+         LH R14,INSTRUCT+X'3E'  BLOCKSIZE
+         SH R14,14(R1)  MINUS RESIDUAL COUNT
+         STH   R14,RETNBLKS    LENGTH OF RETN BLOCK

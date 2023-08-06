@@ -1,0 +1,22 @@
+TOTAPE:MACRO(%PDS);
+ Declare %LabelNo Init(0) EXT;
+ Declare %TAPE Init('TAPE') EXT;
+ Declare Source DS %LIST(1);
+ /*Texist Source;
+ if %Lastcc = 0 then
+   do;*/
+     %LabelNo=%LabelNo+1;
+     IF %LabelNo = 1 THEN
+       DO;
+          Declare THE_TAPE DS %LIST(2) NODCB UNIT %TAPE EXT;
+          LIBETAP %LIST(1) TO THE_TAPE BACKUP %PDS;
+       END;
+       ELSE
+       DO;
+          Declare THE_REST DS %LIST(2) NODEF UNIT TAPE
+              VOLREF THE_TAPE LABEL %LabelNo;
+          LIBETAP Source TO THE_REST BACKUP %PDS;
+       END;
+/*   end;
+  else write 'Dataset %List(1) doesn''t exist|';*/
+END;

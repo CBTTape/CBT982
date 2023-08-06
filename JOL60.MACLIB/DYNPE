@@ -1,0 +1,25 @@
+         MACRO
+         DYNPE &VOL,&TOT,&TEST=
+.*  PRE-PROCESSOR FOR VOL AND LABEL
+         GBLA  &II
+         GBLC  &PDCB(40),&PS,&PP
+         LCLA  &J,&I
+         LCLC  &C
+&II      SETA  0
+.V2      ANOP
+&I       SETA  &I+1
+         AIF   ('&VOL(&I)'EQ'').V5
+&C       SETC  '&VOL(&I)'(1,K'&TEST(1))
+         AIF   ('&C'NE'&TEST(1)').V3
+&II      SETA  2
+         AGO   .V4
+.V3      AIF   ('&C'NE'&TEST(2)').V5
+&II      SETA  1
+.V4      ANOP
+&PS      SETC  '&VOL(&I)'(K'&TEST(1)+1,K'&VOL(&I)-K'&TEST(1)).',,,'
+         AGO   .V6
+.V5      ANOP
+&J       SETA  &J+1
+&PDCB(&J) SETC '&VOL(&I)'
+.V6      AIF   (&I LE &TOT).V2
+         MEND

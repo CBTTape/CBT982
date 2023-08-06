@@ -1,0 +1,284 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>BUILDGDG</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>BUILDGDG</u></font><font size="5"><u><span
+ style="font-weight: normal;"> </span></u></font><u>- </u><font
+ size="5"><i><u><span style="font-weight: normal;">Execute Command</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">BUILDGDG</span> command creates an index in
+the Catalog for Generation data sets.&nbsp; Options specify how many
+data sets are to be retained, and the action to be taken to data sets
+when the specified maximum have been cataloged.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; <br>
+      </b></p>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">{BUILDG
+|
+BUILDGDG
+| BUILDG }</span><br>
+      </div>
+      <br>
+      <div style="margin-left: 80px;">&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;<span style="font-style: italic;">index
+[,index....] options;</span><br>
+      </div>
+      <br>
+      <div style="margin-left: 80px;">
+      <table style="text-align: left; width: 482px; height: 360px;"
+ border="1" cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top; text-align: center;"><span
+ style="font-weight: bold;">Options</span><br>
+            </td>
+            <td style="vertical-align: top; text-align: center;"><span
+ style="font-weight: bold;">Defaults</span><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">&nbsp;&nbsp;&nbsp; CVOL</span>&nbsp; &nbsp;
+= <span style="font-style: italic;">cvol&nbsp;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+            <br>
+            </td>
+            <td style="vertical-align: top;">-<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">&nbsp;&nbsp;&nbsp; UNIT&nbsp;</span>
+&nbsp;&nbsp;&nbsp; = <span style="font-style: italic;">unit&nbsp;&nbsp;</span>&nbsp;&nbsp;&nbsp;
+
+
+            <br>
+            </td>
+            <td style="vertical-align: top;">-<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">&nbsp;&nbsp;&nbsp; DELETE</span><br
+ style="font-weight: bold;">
+            <span style="font-weight: bold;">&nbsp; &nbsp; NODELETE</span><br>
+            <br>
+            </td>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">DELETE</span><br>
+            <br>
+            <br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">&nbsp;&nbsp;&nbsp; EMPTY</span><br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">&nbsp;&nbsp;&nbsp; ENTRIES &nbsp; |&nbsp;
+MAXDS</span><br>
+&nbsp;&nbsp;&nbsp; maximum number of datasets in the group<br>
+            <br>
+            </td>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">3</span><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">&nbsp;&nbsp;&nbsp; OWNER</span><br>
+            </td>
+            <td style="vertical-align: top;">-<br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div style="margin-left: 80px;">
+      <div style="margin-left: 80px;"><br>
+      <br>
+      </div>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <span
+ style="font-weight: bold; font-style: italic;"><br>
+Generation Data Sets</span><br>
+      </td>
+      <td align="left" valign="top">
+      <p><br>
+A Generation data set is one of a collection of successive,
+historically related, cataloged data sets known as a generation data
+group.<br>
+      <br>
+Whenever a new data set belonging to the group is created and
+cataloged, its name, volume, unit and position (if on a tape) is
+appended to the list of existing data sets in that group.<br>
+      <br>
+Thus, the data sets are kept in a chronological order.&nbsp; Each data
+set may be retrieved individually, or altogether as a group.<br>
+      <br>
+Before any generation data sets may be cataloged, a special index must
+be built in the catalog.&nbsp; This index tells the system the maximum
+number of data sets allowed in the group and what is to happen to
+existing data sets if the maximum number of data sets specified is
+exceeded.<br>
+      <br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+        <li><span style="font-weight: normal;">Jol and/or the Operating
+System automatically builds and deletes indexes for Non-generation data
+sets, but before any Generation Data Sets can be cataloged, an index
+must be built.</span></li>
+        <li><span style="font-weight: normal;">Up to five (5) index
+levels may be built in one <span style="font-weight: bold;">BUILDGDG</span>
+Command.</span></li>
+        <li><span style="font-weight: normal;">To build Indexes with a
+differing number of <span style="font-weight: bold;">ENTRIES</span>,
+two or more <span style="font-weight: bold;">BUILDGDG</span> Commands
+must be used.</span></li>
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">ENTRIES</span> specifies the maximum number
+of entries to be contained in the generation index.&nbsp; It may not
+exceed 255.</span></li>
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">EMPTY</span> specifies that all data sets
+are to be uncataloged when the number of data sets specified in the
+ENTRIES parameter has been exceeded.&nbsp; Otherwise only the oldest
+data set(s) will be uncataloged.</span></li>
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">DELETE</span> specifies that the data sets
+whose names are removed from the catalog when the maximum number of
+entries has been exceeded are to be also Deleted.</span></li>
+      </ol>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol style="font-weight: bold;">
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">BUILDGDG</span>&nbsp;&nbsp;&nbsp; <span
+ style="font-weight: bold;">SALES.MASTER</span></span></li>
+      </ol>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">ENTRIES
+15;<br>
+      <br>
+      </span></div>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+
+
+      <span style="font-weight: bold;">BUILDGDG</span> command will
+create an index that will allow no more than <span
+ style="font-weight: bold;">15 SALES.MASTER</span> generation data
+sets.&nbsp; When 15 data sets have been created, the oldest will be <span
+ style="font-weight: bold;">DELETE</span>d when more data sets are <span
+ style="font-weight: bold;">CATALOG</span>ed because <span
+ style="font-weight: bold;">DELETE</span> is a default option.<br>
+      <br>
+      <br>
+      </span></div>
+      <ol start="2" style="font-weight: bold;">
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">BUILDGDG&nbsp;&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span
+ style="font-weight: bold;">TEST.INPUT</span></span></li>
+      </ol>
+      <div style="margin-left: 160px;"><span
+ style="font-weight: normal;">&nbsp;&nbsp;&nbsp;<span
+ style="font-weight: bold;"> TEST.OUTPUT</span></span><br>
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+
+      <span style="font-weight: bold;">NODELETE;<br>
+      <br>
+      </span></span></div>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+
+
+      <span style="font-weight: bold;">BUILDGDG</span> will create two
+indexes for the maximum of three data sets in the groups <span
+ style="font-weight: bold;">TEST.INPUT</span> and <span
+ style="font-weight: bold;">TEST.OUTPUT.</span>&nbsp; Old data sets
+will be uncataloged but not deleted when the limit of three has been
+exceeded.</span><br>
+      </div>
+      </td>
+    </tr>
+    <tr align="center">
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+---000---</span><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

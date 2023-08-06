@@ -1,0 +1,210 @@
+         MACRO
+&NAME    $OPEN &DAMCB,&MF=I,&EPLOC=
+         LCLA  &ACOUNT,&ASUM,&COUNT,&COUNT1,&LGTH,&NUMBER
+         LCLB  &MFESW,&MFISW,&MFI2SW,&B(11),&NULLSW,&OPT2SW
+         LCLC  &PARA
+.*
+&NUMBER  SETA  N'&DAMCB
+.*
+&COUNT   SETA  1
+&COUNT1  SETA  2
+.*
+         AIF   (N'&SYSLIST LE 1).TYPE   IF ONLY 1 (PARMLIST)
+         IHBERMAC 238                   EXCESSIVE POS. PARMS
+.TYPE    ANOP
+         AIF   ('&MF' EQ 'L').RTEL
+         AIF   ('&MF' EQ 'I').TESTI
+         AIF   (N'&MF LE 1).ERROR3
+         AIF   ('&MF(1)' NE 'E').ERROR3
+&NAME    IHBINNRA &MF(2)                    LOAD REG 1 WITH LIST ADDR
+         AGO   .ISSCAL
+.*
+.*
+.RTEL    ANOP
+&NAME    DC    0F'0'                    TO ALIGN WORD BOUNDARY
+         AIF   ('&DAMCB' EQ '').ERROR5
+.CLRSW   ANOP
+&ASUM    SETA  0
+         AIF   (&COUNT1 GT &NUMBER).J
+         AIF   ('&DAMCB(&COUNT1)' EQ '').DC1
+         AIF   ('&DAMCB(&COUNT1)'(1,1) NE '(').NOPAREN
+&B(1)    SETB  ('&DAMCB(&COUNT1)'(2,5) EQ 'INPUT')
+&B(4)    SETB  ('&DAMCB(&COUNT1)'(2,5) EQ 'UPDAT')
+&B(6)    SETB  ('&DAMCB(&COUNT1)'(2,6) EQ 'OUTPUT')
+&B(11)   SETB  ('&DAMCB(&COUNT1)'(2,2) EQ 'AD')
+&B(11)   SETB  (&B(11) OR '&DAMCB(&COUNT1)'(2,2) EQ 'AD')
+         AIF   (K'&DAMCB(&COUNT1) LE 8).STOPNOW
+.*
+&OPT2SW  SETB  1
+         AIF   (&B(7)+&B(8)+&B(9)+&B(10) NE 1).ERROR1
+.STOPNOW AIF   (&B(1)+&B(2)+&B(3)+&B(4)+&B(5)+&B(6)+&B(11) NE 1).ERROR1
+&ASUM    SETA  &B(2)+3*&B(3)+4*&B(4)+7*&B(5)+15*&B(6)+48*&B(7)+16*&B(8)X
+               +32*&B(10)+14*&B(11)
+         AGO   .RESET
+.NOPAREN ANOP
+&B(1)    SETB  ('&DAMCB(&COUNT1)' EQ 'INPUT')
+&B(4)    SETB  ('&DAMCB(&COUNT1)' EQ 'UPDAT')
+&B(6)    SETB  ('&DAMCB(&COUNT1)' EQ 'OUTPUT')
+&B(11)   SETB  ('&DAMCB(&COUNT1)' EQ 'AD')
+&B(11)   SETB  (&B(11) OR '&DAMCB(&COUNT1)' EQ 'AD')
+         AGO   .STOPNOW
+.RESET   ANOP
+&B(7)    SETB  0
+&B(8)    SETB  0
+&B(10)   SETB  0
+.DC1     AIF   (&MFESW).ERTRTRN
+         AIF   (&COUNT1 LT &NUMBER).K
+.J       ANOP
+&ASUM    SETA  &ASUM+128
+.K       AIF   (&MFI2SW).I2ROUT
+         AIF   (&MFISW).IROUTRN
+         DC    AL1(&ASUM)               DEFINE OPTION BYTE
+         AIF   ('&DAMCB(&COUNT)' NE '').NOBLANK
+         DC    AL3(0)                   DEFINE ADDRESS OF DAMCB
+         AGO   .NOTLST
+.NOBLANK AIF   ('&DAMCB(&COUNT)'(1,1) EQ '(').ERROR6
+         DC    AL3(&DAMCB(&COUNT))      DEFINE ADDRESS OF DAMCB
+.NOTLST  AIF   (&COUNT1 GE &NUMBER).FINI
+.*
+&COUNT   SETA  &COUNT+2
+&COUNT1  SETA  &COUNT1+2
+.*
+         AGO   .CLRSW
+.*
+.TESTI   CNOP  0,4                      TO ALIGN WORD BOUNDARY
+&LGTH    SETA  ((&NUMBER+1)/2)*4+4
+&NAME    BAL   1,*+&LGTH                REG(1) ADDRESS OF PARM LIST
+&MFISW   SETB  1
+.*
+.RTEYE   AIF   ('&DAMCB(&COUNT)' EQ '').ERROR5
+         AIF   ('&DAMCB(&COUNT)'(1,1) NE '(').CLRSW
+         DC    A(0)                     OPTION BYTE / DAMCB ADDRESS
+         AGO   .CNTUP11
+.IROUTRN DC    AL1(&ASUM)               DEFINE OPTION BYTE
+         DC    AL3(&DAMCB(&COUNT))      DEFINE ADDRESS OF DAMCB
+.CNTUP11 AIF   (&COUNT1 GE &NUMBER).QUITS
+&COUNT   SETA  &COUNT+2
+&COUNT1  SETA  &COUNT1+2
+         AGO   .RTEYE
+.*
+.QUITS   ANOP
+.*
+&COUNT   SETA  1
+&COUNT1  SETA  2
+.*
+.ILOOP2  AIF   ('&DAMCB(&COUNT)'(1,1) NE '(').CNTUP22
+&LGTH    SETA  K'&DAMCB(&COUNT)-2
+&PARA    SETC  '&DAMCB(&COUNT)'(2,&LGTH)
+         ST    &PARA,&ACOUNT.(1,0)      DEFINE ADDRESS OF DAMCB
+&MFI2SW  SETB  1
+         AGO   .CLRSW
+.I2ROUT  AIF   (&ASUM EQ 0).CNTUP22
+         MVI   &ACOUNT.(1),&ASUM        DEFINE OPTION BYTE
+.CNTUP22 AIF   (&COUNT1 GE &NUMBER).CAL1922
+.*
+&COUNT   SETA  &COUNT+2
+&COUNT1  SETA  &COUNT1+2
+&ACOUNT  SETA  &ACOUNT+4
+.*
+         AGO   .ILOOP2
+.*
+.*--* FOR EXECUTE TYPE (MF=E) WITH UPDATED PARAMETER LIST
+.*
+.ISSCAL  AIF   ('&DAMCB' EQ '').CAL1922
+.LOOPA   AIF   ('&DAMCB(&NUMBER)' NE '').LOOPB
+&NUMBER  SETA  &NUMBER-1
+         AIF   (&NUMBER EQ 0).CAL1922
+         AGO   .LOOPA
+.LOOPB   AIF   ('&DAMCB(&COUNT)' NE '').CNTCHK
+&NULLSW  SETB  1
+.CNTCHK  AIF   (&COUNT EQ &NUMBER).QUITNOW
+         AIF   ('&DAMCB(&COUNT1)' EQ '').NULLTWO
+&MFESW   SETB  1
+         AGO   .CLRSW
+.ERTRTRN AIF   (&COUNT1 EQ &NUMBER).THRUNOW
+         AIF   (&NULLSW).NOFIRST
+         AIF   ('&DAMCB(&COUNT)'(1,1) EQ '(').REGISTR
+         AIF   (NOT &OPT2SW).OPTA
+         LA    14,&DAMCB(&COUNT)        DEFINE ADDRESS OF DAMCB
+         ST    14,&ACOUNT.(1,0)         RESET  ADDRESS OF DAMCB
+.SHORTB  MVI   &ACOUNT.(1),&ASUM        RESET  OPTION BYTE
+         AGO   .INCRMT
+.OPTA    IC    14,&ACOUNT.(1,0)         DEFINE OPTION BYTE
+         LA    0,&DAMCB(&COUNT)         DEFINE ADDRESS OF DAMCB
+         ST    0,&ACOUNT.(1,0)          RESET  ADDRESS OF DAMCB
+.SHORTA  STC   14,&ACOUNT.(1,0)         RESET  OPTION BYTE
+.OPTC    NI    &ACOUNT.(1),X'F0'        CLEAR OUT OPTION-1 BIT(S)
+         AIF   (&ASUM EQ 0).INCRMT
+         OI    &ACOUNT.(1),&ASUM        RESET OPTION-1 BIT(S)
+         AGO   .INCRMT
+.REGISTR ANOP
+&LGTH    SETA  K'&DAMCB(&COUNT)-2
+&PARA    SETC  '&DAMCB(&COUNT)'(2,&LGTH)
+         AIF   (NOT &OPT2SW).OPTB
+         ST    &PARA,&ACOUNT.(1,0)      RESET ADDRESS OF DAMCB
+         AGO   .SHORTB
+.OPTB    IC    14,&ACOUNT.(1,0)         DEFINE OPTION BYTE
+         ST    &PARA,&ACOUNT.(1,0)      RESET  ADDRESS OF DAMCB
+         AGO   .SHORTA
+.NOFIRST AIF   (NOT &OPT2SW).OPTC
+         AGO   .SHORTB
+.NULLTWO AIF   (&NULLSW).INCRMT
+         AIF   ('&DAMCB(&COUNT)'(1,1) EQ '(').REGSTER
+         IC    14,&ACOUNT.(1,0)         DEFINE OPTION BYTE
+         LA    0,&DAMCB(&COUNT)         DEFINE ADDRESS OF DAMCB
+         ST    0,&ACOUNT.(1,0)          RESET  ADDRESS OF DAMCB
+.SHORTC  STC   14,&ACOUNT.(1,0)         RESET  OPTION BYTE
+         AGO   .INCRMT
+.REGSTER IC    14,&ACOUNT.(1,0)         DEFINE OPTION BYTE
+&LGTH    SETA  K'&DAMCB(&COUNT)-2
+&PARA    SETC  '&DAMCB(&COUNT)'(2,&LGTH)
+         ST    &PARA,&ACOUNT.(1,0)      RESET  ADDRESS OF DAMCB
+         AGO   .SHORTC
+.QUITNOW IC    14,&ACOUNT.(1,0)         DEFINE OPTION BYTE
+         AIF   ('&DAMCB(&COUNT)'(1,1) EQ '(').REGST
+         LA    0,&DAMCB(&COUNT)         DEFINE ADDRESS OF DAMCB
+         ST    0,&ACOUNT.(1,0)          RESET  ADDRESS OF DAMCB
+.SHORTD  STC   14,&ACOUNT.(1,0)         RESET  OPTION BYTE
+         AGO   .CAL1922
+.REGST   ANOP
+&LGTH    SETA  K'&DAMCB(&COUNT)-2
+&PARA    SETC  '&DAMCB(&COUNT)'(2,&LGTH)
+         ST    &PARA,&ACOUNT.(1,0)      RESET  ADDRESS OF DAMCB
+         AGO   .SHORTD
+.THRUNOW AIF   (NOT &OPT2SW).OPTD
+         NI    &ACOUNT.(1),X'80'        CLEAR OUT OPTION BYTE
+.SHORTE  AIF   (&ASUM EQ 0).CONTA
+         OI    &ACOUNT.(1),&ASUM        RESET OPTION BYTE
+.CONTA   AIF   (&NULLSW).CAL1922
+         AGO   .QUITNOW
+.OPTD    NI    &ACOUNT.(1),X'F0'        CLEAR OUT OPTION-1 BIT(S)
+         AGO   .SHORTE
+.INCRMT  ANOP
+.*
+&COUNT   SETA  &COUNT+2
+&COUNT1  SETA  &COUNT1+2
+&ACOUNT  SETA  &ACOUNT+4
+.*
+&OPT2SW  SETB  0
+&NULLSW  SETB  0
+.*
+         AGO   .LOOPB
+.*
+.CAL1922 ANOP
+         AIF   (T'&EPLOC EQ 'O').VCON                             88036
+         L     15,&EPLOC       LOAD SUPPLIED ENTRY ADDRESS
+         AGO   .BALR                                              88036
+.VCON    ANOP                                                     88036
+         L     15,=V(DAMOPEN)  LOAD OPEN ROUTINE ADDRESS
+.BALR    ANOP                                                     88036
+         BALR  14,15           OPEN DAM FILE
+         MEXIT
+.ERROR1  IHBERMAC 49,,&DAMCB(&COUNT1)     INVALID OPTION OPERAND
+         MEXIT
+.ERROR3  IHBERMAC 35,,&MF               INVALID MF OPERAND SPECIFIED
+         MEXIT
+.ERROR5  IHBERMAC 6                     DAMCB MISSING
+         MEXIT
+.ERROR6  IHBERMAC 69                    INVALID REG NOTATION W/MF=L
+.FINI    ANOP
+         MEND

@@ -1,0 +1,129 @@
+         MACRO
+&NAME    CONVERT &FROM,&TO
+.* THIS MACRO CONVERTS DATA FROM &FROM'S FORMAT TO &TO'S
+.* IT MAY CHANGE THE CONTENTS OF R0
+.*
+         LCLC  &TOLOC,&TOTYPE,&C
+         LCLC  &FRLOC,&FRTYPE
+         LCLA  &TOLEN
+         LCLA  &FRLEN
+         LCLA  &LITPOSN,&LITLEN,&LEN
+         LCLA  &LENGTH,&THIS,&THAT,&POSN,&L,&K,&STMTLEN
+         LCLB  &B,&COMP
+         LCLA  &MASK(4),&VREG
+&MASK(1) SETA  1               ONE BYTE LONG
+&MASK(2) SETA  3               TWO BYTES LONG
+&MASK(3) SETA  7               THREE BYTES LONG
+&MASK(4) SETA  15              FOUR BYTES LONG
+&THIS    SETA  1
+         AIF   (T'&NAME EQ 'O').NUMLUP
+&NAME    DS    0H
+.NUMLUP  ANOP
+&THAT    SETA  1+&THIS
+         AIF   (&THIS GE N'&SYSLIST).DUN
+&FRTYPE  SETC  T'&SYSLIST(&THIS)
+&FRLEN   SETA  L'&SYSLIST(&THIS)
+         AIF   (N'&SYSLIST(&THIS) EQ 1).X02
+         AIF   (K'&SYSLIST(&THIS,2) EQ 0).X01
+&FRTYPE  SETC  '&SYSLIST(&THIS,2)'
+.X01     ANOP
+         AIF   (N'&SYSLIST(&THIS) EQ 2).X02
+         AIF   (K'&SYSLIST(&THIS,3) EQ 0).X02
+&FRLEN   SETA  &SYSLIST(&THIS,3)
+.X02     ANOP
+&TOTYPE  SETC  T'&SYSLIST(&THAT)
+&TOLEN   SETA  L'&SYSLIST(&THAT)
+         AIF   (N'&SYSLIST(&THAT) EQ 1).X04
+         AIF   (K'&SYSLIST(&THAT,2) EQ 0).X03
+&TOTYPE  SETC  '&SYSLIST(&THAT,2)'
+.X03     ANOP
+         AIF   (N'&SYSLIST(&THIS) EQ 2).X02
+         AIF   (K'&SYSLIST(&THIS,3) EQ 0).X02
+&TOLEN   SETA  &SYSLIST(&THAT,3)
+.X04     ANOP
+         AIF   ('&FRTYPE' EQ 'C').IGNR
+&LEN     SETA  &FRLEN
+         AIF   ('&TOTYPE' EQ 'X').TOHEX
+         AIF   ('&FRTYPE' EQ 'P').DEC
+         AIF   ('&FRTYPE' EQ 'H').HALF
+         AIF   ('&FRTYPE' EQ 'Y').HALF A Y CON IS LINE AN A CON
+         AIF   ('&FRTYPE' EQ 'F').FULL
+         AIF   ('&FRTYPE' EQ 'X').BIT
+         AIF   ('&FRTYPE' EQ 'R').XPLACO          EXPLICT LENGTH A
+         AIF   ('&FRTYPE' EQ 'G').XPLFCO           OR F CONSTANTS
+&C       SETC  '&FRTYPE'
+         MNOTE 4,'UNKNOWN DATA TYPE, &C, FOR &SYSLIST(&THIS)'
+         MNOTE *,'CHARACTER DATA ASSUMED'
+&FRTYPE  SETC  'C'
+         AGO   .IGNR           ASSUME IT'S CHAR
+.HALF    LH    0,&FRLOC
+         AGO   .STORE        CONVERT TO CHAR
+.FULL    L     0,&SYSLIST(&THIS)  LOAD THE NUMBER IN R0
+         AGO   .STORE        CONVERT TO CHAR
+.DEC     ANOP
+         AIF   ('&TOTYPE' EQ 'F').P2BIN
+         AIF   ('&TOTYPE' EQ 'H').P2BIN
+         AIF   ('&TOTYPE' EQ 'X').P2BIN
+         AIF   ('&TOTYPE' EQ 'R').P2BIN
+         AIF   ('&TOTYPE' EQ 'G').P2BIN
+         UNPK  &SYSLIST(&THAT),&SYSLIST(&THIS)
+         AIF   ('&TOTYPE' EQ 'Z').NEXT
+         AGO   .OI
+.P2BIN   ANOP
+         ZAP   DBL,&FRLOC
+         CVB   0,DBL
+.STORE   ANOP                                                     J50
+         AIF   ('&TOTYPE' EQ 'F').STFULL
+         AIF   ('&TOTYPE' EQ 'H').STHALF
+         AIF   ('&TOTYPE' EQ 'X').P2HEX
+         AIF   ('&TOTYPE' EQ 'R').STVAR
+         AIF   ('&TOTYPE' EQ 'G').STVAR
+.STHALF  STH   0,&TOLOC
+         AGO   .NEXT
+.STFULL  ST    0,&TOLOC
+         AGO   .NEXT
+.P2HEX   ST    0,CALLAREA
+&FRLOC   SETC  'CALLAREA'
+&FRLEN   SETA  4
+         AGO   .TOHEX
+.STVAR   AIF   (&TOLEN LE 4).STO0
+         MNOTE 12,'LENGTH(&FRLEN) FOR BINARY NUMBER(&FRLOC) NOT SUPPORTE
+               ED.'
+         AGO   .NEXT
+.STO0    ANOP
+         STCM  0,&MASK(&TOLEN),&TOLOC   STORE UNALIGNED NO
+.BIT     ANOP
+.XPLACO  ANOP
+.XPLFCO  ANOP
+         AIF   (&FRLEN LE 4).CLR0
+         MNOTE 12,'LENGTH(&FRLEN) FOR BINARY NUMBER(&FRLOC) NOT SUPPORTE
+               ED.'
+         AGO   .NEXT
+.CLR0    SLR   0,0
+         ICM   0,&MASK(&FRLEN),&FRLOC   LOAD UNALIGNED NO
+         AGO   .CONV
+.CONV    ANOP
+         CVD   R0,DBL        CONVERT TO PACKED
+         UNPK  ERRNUM,DBL
+.OI      ANOP
+         OI    &TOLOC+L'&TOLOC-1,C'0' SET ZONE BITS
+         AGO   .NEXT
+.TOHEX   ANOP
+         UNPK  WORK(16),&FRLOC.(&LEN)
+&LEN     SETA  &FRLEN+1
+         TR    WORK,=C'0123456789ABCDEF'-240
+         MVC   &TOLOC.(&TOLEN),WORK
+         AGO   .NEXT
+.IGNR    ANOP
+.NEXT    ANOP
+&THIS    SETA  &THIS+1
+         AGO   .NUMLUP
+.DUN     ANOP                                   END LIST
+         MEND
+         USING *,15                                               J50
+DBL      DS    D                                                  J50
+FROM     DS    F                                                  J50
+TO       DS    CL6                                                J50
+         CONVERT FROM,TO                                          J50
+         CONVERT TO,FROM                                          J50
+         END

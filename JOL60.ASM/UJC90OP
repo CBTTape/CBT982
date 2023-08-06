@@ -1,0 +1,60 @@
+UJC90OP  TITLE 'OUTPUT INSTRUCTION TO NEXT PHASE'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973
+*  1974,1975
+* COPYRIGHT CCS 1971-1976
+* COPYRIGHT CCS 1980
+* COPYRIGHT CCS 1982
+* COPYRIGHT CCS-JOL 1988
+          COPY   JOLCOM
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+       JOLSAVE CSECT=UJC90OP
+* ON ENTRY R1 POINTS TO THE RECORD TO GO OUT
+*
+* NOW BEFORE ACTUALLY OUTPUTTING THE RECORD, WE MUST SEE
+* IF WE ARE STARTING AT, AND IF SO, DON'T OUTPUT IT, UNLESS
+* IT IS A 'DO' OR 'END'.
+*
+           IFNULL   STARTAT,C90OP
+            CLC =C'DO ',ICOMMAND-INST(R1)
+            BE  C90OP
+            CLC =C'END ',ICOMMAND-INST(R1)
+            BE  C90OP
+         CLC   =C'MACRO ',ICOMMAND-INST(R1)              JOL30091 76200
+         BE    C90OP                                     JOL30091 76200
+         CLC   =C'OPCNTLA ',ICOMMAND-INST(R1)            JOL30091 76200
+         BE    C90OP                                     JOL30091 76200
+            JOLRETN   RC=0   LET'S THINK IT HAS GONE
+C90OP      EQU   *
+         CLI   STOPAT,X'FF'   PASSED STOP AT?            CHG30008 76200
+         BE    C90RETN        YES, NO OUTPUT             CHG30008 76200
+       L   R0,AINSCNTL     GET CONTROL AREA FOR INSTRUCTIONS
+       L    R15,AUJS30OP    GET OUTPUT ROUTINE ADDRESS
+       BALR R14,R15         OUTPUT IT
+C90RETN  EQU   *                                         CHG30008 76200
+       JOLRETN RC=0              AND RETURN
+       LTORG
+     DC   S(*,*,*,*)
+     DC   S(*,*,*,*)
+     DC   S(*,*,*,*)
+     DC   S(*,*,*,*)
+     DC   S(*,*,*,*)
+     DC   S(*,*,*,*)
+     DC   S(*,*,*,*)
+           END

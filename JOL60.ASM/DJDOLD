@@ -1,0 +1,520 @@
+UJCTKN   TITLE 'TOKENISE - SPLIT TOKENS FOR STATEMENT'
+UJCTKN   CSECT
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1976
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1980
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1982
+* JOL COPYRIGHT CCS-JOL 1986.  1987,  1988 1990
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+         SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+* THIS MODULE SETS UP THE TOKEN ADDR START AND LENGTH VALUES ON ENTRY
+* TO THE ROUTINE R1 CONTAINS THE ADDRESS OF A PARAMETER LIST POINTING
+* TO SOME INFORMATION
+         SAVE  (14,12),,UJCTKN.&SYSDATE..&SYSTIME
+R0       EQU   0   GENERAL WORK REGISTER
+R1       EQU   1   GENERAL WORK REGISTER
+R2       EQU   2   TRT REGISTER
+R3       EQU   3   POINTS TO 'TKNX'
+R4       EQU   4   ALWAYS POINTS TO CURRENT CHARACTER
+R5       EQU   5
+R6       EQU   6   ALWAYS CONTAINS 1 FOR BXLE INCREMENT
+R7       EQU   7   POINTS TO LAST CHARACTER TO BE EXAMINED
+R8       EQU   8   MODIFIER TO STORE INTO TKNDESC
+R9       EQU   9   ALWAYS= A(TKNSTRG) TO CALCULATE OFFSETS QUICKLY
+R10      EQU   10  INDICATORS
+R11      EQU   11  BASE REGISTER
+R12      EQU   12  CONTAINS R4 VALUE FOR CALCULATING LENGTH OF STRING
+R13      EQU   13  POINTS TO CALLERS ** SAVE AREA
+R14      EQU   14  GENERAL WORK REGISTER
+R15      EQU   15  GENERAL WORK REGISTER
+         LR    R11,R15
+         USING UJCTKN,R11
+         L     R3,0(R1)        GET ADDR OF THE TOKEN AREA
+         USING TKNX,R3
+         CLC   #TKNSTRG,=Y(L'TKNSTRG-1)    STRING TOO LONG?
+         BH    RETN4
+*        XC    TKNNO(256),TKNNO                                   74303
+*        XC    TKNNO+256(256),TKNNO+256                           74303
+*        XC    TKNNO+512(092),TKNNO+512                           74303
+         FIX   'MAKE MORE, OR ALL ZEROES'
+         LA    R6,1            SET UP AN INCREMENT FOR BXLE IN R6 74303
+         STH   R6,TKNCURR        SET TKNCURR TO 1 FOR OUR CALLER  74303
+         SPACE 2
+         LA    R4,TKNSTRG
+         LR    R7,R4           SET UP STOP ADDRESS IN R7          74303
+         AH    R7,#TKNSTRG     R7 NOW POINTS TO END OF STRING+1   74303
+         MVI   0(R7),C' '        CLEAR NEXT BYTE TO MAKE          74303
+         MVI   1(R7),X'FF'        AND NEXT BYTE TO MAKE           J50
+*                                       LIFE EASIER LATER ON
+         BCTR  R7,0             -1 COS WE WERE POINTING           74303
+*                                            AT THE NEXT POSN AFTER
+*                                             THE END OF THE STRING
+         SR    R8,R8           USED AS MODIFIER TO TKNDESC        74303
+         LR    R9,R4           SAVE START TO CALCULATE OFFSETS    74303
+SKIPBLNK LR    R1,R4                                              J50
+         SLR   R2,R2                                              J50
+         TRT   0(256,R1),ENDBLANK SKIP TO FIRST NONBLANK          J50
+         CH    R2,=H'4'                                           J50
+         BE    RETN0             END OF STRING                    J50
+* NOW CALCULATE THE OFFSET OF THE STRING IN TKNSTRG               74303
+*  R4-> START TKN AREA                                            74303
+*  R1-> CURRENT CHARACTER                                         74303
+*  R8 IS INDEX TO TKNDESC TABLE                                   74303
+         LR    R15,R1          LOAD CURRENT POINTER               74303
+         SR    R15,R4          15=OFFSET NOW                      74303
+         STH   R15,TKNDESC+2(R8) GOOD,OFFSET STORED               74303
+* NOW,R8 IS INCREMENTED BY 4 AT LABEL 'ENDTOKEN' AND CHECKED      74303
+*  TO BE < 600 (OR 150 TOKENS IN TOTAL)                           74303
+* NOW WE CAN START OUR EXAMINATION OF THE STRING TO FIND THE
+*  END OF THE CURRENT TOKEN.
+         LR    R12,R1          SAVE START ADDR FOR CALCULATING    74303
+*                                    LENGTH OF TOKEN LATER
+         B     -4(R2)            FIND OUT WHAT THE STRING MIGHT BEJ40
+         NOP   IDENT             08 ANYTHING EXCEPT FOLLOWING     J50
+         NOP   NUM               0C NUMERIC                       J50
+         NOP   SPEC              10 SPECIAL                       J50
+         NOP   SPEC              14 SPECIAL, MAY BE COMPOUND      J50
+         NOP   LIT               QUOTE: BEGINS CHAR LITERAL       J50
+* R1 POINTS TO THE CURRENT BYTE IN THE STRING WE ARE EXAMINING.
+         SPACE 1
+* LETS HAVE A LOOK AND SEE IF IT IS A NUMBER,IF SO ANY ALPHABETIC
+*  CHARACTER WILL STOP THE SCAN.
+*                                                                 J50
+*        CLI   0(R4),C'0'                                         J50
+*        BL    NOTNUM                                             J50
+*        CLI   0(R4),C'9'                                         J50
+*        BH    NOTNUM                                             J50
+* THE TOKEN WE ARE EXAMINING IS A NUMERIC FIELD
+NUM      DS    0H
+         MVI   1(R8),0           IT'S NUMERIC                     J50
+         TRT   0(256,R1),ENDNUM   SKIP TO FIRST NON-NUMERIC       J50
+*        CH    R2,=H'4'                                           J50
+*        BE    FINNUM            END OF STRING                    J50
+*INNUM   SR    R10,R10
+         B     STORLEN
+IDENT    DS    0H
+         MVI   1(R8),2           IT'S AN IDENTIFIER               J50
+         TRT   0(256,R1),ENDIDENT SKIP TO FIRST NON-IDENTIFIER    J50
+         B     STORLEN
+LIT      DS    0H
+         MVI   1(R8),3           I THINK IT'S A QUOTED STRING     J50
+         TRT   0(256,R1),ENDIDENT SKIP TO FIRST NON-IDENTIFIER    J50
+         CLI   1(R1),C''''       DOUBLE QUOTE?                    J50
+         BNE   CHECKLIT          NO, CONTINUE                     J50
+         LA    R1,R(,R1)         SKIP                             J50
+         B     LIT                AND TRY AGAIN                   J50
+CHECKLIT DS    0H
+         CH    R2,=H'4'                                           J50
+         BNE   STORLEN           END OF STRING                    J50
+         MVI   1(R8),16          I THINK IT'S RUBBISH             J50
+         B     RETN16
+SPEC     DS    0H                SPECIALS CAN ONLY BE 1 OR TWO BYTES
+*                                  LONG. THEREFORE WE DO THINGS
+*                                  DIFFERENTLY HERE
+         MVI   1(R8),1           IT'S AN IDENTIFIER               J50
+*        TRT   0(256,R1),ENDIDENT SKIP TO FIRST NON-IDENTIFIER    J50
+         LM    R14,R15,COMPOUND                                   J50
+         L     R6,COMPOUND+8                                      J50
+SPECKCRC HS    0H                SPECIALS CAN ONLY BE 1 OR TWO BYTES
+         CLC   0(2,R1),0(R14)                                     J50
+         BE    COMPSPEC                                           J50
+         BXLE  R14,R6,SPECKSRCH                                   J50
+         LA    R1,1(,R1)                                          J50
+         B     STORLEN
+COMPSPEC DS    0H                COMPOUND SPECIAL
+         LA    R1,2(,R1)                                          J50
+         B     STORLEN
+         AGO   .X                                                 J50
+         SPACE 2                                                   DASD
+*******************************************************************DASD
+* THIS BIT OF CODE IS REQUIRED FOR STANDARD OIL.  IF CHANGES THE   DASD
+* TOKENIZING RULES FROM THOSE GIVEN BY CLEM CLARKE.  IF ONE WANTS  DASD
+* SOMETHING LIKE 7TRKS ON A DCL DSID THEY MUST CODE IT AS 7 TRKS   DASD
+* WITH THE BLANK IN BETWEEN THE TWO TOKENS.  THIS CODE MAY BE TURNEDASD
+* OFF BY ACTIVATING THE NOP ENDNUM INSTRUCTION AT LINE 6650.       DASD
+*******************************************************************DASD
+         SPACE 2                                                   DASD
+SOCOZAP  NOP   ENDNUM          BRANCH TO DEACTIVATE STANDARD OIL CODASD
+         CLI   0(R4),C'A'      C'A' OR HIGHER MEANS NOT END OF TOKEDASD
+         BL    ENDNUM          IF LESS THAN C'A', THEN END OF TOKENDASD
+         B     IDENT           ELSE, CONTINUE SCANNING "IDENTIFIER"DASD
+         SPACE 2                                                   DASD
+NOTNUM   DS    0H
+* JUST TO SPEED THE IDENTIFIER ROUTINE UP,CHECK HERE IF ALPHA     74303
+         CLI   0(R4),C'A'                                         74303
+         BNL   IDENT             CHAR > 'A'                       74303
+* OK,CHECK FOR SPECIALS                                           74303
+         CLI   0(R4),C'|'                      PL1 | SIGN ?
+         BNE   NOTOR
+         CLI   1(R4),C'|'                      CONCATENATION ?
+         BNE   ORSIGN
+ADD1TOR4 AR    R4,R6           ADD '1' TO SKIP SECOND | SIGN      74303
+STR2     LA    R1,2                            SET R1 TO LENGTH
+STRSPEC  SLL   R1,8              SHIFT LENGTH LEFT 1 BYTE         74303
+         AR    R1,R6           R1= AL(1) LENGTH,AL1(1) COS R6=1   74303
+         STH   R1,TKNDESC(R8)    STORE LENGTH AND TYPE            74303
+         AR    R4,R6           ADD '1' TO R4 TO -> NEXT CHAR      74303
+         B     ENDTOKEN
+STR1     DS    0H
+ORSIGN   LR    R1,R6           SET R1=H'1',LENGTH OF CHARACTER    74303
+         B     STRSPEC                         STORE LENGTH ETC
+NOTOR    DS    0H
+         CLI   0(R4),C'¬'
+         BE    NOTSIGN
+         CLI   0(R4),C'>'
+         BE    TRYEQU
+         CLI   0(R4),C'<'
+         BNE   TRYSPEC
+TRYEQU   CLI   1(R4),C'='
+         BNE   STR1                            STORE LENGTH OF 1
+SETLEN2  DS    0H
+         AR    R4,R6           JUMP '='                          74303
+         B     STR2                            STORE LENGTH OF 2
+NOTSIGN  CLI   1(R4),C'='        ¬= ?
+         BE    SETLEN2                                           74303
+         CLI   1(R4),C'>'
+         BE    SETLEN2                         SKIP NEXT CHAR,STORE L=2
+         CLI   1(R4),C'<'
+         BE    SETLEN2
+         B     STR1
+         SPACE 2
+TRYSPEC  DS    0H
+* CHECK IF CHAR IS START OF LITERAL STRING                        74303
+         CLI   0(R4),C''''                                        74303
+         BE    STARTLIT                                           74303
+* NOW SEE IF THE CHARACTER IS A NORMAL SPECIAL CHARACTER,
+*  I.E *-/ ETC
+         TRT   0(1,4),TABLE1
+         BC    2,STR1
+* HERE IT IS NOT A NORMAL SPECIAL CHARACTER.
+         B     IDENT           START OFF IDENTIFIER PROCESSING    74303
+STARTLIT DS    0H                                                 74303
+* DECODE THE ROTTEN LITERAL AND SET UP ITS LENGTH.
+         LR    R10,R6          SET QUOTE COUNTER TO 1             74303
+         BXH   R4,R6,LITERR                                       74303
+LITLOOP  CLI   0(R4),C''''
+         BNE   NOTLIT
+* OK,WE HAVE A SECOND QUOTE SIGN
+         AR    R10,R6          ADD 1 TO QUOTE COUNTER             74303
+         LR    R15,R10         SAVE R10                           74303
+         NR    R15,R6          TEST IF ODD (R6 CONTAINS A 1)      74303
+         BNZ   STILLMOR          ODD,THEREFORE QUOTES NOT MATCHED 74303
+* HERE THE LITERAL HAS A MATCHING QUOTE.  HOWEVER,IF THE NEXT CHARACTER
+*  IS A ' THEN WE STILL HAVE MORE TO GO.
+         CLI   1(R4),C''''
+         BNE   ENDLIT            SETS UP LENGTH AND STORES IT
+* HERE WE STILL HAVE FURTHER TO GO
+         BXLE  R4,R6,LITLOOP    STEP ON TO NEXT CHARACTER         74303
+LITERR   DS    0H
+         LA    R10,16             ERROR INDICATOR
+         B     STORLIT
+         SPACE 2
+NOTLIT   DS    0H
+STILLMOR DS    0H
+         BXH   R4,R6,LITERR                                       74303
+         B     LITLOOP
+ENDLIT   LA    R10,3         TO INDICATE THE TYPE IE LITERAL
+         AR    R4,R6           SKIP TO NEXT CHARACTER             74303
+         B     STORLIT             STORES THE LENGTH AND TYPE
+         TITLE 'FIND LENGTH OF IDENTIFIER'
+IDENT    DS    0H
+* NOW IDENTIFIERS ARE STOPPED ONLY BY SPECIAL CHARACTERS,OR BLANKS
+         AR    R4,R6           SKIP TO NEXT CHARACTER             74303
+CONTIDNT CLI   0(R4),C'A'        EXTRA TEST SAVES MUCH TIME(CPU)  74303
+         BNL   CONT2             >A,CONTINUE                      74303
+         TRT   0(1,4),TABLE2      LOOK FOR SPECIAL CHAR TO END IDENT
+         BC    2,ENDIDENT         SPECIAL CHAR FOUND
+* WELL,NO SPECIALS FOUND SO WE SHALL CONTINUE
+CONT2    BXLE  R4,R6,CONTIDNT                                     74303
+         SPACE 1                               **** ERROR CONDITION
+ENDIDENT DS    0H
+         LA    R10,2      TO INDICATE AN IDENTIFIER
+.X       ANOP                                                     J50
+STORLEN  DS    0H
+STORLIT  DS    0H    R10 CONTAINS THE TYPE CHARACTER
+         LR    R4,R1
+         SR    R1,R12          R1 NOW CONTAINS THE LENGTH         74303
+*                            THE TOKEN
+         CH    R1,=Y(L'TKN)                    TOKEN TOO LONG ?
+         BH    RETN12
+         STC   R1,TKNDESC(R8)    LENGTH STORED
+*        STC   R10,TKNDESC+1(R8) TYPE FIELD NOW SET.
+         LA    R15,TKNDESC+1(R8) ADDRESS TYPE FIELD
+         CLI   0(R15),16       16 IF UNBALANCED QUOTES IN LIT     74303
+         BE    RETN16          ERROR                              74303
+* R10 WAS SET AT ENDLIT OR ENDIDENT
+ENDTOKEN DS    0H
+         LA    R8,4(,R8)        ADD TO MODIFIER                   74303
+         XC    0(4,R8),0(R8)                                      J50
+         C     R8,=A(#TKN-TKNDESC) TOO MANY TOKENS ?              74303
+         BNL   RETN8             YES,SO STOP PROCESSING           74303
+         CH    R2,=H'4                                            74303
+         BNE   SKIPBLNK
+RETNO    DS    0H
+         SR    R15,R15
+         B     RETN
+RETN4    LA    R15,4
+         B     RETN
+RETN8    LA    R15,8
+         B     RETN
+RETN12   LA    R15,12
+         B     RETN
+RETN16   LA    R15,16
+RETN     DS    0H
+* HERE WE HAVE REACHED THE END OF THE STRING,SO WE MUST SET UP    74303
+*  THE NUMBER OF TOKENS WE HAVE DEALT WITH. R8=NUMBER X 4         74303
+         SRL   R8,2               4                               74303
+         STH   R8,TKNNO                                           74303
+         RETURN (14,12),T,RC=(15)
+*                                            START
+COMPOUND DS    A(COMP1,2,COMPE)                                   J50
+         DC    C'||'                                              J50
+         DC    C'¬='                                              J50
+         DC    C'¦¦'                                              J50
+         DC    C'<='                                              J50
+         DC    C'>='                                              J50
+         DC    C'¬>'                                              J50
+         DC    C'¬<'                                              J50
+         DC    X'0000'                                            J50
+TABLE1   DC    256XL1'00'         TABLE FOR TRT INSTRUCTION
+         ORG   TABLE1+C'='    THIS TABLE CONTAINS SPECIAL
+         DC    CL1'='             CHARACTERS.
+         ORG   TABLE1+C':'
+         DC    CL1':'
+         ORG   TABLE1+C'.'
+         DC    CL1'.'
+         ORG   TABLE1+C'*'
+         DC    CL1'*'
+         ORG   TABLE1+C'+'
+         DC    CL1'+'
+         ORG   TABLE1+C'-'
+         DC    CL1'-'
+         ORG   TABLE1+C','
+         DC    CL1','
+         ORG   TABLE1+C';'
+         DC    CL1';'
+         ORG   TABLE1+C'('
+         DC    CL1'('
+         ORG   TABLE1+C')'
+         DC    CL1')'
+         ORG   TABLE1+C'<'
+         DC    CL1'<'
+         ORG   TABLE1+C'>'
+         DC    CL1'>'
+         ORG   TABLE1+C'/'
+         DC    CL1'/'
+         ORG   TABLE1+C'&&'
+         DC    CL1'&&'
+         ORG
+         SPACE 3
+TABLE2   DC    256XL1'00'          TABLE FOR TRT INSTRUCTION
+INIT2    ORG   TABLE2+C' '         THIS TABLE CONTAINS THE
+         DC    CL1' '              SPECIAL CHARACTERS THAT CAN
+         ORG   TABLE2+C'='         END AN IDENTIFIER.
+         DC    CL1'='
+         ORG   TABLE2+C':'
+         DC    CL1':'
+         ORG   TABLE2+C'.'
+         DC    CL1'.'
+         ORG   TABLE2+C'*'
+         DC    CL1'*'
+         ORG   TABLE2+C'+'
+         DC    CL1'+'
+         ORG   TABLE2+C'-'
+         DC    CL1'-'
+         ORG   TABLE2+C','
+         DC    CL1','
+         ORG   TABLE2+C''''
+         DC    CL1''''
+         ORG   TABLE2+C';'
+         DC    CL1';'
+         ORG   TABLE2+C'('
+         DC    CL1'('
+         ORG   TABLE2+C')'
+         DC    CL1')'
+         ORG   TABLE2+C'<'
+         DC    CL1'<'
+         ORG   TABLE2+C'>'
+         DC    CL1'>'
+         ORG   TABLE2+C'/'
+         DC    CL1'/'
+         ORG   TABLE2+C'¬'
+         DC    CL1'¬'
+         ORG   TABLE2+C'|'
+         DC    CL1'|'
+         ORG   TABLE2+C'&&'
+         DC    CL1'&&'
+         ORG   TABLE2+X'FF'
+         DC    X'04'
+         ORG
+         SPACE 3
+ENDBLANK DC    256X'08'          STOP SCAN ON EVERYTHING          J50
+         ORG   ENDBLANK+C' '     OFFSET TO A BLANK                J50
+         DC    01X'00'           EXCEPT THESE                     J50
+         ORG   ENDBLANK+X'FF'    OFFSET TO OUR SPECIAL STOPPER    J50
+         DC    01X'04'           IF WE GET THIS, IT'S ALL DONE    J50
+         ORG   ENDBLANK+C'0'     OFFSET TO A ZERO                 J50
+         DC    10X'0C'           THESE ARE NUMBERS                J50
+         ORG   ENDBLANK+C'='
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C':'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C'.'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C'*'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C'+'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C'-'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C','
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C';'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C'('
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C')'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C'<'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C'>'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C'/'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C'&&'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDBLANK+C'¬'
+         DC    01X'14'           SPECIAL CHARACTERS, MAY BE COMPOUND
+         ORG   ENDBLANK+C'|'
+         DC    01X'14'           SPECIAL CHARACTERS, MAY BE COMPOUND
+         ORG   ENDBLANK+C'¦'
+         DC    01X'14'           SPECIAL CHARACTERS, MAY BE COMPOUND
+         ORG   ENDBLANK+C''''    QUOTE
+         DC    01X'18'
+ENDNUM   DC    256X'08'          STOP SCAN ON EVERYTHING          J50
+         ORG   ENDNUM+C'0'       OFFSET TO A BLANK                J50
+         DC    10X'00'           EXCEPT THESE                     J50
+         ORG   ENDNUM+X'FF'      OFFSET TO OUR SPECIAL STOPPER    J50
+         DC    01X'04'           IF WE GET THIS, IT'S ALL DONE    J50
+         ORG   ENDNUM+C'='
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C':'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C'.'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C'*'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C'+'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C'-'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C','
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C';'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C'('
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C')'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C'<'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C'>'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C'/'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C'&&'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDNUM+C'¬'
+         DC    01X'14'           SPECIAL CHARACTERS, MAY BE COMPOUND
+         ORG   ENDNUM+C'|'
+         DC    01X'14'           SPECIAL CHARACTERS, MAY BE COMPOUND
+         ORG   ENDNUM+C'¦'
+         DC    01X'14'           SPECIAL CHARACTERS, MAY BE COMPOUND
+         ORG   ENDNUM+C''''      QUOTE
+         DC    01X'18'
+         ORG
+ENDIDENT DC    256X'08'          STOP SCAN ON EVERYTHING          J50
+         ORG   ENDIDENT+C'A'     OFFSET TO A                      J50
+         DC    09X'00'           EXCEPT THESE                     J50
+         ORG   ENDIDENT+C'J'     OFFSET TO J BLANK                J50
+         DC    09X'00'           THESE                            J50
+         ORG   ENDIDENT+C'S'     OFFSET TO S                      J50
+         DC    08X'00'           AND THESE                        J50
+         ORG   ENDIDENT+C'_'
+         DC    01X'00'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'@'
+         DC    01X'00'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'#'
+         DC    01X'00'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'$'
+         DC    01X'00'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+X'FF'    OFFSET TO OUR SPECIAL STOPPER    J50
+         DC    01X'04'           IF WE GET THIS, IT'S ALL DONE    J50
+         ORG   ENDIDENT+C'0'     OFFSET TO A ZERO                 J50
+         DC    10X'0C'           THESE ARE NUMBERS                J50
+         ORG   ENDIDENT+C'='
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C':'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'.'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'*'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'+'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'-'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C','
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C';'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'('
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C')'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'<'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'>'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'/'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'&&'
+         DC    01X'10'           SPECIAL CHARACTERS
+         ORG   ENDIDENT+C'¬'
+         DC    01X'14'           SPECIAL CHARACTERS, MAY BE COMPOUND
+         ORG   ENDIDENT+C'|'
+         DC    01X'14'           SPECIAL CHARACTERS, MAY BE COMPOUND
+         ORG   ENDIDENT+C'¦'
+         DC    01X'14'           SPECIAL CHARACTERS, MAY BE COMPOUND
+         ORG   ENDIDENT+C''''    QUOTE
+         DC    01X'18'
+         ORG
+         SPACE 3
+ENDLIT   DC    256X'00'                                           J50
+         ORG   ENDLIT+X'FF'      OFFSET TO OUR SPECIAL STOPPER    J50
+         DC    01X'04'           IF WE GET THIS, IT'S ALL DONE    J50
+         ORG   ENDLIT+C''''      QUOTE
+         DC    01X'18'
+         ORG
+         PRINT DATA                                               J50
+TKNZAP01 DC    10S(*,*,*,*)                                       74303
+         COPY  JOLGLOBL
+         COPY  TKNX
+         END

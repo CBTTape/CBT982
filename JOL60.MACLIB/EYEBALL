@@ -1,0 +1,4 @@
+         MACRO
+         EYEBALL
+         DC    0D'0',CL8'&SYSLIST(1)'
+         MEND

@@ -1,0 +1,67 @@
+*UJP31PRN PRINTS OFF SYMBOLIC VARIABLES AND THEIR LEVEL,LENGTH & VALUE
+* MODIFIED TO EITHER PRINT ALL SYMBOLIC VARIABLES AND THEIR LEVEL,
+* LENGTH AND VALUE OR TO PRINT ONLY SELECTED ONES.
+         PRINT OFF
+         COPY  JOLCOM
+         PRINT ON
+         JOLSAVE CSECT=UJP31PRN
+         SR    R9,R9                   NUM OF TKNS INDICATOR
+         CLC   TKNNO,=H'1'             PRINTSYM ALONE ?
+         BE    TKNSCAN                 YES GO AHEAD
+         GETTKN 2                      GET FIRST SYMBOL NAME
+NEXTTKN  STH   R1,TKNCURR
+         BAL   R9,TKNSCAN              DO PRINT FOR NAME
+         CLC   TKNCURR,TKNNO           ALL DONE ?
+         BH    DONE
+         GETTKN TKNCURR                GET NEXT TKN
+         B     NEXTTKN
+TKNSCAN  L     R4,ASYMTBL              R4 POINTS TO SYMBOLIC TABLE
+         USING SYMOVLY,R4
+         LR    R5,R4
+         LA    R6,12                   INCREMENT FOR LOOP
+         LH    R7,NOSYMS               NO. OF SYMBOLICS
+         S     R7,ONE                  BACK OFF ONE              87150
+         MH    R7,=H'12'               TOTAL LENGTH OF SYMBOLICS
+         AR    R7,R4                   LOOPS STOP ADDRESS + 12
+         AR    R4,R6                   POINT TO FIRST SYMBOLIC
+         L     R8,APRINTLN             ADDRESS OF PRINT BUFFER
+LOOP     LTR   R9,R9                   IF PRINTSYM ALONE
+         BZ    ALLTKNS                 PRINT ALL TKNS
+         CLC   TKN(8),SYMNAME          ELSE CHK SYMNAME
+         BNE   NOPRINT
+ALLTKNS  MVC   5(8,R8),SYMNAME         MOVE IN SYMBOLIC NAME
+         MVC   14(1,R8),SYMLEVEL       MOVE IN LEVEL OF SYMBOLIC
+         OI    14(R8),C'0'             SET SIGN TO X'F' FOR PRINTING
+         L     R15,SYMADDR
+         MVC   DBL(2),0(R15)           MOVE LENGTH OF SYMBOLIC
+         LH    R1,DBL                  PUT IT IN R1
+         CVD   R1,DBL                  CONVERT IT TO DECIMAL
+         UNPK  17(3,R8),DBL            UNPACK 3 BYTES
+         OI    19(R8),C'0'             SET SIGN TO X'F' FOR PRINTING
+         S     R1,=F'1'
+         BM    NOVALUE                 -> IF A NULL VALUE
+         CH    R1,=H'110'              MAX LENGTC FOR PRINTING
+         BL    *+8                     -> IF LESS THEN MAX LENGTH
+         LA    R1,110                  SET IT TO 120
+         EX    R1,MVC                  MOVE VALUE INTO PRINT LINE
+NOVALUE  LA    R1,22(R1)               LENGTH OF OUTPUT LINE
+         STH   R1,0(R8)                PUT IT IN PRINT BUFFER
+         JOLPRINT
+         LTR   R9,R9                   IF NOT PRINTSYM ALONE
+         BNZR  R9                      THEN RETURN
+NOPRINT  BXLE  R4,R6,LOOP              -> THROUGH THE LOOP
+         LTR   R9,R9                   IF NOT PRINTSYM ALONE
+         BZ    DONE                    THEN THERE IS AN ERROR
+         JOLERR 101,'SYMBOL ''',#TKN,''' NOT IN SYMBOL TABLE'
+         BR    R9                      RETURN FOR NEXT SYMNAME
+DONE     JOLRETN
+MVC      MVC   21(*-*,R8),2(R15)       SUBJECT OF EXECUTE
+         LTORG
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         END

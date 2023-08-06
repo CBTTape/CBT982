@@ -1,0 +1,457 @@
+         TITLE 'PREPROCESSOR FORM UP ENTIRE STATEMENT'
+         JOLSAVE CSECT=UJP50RD
+* THIS CSECT IS RESPONSIBLE FOR READING STATEMENTS FROM SYSIN
+* INCLUDE AND MACRO FILE                                          76200
+*************                                                     75128
+*                                                                 75128
+* THE BASIC FLOW OF THIS MODULE IS;-                              75128
+*                                                                 75128
+*        LASTINST=ICOMMAND;   SAVE LAST COMMAND                   75128
+*        CLEAR LABEL;         CLEAR LABEL                         75128
+*        CLEAR #TRNSTRNG;                                         75128
+*        ADD 1 TO STMT NUMBER;                                    75128
+*        IS P50SAVEF=0? NO-> RETURN WITH R15=P50SAVEF;            75128
+*        #TKNSTRNG=#STRING;   #STRING MAY CONTAIN 'THEN' AFTER IF 75128
+* P50GET:CALL UJP51WRD;       GET NEXT WORD                       75128
+*        IF R15>=0,RETURN (R15)
+*        IF STRING (RETURNED FROM UJP51WRD)=';' GO TO P50SEMI;
+*        IF STRING=':' GO TO P50COLON;
+*        IF STRING='THEN' GO TO P50THEN;
+*        IF TKNSTRNG(5)='ELSE ', RETURN (GO TO P50SEMI)
+*        OP=#STRING;          /* SAVE IN CASE ITS A LABEL */
+*        CONCAT #STRING TO #TKNSTRG
+*        B -GOTO-P5OGET;
+* P50SEMI: CLEAR #STRING;     /* END OF STATEMENT */
+*        CLEAR 15, STORE IN P50SAVEF;
+*        SPLIT STATEMENT TO TOKENS;
+*        RETURN;
+           USING JOLCOM,R2
+           USING TKNX,R3
+* FIRST SAVE THE LAST INSTRUCTION BECAUSE IT IS SOMETIMES REQUIRED
+           MVC LASTINST,ICOMMAND
+           CLEAR LABEL                                            75311
+* INITIALISE THE TOKEN STRING
+           SR  R6,R6           INITALISE R6 TO ZERO               74303
+           STH R6,#TKNSTRG     SET LENGTH OF STRING=0             74303
+           LA  R1,TKNSTRG      MUST SET A USING AS IT IS TOO BIG  80290
+           USING TKNSTRG,R1                                       80290
+           FIX  'IS THIS CLEAR REALLY NECESSARY ? '
+           B   P50NCLR
+           CLEAR TKNSTRG
+           DROP  R1
+P50NCLR    AP  PCKDSTMT,=P'1'                  NOW ADD 1 TO THE STATEM-
+           UNPK STMT,PCKDSTMT                  ENT NUMBER
+           OI STMT+3,X'F0'
+           LA  R1,STMT                         DROP
+           LA  R14,1                               ZEROES
+           LA  R15,STMT+3                              FROM
+P50LUP1    CLI 0(R1),C'0'                                  THE
+           BNE P50ELUP1                                        STMT
+           MVI 0(R1),C' '
+*                                                                  NUMB
+           BXLE R1,R14,P50LUP1
+P50ELUP1   EQU *
+           MVC  PRNTSTMT,STMT
+           SPACE 3
+* BECAUSE THIS MODULE READS AHEAD A BIT,IT COULD HAVE BEEN GIVEN
+*    A NON-ZERO RETURN CODE,WHICH WOULD HAVE BEEN STORED IN 'P50SAVEF'
+*    SO BEFORE DOING ANYTHING STARTLING I THINK IT WOULD BE A GOOD
+*    IDEA TO CHECK THIS.
+           L   R15,P50SAVEF                    LOAD OLD RETURN
+           ST  R6,P50SAVEF     SET TO 0,SO NO LOOP                74303
+           LTR R15,R15                         TEST
+           BNZ P50RETNN        NOT ZERO,SO MERELY RETURN
+* NOW THERE COULD BE A SYMBOL IN #STRING WHICH IS THE BEGINNING OF
+*    THE NEXT STATEMENT
+* FOR INSTANCE IF THE LAST STATEMENT WAS 'IF A^=10 THEN DO;'
+*    THEN #STRING WOULD CONTAIN THE'D0'
+* SO SHIFT IT TO #TKNSTRG
+           MVC #TKNSTRG(L'STRING+2),#STRING                       74303
+* OK NOW FELLAS WE CAN START ON FORMING UP THE REST OF THE STATEMENT
+P50GET    $CALL UJP51WRD
+           LTR R15,R15         TEST RETURN CODE                   74303
+           BNZ P50RETN         NOT 0,RETURN                       74303
+*                              4=SYSIN DATA FOUND                 74303
+*                              8=NEW JOB FOUND (* JOL)            74303
+*                              12=EOF ON SYSIN                    74303
+*                              16=ERROR SOMEWHERE                 74303
+P50CONCT   EQU *
+* BEFORE CONCATENATING THIS TOKEN,CHECK THAT
+*    1.    IT'S NOT A ';' (WE CAN DROP THESE NOW)
+*    2.    IT'S NOT A ':'   A LABEL
+*    3.    IT'S NOT AN 'IF' AND THIS SYMBOL IS A 'THEN'
+           CLI STRING,C';'
+           BE  P50SEMI
+           CLI STRING,C':'
+           BE  P50COLON        FIX UP LABEL
+           CLC =C'THEN ',STRING
+           BE  P50THEN
+P50NOTHN   EQU  *  NOT 'IF' AFTER THEN COS WE CAME BACK HERE
+           MVC #OP(20),#STRING SAVE SYMBOL IN CASE ITS A LABEL    74303
+* ALRIGHT THAT'LL DO FOR THE MINUTE,CONCATATENATE THE STRINGS.
+           LH  R1,#TKNSTRG     GET THE CURRENT LENGTH
+         LA    R15,TKNSTRG(R1) PREPARE TO SHIFT A BLANK SEPERATOR 87150
+         MVI   0(R15),C' '     BLANK BETWEEN TOKENS               87150
+           LA  R15,1(R15)      POINT TO NEXT SPOT IN TKNSTRNG     87150
+           LTR R1,R1
+           BNZ P02REALC
+           BCTR R15,0          DON'T WANT A BLANK BEFORE FIRST TKN
+*                              IF R1=0
+P02REALC   EQU  *
+           LH  R5,#STRING                      LOAD LENGTH
+           AR  R1,R5           SUM TWO LENGTHS                    74303
+           LA  R1,1(R1)                        +1 FOR BLANK ABOVE
+           CH  R1,=AL2(L'TKNSTRG)              TOO LONG ?
+           BH  P50ERR1         LENGTH TOO LONG
+           STH R1,#TKNSTRG                     RESET LENGTH
+           BCTR R5,0           -1 FOR MOVE EXECUTE                74303
+           EX   R5,P50MVC                                         74303
+*                                                                 74303
+         CLC   =C'ELSE ',TKNSTRG IS ELSE THERE ?                  75128
+         BE    P50SEMI        YES,DON'T FORM UP ENTIRE STMT       75128
+           B  P50GET
+P50THEN    EQU *
+           CLC =C'IF ',TKNSTRG
+           BNE  P50NOTHN       GO CONCATENATE THE 'THEN'
+*'IF....THEN'
+P50SEMI    STH  R6,#STRING     SET LENGTH=0                       74303
+         MVC   STRING(20),BLANKS
+         B     P50RETN0
+         FIX ' REMOVE CLEAR IF  ALL OK LATER'
+           CLEAR STRING
+P50RETN0   SR  R15,R15
+P50RETN    EQU  *
+           ST  R15,P50SAVEF
+P50RETNN   EQU  *
+          $CALL UJSPLIT        SPLIT STATEMENT INTO TOKENS        74303
+           LTR  R15,R15        TEST THE RETURN CODE               74303
+           BNZ  P50ERR2        NON-ZERO,THEREFORE AN ERROR        74303
+*                              OCCURRED,AND A MESSAGE ISSUED,BUT  74303
+*                              WE WILL ISSUE ANOTHER SHORT MSSGE  74303
+*                              UJCSPLIT RETURNS:-                 74303
+*                              0= OK                              74303
+*                              4= STRING TOO LONG (>1000)         74303
+*                              8= TOO MANY TOKENS                 74303
+*                              12=ONE (OR MORE) TOKENS >L'TKN     74303
+*                              16=INVALID LITERAL (QUOTE MISSING) 74303
+P50TKN0    EQU  *
+           GETTKN 1
+           MVC ICOMMAND,TKN
+           L   R15,P50SAVEF
+           JOLRETN RC=(15)
+P50ERR2  JOLERR 402,'ERROR DETECTED IN MAIN READ PHASE'
+P50RETNF   JOLRETN RC=16
+           SPACE 3
+P50MVC     MVC 0(*-*,R15),STRING
+           SPACE 3
+P50ERR1  JOLERR 501,'STATEMENT TOO LONG'
+           LA  R15,16
+           B  P50RETN
+P50COLON   EQU  *
+* THIS CODE FIXES THE PROBLEM ENCOUNTERED WHEN THE LABEL IS       76200
+* PRECEDED BY A STATEMENT THAT DOES NOT HAVE A SEMI-COLON         76200
+         SPACE 1                                                  76200
+         CLC   #TKNSTRG,ZERO IS THERE A STATMENT THERE?(NO ';'   76200
+         B    P50STMTO       STATEMENT WAS FINE                  76200
+        FIX 'XXXX'
+* NOW WE MUST SET UP THE CURRENT STATEMENT SO THAT IT             76200
+* IS OK, AND ISSUE AN ERROR MESSAGE                               76200
+         SPACE 1                                                  76200
+* WE KNOW THAT 'INCHAR' IS BLANK, AND STRING HAS THE ':',         76200
+*  AND OP CONTAINS THE LABEL. THE LABEL HAS (UNFORTUNATELY)       76200
+*  ALREADY BEEN CONCATENATED TO TKNSTRNG, SO WE MUST REMOVE IT    76200
+         SPACE 1                                                  76200
+         LH    R1,#TKNSTRG    GET CURRENT LENGTH                  76200
+         SH    R1,#OP         - LENGTH OF LABEL CONCATENATED      76200
+         BP    P50RECOV       WE CAN RECOVER                      76200
+         JOLERR 305,'MISSING '';'' :- STATEMENT LOST'             76200
+         B     P50SEMI        GET NEXT STATMENT                   76200
+P50RECOV STH   R1,#TKNSTRG    RESET LENGTH                        76200
+         MVI   INCHAR,C':' SET LABEL IND AGAIN  76200
+          JOLERR 206,'MISSING '';'' :- INSERTED'                  76200
+         B     P50SEMI        CONTINUE                            76200
+P50STMTO EQU   *                                                  76200
+         MVC   WORK(12),BLANKS                                    75128
+*  THE SYMBOLIC REPLACEMENT ROUTINES WON'T LEAVE JUNK IN LABEL    75049
+          $CALL UJS20REP,#OP                 REPLACE SYMBOLICS    74303
+*                                            IN LABEL FIELD       74303
+           CLI LABEL,C' '      ALREADY SPECIFIED A LABEL THIS STMT ?
+           BE  P50LBOK1
+         JOLERR 303,'DUPLICATE LABEL ''',#WORK,''' IGNORED'
+           B  P50IGNR
+P50LBOK1   CLI #WORK+1,L'LABEL LENGTH<=LENGTH OF LABEL ?          74303
+           BNH P50LBOK2
+         JOLERR 304,'LABEL ''',#WORK,'''> 8 CHARACTERS'
+P50LBOK2   MVC LABEL,WORK      SHIFT LABEL IN                     74303
+P50IGNR    EQU  *
+           MVC #TKN(8),#WORK     #TKNSTRG                         J52
+           B   NOLOWCV                                            J52
+        LA      R1,TKN                   LOAD START ADDRESS OF STRING
+        LR      R15,R1                   Copy to R15
+        AH      R15,#TKN                 ADD LENGTH TO GIVE STOP
+        LA      R14,1                    BXLE increment
+        SR      R0,R0                    Clear R0
+LOWNEXT CLI     0(R1),C'A'
+        BL      LOWBXLE
+        CLI     0(R1),C'Z'
+        BH      LOWBXLE
+        IC      R0,0(R1)                    Load character
+TOLOW   EQU     C'A'-C'a'
+        SH      R0,=AL2(TOLOW)
+        STC     R0,0(R1)
+LOWBXLE BXLE    R1,R14,LOWNEXT
+NOLOWCV  DS    0H                                                 J52
+         XC    TKNDESC(24),TKNDESC  Stop GETTKN getting tokens    J52
+         CALL$ UJP45LAB                                           J51
+         CLC   GOTO,LABEL                                         J52
+         BNE   NOCLRGT                                            J52
+         MVC   GOTO,BLANKS                                        J52
+NOCLRGT  DS    0H                                                 J52
+*
+*      if (label_name/(0/) != ' ')
+*      if (ujp45lab() == 0) ;                       /* Save Labels  */
+*
+*
+*      if (clc(goto_nm,label_name,8))    /*fix*/
+*         mvc(goto_nm, "        ",8); /* CVC 220 */
+*      goto label_done;
+*   }
+*
+           STH R6,#TKNSTRG     ZERO LENGTH OF STRING WE WERE      74303
+*                              BUILDING UP                        74303
+           LA  R1,TKNSTRG      MUST SET A USING AS IT IS TOO BIG  80290
+           USING TKNSTRG,R1                                       80290
+           CLEAR TKNSTRG
+           DROP  R1
+           CLC =C'ELSE ',TKN
+           BNE  P50GET
+           MVC   TKNSTRG(5),TKN
+           MVI #TKNSTRG+1,5    SET LENGTH TO 5                    74303
+           B  P50GET           GET A NEW SYMBOL FROM INPUT STREAM(S)
+           LTORG                                                  74303
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+      TITLE 'PREPROCESSOR FORM UP A TOKEN,WORD ETC'
+           JOLSAVE CSECT=UJP51WRD
+*THIS ROUTINE IS CALLED WHENEVER THE NEXT TOKEN IS REQUIRED FROM THE
+*    INPUT STEAM
+* IT CALLS UJP52CHR TO ACTUALLY GET THE CHARACTER AND UJP52CHR IS THE
+*    MODULE WHICH ACTUALLY READS THINGS FROM THE INPUT STREAM OR
+*    PROCLIB ETC
+           SPACE
+           USING JOLCOM,R2
+* CLEAR THE STRING TO WHICH EVERYTHING IS GOING
+P51START   XC  #STRING,#STRING
+         MVC   STRING(20),BLANKS
+         B     P51CHK1
+         FIX ' REMOVE CLEAR SOMETIME LATER'
+           CLEAR STRING
+P51CHK1    CLI INCHAR,C' '                     LAST CHAR READ =' '
+           BNE P51MUV1                         NO SO SHIFT IT INTO
+*                                              THE RECEIVING STRING
+* HERE IT IA A BLANK SO GET THE NEXT CHARACTER
+          $CALL UJP52CHR
+P51TR15A   DS  0H                                                 74303
+           LTR  R15,R15         TEST IF IT RETURNED 0 OR NOT      74303
+           BZ  P51CHK1         YES,GO CHECK IF CHARACTER ' '      74303
+           JOLRETN RC=(15)      NO,SO RETURN WHATEVER IS IN 15    74303
+* A 4=SYSIN DATA FOUND                                            74303
+*   8=NEW JOB                                                     74303
+*  12=EOF ON PRIMARY INPUT (END OF JOB)                           74303
+*  16=ERROR DETECTED SOMEWHERE DOWN BELOW                         74303
+           SPACE 3
+P51MUV1    EQU *
+           OI   INCHAR,C' '   MAKE UPPER CASE                     87150
+* RIGHT NOT A BLANK SO SHIFT TO STRING
+           MVC STRING(1),INCHAR
+           MVI #STRING+1,1     SET LENGTH TO 1                    74303
+           SPACE 1                                                74303
+* NOW TO SAVE CPU TIME,CHECK IF THE CHARACTER IS >C'A' (ALL       74303
+*        SPECIAL CHARACTERS ARE LESS)                             74303
+           CLI INCHAR,C'A'      TEST AGAINST 'A'                  74303
+           BNL P51CHAR         NOT LOW,MUST BE HIGHER             74303
+           SPACE 1                                                74303
+* HERE,IT IS <'A',IE A SPECIAL CHARACTER,SO WE'D BETTER FIND      74303
+*  OUT WHAT ITS ALL ABOUT                                         74303
+           SPACE 1                                                74303
+* NOW UNFORTUNATELY WE HAVE TO GO THROUGH THE BORING PROCESS
+*    OF DEALING WITH LITERAL RUDDY STRINGS
+           CLI INCHAR,C''''
+           BNE P51NOTL1                        WHEW,SAVED BY THE BELL
+           SPACE 3
+* WELL FOLKS HRRE IS THE FIRST OF A LONG LINE OF LITERAL STRING
+*    HANDLERS
+           LA  R6,1                          # OF QUOTES FOUND SO FAR
+P51READ2  $CALL UJP52CHR
+           LTR R15,R15          DID GET CHARACTER RETURN 0?       74303
+           BZ  P51TLIT2         YES,0,SO LOOK AT THE CHARACTER    74303
+         JOLERR 401,'INVALID LITERAL STRING ',#STRING,' FOUND'
+           MVI INCHAR,C''''
+           BAL  R8,P51CONCT    PUT AND END ON IT IN CASE USED LATER
+           MVI INCHAR,C' '
+P51RETNF   JOLRETN RC=16
+P51TLIT2   EQU *
+* NOW CONCATENATE THE CHARACTER WE JUST GOT TO #STRING
+           BAL  R8,P51CONCT
+* NOW SEE IF THE CHARACTER IS A QUOTE
+           CLI INCHAR,C''''
+           BNE P51READ2
+* NOW HERE IT IS A SECOND (OR MORE ) LITERAL STRING THINGO
+           LA  R6,1(R6)        ADD 1 TO QUOTE COUNTER
+           LR  R0,R6                                              J52
+           SRDL R0,1                                              J52
+           LTR R1,R1                                              J52
+*        STC   R6,CALLAREA                                        J52
+*        TM    CALLAREA,1                                         J52
+           BM  P51READ2        STILL HAVE TO GET MORE CHARACTERS FRED
+* NOW HERE THE # OF QOUTES IS EVEN,THAT IS WE HAVE SUCESSFULLY FOUND
+*    THE MATCHING QUOTE
+* HOWEVER (ISN'T THERE ALWAYS?) ,THE VERY NEXT CHARACTER COULD ALSO
+*    BE A QUOTE IN WHICH CASE WE HAVE TO PRESS ON REGARDLESS
+P51READ3  $CALL UJP52CHR
+           LTR R15,R15          TEST UJP52CHR RETURN CODE         74303
+           BZ  P51LIT3          0,TEST WHAT IT IS                 74303
+           B   P51RETN          RETURN WHATEVER IS IN R15         74303
+           SPACE 3
+P51LIT3    EQU *
+* NOW IF INCHAR DOES NOT CONTAIN A QUOTE WE'LL RETURN
+           CLI INCHAR,C''''
+           BNE P51RETN0
+           B  P51TLIT2         CONCATENATE THE CHARACTER
+* AND SO ENDS THE LITERAL STRING
+           SPACE 3
+P51NOTL1   EQU  *
+* NOW HERE THERE WAS NO LITERAL STRING
+           SPACE
+* CHECK IF A COMMENT ABOUT TO START
+           CLI INCHAR,C'/'
+           BNE P51NOTCM        NOT A COMMENT COS NO '/'
+          $CALL UJP52CHR
+           OI   INCHAR,C' '   MAKE UPPER CASE                     87150
+           LTR R15,R15          DID IT RETURN 0?                  74303
+           BZ  TP51ASTR         YES,CHECK IF AN ASTERISK          74303
+           B   P51RETN          NO,RETURN WHATEVER IS IN R15      74303
+           SPACE
+TP51ASTR   CLI  INCHAR,C'*'    COMMENT ?
+           BNE P51RETN0
+* WELL FOLKS IT LOOKS LIKE A COMMENT HAS STARTED
+*    A SIMPLE LITTLE LOOP SOON SKIPS THE COMMENT
+         MVI   OPERATOR,X'FF'     SET COMMENT FLAG                 SOCO
+P51READ4  $CALL UJP52CHR
+P51TR15Z EQU   *                                                  75128
+           OI   INCHAR,C' '   MAKE UPPER CASE                     87150
+           LTR R15,R15          DID IT RETURN 0?                  74303
+           BZ  TP51ENDC         TEST IF END OF COMMENT            74303
+         JOLERR 402,'COMMENT HAS NO END'
+         MVI   OPERATOR,X'00'     RESET COMMENT FLAG               SOCO
+           B   P51RETNF
+           SPACE
+TP51ENDC   CLI INCHAR,C'*'
+           BNE P51READ4
+          $CALL UJP52CHR
+           OI   INCHAR,C' '   MAKE UPPER CASE                     87150
+           CLI INCHAR,C'/'      GOT END OF COMMENT ?
+         BNE   P51TR15Z       TEST R15 FOR VALID RETURN CODE      75128
+           SPACE
+P51ENDCM   MVI INCHAR,C' '
+         MVI   OPERATOR,X'00'     RESET COMMENT FLAG               SOCO
+           B  P51START
+P51NOTCM   EQU *
+          $CALL UJP52CHR
+           OI   INCHAR,C' '   MAKE UPPER CASE                     87150
+           LTR  R15,R15
+           BNZ P51RETN0
+         CLI   STRING,C'?'                                        J40B
+         BNE   *+8                                                J40B
+         MVI   STRING,C'|'                                        J40B
+         CLI   INCHAR,C'?'                                        J40B
+         BNE   *+8                                                J40B
+         MVI   INCHAR,C'|'                                        J40B
+           CLI STRING,C'|'
+           BNE  P51TNOT
+           CLI INCHAR,C'|'
+           BNE P51RETN0
+P51CON1R   EQU  *
+           BAL  R8,P51CONCT
+P51CLRIN   EQU  *
+           MVI INCHAR,C' '
+           B  P51RETN0
+P51TNOT    CLI STRING,C'^'
+         BE    P51ISNOT       CHAR IS 'NOT' ->                    76200
+* CHARACTER IS NOT A 'NOT'                                        76200
+         CLI   STRING,C'>'    >                                   76200
+         BE    P51GT                                              76200
+         CLI   STRING,C'<'    <                                   76200
+         BNE   P51TSPC2       GO CHECK WHAT IT IS                 76200
+* CHECK IF >=   <=                                                76200
+P51GT    CLI   INCHAR,C'='    NEXT CHAR '='                       76200
+         BE    P51CON1R       YES, COMPOSITE SYMBOL THEN          76200
+         B     P51TSPC2       NO, FIND OUT WHAT IT IS             76200
+P51ISNOT EQU   *                                                  76200
+           CLI INCHAR,C'='
+           BE  P51CON1R
+           CLI INCHAR,C'<'
+           BE  P51CON1R
+           CLI INCHAR,C'>'
+           BE  P51CON1R
+           B  P51RETN0
+P51TSPC2   LM  R7,R9,P51SPCON                                     74303
+P51TSP3    CLC STRING(1),0(R7)  SPECIAL CHARACTER ?               74303
+           BE  P51RETN0        YES,RETURN A ZERO                  74303
+           BXLE R7,R8,P51TSP3   ROUND ROBIN                       74303
+           B  P51ORDCH
+* NOW THE CHARACTER IN 'INCHAR' IS NOT A LITERAL STRING OR A COMMENT
+*    OR ANYTHING ELSE: ALL WE HAVE TO DO IS LOOP ROUND AND
+*    ROUND AND ROUND AND ROUND (GIDDY?) UNTIL A BLANK OR EOF OR
+*    SOMETHING ELSE HAPPENS TO END THE WORD READ ROUTINE
+P51CHAR    EQU *                                                  74303
+P51READ5  $CALL UJP52CHR
+           OI   INCHAR,C' '   MAKE UPPER CASE                     87150
+           LTR R15,R15          RETURN 0,OR NOT                   74303
+           BNZ P51RETN          RETURN WHATEVER IS IN 15          74303
+           CLI INCHAR,C'A'      CHAR>C'A' (SAVE CPU TIME)         74303
+           BNL P51ORDCH         > THEREFORE ALPHANUMERIC          74303
+           LM  R7,R9,P51SPCO2   LOAD ADDRESS SPECIAL CONSTANTS    74303
+P51TSPC1   CLC INCHAR,0(R7)     IS IT A SPECIAL | ' '             74303
+           BE  P51RETN0        YES,RETURN A ZERO                  74303
+           BXLE R7,R8,P51TSPC1  ROUND LOOP                        74303
+P51ORDCH   EQU  *               NOT A SPECIAL CHARACTER,OR ' '    74303
+           BAL  R8,P51CONCT
+           B   P51READ5
+P51RETN0   SR R15,R15
+P51RETN    EQU *
+           JOLRETN RC=(15)
+           SPACE 3
+P51CONCT   EQU  *
+* THIS LITTLE ROUTINE CONCATENATES THE CHARACTER IN 'INCHAR' TO
+*    '#STRING'
+          FIX 'COULD SHORTEN A LOT OF THIS???'
+           LH  R1,#STRING
+           LA  R15,L'STRING
+           CR  R1,R15
+           BH  P51ERR03        TOO BIG AND IT WON'T FIT
+           LA R15,STRING(R1)
+           MVC 0(1,R15),INCHAR
+           LA  R1,1(R1)
+           STH R1,#STRING
+           BR  R8
+P51ERR03 JOLERR 403,'SYMBOL ''',#STRING,''' TOO LONG'
+           B  P51RETNF
+P51BLANK DC    C' '             USUALLY ENDS A NUMBER,<IDENTIFIER>74303
+         DC    C';=.,:&&|^<>''+-/*()' SPECIAL VALID CHARACTERS   75049
+P51ETBL    DS  0H                                                 74303
+P51SPCON DC    A(P51BLANK+1,1,P51ETBL-1) BXLE LOOP 1 CONSTANTS    74303
+P51SPCO2 DC    A(P51BLANK,1,P51ETBL-1)   BXLE LOOP 2 CONSTANTS    74303
+         DC    30S(*)
+         LTORG

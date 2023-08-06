@@ -1,0 +1,346 @@
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+ ITS REALLY UJS34ARE                                            J40B
+UJS45AER TITLE 'UJS45AER  ISSUE GET-FILE ERROR MESSAGE'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974,1975,1976
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1980,1981,1982.
+* JOL COPYRIGHT CCS-JOL PTY LTD 1985, 1986, 1987, 1988
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+         SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+* LAST SOURCE UPDATE
+*   CHANGES:-
+*     1.
+         COPY  JOLGLOBL
+         LCLC  &C,&C1,&C2,&C3,&C4,&C5,&C6
+         $UJEPARM
+&TYPE    SETC  'SCHED'                                            J40B
+         PRINT ON,DATA
+UJECOMM  DSECT
+         USING UJECOMM,R3,R5
+         COPY  UJECOMM
+         JOLSAVE CSECT=UJS45AER,BASE=R11
+         SPACE 3
+         CH    R1,=H'184'
+         BH    X8GETINV
+         B     X8GETERR(R1)
+X8GETERR B     X8GET0        0
+         B     X8GET4        4
+         B     X8GET8        8
+         B     X8GET12      12
+         B     X8GET16      16
+         B     X8GET20      20
+         B     X8GET24      24
+         B     X8GET28      28
+         B     X8GETINV     32
+         B     X8GETINV     36
+         B     X8GETINV     40
+         B     X8GETINV     44
+         B     X8GETINV     48
+         B     X8GETINV     52
+         B     X8GETINV     56
+         B     X8GET60      60
+         B     X8GET64      64
+         B     X8GETINV     68
+         B     X8GET72      72
+         B     X8GET76      76
+         B     X8GET80      80
+         B     X8GET84      84
+         B     X8GET88      88
+         B     X8GET92      92
+         B     X8GETINV     96
+         B     X8GET100    100
+         B     X8GET104    104
+         B     X8GET108    108
+         B     X8GETINV    112
+         B     X8GETINV    116
+         B     X8GET120    120
+         B     X8GETINV    124
+         B     X8GET128    128
+         B     X8GET132    132
+         B     X8GET136    136
+         B     X8GET140    140
+         B     X8GET144    144
+         B     X8GET148    148
+         B     X8GET152    152
+         B     X8GET156    156
+         B     X8GET160    160
+         B     X8GET164    164
+         B     X8GET168    168
+         B     X8GET172    172
+         B     X8GET176    176
+         B     X8GET180    180
+         B     X8GETINV    184
+X8GET0   JOLERR 000,'DATA SET ',#DSN,' ALLOCATED ON *******'
+         B     X8GETRET
+X8GET4   JOLERR 504,'DATA SET ',#DSN,' HAS INVALID PARAMETERS'
+         B     X8GETRET
+X8GET8   JOLERR 508,'DATA SET ',#DSN,' HAS INVALID PARAMETERS'
+         B     X8GETRET
+X8GET12  JOLERR  312,'DATA SET ',#DSN,' IS A FILE OTHER THAN A DUMMY FI*
+               LE FOR ACCESS NAME ',DDDDNAME
+         B     X8GETRET
+X8GET16  JOLERR  216,'DATA SET ',#DSN,' HAD RXV,DIAG OR NSL SPECIFIED A*
+               ND NO MKEY WAS SPECIFIED'
+         B     X8GETRET
+X8GET20  JOLERR  320,'DATA SET ',#DSN,' WAS NOT ALLOCATED  --- OPERATOR*
+                WOULD NOT MOUNT THE VOLUME'
+         B     X8GETRET
+X8GET24  JOLERR 524,'INSUFFICENT WORK AREA FOR GETFL MACRO'
+         B     X8GETRET
+X8GET28  JOLERR 328,'FILE NOT CONCATENATED BECAUSE:-'
+         JOLERR 329,'A) AN ATTEMPT WAS MADE TO CONCAT TO AN OPEN FILE'
+         JOLERR 330,'B) INVALID ACNAME WAS SPECIFIED'
+         JOLERR 331,'C) SOUT,ISF,CONT,DB,DC,DT,DD,DZ OR SAME WAS SPECIF*
+               IED'
+         B     X8GETRET
+X8GET60  JOLERR  360,'DATA SET ',#DSN,' WAS NOT ALLOCATED  --- ERROR IN*
+                THE CATALOGUE'
+         B     X8GETRET
+X8GET64  JOLERR  364,'DATA SET ',#DSN,' WAS NOT ALLOCATED  --- CATALOGU*
+               E LOCKED'
+         B     X8GETRET
+X8GET72  JOLERR  372,'DATA SET ',#DSN,' WAS NOT ALLOCATED  --- DATA SET*
+                WAS NOT IN CATALOGUE - SEARCH FAILED'
+         B     X8GETRET
+X8GET76  JOLERR  376,'DATA SET ',#DSN,' WAS NOT ALLOCATED  --- FILE NAM*
+               E AGREES WITH THE GROUP NAME OF ALREADY CATALOGUED GENER*
+               ATION DATA SET (DURING CATALOGUING)'
+         B     X8GETRET
+X8GET80  JOLERR  380,'DATA SET ',#DSN,' WAS NOT ALLOCATED  --- FILE NAM*
+               E AGREES WITH THE GROUP NAME OF ALREADY CATALOGUED GENER*
+               ATION DATA SET (DURING REFERENCE TO THE CATALOGUE)'
+         B     X8GETRET
+X8GET84  JOLERR  384,'DATA SET ',#DSN,' WAS NOT ALLOCATED  --- FILE NAM*
+               E IS ALREADY CATALOGUED (GDG ONLY)'
+         B     X8GETRET
+X8GET88  JOLERR  388,'DATA SET ',#DSN,' WAS NOT ALLOCATED  --- FILE NAM*
+               E IS ALREADY CATALOGUED'
+         B     X8GETRET
+X8GET92  JOLERR  392,'DATA SET ',#DSN,' WAS NOT ALLOCATED  --- A HARWAR*
+               E ERROR OCCURRED WHEN READING THE CATALOGUE'
+         B     X8GETRET
+X8GET100 JOLERR  3100,'DATA SET ',#DSN,' WAS NOT ALLOCATED  SYNTAX ERRO*
+               R IN DATA SET NAME'
+         B     X8GETRET
+X8GET104 JOLERR  3104,'DATA SET ',#DSN,' WAS NOT ALLOCATED  CATALOGUE H*
+               AS NO SPACE'
+         B     X8GETRET
+X8GET108 JOLERR  3108,'DATA SET ',#DSN,' WAS NOT ALLOCATED - PLSQA FULL*
+                '
+         B     X8GETRET
+X8GET120 JOLERR  3120,'DATA SET ',#DSN,' WAS NOT ALLOCATED  - SYSTEM HA*
+               S NO CATALOGUE'
+         B     X8GETRET
+X8GET128 JOLERR 3128,'DATA SET ',#DSN,' WAS NOT ALLOCATED  BECAUSE:-'
+         JOLERR 3129,'A) THE VOLUME WAS NOT MOUNTED'
+         JOLERR 3130,'B) THE SAME VOLUME IS REQUIRED TWICE IN THE SAME *
+               JOB'
+         JOLERR 3131,'C) THE VOLUME IS BEING USED BY ANOTHER JOB'
+         JOLERR 3132,'D) A PARAMETER CONTAINS AN ERROR'
+         B     X8GETRET
+X8GET132 JOLERR  3133,'DATA SET ',#DSN,' WAS NOT ALLOCATED - DATA SET I*
+               S LOCKED'
+         B     X8GETRET
+X8GET136 JOLERR  3136,'DATA SET ',#DSN,' WAS NOT ALLOCATED - UNIT IS OF*
+               F LINE'
+         B     X8GETRET
+X8GET140 JOLERR  3140,'DATA SET ',#DSN,' WAS NOT ALLOCATED ',          *
+               'DATA SET IS READ ONLY, AND CANNOT BE WRITTEN INTO'
+         B     X8GETRET
+X8GET144 JOLERR  3144,'DATA SET ',#DSN,' WAS NOT ALLOCATED - ',        *
+               'IT WAS REQUESTED AS NEW, BUT ALREADY EXISTS'
+         B     X8GETRET
+X8GET148 JOLERR  3148,'DATA SET ',#DSN,' WAS NOT ALLOCATED - ',        *
+               'VTOC IS FULL'
+         B     X8GETRET
+X8GET152 JOLERR  3152,'DATA SET ',#DSN,' WAS NOT ALLOCATED - ',        *
+               'NO SPACE ON VOLUME ',DDVOLUME
+         B     X8GETRET
+X8GET156 JOLERR  3156,'DATA SET ',#DSN,' WAS NOT ALLOCATED - ',        *
+               'DATA SET IS NOT ON VOLUME'
+         B     X8GETRET
+X8GET160 JOLERR  3160,'DATA SET ',#DSN,' WAS NOT ALLOCATED - ',        *
+               'INCORRECT PASSWORD'
+         B     X8GETRET
+X8GET164 JOLERR  3164,'DATA SET ',#DSN,' WAS NOT ALLOCATED - ',        *
+               'A HARDWARE ERROR ERROR OCCURRED'
+         B     X8GETRET
+X8GET168 JOLERR  3168,'DATA SET ',#DSN,' WAS NOT ALLOCATED - ',        *
+               'THE FILE IS ALREADY LOCKED'
+         B     X8GETRET
+X8GET172 JOLERR  3172,'DATA SET ',#DSN,' WAS NOT ALLOCATED - ',        *
+               'SHORTAGE OF IO DEVICES'
+         B     X8GETRET
+X8GET176 JOLERR 3176,'DATA SET ',#DSN,' WAS NOT ALLOCATED - ',         *
+               'NO SPACE LEFT ON WORK VOLUMES'
+         B     X8GETRET
+X8GET180 JOLERR 3180,'DATA SET ',#DSN,' WAS NOT ALLOCATED - ',         *
+               'A CANCEL COMMAND WAS ISSUED WHILE WAITING FOR A MOUNT'
+         B     X8GETRET
+X8GETINV DS    0H
+         DC    H'0'                                               J40B
+         JOLERR 5999,'UNRECOGNISED RETURN CODE FROM GETFL '
+X8GETRET B    JRETN0
+         LTORG                                                    J40B
+         TITLE 'ISSUE FREE-FILE ERROR MESSAGE'
+         JOLSAVE CSECT=UJS46FER
+    SPACE 3
+         CH    R1,=H'188'
+         BH    X8FREINV
+         B     X8FREERR(R1)
+X8FREERR B     X8FRE0        0
+         B     X8FRE4        4
+         B     X8FRE8        8
+         B     X8FRE12      12
+         B     X8FRE16      16
+         B     X8FRE20      20
+         B     X8FREINV     24
+         B     X8FREINV     28
+         B     X8FREINV     32
+         B     X8FREINV     36
+         B     X8FREINV     40
+         B     X8FREINV     44
+         B     X8FREINV     48
+         B     X8FREINV     52
+         B     X8FREINV     56
+         B     X8FRE60      60
+         B     X8FRE64      64
+         B     X8FRE68      68
+         B     X8FRE72      72
+         B     X8FRE76      76
+         B     X8FREINV     80
+         B     X8FRE84      84
+         B     X8FRE88      88
+         B     X8FRE92      92
+         B     X8FREINV     96
+         B     X8FREINV    100
+         B     X8FRE104    104
+         B     X8FREINV    108
+         B     X8FRE112    112
+         B     X8FREINV    116
+         B     X8FRE120    120
+         B     X8FREINV    124
+         B     X8FREINV    128
+         B     X8FREINV    132
+         B     X8FREINV    136
+         B     X8FREINV    140
+         B     X8FREINV    144
+         B     X8FRE148    148
+         B     X8FRE152    152
+         B     X8FRE156    156
+         B     X8FRE160    160
+         B     X8FREINV    164
+         B     X8FREINV    168
+         B     X8FREINV    172
+         B     X8FREINV    176
+         B     X8FRE180    180
+         B     X8FRE184    184
+X8FRE0   JOLERR 000,'DATA SET ',#DSN,' FREED'
+         B     X8FRERET
+X8FRE4   JOLERR 504,'DATA SET ',#DSN,' HAS INVALID PARAMETERS'
+         B     X8FRERET
+X8FRE8   JOLERR 508,'DATA SET ',#DSN,' HAS INVALID PARAMETERS'
+         B     X8FRERET
+X8FRE12  JOLERR  312,'DATA SET ',#DSN,' IS A DUMMY FILE... CANNOT BE FR*
+                EED'
+         B     X8FRERET
+X8FRE16  JOLERR  216,'DATA SET ',#DSN,' IS A SYSTEM FILE AND CANNOT BE *
+               FREED WITHOUT SPECIAL PRIVILEGES'
+         B     X8FRERET
+X8FRE20  JOLERR 420,'DATA SET ',#DSN,' IS NOT FREED: JOB STACK IS FULL'
+         B     X8FRERET
+X8FRE60  JOLERR  360,'DATA SET ',#DSN,' WAS NOT CATALOGUED - NULLIFIED *
+               BECAUSE OF ABEND ??????'
+         B     X8FRERET
+X8FRE64  JOLERR  364,'DATA SET ',#DSN,' WAS NOT CATALOGUED --- CATALOGU*
+               E LOCKED'
+         B     X8FRERET
+X8FRE68  JOLERR  368,'DATA SET ',#DSN,' WAS NOT UNCATLOGUED -- FILE NAM*
+               E AGREES WITH THE GROUP NAME OF ALREADY CATALOGUED GENER*
+               ATION DATA SET'
+         B     X8FRERET
+X8FRE72  JOLERR  372,'DATA SET ',#DSN,' WAS NOT FREED --- DATA SET WAS *
+                NOT IN CATALOGUE'
+         B     X8FRERET
+X8FRE76  JOLERR  376,'DATA SET ',#DSN,' WAS NOT CATALOGUED --- FILE NAM*
+               E AGREES WITH THE GROUP NAME OF ALREADY CATALOGUED GENER*
+               ATION DATA SET (DURING CATALOGUING)'
+         B     X8FRERET
+X8FRE84  JOLERR  384,'DATA SET ',#DSN,' WAS NOT CATALOGUED --- FILE NAM*
+               E AGREES WITH THE GROUP NAME OF ALREADY CATALOGUED GENER*
+               ATION DATA SET'
+         B     X8FRERET
+X8FRE88  JOLERR  388,'DATA SET ',#DSN,' WAS NOT CATALOGUED --- FILE NAM*
+               E IS ALREADY CATALOGUED'
+         B     X8FRERET
+X8FRE92  JOLERR  392,'DATA SET ',#DSN,' WAS NOT FREED  --- A HARWARE ER*
+               ROR OCCURRED WHEN USING THE CATALOGUE'
+         B     X8FRERET
+X8FRE104 JOLERR  3104,'DATA SET ',#DSN,' WAS NOT FREED CATALOGUE HAS NO*
+                SPACE'
+         B     X8FRERET
+X8FRE112 JOLERR  3112,'DATA SET ',#DSN,' IS CURRENTLY BEING CATALOGUED *
+                (GENERATION DATA SET)'
+         B     X8FRERET
+X8FRE120 JOLERR  3120,'DATA SET ',#DSN,' WAS NOT FREED - SYSTEM HAS NO *
+               CATALOG'
+         B     X8FRERET
+X8FRE148 JOLERR 4148,'DATA SET ',#DSN,' CANNOT BE DELETED BECAUSE ',   *
+               'IT IS BEING USED BY ANOTHER JOB'
+         B     X8FRERET
+X8FRE152 JOLERR  3152,'DATA SET ',#DSN,' WAS NOT DELETED ASS IT IS ON A*
+                READ ONLY VOLUME'
+         B     X8FRERET
+X8FRE156 JOLERR  3156,'DATA SET ',#DSN,' WAS NOT FREED - A HARDWARE ERR*
+               OR OCCURRED ON THE VTOC'
+         B     X8FRERET
+X8FRE160 JOLERR  3160,'ACNAME ',DDDDNAME,' WAS NOT FREED',             *
+               ' - COULD NOT BE LOCATED'
+         B     X8FRERET
+X8FRE180 JOLERR  3180,'ACNAME ',DDDDNAME,' WAS NOT FREED',             *
+               ' - SAME FILE SPECIFIED'
+         B     X8FRERET
+X8FRE184 JOLERR  3184,'ACNAME ',DDDDNAME,' WAS NOT FREED',             *
+               ' OPEN COUNTER IS NOT ZERO'
+         B     X8FRERET
+X8FRERET B     JRETN0
+X8FREINV JOLERR 5999,'FREE-FILE HAS GIVEN AN UNRECOGNISED RETURN CODE'
+         LTORG                                                    J40B
+         END

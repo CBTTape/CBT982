@@ -1,0 +1,46 @@
+         TITLE 'TIOT SCAN SOUBROUTINE'
+* THIS SUBROUTINE SEARCHES THE TIOT FOR A SPECIFIED DDNAME
+*  WHOSE ADDRESS IS PASSED IN REGISTER 1
+* There is code after the end statement that shows how it
+* used to be done prior to z/os.
+* Changed, Dec 16, 2008 for Z/OS by Clement Clarke
+         PRINT OFF                                                J60
+         PRINT ON,DATA                                            J60
+SRCHTIOT CSECT
+R00      EQU   0
+R01      EQU   1
+R11      EQU   11
+R13      EQU   13
+R14      EQU   14
+R15      EQU   15
+         SAVE  (11,12)             SAVE REGISTERS
+         LR    R11,R15             SET UP A BASE
+         USING SRCHTIOT,R11
+         SPACE
+SCHTIOT  DS    0H
+         DEVTYPE 0(R01),40(R13)                                   J60
+         RETURN (11,12),,RC=(15)
+         L     R15,X'010'          ADDRESS OF CVT
+         L     R15,0(0,R15)        TCB WORDS
+         L     R15,4(,R15)         ADDRESS OF MY TCB
+         SLR   R00,R00
+         L     R15,TCBTIO-TCB(,R15) TIOT ADDRESS
+ST010    DS    0H
+         CLC   28(8,R15),0(R01)    Q... DDNAME MATCH?
+         BE    RETURN0             A... YES:RETURN
+         IC    R00,24(,R15)        LENGTH OF THIS ENTRY
+         AR    R15,R00
+         LTR   R00,R00             Q... END OF TIOT?
+         BNZ   ST010               A... NO: CHECK THE NEXT ENTRY
+*        CLI   *,0                 SET CC TO SHOW NOT EQUALS
+*        BR    R14
+         RETURN (11,12),,RC=4
+RETURN0  LR    1,15                SAVE POINTER INTO TIOT FOR LATER
+         RETURN (11,12),,RC=0
+         PUSH  PRINT
+         PRINT NOGEN
+         DS    0D
+         TITLE 'TASK CONTROL BLOCK'
+*        KAATCB
+         IKJTCB
+         END

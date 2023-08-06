@@ -1,0 +1,553 @@
+UJP28SCR TITLE 'JOL 3270 SCREEN HANDLER - INTERNAL MACROS'        J40B
+         MACRO                                                    J50
+&L       NEXTADDR &LEN
+         LCLA  &A                                                 J50
+         LCLB  &B                                                 J50
+&B       SETB  (T'&LEN NE 'O')                                    J50
+&A       SETA  4+&B                                               J50
+&L       DS    0H
+.*       LA    R11,&A.(,R11)     POINT AT NEXT SBA
+         AIF   (T'&LEN EQ 'O').NOL                                J50
+         AH    R11,&LEN
+.NOL     ANOP                                                     J50
+.*       CLI   P28SF,SFE                                          J50
+.*       BNE   *+8                                                J50
+.*       LA    R11,1(,R11)                                        J50
+         MEND                                                     J50
+*                                                                 J50
+         MACRO                                                    J50
+&L       NEXTITEM
+&L       LH    R15,TXTLEN
+         AH    R15,RLITLEN
+         LA    R10,DITENEXT(R15) ADDRESS NEXT DATA ITEM           J50
+         MEND                                                     J50
+*                                                                 J50
+         MACRO                                                    J50
+&L       SETATTR &PROT
+         LCLA  &A                                                 J50
+         LCLB  &B                                                 J50
+         LCLC  &COLOUR,&ATTR,&L1,&L2                              J50
+&A       SETA  K'&PROT                                            J50
+&B       SETB  (K'&PROT NE 0)                                     J50
+&L1      SETC  'KCP'.'&SYSNDX'.'A'                                J50
+&L2      SETC  'KCP'.'&SYSNDX'.'B'                                J50
+         AIF   (NOT &B).PROTOK                                    J50
+         AIF   ('&PROT' EQ 'PROT').PROTOK                         J50
+         AIF   ('&PROT' EQ 'DEFAULT').PROTOK                      J50
+         MNOTE 8,'PROT VALUE &PROT IS NOT ALLOWED'                J50
+.PROTOK  ANOP                                                     J50
+&L       MVC   0(1,R11),P28SF    SET FIELD
+&COLOUR  SETC  (&B)'TXTCOLR'.(1-&B)'REPCOLR'                      J50
+&ATTR    SETC  (&B)'TXTATTR'.(1-&B)'REPATTR'                      J50
+         AIF   ('&PROT' EQ 'DEFAULT').DEFCOLR                     J50
+         SLR   R15,R15                                            J50
+         IC    R15,&COLOUR       LOAD COLOUR NUMBER               J50
+         IC    R15,COLOURS(R15)  TRANSLATE TO 9526 EQUIVALENT     J50
+         STC   R15,1(,R11)                                        J50
+         AIF   (NOT &B).NPROT                                     J50
+         OI    1(R11),X'20'      SET PROTECTED ON                 J50
+         AGO   .NPROT                                             J50
+.DEFCOLR ANOP                                                     J50
+         MVI   1(R11),X'2C'                                       J50
+.NPROT   ANOP
+         CLI   P28SF,SFE                                          J50
+         BNE   &L1                                                J50
+         AIF   ('&PROT' NE 'DEFAULT').SETATTR                     J50
+         MVI   2(R11),0                                           J50
+         AGO   .DEFATTR                                           J50
+.SETATTR ANOP                                                     J50
+         IC    R15,&ATTR                                          J50
+         SRL   R15,2                                              J50
+         STC   R15,2(,R11)                                        J50
+.DEFATTR ANOP                                                     J50
+         TR    1(2,R11),SDATA                                     J50
+         LA    R11,1(,R11)                                        J50
+         B     &L2                                                J50
+&L1      TR    1(1,R11),SDATA                                     J50
+&L2      DS    0H                                                 J50
+         LA    R11,2(,R11)                                        J50
+         MEND                                                     J50
+*                                                                 J50
+         MACRO                                                    J50
+&L       SETBA &LINE,&COL,&STO=                                   J50
+&L       MVI   MSGBA,SBA      SET BUFFER ADDR                     J50
+         AIF   ('&LINE'(1,1) EQ  '(').LLR                         J50
+         AIF   (T'&LINE EQ 'H').LLH
+         L     R1,&LINE       LOAD LINE NUMBER                    J50
+         AGO   .COL                                               J50
+.LLH     LH    R1,&LINE       LOAD LINE NUMBER                    J50
+         AGO   .COL                                               J50
+.LLR     AIF   ('&LINE' EQ '(1)' OR '&LINE' EQ '(R1)').COL        J50
+         LR    R1,&LINE(1)   LOAD LINE NUMBER                     J50
+.COL     ANOP                                                     J50
+         AIF   ('&COL'(1,1) EQ  '(').LCR                          J50
+         AIF   (T'&COL EQ 'H').LCH
+         L     R14,&COL       LOAD COLUMN NUMBERS                 J50
+         AGO   .ECOL                                              J50
+.LCH     LH    R14,&COL       LOAD COLUMN NUMBER                  J50
+         AGO   .ECOL                                              J50
+.LCR     AIF   ('&COL' EQ '(14)' OR '&COL' EQ '(R14)').ECOL       J50
+         LR    R14,&COL(1)    LOAD COLUMN NUMBER                  J50
+.ECOL    ANOP                                                     J50
+         BCTR  R14,0          BUFFER POSITION STARTS AT ZERO
+         BCTR  R1,0           SUBTRACT 1
+         M     R0,#COLUMNS    MULTIPLY BY NUMBER IF COLUMNS
+         AR    R1,R14         R1 NOW HAS BUFFER ADDRESS
+         AIF   (T'&STO EQ 'O').NSTO
+         LA    R15,1(,R1)                                         J50
+         STH   R15,&STO                                           J50
+         LA    R7,2(,R7)                                          J50
+.NSTO    ANOP                                                     J50
+         D     R0,=F'64'      R1 NOW HAS 1ST ADDR R14 NOW HAS 2ND ADDR
+         STC   R1,MSGADDR1    STORE HIGH BYTE                 (JCS)
+         STC   R0,MSGADDR2      AND LOW BYTE                  (JCS)
+         TR    MSGADDR1(2),SDATA TRANSLATE PROPERLY           (JCS)
+         LA    R11,3(,R11)                                        J50
+         MEND                                                     J50
+         MACRO                                                    J50
+&L       FIELD &LINE,&COL,&PROT,&STO=                             J50
+         LCLA  &A,&LEN                                            J50
+         LCLB  &B                                                 J50
+         LCLC  &COLOUR,&ATTR,&L1,&L2                              J50
+&A       SETA  K'&PROT                                            J50
+&LEN     SETA  5                                                  J50
+&B       SETB  (K'&PROT NE 0)                                     J50
+&L1      SETC  'KCP'.'&SYSNDX'.'A'                                J50
+&L2      SETC  'KCP'.'&SYSNDX'.'B'                                J50
+         AIF   (NOT &B).PROTOK                                    J50
+         AIF   ('&PROT' EQ 'PROT').PROTOK                         J50
+         AIF   ('&PROT' EQ 'DEFAULT').PROTOK                      J50
+         MNOTE 8,'PROT VALUE &PROT IS NOT ALLOWED'                J50
+.PROTOK  ANOP                                                     J50
+&L       MVI   MSGBA,SBA      SET BUFFER ADDR                     J50
+         AIF   ('&LINE'(1,1) EQ  '(').LLR                         J50
+         AIF   (T'&LINE EQ 'H').LLH
+         L     R1,&LINE       LOAD LINE NUMBER                    J50
+         AGO   .COL                                               J50
+.LLH     LH    R1,&LINE       LOAD LINE NUMBER                    J50
+         AGO   .COL                                               J50
+.LLR     AIF   ('&LINE' EQ '(1)' OR '&LINE' EQ '(R1)').COL        J50
+         LR    R1,&LINE(1)   LOAD LINE NUMBER                     J50
+.COL     ANOP                                                     J50
+         AIF   ('&COL'(1,1) EQ  '(').LCR                          J50
+         AIF   (T'&COL EQ 'H').LCH
+         L     R14,&COL       LOAD COLUMN NUMBERS                 J50
+         AGO   .ECOL                                              J50
+.LCH     LH    R14,&COL       LOAD COLUMN NUMBER                  J50
+         AGO   .ECOL                                              J50
+.LCR     AIF   ('&COL' EQ '(14)' OR '&COL' EQ '(R14)').ECOL       J50
+         LR    R14,&COL(1)    LOAD COLUMN NUMBER                  J50
+.ECOL    ANOP                                                     J50
+         BCTR  R14,0          BUFFER POSITION STARTS AT ZERO
+         BCTR  R1,0           SUBTRACT 1
+         M     R0,#COLUMNS    MULTIPLY BY NUMBER IF COLUMNS
+         AR    R1,R14         R1 NOW HAS BUFFER ADDRESS
+         AIF   (T'&STO EQ 'O').NSTO
+         LA    R15,1(,R1)                                         J50
+         STH   R15,&STO                                           J50
+         LA    R7,2(,R7)                                          J50
+.NSTO    ANOP                                                     J50
+         D     R0,=F'64'      R1 NOW HAS 1ST ADDR R0 NOW HAS 2ND ADDR
+         STC   R1,1(,R11)     STORE HIGH BYTE                 (JCS)
+         STC   R0,2(,R11)       AND LOW BYTE                  (JCS)
+         TR    1(2,R11),SDATA    TRANSLATE PROPERLY           (JCS)
+.*       LA    R11,3(,R11)                                        J50
+         MVC   3(1,R11),P28SF    SET FIELD
+&COLOUR  SETC  (&B)'TXTCOLR'.(1-&B)'REPCOLR'                      J50
+&ATTR    SETC  (&B)'TXTATTR'.(1-&B)'REPATTR'                      J50
+         AIF   ('&PROT' EQ 'DEFAULT').DEFCOLR                     J50
+         SLR   R15,R15                                            J50
+         IC    R15,&COLOUR       LOAD COLOUR NUMBER               J50
+         IC    R15,COLOURS(R15)  TRANSLATE TO 9526 EQUIVALENT     J50
+         STC   R15,4(R11)                                         J50
+         AIF   (NOT &B).NPROT                                     J50
+         OI    4(R11),X'20'      SET PROTECTED ON                 J50
+         AGO   .NPROT                                             J50
+.DEFCOLR ANOP                                                     J50
+         MVI   4(R11),X'2C'                                       J50
+.NPROT   ANOP
+         CLI   P28SF,SFE                                          J50
+         BNE   &L1                                                J50
+         AIF   ('&PROT' NE 'DEFAULT').SETATTR                     J50
+         MVI   5(R11),0                                           J50
+         AGO   .DEFATTR                                           J50
+.SETATTR ANOP                                                     J50
+         IC    R15,&ATTR                                          J50
+         SRL   R15,2                                              J50
+         STC   R15,5(,R11)                                        J50
+.DEFATTR ANOP                                                     J50
+         TR    4(2,R11),SDATA                                     J50
+         LA    R11,1(,R11)                                        J50
+         B     &L2                                                J50
+&L1      TR    4(1,R11),SDATA                                     J50
+&L2      DS    0H                                                 J50
+         LA    R11,5(,R11)                                        J50
+         MEND                                                     J50
+         TITLE 'JOL 3270 SCREEN HANDLER - MAPPING DSECTS'         J40B
+********************************************************************
+*                                                                  *
+* HERE WE HAVE THE MAPPING DSECTS                                  *
+*                                                                  *
+********************************************************************
+WORKAREA DSECT            PASSED WORK AREA POINTED TO BY R0 ON ENTRY
+SAVEAREA DS    18F
+SEVENTY9 DS    F                                                  J50
+EIGHTY1  DS    F                                                  J50
+P28DLEN  DS    H                                                  J50
+P28DLOC  DS    A                                                  J50
+P28SF    DC    X'1B'                                              J50
+SF       EQU   X'1D'                                              J50
+SFE      EQU   X'1B'                                              J50
+SBA      EQU   X'11'                                              J50
+IC       EQU   X'13'                                              J50
+PT       EQU   X'05'                                              J50
+RA       EQU   X'3C'                                              J50
+REPLEN   DS    40H       REQUIRED REPLY LENGTH
+REPADD   DS    40H       REQUIRED REPLY ADDRESSES
+REPLYA   DS    CL100    AREA TO PASS REPLIES BACK TO CALLER            .
+                            POINTED TO BY R1 ON EXIT
+WRITEA   DS    0C       BUFFER AREA USED TO WRITE TO SCREEN
+WCNTL    DS    CL2
+WCC      DS    CL1
+MSG0     DS    CL2000                       FIX DJD 22/08/83
+TAID     DS    C        STOREAGE AREA FOR AID WHILE BEING MUTILATED
+READA    EQU   *        BUFFER AREA USED TO READ FROM SCREEN
+AID      DS    CL1
+CURSOR   DS    CL2
+MSGI     DS    CL2000                       FIX DJD 22/08/83
+*
+********************************************************************
+*                                                                  *
+MSG      DSECT          MAPPING FOR WRITE TO SCREEN                *
+MSGBA    DS    CL1                                                 *
+MSGADDR1 DS    CL1                                                 *
+MSGADDR2 DS    CL1                                                 *
+MSGSF    DS    CL1                                                 *
+MSGATTR  DS    CL1                                                 *
+MSGEATTR DS    0C                                                  *
+MSGTXT   DS    CL100                                               *
+*                                                                  *
+********************************************************************
+*                                                                  *
+IMSG     DSECT          MAPPING TO READ FROM SCREEN                *
+ISBA     DS    CL1                                                 *
+IADD1    DS    CL1                                                 *
+IADD2    DS    CL1                                                 *
+ITEXT    DS    CL100                                               *
+*                                                                  *
+********************************************************************
+         SPACE
+         COPY  P28PARMS                                           J50
+         SPACE
+********************************************************************
+*                                                                  *
+JOLREP   DSECT               MAPPING FOR REPLY TO CALLER           *
+LENGTH   DS    H                                                   *
+LIT      DS    CL100                                               *
+*                                                                  *
+********************************************************************
+*
+* END OF MAPPING DSECTS
+*
+         TITLE 'JOL 3270 SCREEN HANDLER '
+UJP28SCR CSECT
+*
+* MAINLINE OF ROUTINE TO TAKE ARRAY OF DISPLAY ADDRESSES,LITERALS
+* AND REPLY REQUIREMENTS THEN TO FORMAT THE SCREEN USING TPUT FULLSCR,
+* READ REPLY AND PASS BACK TO THE CALLING ROUTINE A FORMATTED AREA
+* CONTAINING THE REPLIES
+*
+*
+*        WRITTEN BY ODTAA PTY LIMITED
+*            PO BOX 737 CANBERRA CITY 2601
+*                ACT  AUSTRALIA
+*
+*        VERSION 1   .............. 28/8/80
+*
+*
+R0       EQU   0
+R1       EQU   1
+R2       EQU   2
+R3       EQU   3
+R4       EQU   4
+R5       EQU   5
+R6       EQU   6
+R7       EQU   7
+R8       EQU   8
+R9       EQU   9
+R10      EQU   10
+R11      EQU   11
+R12      EQU   12            BASE
+R13      EQU   13            MAIN MAP
+R14      EQU   14
+R15      EQU   15
+*
+*
+***********************************************************************
+*
+*
+*        SAVE  (14,12),,*
+         SAVE  (14,12),,UJP28SCR.&SYSDATE..&SYSTIME
+         LR    R12,R15        BASE REGISTER
+         USING UJP28SCR,R12
+         LR    R11,R0         POINT AT WORK AREA
+         USING WORKAREA,R11
+         ST    R11,8(,R13)
+         ST    R13,SAVEAREA+4
+         LR    R13,R11
+         DROP  R11
+         USING WORKAREA,R13
+         LA    R11,WRITEA     POINT AT OUTPUT AREA
+         USING WRITEA,R11
+         USING #PARM,R5                                           J50
+         LR    R5,R1         POINT AT ARRAY PASSED FROM CALLER
+*        STLINENO LINE=1,MODE=ON                           ** CVC
+*        STFSMODE ON                                       ** CVC
+         STFSMODE ON,INITIAL=YES                           ** CVC
+         MVI   P28SF,SFE                                          J50
+         TM    #TERMFLG,#TRMEXTD                                  J50
+         BO    *+8                                                J50
+         MVI   P28SF,SF                                           J50
+         LH    R9,#SCITEMS    LOAD NO OF ITEMS
+         L     R15,#COLUMNS                                       J50
+         BCTR  R15,0                                              J50
+         ST    R15,SEVENTY9      #COLS-1                          J50
+         LA    R15,2(,R15)                                        J50
+         ST    R15,EIGHTY1       #COLS+1                          J50
+         LA    R10,#ITEMDSC   POINT AT ITEMS
+         USING DITEM,R10      MAP ITEMS
+*        MVC   WCNTL,=X'27F5' MOVE IN WRITE CONTROL
+         MVC   WCNTL,=X'277E' MOVE IN WRITE CONTROL
+         MVI   WCC,X'C3'   RESTORE KEYBOARD. RESET MODIFIED DATA  TAGS
+         LA    R11,MSG0       POINT AT SCREEN AREA
+         DROP  R11
+         USING MSG,R11        MAP SCREEN
+         LA    R7,REPADD      POINT AT REPLY ADDRESS ARRAY
+         XC    REPADD,REPADD   CLEAR EXISTING JUNK               88036
+         LA    R8,REPLEN      POINT AT REPLY LENGTH ARRAY
+         CLC   ROWNO,=H'1'    IS ROW NUMBER = 1
+         BNE   BLDLOOP        NO SO CHANCE OF ROW 1 COL 1
+         CLC   COLNO,=H'1'    IS COL NUMBER = 1
+         BNE   BLDLOOP        NOT ROW 1 COL 1
+         MVC   ROWNO,#LINES+2 FOR ROW 1 COL 1 POINT AT ROW 24 COL 80
+         MVC   COLNO,EIGHTY1+2
+         SPACE 2
+BLDLOOP  DS    0H
+         LH    R14,COLNO                                          J50
+         BCTR  R14,0                                              J50
+SET1     DS    0H                                                 J50
+*        SETBA ROWNO,(R14)                                        J50
+         FIELD ROWNO,(R14),PROT                                   J50
+ESETBA1  DS    0H                                                 J50
+STATTR1  DS    0H                                                 J50
+*        SETATTR PROT                                             J50
+ESTATTR1 DS    0H                                                 J50
+         LH    R15,TXTLEN
+         BCTR  R15,0                                              J50
+         EX    R15,*+4           MOVE LITERAL TO SCREEN AREA
+         MVC   0(0,R11),LITERAL   MOVE LITERAL TO BUFFER
+*        MVC   MSGTXT(0),LITERAL  MOVE LITERAL TO BUFFER
+*1       NEXTADDR TXTLEN
+         LA    R11,1(R11,R15)                                     J50
+         CLC   RPLYLEN,ZERO      ANY REPLY REQUIRED
+         BNE   P27REPL
+         SETATTR DEFAULT                                          J50
+         B     LOOPEND
+P27REPL  DS    0H                                                 J50
+         LH    R14,RCOL          SET ADDR FOR REPLY AREA          J50
+         BCTR  R14,0                                              J50
+SET2     DS    0H                                                 J50
+*        SETBA RROW,(R14),STO=0(,R7)                              J50
+         FIELD RROW,(R14),STO=0(,R7)                              J50
+ESETBA2  DS    0H                                                 J50
+STATTR2  DS    0H                                                 J50
+*        SETATTR
+ESTATTR2 DS    0H                                                 J50
+         CLI   TESTR,X'00'     SEE IF DEFAULT REPLY
+         BE    ENDPROT        GO SET UP END FIELD
+         LH    R14,RLITLEN     PICK UP REQUIRED
+         LH    R6,RPLYLEN     INFO BEFORE CHANGING O'LAY PTR
+         LH    R15,TXTLEN     POINT AT DEFAULT REPLY
+         LA    R15,DITENEXT(R15)                                  J50
+         EX    R14,*+4         MOVE DEFAULT
+         MVC   0(0,R11),0(R15)   MOVE LITERAL TO BUFFER
+*        MVC   MSGTXT(0),0(R15)  MOVE LITERAL TO BUFFER
+         AR    R11,R14                                            J50
+ENDPROT  DS    0H
+*        NEXTADDR
+         LH    R14,RCOL                                           J50
+         AH    R14,RPLYLEN                                        J50
+SET3     DS    0H                                                 J50
+*        SETBA RROW,(R14)                                         J50
+         FIELD RROW,(R14),DEFAULT                                 J50
+ESETBA3  DS    0H                                                 J50
+STATTR3  DS    0H                                                 J50
+*        SETATTR DEFAULT                                          J50
+ESTATTR3 DS    0H                                                 J50
+*        NEXTADDR         ,   POINT AT NEXT SBA
+LOOPEND  EQU   *
+         NEXTITEM
+         BCT   R9,BLDLOOP
+*
+* SET CURSOR ADDRESS HERE
+         MVC   MSGBA(3),=X'050513' PROGRAM TAB, SET CURSOR
+         LA    R11,3(,R11)
+*        CALCULATE DATASTREAM LENGTH
+         LA    R14,WRITEA     START OF OUTPUT
+         SR    R11,R14        LENGTH OF OUTPUT
+         SPACE 2
+         ST    R14,P28DLOC                                        J50
+         ST    R11,P28DLEN                                        J50
+         MVI   P28DLOC,3         TPUT FLAGS                       J50
+TPUT     DS    0H
+         LM    R0,R1,P28DLEN                                      J50
+         LR    R15,R0            DEBUGGING                        J50
+         ALR   R15,R1            DEBUGGING                        J50
+         BCTR  R15,0             DEBUGGING                        J50
+         TPUT  (1),(0),R               FULLSCREEN WRITE
+         SPACE
+* CHECK IF WRITE WENT OK
+         SPACE
+         LTR   R15,R15        CLEAN RETURN CODE?
+         BZ    TGETPART       GO GET REPLY
+         SPACE
+********************************************************************
+*                                                                  *
+*   ERROR ROUTINES   TO BE CHANGED TO NON ZERO RETURNS TO CALLER   *
+*     WHEN PROGRAM INCORPORATED INTO CALLER                        *
+*                                                                  *
+********************************************************************
+ERROR1   DS    0H
+         L     R13,SAVEAREA+4   I/O ERROR ON TPUT RETURN TO
+         L     R14,12(R13)           CALLER WITH RETURN CODE OF 1
+         RETURN (2,12),,RC=1
+ERROR2   DS    0H
+         L     R13,SAVEAREA+4   I/O ERROR ON TGET RETURN TO
+         L     R14,12(R13)           CALLER WITH RETURN CODE OF 2
+         RETURN (2,12),,RC=2
+         SPACE
+********************************************************************
+*                                                                  *
+* FROM HERE WE TGET BACK FROM SCREEN AND FORMAT FOR CALLER         *
+*                                                                  *
+********************************************************************
+TGETPART DS    0H
+         DROP  R10,R11       CLEAR MAPPING
+         LA    R9,READA      POINT AT INBUFFER AREA
+         TGET  (9),2000,ASIS READ SCREEN
+         LR    14,9                                               J50
+         ALR   14,1                                               J50
+TGOT     DS    0H                                                 J50
+         LTR   R15,R15       SEE IF READ ALL OK
+         BZ    TGOK                                               J50
+         CH    R15,=H'8'                                          J50
+         BNE   ERROR2
+         B     TPUT              ATTN: RESHOW THE SCREEN          J50
+TGOK     SLR   R0,R0         INDICATE ENTER KEY USED
+         CLI   AID,X'7D'     SEE IF ENTER KEY PRESSED
+         BE    SETUP
+         SPACE 2
+* PFKS 1-9   RETURN AIDS F1-F9
+*      10-12 RETURN AIDS 7A-7C
+*      13-21 RETURN AIDS C1-C9
+*      22-24 RETURN AIDS 4A-4C
+         SPACE 2
+         MVC   TAID,AID      COPY AID
+         NI    TAID,X'3F'    TURN OTURN OFF BITS 0,1
+         SR    R14,R14
+         IC    R14,TAID
+         CLI   TAID,X'0D'
+         BH    PFKLO         LOW RANGE OF PFK
+         LA    R14,12(,R14)  13-24
+         B     PFKDONE
+PFKLO    CLI   TAID,X'31'
+         BL    TPUT          NOT A PFK
+         CLI   TAID,X'3C'
+         BH    TPUT          NOT A PFK
+         NI    TAID,X'0F'    TURN OFF MORE BITS
+         IC    R14,TAID      LOAD VALUE 1-12
+PFKDONE  LR    R0,R14        COPY TO REG 0
+         B     SETUP
+SETUP    EQU   *
+         L     R14,SAVEAREA+4 GET SAVE AREA ADDRESS
+         ST    R0,20(,R14)    WHILE HERE, ALTER R0 VALUE TO RETURN
+         L     R14,24(R14)    GET ORIGINAL REGISTER 1
+         LH    R14,#SCITEMS   GET NUMBER OF ITEMS IN THE LIST
+         AR    R1,R9          POINT TO NEXT SPOT IN BUFFER
+P28FILL  MVI   0(R1),X'00'    FILL UP WITH EXTRA SBA'S
+         LA    R11,MSGI       MAP INPUT MESSAGE
+         USING IMSG,R11
+         LA    R10,REPLYA     MAP CALLER REPLY AREA
+         USING JOLREP,R10
+         LA    R6,REPADD      POINT AT REQUIRED REPLY AREA
+RPLYLOOP EQU   *
+         IC    R1,IADD1       GET FIRST ADDRESS
+         N     R1,=F'63'      TURN OFF ALL BITS EXCEPT LAST 6
+         IC    R15,IADD2      GET 2ND ADDRESS
+         N     R15,=F'63'     TURN OFF ALL BITS EXCEPT LAST 6
+         SLL   R1,6           SHIFT FIRST ADDRESS 6 BITS TO THE LEFT
+         AR    R15,R1        ADD THE RESULTS. R15 HAS ADDR REL TO 0 POS
+NXTCHK   EQU   *
+         CH    R15,0(R6)   IF BUFFER ADDR IS EQUAL TO REQUIRED REPLY
+         BE    NEXT2          MOVE REPLY
+         MVC   LENGTH,ZERO    ELSE SAY NO REPLY AND MOVE TO NEXT
+         SLR   R15,R15                                            J50
+         B     P28UPD1
+NEXT2    DS    0H
+         BAL   R14,LENMSG     FIND LENGTH OF REPLY
+         MVC   LENGTH,=X'8000'    INDICATE CLEARED DEFAULT
+         LTR   R15,R15        CHECK FOR ZERO LENGTH
+         BZ    P28UPDT                                            J50
+         STH   R15,LENGTH     SAVE IT INTO CALLER REPLY AREA
+         EX    R15,*+4        MOVE REPLY INTO CALLER REPLY AREA
+         MVC   LIT(0),ITEXT  MOVE REPLY TO ARRAY
+P28UPDT  DS    0H                                                 J50
+         LA    R11,3(R15,R11)    ADJUST POINTERS
+P28UPD1  LA    R10,2(R15,R10)                                     J50
+         LA    R6,2(R6)
+P28TEND  CR    R6,R7          END OF REQUIRED REPLIES
+         BL    RPLYLOOP       NO SO ROUND AGAIN
+         STLINENO LINE=1,MODE=OFF                          ** JCS
+         LA    R1,REPLYA      YES SO POINT AT START OF CALLER REPLY A
+         SPACE
+********************************************************************
+*                                                                  *
+*      END OF JOB - TIME TO GO HOME                                *
+*                                                                  *
+********************************************************************
+RETURN   EQU   *
+         L     R13,SAVEAREA+4
+         L     R14,12(R13)
+         L     R0,20(,R13)                                        J40B
+         RETURN (2,12) RC=0
+         SPACE 2                                                  J50
+********************************************************************
+*                                                                  *
+* ROUTINE TO FIND REPLY TEXT LENGTH                                *
+*                                                                  *
+********************************************************************
+LENMSG   EQU   *
+         LA    R1,ITEXT       LOAD TEXT START ADDRESS
+         LA    R15,ITEXT      LOAD TEST ADDR
+LOOP1    CLI   0(R15),SBA     CHECK FOR SBA
+         BE    FOUNDIT        END OF LITERAL
+         CLI   0(R15),0       CHECK FOR NULL
+         BE    FOUNDIT        END OF LITERAL
+         LA    R15,1(R15)     POINT AT NEXT CHARACTER
+         B     LOOP1          GO CHECK AGAIN
+FOUNDIT  DS    0H
+         SR    R15,R1         R15 NOW HAS LENGTH OF TEXT
+         BR    R14             RETURN
+         SPACE
+         LTORG
+ZERO     DC    D'0'
+SDATA    DC    X'40C1C2C3C4C5C6C7C8C94A4B4C4D4E4F'
+         DC    X'50D1D2D3D4D5D6D7D8D95A5B5C5D5E5F'
+         DC    X'6061E2E3E4E5E6E7E8E96A6B6C6D6E6F'
+         DC    X'F0F1F2F3F4F5F6F7F8F97A7B7C7D7E7F'
+COLOURS  DC    X'0C,00,00,00,00,08,08,04'
+*                ¬  G  G  G  G  +  +  W                           J50
+ZAPSPC1  DC    20S(*)
+         SPACE 2
+         DC    C'END OF SCREEN'
+         END

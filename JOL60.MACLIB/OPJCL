@@ -1,0 +1,21 @@
+         MACRO                                                          OPJC0100
+&NAME    OPJCL &JCL                                                     OPJC0200
+         LCLA  &L,&WORK                                                 OPJC0300
+         LCLC  &FILL                                                    OPJC0400
+         AIF   ('&JCL'(1,1) EQ '''').LIT                                OPJC0500
+&NAME    LA    1,&JCL        LOAD PARM ADDRESS                          OPJC0600
+.BALR    L     15,AUJG90     LOAD ADDRESS OF OUTPUT ROUTINE             OPJC0700
+         BALR  14,15         AND BRANCH AND LINK TO IT                  OPJC0800
+         MEXIT                                                          OPJC0900
+.LIT     ANOP                                                           OPJC1000
+&L       SETA  K'&JCL                                                   OPJC1100
+&WORK    SETA  (((&L+1-2)/2)*2)                                         OPJC1200
+&WORK    SETA  &WORK-&L+2                                               OPJC1205
+&NAME    BAL   1,OP&SYSNDX   BAL AROUND PARM                            OPJC1300
+         DC    AL2(OP&SYSNDX-*-2),C&JCL                                 OPJC1400
+         AIF   (&WORK EQ 0).NOFILL                                      OPJC1405
+         DC    C' '          FILLER                                     OPJC1410
+.NOFILL  ANOP                                                           OPJC1415
+OP&SYSNDX L    15,AUJG90     LOAD ADDRESS OF OUTPUT ROUTINE             OPJC1500
+         BALR  14,15         AND LINK TO IT                             OPJC1501
+         MEND                                                           OPJC1600

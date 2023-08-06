@@ -1,0 +1,428 @@
+         MACRO
+         JOLDEF &SYSTEM=VS2,&CPUTYPE=370/145,&CPUID=000000,&REL=03.8,  *
+               &OWNER='CCS-JOL, 31 QUEEN STREET, MELBOURNE, AUSTRALIA, *
+               AUSTRALIA, 3000',                                       *
+               &MAXNAME=400,&MAXSYM=300,&MAXSYSV=9000,&GDGDCB=JOLDCB,  *
+               &SPOOL=,&PUNCHCL=B,&PRINT=YES,                          *
+               &FLAG=0,&ERRSEV=0,&REALJCL=NO,                          *
+               &CLASS=A,&JOBREGN=512,&PRTY=3,&ELAP=10,&CPU=2,     74303*
+               &SYSDEFS=(FBA,1330,133),&SPCFORM=S,                74303*
+               &TSOCLAS=X,&SYSCLAS=A,                             80289*
+               &PI=YES,&PM=NO,&PE=NO,&PJ=NO,&PO=NO,                    *
+               &PRNTJCL=YES,&PRNTALL=YES,&LISTJCL=NO,                  *
+               &DEFTAPE=SYSSQ,&DEFDISK=SYSDA,                     74303*
+               &OUTDEFS=(VB,6144,6140,100,50,B),                  74303*
+               &SVC=13,&MON=,&SCHED=$JOLMN33,&COPYMBR=,           76200*
+               &JOLCARD='  ',&SRDR=NO,                            74303*
+               &SYSBLK=960,&CARD1=,&CARD2=,&CARD3=,               75128*
+               &SM=(1,72,00),&LINECNT=57,&TYPE=CSECT,             75128*
+               &DUMP='//SYSUDUMP DD SYSOUT=A,OUTLIM=20000'        75128
+         GBLA  &JOLDEF                                            75128
+         GBLC  &TYPEGEN                                           75128
+         LCLC  &DEFPI
+         LCLC  &DEFSPEC
+         LCLC  &DEFP1,&DEFPM,&DEFPE,&DEFPJ,&DEFPO
+         LCLB  &THISSYS(8)
+         LCLC  &PROPT
+         LCLA  &SM1,&SM2,&SM3,&FLAGMOP
+*****    ACTR  300  ****************************************      76200
+&JOLDEF  SETA  1                                                  75128
+&TYPEGEN SETC  '&TYPE'                                            75128
+         AIF ('&TYPE' NE 'CSECT').DSECTX
+UJGENDET CSECT
+         AGO .STRT
+.DSECTX  ANOP
+UJGENDET DSECT
+.STRT  ANOP
+GENDETS  EQU   *                                                  75128
+* THIS CSECT IS GENERATED AS PART OF THE 'JOLGEN' AND IS LOADED   75128
+* DURING THE JOL COMPILER INITIALISATION PHASES                   75128
+AGENCOPY DC    A(DEFCOPY)  A COPY IS HELD AS IT MAY BE ALTERED    75128
+*                          BY PARAMETER INFORMATION               75128
+         AIF ('&TYPE' NE 'DSECT').REALADD
+*
+* THE FOLLOWING ARE DEFINED AS DS A(0) ITEMS.
+* IN FACT, WHEN THE SYSTEM IS GENERATED,THEY ARE REAL ADDRESS CONS
+*
+AGENUNIT DS    A(0)
+APREFVOL DS    A(0)
+ARETVOLS DS    A(0)
+ASWAPUNI DS    A(0)           SWAP UNIT TABLE                     75128
+AS01NCAT DS    A(0)           NO CATLG SEARCH DSN TABLE           75128
+         AGO .SP1
+.REALADD ANOP
+AGENUNIT DC    A(GENUNIT)  ADDRESS OF UNIT NAMES
+APREFVOL DC    A(PREFVOLS) ADDRESS OF PREFERRED VOLUMES           75128
+ARETVOLS DC    A(RETVOLS)  ADDRESS OF VOLUMES TO BE RETAINED      75128
+ASWAPUNI DC    A(SWAPUNIT)                                        75128
+AS01NCAT DC    A(UJS01NC)                                        75128
+.SP1     ANOP
+*                                                                 75128
+* SOME ZAP SPACE                                                  75128
+*                                                                 75128
+         DC    A(0,0)                                             75128
+         DC    A(0,0)                                             75128
+         DC    A(0,0)                                             75128
+         DC    A(0,0)                                             75128
+         DC    A(0,0)                                             75128
+         SPACE 3
+DEFAULTS EQU  *
+MAXLINE  DC    H'&LINECNT' MAXIMUM NO. LINES PER PAGE             75128
+         AIF   ('&SYSTEM' EQ  'MFT').MFT
+         AIF   ('&SYSTEM' EQ  'MVT').MVT
+         AIF   ('&SYSTEM' EQ  'VS1').VS1
+         AIF   ('&SYSTEM' EQ  'VOS2').VS1
+         AIF   ('&SYSTEM' EQ  'VS2').VS2
+         AIF   ('&SYSTEM' EQ  'VOS3').VS2
+         AIF   ('&SYSTEM' EQ  'OSIV/F4'.VS2
+         AIF   ('&SYSTEM' EQ  'BS3000'.VS2
+         MNOTE 8,'&SYSTEM INVALID,MVS ASSUMED'
+         AGO .VS2
+.MFT     ANOP                                                     75128
+DEFSYS   DC    C'MFT'         MFT SYSTEM                          75128
+         AGO   .DOHASP
+.MVT     ANOP                                                     75128
+DEFSYS   DC    C'MVT'         MVT SYSTEM                          75128
+         AGO   .DOHASP
+.VS1     ANOP                                                     75128
+DEFSYS   DC    C'VS1'         VS1 SYSTEM                          75128
+         AGO   .DOSPOO
+.VS2     ANOP                                                     75128
+DEFSYS   DC    C'VS2'         VS2 SYSTEM                          75128
+         AGO   .DOSPOO
+.DOHASP  AIF   ('&SPOOL' EQ 'HASP').HASP
+         AIF   ('&SPOOL' EQ 'ASP').ASP
+         AIF   ('&SPOOL' EQ '').NSPOOL NO SPOOLING SYSTEM
+         MNOTE 8,'SPOOLING SYSTEM INVALID FOR &SYSTEM:-&SPOOL'
+         AGO   .NSPOOL
+.HASP    ANOP                                                     75128
+SPOOL    DC    C'H'           SET HASP INDICATOR                  75128
+         AGO   .DOPRTY                                            75128
+.DOSPOO  ANOP
+         AIF   ('&SPOOL' EQ '').TSYS2
+         AIF   ('&SPOOL' EQ 'JES1' OR '&SPOOL' EQ 'JES2' OR            *
+               '&SPOOL' EQ 'JES3').VSPOOLO   SPOOL OK
+         MNOTE 8,'SPOOLING SYSTEM &SPOOL INVALID FOR &SYSTEM'
+         AGO   .TSYS2
+.VSPOOLO ANOP
+&DEFPI   SETC  '&SPOOL'(4,1)  SET TO LAST CHAR
+SPOOL    DC    CL1'&DEFPI'              JES SYSTEM
+         AGO   .DOPRTY
+.TSYS2   ANOP
+         AIF   ('&SYSTEM' EQ 'VS1' OR '&SYSTEM' EQ 'VS2').MAKEHSP
+.NSPOOL  ANOP
+SPOOL    DC    C' '           NO SPOOLING SYSTEM                  75128
+         AGO   .DOPRTY
+.MAKEHSP AIF   ('&TYPE' EQ 'DSECT').NOMESS1
+         AIF   ('&SYSTEM' EQ 'VS1').SPVS1
+         MNOTE 0,'JES2 SPOOLING SYSTEM ASSUMED'                   75128
+.NOMESS1 ANOP
+SPOOL    DC    C'2'           JES2                                75128
+         AGO   .DOPRTY                                            75128
+.SPVS1   MNOTE 0,'JES1 SPOOLING SYSTEM ASSUMED'                   75128
+SPOOL    DC    C'1'           JES1                                75128
+         AGO   .DOPRTY
+.ASP     ANOP                                                     75128
+SPOOL    DC    C'A'           ASP IS IN: SPOOLING SYSTEM          75128
+.DOPRTY  AIF   ('&PRTY' EQ '').NOPRTY                             74303
+DEFPRTY  DC    CL1'&PRTY'     DEFINE DEFAULT PRIORITY             75128
+         AGO   .TELAP                                             75128
+.NOPRTY  ANOP                                                     75128
+DEFPRTY  DC    C' '           NO DEFAULT PRIORITY                 75128
+.TELAP   AIF   ('&ELAP' EQ '').NOELAP                             75128
+DEFETIME DC    CL3'&ELAP'     DEFINE DEFAULT ELAPSED TIME         75128
+         AGO   .TCPU                                              75128
+.NOELAP  ANOP                                                     75128
+DEFETIME DC    CL3' '         NO DEFAULT ELAPSED TIME             75128
+.TCPU    AIF   ('&CPU' EQ '').NOCPU                               75128
+DEFCTIME DC    CL3'&CPU'      DEFINE DEFAULT CPU TIME             75128
+         AGO   .TCLASS                                            75128
+.NOCPU   ANOP                                                     75128
+DEFCTIME DC    CL3' '         NO DEFAULT CPU TIME                 75128
+.TCLASS  AIF   ('&CLASS' EQ '').NOCLASS                           75128
+DEFCLASS DC    CL1'&CLASS'    DEFINE DEFAULT CLASS                75128
+         AGO   .TREGION                                           75128
+.NOCLASS ANOP                                                     75128
+DEFCLASS DC    C' '           NO DEFAULT CLASS                    75128
+.TREGION AIF   ('&JOBREGN' EQ '').NOREGN                          75128
+DEFPREGN DC    CL3'&JOBREGN'  DEFINE DEFAULT REGION               75128
+         AGO   .TJCLP                                             75128
+.NOREGN  ANOP                                                     75128
+DEFPREGN DC    CL3' '         NO DEFAULT REGION                   75128
+.TJCLP   ANOP                                                     75128
+         AIF   ('&PRNTJCL' EQ 'YES').MSG1
+DEFMSG1  DC    C' '           NO JCL TO BE PRINTED                75128
+         AGO   .TALLOC
+.MSG1    ANOP                                                     75128
+DEFMSG1  DC    C'1'           LET OS PRINT THE JCL                75128
+.TALLOC  AIF   ('&PRNTALL' EQ 'YES').MSG2
+DEFMALLC DC    C' '           PRINT JCL ALLOCATION MESSAGES IF ABN75128
+         AGO   .TPI                                               75128
+.MSG2    ANOP                                                     75128
+DEFMALLC DC    C'1'           PRINT ALL ALLOCATION MESSAGES       75128
+.TCLSS   ANOP                                                     74303
+.TPI     AIF   ('&PI' EQ 'NO').NOPI                               75128
+&DEFPI   SETC  '1'            PI ON                               75128
+         AGO   .TPM                                               75128
+.NOPI    ANOP                                                     75128
+&DEFPI   SETC  '0'            PI OFF                              75128
+.TPM     AIF   ('&PM' EQ 'NO').NOPM
+&DEFPM   SETC  '1'            PM ON                               75128
+.NOPM    ANOP                                                     75128
+&DEFPM   SETC  '0'            PM OFF                              75128
+.TPE     AIF   ('&PE' EQ 'NO').NOPE
+&DEFPE   SETC  '1'            PE ON                               75128
+         AGO   .TPJ
+.NOPE    ANOP                                                     75128
+&DEFPE   SETC  '0'            PE OFF                              75128
+.TPJ     AIF   ('&PJ' EQ 'NO').NOPJ
+&DEFPJ   SETC  '1'            PJ ON                               75128
+         AGO   .TPO
+.NOPJ    ANOP                                                     75128
+&DEFPJ   SETC  '0'            PJ OFF                              75128
+.TPO     AIF   ('&PO' EQ 'NO').NOPO
+&DEFPO   SETC  '1'            PO ON                               75128
+         AGO   .ENDPS
+.NOPO    ANOP                                                     75128
+&DEFPO   SETC  '0'            PO OFF                              75128
+.ENDPS   ANOP                                                     75311
+&PROPT   SETC '0'                                                 75311
+&FLAGMOP SETA 0                                                   75311
+           AIF ('&FLAG' EQ '0').NFLAGM                            75311
+&FLAGMOP   SETA 1                                                 75311
+.NFLAGM    ANOP
+           AIF ('&PRINT' EQ 'YES').NPROPT                         75311
+&PROPT     SETC '1'                                               75311
+.NPROPT    ANOP                                                   75311
+PARMPRNT   DC  B'&DEFPI&DEFPM&DEFPE&DEFPJ.00&PROPT&DEFPO' PRINT        *
+               OPTIONS
+* BIT 0 ON TO PRINT INCLUDES
+* BIT 1 ON TO PRINT MACROS AS THEY ARE BEING READ FROM THE MACRO-LIB
+* BIT 2 ON TO PRINT MACRO EXPANSIONS
+* BIT 3 ON TO PRINT GENERATED JCL
+* BIT 4 ON WHEN 'TEST' CODED IN * JOL Ý COMPILER OPTIONS          75128
+*       - STOPS CONSOLE MESSAGES WHEN ERRORS OCCUR                75128
+* BIT 5 ON IF NPC (PRINT JCL COMMENTS NOT REQD)                   75311
+* BIT 6 ON WHEN 'NOPRINT' ON (DON'T PRINT COMPILE)                75311
+* BIT 7 ON TO PRINT OPTIONS AND DEFAULTS
+         AIF   ('&DEFTAPE' EQ '').NOTAPE                          75128
+DEFTAPE  DC    CL8'&DEFTAPE'  DEFAULT TAPE UNIT NAME              75128
+         AGO   .TDISK                                             75128
+.NOTAPE  ANOP                                                    75128
+DEFTAPE  DC    CL8' '         NO DEFAULT TAPE UNIT                75128
+         MNOTE *,'NO TAPE UNIT SPECIFIED AS A DEFAULT'            75128
+.TDISK   AIF   ('&DEFDISK' EQ '').NODISK                          75128
+DEFDISK  DC    CL8'&DEFDISK'  DEFAULT DISK UNIT NAME              75128
+         AGO   .TSRECF                                            75128
+.NODISK  ANOP                                                     75128
+DEFDISK  DC    CL8' '         NO DEFAULT DISK UNIT                75128
+         MNOTE *,'NO DISK UNIT SPECIFIED AS A DEFAULT'            75128
+* NOW FIX UP DEFAULT OUTPUT CONSTANTS                             74303
+.TSRECF  ANOP                                                     75128
+           AIF ('&OUTDEFS(1)' EQ '').NORECF                       74303
+DEFRECF  DC    CL3'&OUTDEFS(1)' DEFAULT RECFM                     75128
+         AGO   .TDBLK                                             75128
+.NORECF  ANOP                                                     75128
+DEFRECF  DC    CL3' '         NO DEFAULT RECFM                    75128
+.TDBLK   AIF   ('&OUTDEFS(2)' EQ '').NODBLK                       75128
+DEFBLK   DC    H'&OUTDEFS(2)' DEFAULT BLOCKSIZE                   80289
+         AGO   .TDLREC                                            75128
+.NODBLK  ANOP                                                     75128
+DEFBLK   DC    H'0'           NO DEFAULT BLOCKSIZE                80289
+.TDLREC  AIF   ('&OUTDEFS(3)' EQ '').NOLREC                       75128
+DEFLREC  DC    H'&OUTDEFS(3)' DEFAULT LRECL                       80289
+         AGO   .TDPRIM                                            75128
+.NOLREC  ANOP                                                     75128
+DEFLREC  DC    H'0'         NO DEFAULT LRECL                      80289
+.TDPRIM  AIF   ('&OUTDEFS(4)' EQ '').NOPRIM                       75128
+DEFPRIM  DC    H'&OUTDEFS(4)' DEFAULT PRIMARY                     80289
+         AGO   .TDSEC                                             75128
+.NOPRIM  ANOP                                                     75128
+DEFPRIM  DC    H'0'         NO DEFAULT PRIMARY SPACE              80289
+.TDSEC   AIF   ('&OUTDEFS(5)' EQ '').NOSEC                        75128
+DEFSEC   DC    H'&OUTDEFS(5)'  DEFAULT SECONDARY SPACE            80289
+         AGO   .TALLOC2                                           75128
+.NOSEC   ANOP                                                     75128
+DEFSEC   DC    H'0'         NO DEFAULT SECONDARY ALLOCATION       80289
+.TALLOC2 AIF   ('&OUTDEFS(6)' EQ '').NOALLOC                      75128
+DEFALLUN DC    CL1'&OUTDEFS(6)' DEFAULT SPACE ALLOCATION UNITS    75128
+         AGO   .TSYSREC                                           75128
+.NOALLOC ANOP                                                     75128
+DEFALLUN DC    CL1' '         NO DEFAULT SPACE UNIT OF ALLOCATION 75128
+* NOW SYSOUT DEFAULTS                                             74303
+.TSYSREC ANOP                                                     75128
+         AIF   ('&SYSDEFS(1)' EQ '').NOSRECF                      74303
+DEFSRECF DC    CL3'&SYSDEFS(1)' DEFAULT SYSOUT RECFM              75128
+         AGO   .TSBLK
+.NOSRECF ANOP
+DEFSRECF DC    CL3' '         NO DEFAULT SYSOUT RECFM
+.TSBLK   AIF   ('&SYSDEFS(2)' EQ '').NOSBLK
+DEFSBLK  DC    H'&SYSDEFS(2)' DEFAULT SYSOUT BLOCKSIZE
+         AGO .TSLREC
+.NOSBLK  ANOP
+DEFSBLK  DC    H'0'           NO DEFAULT SYSOUT BLOCKSIZE
+.TSLREC  AIF   ('&SYSDEFS(3)' EQ '').NOSLREC
+DEFSLREC DC    H'&SYSDEFS(3)' DEFAULT SYSOUT LRECL
+         AGO   .TSPRIM
+.NOSLREC ANOP
+DEFSLREC DC    H'0'           NO DEFAULT SYSOUT LRECL
+.TSPRIM  AIF   ('&SYSDEFS(4)' EQ '').NOSPRIM
+DEFSPRIM DC    H'&SYSDEFS(4)' DEFAULT PRIMARY SYSOUT SPACE
+         AGO   .TSSEC
+.NOSPRIM ANOP
+DEFSPRIM DC    H'0'         NO DEFAULT PRIMARY SYSOUT SPACE
+.TSSEC   AIF   ('&SYSDEFS(5)' EQ '').NOSSEC
+DEFSSEC  DC    H'&SYSDEFS(5)' DEFAULT SYSOUT SECONDARY SPACE
+         AGO   .TSALLOC
+.NOSSEC  ANOP
+DEFSSEC  DC    H'0'           NO SYSOUT SECONDARY SPACE           75128
+.TSALLOC AIF   ('&SYSDEFS(6)' EQ '').NOSALLO                      75128
+DEFSCT   DC    CL1'&SYSDEFS(6)' DEFAULT SYSOUT SPACE ALLOCATION   75128
+         AGO   .TBATCH                                            75128
+.NOSALLO ANOP                                                     75128
+DEFSCT   DC    CL1' '         NO SYSOUT SPACE ALLOCATION TYPE     75128
+.TBATCH  ANOP                                                     75128
+.NOSUNIA ANOP                                                     74303
+         AIF   ('&MON' NE 'BATCH').NOBATCH                        74303
+&THISSYS(2)    SETB 1                                             75128
+.NOBATCH AIF   ('&SRDR' EQ 'NO').NOSRDR                           75128
+&THISSYS(6)    SETB 1         TURN ON START READER INDICATOR      75128
+.NOSRDR  ANOP                                                     75128
+         AIF   ('&REALJCL' EQ 'NO').NREAL                         75311
+&THISSYS(4) SETB 1                                                75311
+.NREAL   ANOP                                                     75311
+THISSYS  DC      B'&THISSYS(1)&THISSYS(2)&THISSYS(3)&THISSYS(4)&THISSYS*
+               (5)&THISSYS(6)&THISSYS(7)&THISSYS(8)'              75128
+VSSYS    EQU   X'80'          BIT 0 = VS SYSTEM                   76200
+PRODOPT  EQU   X'40'          BIT 1 = PRODUCTION OPTION ON        76200
+LETOPT   EQU   X'08'          BIT 4 = LET OPTION ON               76200
+SRDROPT  EQU   X'04'          BIT 5 = SRDR OPTION ON              76200
+SCHED    DC    CL8'&SCHED'    SCHEDULER/MONITOR NAME              75128
+         DS    0H                                                 75128
+SUPRVSR  SVC   &SVC           SVC EXECUTED TO GET INTO SUPERVISOR 75128
+PARMCOL  DC    CL2&JOLCARD    JOL CARD INDICATORS (COL 1&2)       75128
+PARMSYSB DC    H'&SYSBLK'     DEFAULT SYSIN BLOCKSIZE             75128
+SM1      DC    H'&SM(1)'      COLUMN START OF JOL CARD            75128
+SM2      DC    H'&SM(2)'      COLUMN STOP OF JOL CARD             75128
+SM3      DC    H'&SM(3)'      COLUMN FOR PRINT CONTROL CHARACTER  75128
+CPU      DC    CL7'&CPUTYPE'                                      75128
+OSVSREL  DC    CL4'&REL'                                          75128
+CPUID    DC    CL6'&CPUID'                                        75128
+SPECFORM DC    CL1'&SPCFORM'   SPECIAL FORM CHARACTER             75311
+TSOCLASS DC    CL1'&TSOCLAS'   DEFAULT SYSOUT CLS FOR TSO JOBS    80289
+DEFSCLAS DC    CL1'&SYSCLAS'   DEFAULT SYSOUT CLASS (NON TSO)     80289
+PUNCHCLS DC    CL1'&PUNCHCL'   PUNCH CLASS TO BE USED             75311
+FLAGCOL  DC    H'&FLAG'        COLUMN TO PLACE * BEFORE           75311
+.* FIX ERRSEV PRINT LEVEL                                         75311
+         AIF   (&ERRSEV LT 6).ERRSEVO                             75311
+         MNOTE 4,'ERROR SEVERITY = &ERRSEV:- SET TO 0'          75311
+PFLAG    DC    AL1(0)          DEFAULT PRINT SEVERITY             75311
+         AGO   .AFTEE1                                            75311
+.ERRSEVO ANOP                                                     75311
+PFLAG    DC    AL1(&ERRSEV)    SPECIFIED PRINT SEVERITY           75311
+.AFTEE1  ANOP                                                     75311
+*                                                                 75128
+* ZAP SPACE                                                       75128
+*                                                                 75128
+ADEVNAME DC    A(0)                                               75311
+MODEIN   DC    X'00'          INPUT MODE INDICATOR                76200
+TSOINOPT EQU   X'80'          BIT 0 = TSO INPUT MODE              76200
+MODEOUT  DC    X'20'          OUTPUT MODE INDICATOR               76200
+IMMED    EQU   X'80'          BIT 0 = IMMEDIATE EXECUTION REQUIRED76200
+DYNAM    EQU   X'40'          BIT 1 = DYNAMIC ALLOCATION REQUESTED76200
+MONITOR  EQU   X'20'          BIT 2 = NORMAL JOL MONITOR REQUEST  76200
+ONESTEP  EQU   X'10'          BIT 3 = ONE STEP TO BE GENERATED    76200
+PROCJCL  EQU   X'08'          BIT 4 = CATLG PROC TO BE GENERATED  76200
+REALJCL  EQU   X'04'          BIT 5 = REAL JCL (NO MONITOR)       76200
+         SPACE 1                                                  76200
+         DC    X'00'                                              76200
+         DC    X'00'                                              76200
+         DC    A(0)
+         DC    A(0,0)                                             75128
+         DC    A(0,0)                                             75128
+.* THE NEXT BIT OF CODE VALIDES SM & FLAG FIELDS (A LITTLE)...    75311
+&SM1     SETA  &SM(1)                                             75311
+&SM2     SETA  &SM(2)                                             75311
+&SM3     SETA  &SM(3)                                             75311
+&FLAGMOP SETA  &FLAG                                              75311
+.* ONLY A FEW CHECKS CAN BE MADE
+.*         1.  SM3=0 Ý > SM2
+.*         2.  FLAG=0 Ý >SM3 Ý IF SM3=0, > SM2
+.*         3.  SM1,SM2,SM3,FLAG <=80
+.*         4.  SM1<SM2
+.*
+.* DO 3 FIRST
+.*
+         AIF   (&SM1 LT 81 AND &SM2 LT 81 AND &SM3 LT 81 AND &FLAGMOP  *
+               LT 81).SMVAL1
+           MNOTE 16,'SOURCE MARGINS OR FLAG COLUMN INCORRECT (>80),SM1=*
+               &SM1,SM2=&SM2,SM3=&SM3,FLAG=&FLAGMOP'
+         AGO   .ESMVAL
+.SMVAL1  AIF   (&SM3 EQ 0).SM3ZERO
+         AIF   (&SM3 GT &SM2).SMVAL2
+        MNOTE 16,'SM3=&SM3,SM2=&SM2,SM3=&SM3:- SM3 MUST BE GREATER THAN*
+               SM2'
+         AGO   .ESMVAL
+.SMVAL2  AIF   (&FLAGMOP EQ 0).NFMAR2
+         AIF   (&FLAGMOP GT &SM3).SMVAL3
+         MNOTE 16,'FLAG=&FLAGMOP,SM3=&SM3:- FLAG MUST BE > SM3'
+         AGO   .ESMVAL
+.SMVAL3  ANOP
+.SM3ZERO AIF   (&FLAGMOP EQ 0).NFMAR3
+         AIF   (&FLAGMOP GE &SM2).SMVAL4
+         MNOTE 16,'SM2=&SM2,FLAG=&FLAGMOP:-FLAG MUST BE > SM2'
+         AGO   .ESMVAL
+.SMVAL4  AIF   (&SM2 GT &SM1).SMVAL5
+         MNOTE 16,'SM1=&SM1,SM2=&SM2:- SM2 MUST BE > SM1'
+         AGO   .ESMVAL
+.SMVAL5  ANOP
+.ESMVAL  ANOP
+.NFMAR2  ANOP
+.NFMAR3  ANOP
+         DC    A(0,0,0,0)    RESERVED
+         DC    A(0,0,0,0)    RESERVED
+LNAMETBL DC    A((((&MAXNAME+7)/8)*8)*20) ROUNDED TO MULTIPLE OF 8(UP)
+MAXNAME  DC    AL2(((&MAXNAME+7)/8)*8)    ROUNDED TO MULTIPLE OF 8(UP)
+* ABOVE 2 LOCATIONS INDICATE MAXIMUM NUMBER OF DSID'S AND PGMID'S
+*    AND MACRO NAMES ALLOWED DURING COMPILATION
+         SPACE 1
+LSYMTBL  DC    A(((((&MAXSYM*12)+7)/8)*8)+(((&MAXSYSV+7)/8)*8))
+MAXSYM   DC    AL2((((&MAXSYM+7)/8)*8))
+* ABOVE 2 LOCATIONS INDICATE MAXIMUM NUMBER OF SYMBOLICS AND THE TOTAL
+*    TABLE SIZE CONTAINING THE NAMES AND THEIR ASSOCIATED VALUES
+         SPACE 1
+GDGDCB   DC    CL20'&GDGDCB'   DCB USED FOR + GDGS
+DUMPCARD DC    AL2(L'DUMPC)                                       75311
+DUMPC    DC    C&DUMP                                             75311
+         ORG   DUMPC+80                                           75311
+         DS    0H                                                 75311
+DEFAULTE EQU   *
+LDEFAULT EQU   DEFAULTE-DEFAULTS
+DEFCOPY  DS    (LDEFAULT)C
+         DS    CL8            SPARE
+LGENCRD1 DC    H'0',CL80' '                                       75128
+LGENCRD2 DC    H'0',CL80' '                                       75128
+LGENCRD3 DC    H'0',CL80' '                                       75128
+OWNER    DC    H'5',H'0',CL1'0',CL137' '
+         AIF  ('&CARD1' EQ '').NOGCAR1                            75128
+         ORG   LGENCRD1                                           75128
+         DC    AL2(L'GENCARD1)                                    75128
+GENCARD1 DC    C&CARD1                                            75128
+.NOGCAR1 AIF  ('&CARD2' EQ '').NOGCAR2                            75128
+         ORG   LGENCRD2                                           75128
+         DC    AL2(L'GENCARD2)                                    75128
+GENCARD2 DC    C&CARD2                                            75128
+.NOGCAR2 AIF   ('&CARD3' EQ '').NOGCAR3                           75128
+         ORG   LGENCRD3                                           75128
+         DC    AL2(L'GENCARD3)                                    75128
+         DC    C&CARD3                                            75128
+.NOGCAR3 ANOP                                                     75128
+         AIF   ('&OWNER' EQ '').NOWNR
+         ORG   OWNER
+         DC    AL2(L'LOWNER+5,0),C'0'   SKIP UP A LINE
+LOWNER   DC    C&OWNER
+.NOWNR   ANOP
+         ORG
+         DS    0D
+JOLGENE  EQU   *                                                  75128
+         MEND

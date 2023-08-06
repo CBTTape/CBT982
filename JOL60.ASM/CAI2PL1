@@ -1,0 +1,152 @@
+   /* THIS PROGRAM TAKES THE CAI DATA FROM THE VB DATA SETS
+      AND CONVERTS IT TO A PRINT VBA FILE WITH BOXES TO MAKE
+      IT LOOK PRETTY.
+   */
+
+
+   CAI2: PROC(TYPE) OPTIONS(MAIN);
+
+         DCL TYPE CHAR(100) VAR;  /* UPPER FOR UPPER CASE */
+         DCL (L,SAVEL) BIN FIXED STATIC;
+         DCL SYSUT1 FILE RECORD INPUT;
+         DCL SYSUT2 FILE PRINT  OUTPUT;
+
+         DCL (IN,SAVE) CHAR(250) VAR STATIC ;
+
+         DCL     TEXT  CHAR(80) INIT(' ');
+         DCL     BITTEXT(80) BIT(8) DEF TEXT;
+         DCL     B1 CHAR(1) INIT(' ');
+         DCL     BITBLANK BIT(8) DEF B1;
+         DCL     B80   CHAR(80) INIT(' ');
+         DCL     T80   CHAR(80) INIT(
+ '----------------------------------------------------------------------
+ --------');
+         DCL PAGENO BIN FIXED STATIC INIT(1);
+
+         DCL H2 BIT(8) STATIC INIT('00000010'B);
+         DCL HEX02 CHAR(1) BASED(PX);
+         DCL PX POINTER;
+         PX=ADDR(H2);
+     PUT SKIP LIST('PROGRAM STARTING');
+
+         ON ENDFILE(SYSUT1) GOTO END;
+     PUT SKIP LIST('AFTER ON END');
+         OPEN FILE(SYSUT1);
+     PUT SKIP LIST('AFTER OPEN IN');
+         OPEN FILE(SYSUT2);
+     PUT SKIP LIST('AFTER OPEN OUT');
+
+         CALL PHEAD;     /* SET UP A PAGE */
+
+ MAINLOOP:
+         READ FILE(SYSUT1) INTO(IN);
+         SAVE=IN;                        /* SAVE THE LINE */
+
+         IF IN='.E'   | IN='.E'
+         THEN DO;
+              CALL PEND;
+              CALL PHEAD;
+              GOTO MAINLOOP;
+         END;
+
+
+ /* HERE WE HAVE SOME TEXT TO BE PRINTED */
+
+        TEXT=IN;     /* COPY TO FIXED LENGTH AREA, PAD WITH BLANKS*/
+
+         IF TYPE='UPPER'
+         THEN
+         DO I=1 TO 80;
+            BITTEXT(I)=BITTEXT(I) | BITBLANK;
+         END;
+
+  /* NOW THE TEXT COULD HAVE SOME HEX 02 CHARACTERS IN IT.
+   THIS MEANS THAT THE TEXT BETWEEN THE 02 CHARACTERS MUST BE PRINTED
+   IN A HIGHLIGHTED MANNER.
+
+   THE FIRST THING IS TO SAVE THE LINE AS IS, THEN CONVERT ALL
+   HEX 02 CHARS TO BLANKS FOR PRINTING LINE 1.
+
+   THEN WE WILL RE-PRINT THE LINE (WITHOUT MOVING THE PRINTER)
+   SO AS TO HIGH-LIGHT THE TEXT THAT NEEDS HIGH-LIGHTING
+  */
+
+ T02AGAIN:
+
+        L=INDEX(TEXT,HEX02);
+        IF L¬=0 THEN DO;
+                SUBSTR(TEXT,L,1)=' ';
+                GOTO T02AGAIN;
+        END;
+
+         PUT FILE(SYSUT2) SKIP     EDIT(
+               '               |     ',TEXT,'     |')(A);
+
+  /* NOW TEST IF WE HAVE TO PRINT THE SECOND LINE OR NOT */
+  /* ***** DON'T   +++ THEY ARE NOT THERE CVC */
+        GOTO MAINLOOP;
+        TEXT=IN;       /* COPY THE TEXT AGAIN */
+        L=INDEX(TEXT,HEX02);
+        IF L=0 THEN GOTO MAINLOOP;
+                         /* NO HEX 02 CHARS, GET NEXT LINE */
+
+ /* NOW WE HAVE SOME TEXT TO BE HIGHLIGHTED */
+
+
+ T022AGAIN:
+
+        L=INDEX(TEXT,HEX02);   /* FIND THE FIRST 02 */
+        IF L¬=0 THEN DO;
+                SAVEL=L;                  /* KEEP THE POSITION */
+                SUBSTR(TEXT,L,1)=' ';     /* BLANK IT OUT FOR NOW */
+                L=INDEX(TEXT,HEX02);      /* FIND THE MATCHING END */
+                IF L=0 THEN L=80;         /* GET THE WHOLE LINE */
+                IF L¬=0 THEN DO;
+                      IF L¬=80 THEN
+                      SUBSTR(TEXT,L,1)=' '; /* BLANK IT OUT FOR NOW */
+
+          /*          SUBSTR(TEXT2,SAVEL,L-SAVEL)
+                      =SUBSTR(TEXT,SAVEL,L-SAVEL);*/
+                END;
+                GOTO T022AGAIN;
+        END;
+
+   /*   IF TEXT2=' ' THEN GOTO MAINLOOP;  /* MIGHT BE ALL BLANKS */
+
+        GOTO MAINLOOP;
+   PHEAD:PROC;
+         PUT FILE(SYSUT2) PAGE EDIT(
+                ' C A I  -  J O L   (VERSION 1.0)') (COL(40),A);
+         PUT FILE(SYSUT2) LINE(15) EDIT(
+               '                ',T80,T80)(A,A(45),A(45));
+         PUT FILE(SYSUT2) SKIP     EDIT(
+               '               *     ',B80 ,'     *')(A);
+         PUT FILE(SYSUT2) SKIP     EDIT(
+               '               |     ',B80 ,'     |')(A);
+         PUT FILE(SYSUT2) SKIP     EDIT(
+               '               |     ',B80 ,'     |')(A);
+         PUT FILE(SYSUT2) SKIP     EDIT(
+               '               |     ',B80 ,'     |')(A);
+         PUT FILE(SYSUT2) SKIP     EDIT(
+               '               |     ',B80 ,'     |')(A);
+   END;  /* HEADING PROCEDURE */
+   PEND :PROC;
+         PUT FILE(SYSUT2) SKIP     EDIT(
+               '               |     ',B80 ,'     |')(A);
+         PUT FILE(SYSUT2) SKIP     EDIT(
+               '               |     ',B80 ,'     |')(A);
+         PUT FILE(SYSUT2) SKIP     EDIT(
+               '               |     ',B80 ,'     |')(A);
+         PUT FILE(SYSUT2) SKIP     EDIT(
+               '               |     ',B80 ,'     |')(A);
+         PUT FILE(SYSUT2) SKIP     EDIT(
+               '               *     ',B80 ,'     *')(A);
+         PUT FILE(SYSUT2) SKIP     EDIT(
+               '                ',T80,T80)(A,A(45),A(45));
+         PUT FILE(SYSUT2) LINE(60) EDIT(
+                ' C A I  -  J O L     PAGE ',PAGENO) (COL(45),A,A);
+         PAGENO=PAGENO+1;
+    /*   IF PAGENO>10 THEN SIGNAL ENDFILE(SYSUT1);*/
+   END;  /* HEADING PROCEDURE */
+ END: CALL PEND;
+    END; /* OF PROGRAM */

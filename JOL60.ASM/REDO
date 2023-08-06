@@ -1,0 +1,413 @@
+REDO     TITLE 'JOL REPEAT INSTRUCTION'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1981.
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1982.
+* JOL COPYRIGHT CCS-JOL PTY LTD          1986.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+           PRINT  OFF                                             J52
+         COPY  JOLCOM
+           PRINT  ON,DATA                                         J52
+* THE FOLLOWING SOURCE CODE  CONTAINS THE ADD_ONS:-
+*
+*  1. LABEL    STORE ADDRESS  OF LABEL X FOR RE-DO OR LOOP COMMAND
+*
+*  2. REDO     SORT OF A GO TO - REDO A GROUP OF JOL CODE
+*               REDO * MEANS CURRENT LINE
+*               REDO LABEL MEANS BRANCH BACK
+*
+*
+PX       DSECT
+PXTTR    DS     A              TTRK OF LABEL OF BLOCK
+PXDCB    DS     A              CURRENT DCB
+PXPOSN   DS     A              CURRENT RECORD ADDRESS
+PXFILENO DS     H              CURRENT FILENO
+PXLEVEL  DS     H              CURRENT LEVEL
+PXNEST   DS     H              CURRENT NEST
+PXBLKSZE DS     H              CURRENT BLKSIZE
+PXLRECL  DS     H              CURRENT LRECL
+PXCP     DS     H              CURRENT CHARACTER POSITION
+* NOTE *** LEAVE PXCOUNT LAST ****
+PXCOUNT  DS     H              LOOP COUNTER
+PXLEN    EQU    *-PX           SET AN EQUATE TO THE LENGTH
+UJP45LAB JOLSAVE
+         ORG    UJP45LAB
+LABELX   EQU    *
+         ENTRY LABELX
+         ORG
+* WE GET CALLED WHEN A LABEL IS FOUND OR LABEL X; IS CODED.      J52
+         L      R10,AP52DCBS   LOAD ADDRESS OF DCB
+         USING  P52DCBS,R10
+         L      R4,ADCBS
+         USING  DCBS,R4
+         CLC   =C'LABEL ',ICOMMAND                                J51
+         BE    LABELCMD                                           J51
+* HERE,  LABEL :                                                  J51
+*        MVC    ICOMMAND,=CL8'MACRO'                              J52
+         MVC    #TKN(10),#WORK   (DELETE THIS LATER - SEE P50RD)  J52
+         B     STRLAB                                             J51
+LABELCMD DS    0H                                                 J51
+         MVC    ICOMMAND,=CL8'MACRO'
+         GETTKN 2              GET LABEL NAME
+STRLAB   DS    0H                                                 J51
+* WE WANT TO STORE THIS IN THE TABLE IN A WAY WE CAN DIFFERENTIATEJ52
+* IT FROM A SYMBOL.  TO DO THIS, WE'LL CHANGE THE 1ST CHARACTER   J52
+* TO LOWER CASE.  WE HAVE TO BE  CAREFUL ABOUT '$', '_' AND '@'   J52
+         MVC    #WORK(10),#TKN SAVE IN WORK
+*        MVI    #TKN+1,1       SET LENGTH TO 1
+*        MVI    TKN,C':'
+*        BAL    R14,CONCAT     CONCAT TKN TO WORK
+         SR    R0,R0                                              J52
+         IC    R0,WORK                                            J52
+         CLI   WORK,C'A'         $, _ OR @ ?                      J52
+         BH    P45ALF1           NO, 'A' THRU 'Z'                 J52
+TOLOW    EQU   C'A'-C'a'                                          J52
+AMPERS   EQU   C'&&'                                              J52
+         SH    R0,=AL2(AMPERS)                                    J52
+         B     LABCONV1                                           J52
+P45ALF1  SH    R0,=AL2(TOLOW)                                     J52
+LABCONV1 STC   R0,WORK                                            J52
+         CLC    #WORK,=H'9'    CHECK LENGTH TO BE LESS THAN OR= 8
+         BL     P45OK1
+         JOLERR 401,'LABEL FOR REDO MUST BE 8 CHARACTERS OR LESS' J52
+P45RETNF JOLRETN RC=16
+         SPACE 3
+P45OK1   EQU    *
+* WE ARE GOING TO STORE THE LABEL IN THE SYMBOLIC PARAMETER TABLE.
+*  THERE ARE 2 ADVANTAGES TO THIS:-
+*  1. THE NAME WILL BE DELETED AUTOMATICALLY AT THE END OF A MACRO
+*  2. WE CAN HAVE MULTIPLE LABELS IN THIS VERSION OF JOL (3.3)
+*     WITHOUT HAVING TO DO A GETMAIN FOR MORE STORAGE.
+*  3. IT IS MUCH FASTER TO IMPLEMENT IN 3.3 OF JOL.
+         MVC    SYMBOLIC,WORK  SHIFT NAME SO WE CAN STORE IT
+* NOW GET CURRENT TTR SO WE CAN STORE IT ON THE SYMBOLIC.
+*        CLC   =C'LABEL ',ICOMMAND                                J52
+*        BNE   P45SYSIN                                           J52
+         L      R5,CURRDCB     GET CURRENT DCB ADDRESS.
+         LA     R1,SYSIN       GET SYSIN DCB ADDRESS.
+         CR     R1,R5          SAME DCB?
+         BNE    P45OK2
+         CLC   =C'LABEL ',ICOMMAND                                J52
+         BNE   P45SYSIN                                           J52
+         JOLERR 402,'CANNOT TAKE ADDRESS OF SYSIN FILE ',            ***
+               ' FOR LOOPING.'
+P45SYSIN DS    0H                                                 J52
+         SR    R6,R6                                              J52
+         MVI   ISPGMDCL,1        temporarily make a pgm declare   J52
+         B     P45DOPGM                                           J52
+         JOLRETN RC=16
+* NOW WRITE THE TTR OF THE CURRENT BLOCK ETC.
+P45OK2   NOTE   (R5)           NOTE THE CURRENT TTR OF FILE
+         LR     R6,R1          SAVE TTR RETURNED TO US
+         CLC    AWORKFIL+1(3),CURRDCB+1  READING FROM WORKFILE
+         BE     *+8           YES, DON'T WORRY ABOUT CONCAT FILE NUMBER
+         IC     R6,CURRCONC    LOAD CURRENT CONCATENATION NUMBER
+* R6 NOW CONTAINS TTRK OF CURRENT FILE.
+         SPACE 3
+P45DOPGM DS    0H                                                 J52
+         LA     R9,WORK        WE WILL STORE THE DATA HERE.
+         USING  PX,R9 USE THE DSECT OVER WORK
+         ST     R6,PXTTR       SAVE TTR
+         MVC    PXDCB,CURRDCB
+         CLI   ISPGMDCL,0        Is it a program declare?         J52
+         BE    P45NPROG                                           J52
+         MVC   PXDCB,ZERO                                         J52
+P45NPROG DS    0H                                                 J52
+         MVC    PXFILENO,FILENO ETC
+         MVC    PXLEVEL,LEVEL
+         MVC    PXNEST,NEST
+         MVC    PXBLKSZE,CURRBLKS
+         MVC    PXLRECL,CURRLREC
+         MVC    PXPOSN,ACURREC
+         MVC    PXCP,CP
+         CLEAR  PXCOUNT       CURRENT NUMBER OF TIMES WE HAVE LOOPED
+         MVC    #WORK,=AL2(PXLEN)
+         SPACE 3
+         USING  SYMOVLY,R1
+* PREPARE TO SEARCH SYMBOLIC NAME TABLE.
+         MVC    ICOMMAND,=CL8'MACRO'                              J52
+         FINDSYM SYMBOLIC      SEE IF IT IS ALREADY DECLARED
+         LR    R1,R0           COPY RETURN TO AN ADDRESSABLE REGISTER
+         LTR   R15,R15         DID WE FIND IT ?
+         BZ    P45GOTLB        YES, WE DID.
+* HERE, LABEL NOT FOUND. TRY TO STORE IT AGAIN (IT MIGHT BE AT A
+*       DIFFERENT LEVEL OR MACRO).
+P45STOR $CALL   UJP02DCL       STORE ABOVE DETAILS.
+         LTR    R15,R15
+         BZ     P45RET0
+P45DUPL  DS     0H                                                J52
+         JOLRETN RC=16
+         FIX   'Check if IF being  skipped, then give msg'        J52
+         JOLERR 403,'YOU ALREADY HAVE A LABEL ''',SYMBOLIC,         ****
+               ''' THIS ONE IGNORED'
+         JOLRETN RC=16
+* HERE, WE HAVE FOUND A LABEL OF THAT NAME.
+P45GOTLB CLC    SYMLEVEL,LEVEL+1 CHECK IF LEVEL THE SAME
+         BNE    P45STOR        DIFFERENT (LOWER) LEVELS; STORE IT.
+* HERE WE HAVE THE LABEL AGAIN AT THE SAME LEVEL.
+* CHECK IF IS FOR THE SAME CODE, IE USER BRANCHED BACK TO IT.
+         CLI   ISPGMDCL,0        Is it a program declare?         J52
+         BNE   P45GOBAK          2 program declares are OK        J52
+         L      R9,SYMADDR
+         USING  PX,R9
+         CLC    #WORK(PXLEN-L'PXCOUNT),0(R9) CHECK IF THE SAME LABEL.
+         BNE   P45DUPL         NO, SO GIVE AN ERROR MESSAGE
+P45RET0  GETTKN 3             SEE IF TOO MANY PARMETERS ON LINE
+         CLI   ISPGMDCL,0        Is it a program declare?         J52
+         BNE   P45GOBAK          2 program declares are OK        J52
+         CLI    TKN,C' '      IS PARM 3 BLANK.
+         BE     P45GOBAK      YES, OK...
+         JOLERR 404,'TOO MUCH DATA ON LABEL INSTRUCTION'
+         JOLRETN RC=16
+P45GOBAK MVI   ISPGMDCL,0        turn off pgm declare             J52
+         JOLRETN RC=0
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         LTORG
+         EJECT
+UJP46RED JOLSAVE
+         ORG    UJP46RED
+REDO     EQU    *
+         ENTRY  REDO
+         ORG
+         L      R10,AP52DCBS   LOAD ADDRESS OF DCB
+         USING  P52DCBS,R10
+         L      R4,ADCBS
+         USING  DCBS,R4
+         SR     R6,R6          FOREVER INDICATOR                  86015
+         GETTKN 3              GET 3RD ITEM  (IF CODED)
+         CLC    =C'FOREVER ',TKN                                  86015
+         BNE    P46TKN3                                           86015
+         LA     R6,1           SET FOREVER INDICATOR ON           86015
+         B      P46OK1                                            86015
+P46TKN3  CLI    TKN,C' '       IS THERE ONE?
+         BE     P46OK1          NO..
+         JOLERR 401,'TOO MANY PARAMETERS IN REDO INSTRUCTION'
+P46RETNF JOLRETN RC=16
+         SPACE 3
+P46OK1   EQU    *
+         GETTKN 2 GET REAL PARAMETER
+         CLI    TKN,C' '       BLANK?
+         BNE    P46OK2
+         JOLERR 102,'BLANK PARAMETER ON REDO - NEXT INSTRUCTION WILL BE*
+                 EXECUTED'
+P46RETNO JOLRETN RC=0
+P46OK2   EQU    *
+         CLI    TKN,C'*'
+         BE     P46AST         REDO CURRENT LINE
+* NOW TO FIND THE SYMBOLIC PARAMETER CONTAINING THE NAME
+         MVC    #WORK(10),#TKN  MOVE SYMBOLIC NAME TO WORK
+         IC    R0,WORK                                            J52
+         CLI   WORK,C'A'                                          J52
+         BH    P46ALF1                                            J52
+         SH    R0,=AL2(AMPERS)
+         B     LABCONV2                                           J52
+P46ALF1  SH    R0,=AL2(TOLOW)                                     J52
+LABCONV2 STC   R0,WORK                                            J52
+*        MVI    #TKN+1,1       SET LENGTH TO ONE
+*        MVI    TKN,C':'       PUT A COLON IN
+*        JOLERR 199,'WORK=''',#WORK,''':TKN=''',#TKN,''''
+*        BAL    R14,CONCAT     CONCAT A COLON TO THE CONTENTS OF WORK
+*        JOLERR 198,'WORK=''',#WORK,''':TKN=''',#TKN,''''
+         SPACE 3
+         USING  SYMOVLY,R1
+* PREPARE TO SEARCH SYMBOLIC NAME TABLE.
+         FINDSYM WORK          TRY TO FIND THE SYMBOLIC PARAMETER
+         LR    R1,R0           COPY RETURN TO AN ADDRESSABLE REGISTER
+         LTR   R15,R15         DID WE FIND IT ?
+         BZ    P46GOTLB        YES, WE DID.
+* HERE, LABEL NOT FOUND.                                          J52
+* GOTO's can go forward, so check this.                           J52
+         CLC   ICOMMAND,=CL8'GOTO'                                J52
+         BNE   P46NFND                                            J52
+ISGOTO   MVC   GOTO,TKN                                           J52
+         JOLRETN RC=4                                             J52
+P46NFND  DS    0H                                                 J52
+         JOLERR 403,'LABEL ''',#WORK,''' NOT FOUND FOR LOOPING'
+         JOLRETN RC=16
+* HERE, WE HAVE THE CORRECT SYMBOLIC NAME.
+P46GOTLB CLC    SYMLEVEL,LEVEL+1 CHECK IF LEVEL THE SAME
+         BE     P46OK3
+         CLC   ICOMMAND,=CL8'GOTO'                                J52
+         BE    ISGOTO                                             J52
+         JOLERR 404,'SYMBOLIC NAME ',#WORK,' FOUND AT WRONG LEVEL.',   *
+               ' ARE YOU REDOING CODE IN A MACRO WITHOUT',             *
+               ' A PREVIOUS LABEL?'
+         JOLRETN RC=16
+P46OK3   EQU    *
+         L      R8,SYMADDR
+         USING  PX,R9
+         LA     R9,2(R8)      SKIP OVER LENGTH PARAMETER
+         CLC    =AL2(PXLEN),0(R8) CHECK IF LENGTH OK
+         BE     P46OK4
+         JOLERR 405,'LENGTH OF LABEL SYMBOLIC INVALID'
+         JOLRETN RC=16
+         SPACE 2
+P46OK4   EQU    *
+* NOW WE HAVE THE TTR ETC OF THE LABEL WE WISH TO REPEAT
+*
+* CHECK THAT EVERYTHING IS VALID
+         CLC    PXFILENO,FILENO
+         BE     P46FILOK
+         JOLERR 406,'INCORRECT FILE LEVELS :LABEL FILE=',PXFILENO,     *
+               ':CURRENT FILENO=',FILENO                               *
+               '. ARE YOU RE-DOING CODE FROM INCLUDED TEXT ?'
+         JOLRETN RC=16
+         SPACE
+P46FILOK CLC    PXDCB,CURRDCB
+         BE     P46DCBOK
+         JOLERR 407,'YOUR REDO INSTRUCTION IS BEING EXECUTED ',        *
+               'FROM A DIFFERENT MEMBER OR DATA SET'
+         JOLRETN RC=16
+P46DCBOK EQU    *
+         SPACE 2
+* HERE, WE HAVE VALIDATED (TO A LARGE EXTENT) ALL THE PARAMETERS
+*
+* WE MUST SET NEST BACK TO ITS ORIGINAL LEVEL BECAUSE WE MAY HAVE
+* CODE LIKE:-
+*
+*        IF %X+1
+*        THEN DO;
+*               %X=0;
+*               REDO A;
+*        END;
+*  AND WE WOULD BE INCREASING OUR DO LEVEL FOREVER!
+*
+*
+         MVC NEST,PXNEST RESET NEST
+* NOW SET UP CONTROL POINTERS, ISSUE A FIND OR POINT TO RE-POSITION
+* THE DATA SET, SET CP (CHARACTER POINTER) CORRECTLY AND RETURN.
+         MVC    CURRBLKS,PXBLKSZE RESET BLOCKSIZE OF BLOCK WE WILL
+*                              RE-READ
+         MVC    CURRLREC,PXLRECL AND RECORD LENGTH
+         MVC    ACURREC,PXPOSN AND POSITION IN BLOCK
+         LH     R1,PXCP
+         SH     R1,=H'1'
+         STH    R1,CP
+         MVI    INCHAR,C' '    CLEAR INCHARACTER
+         CLEAR  CARD           AND CARD
+         LH     R1,PXCOUNT     LOAD COUNTER OF LOOPS WE HAVE DONE
+         LA     R1,1(R1)       ADD ONE TO IT
+         CH     R1,=H'50'      HAVE WE DONE 50 LOOPS?
+         BL     P46LUPOK       NO, SO CARRY ON
+         LTR    R6,R6          IS IT A FOREVER TYPE LOOP?         86015
+         BNZ    P46LUPOK       YES, SO CARRY ON                   86015
+         JOLERR 108,'YOU HAVE EXCEEDED 50 LOOPS. TYPE ''C'' TO CONTINUE*
+                OR ENTER TO EXIT THE LOOP'
+*        TGET  TWORK,1
+         LA     R0,1             LENGTH OF REPLY
+         LA     R15,CALLAREA     WORK AREA
+         ST     R15,CALLAREA STORED IN WORKAREA
+         MVI    CALLAREA,X'80'   SET OPTIONS
+         L      R1,CALLAREA      SET R1 TO X'80',AL3(CALAREA)
+         SVC    93               TGET
+         OI     CALLAREA,C' '    MAKE UPPER CASE
+         CLI    CALLAREA,C'C'    IS IT C FOR CONTINUE?
+         BNE    P46EXIT          NO, SO JUST EXIT
+         CLEAR  PXCOUNT
+P46LUPOK EQU    *
+         STH    R1,PXCOUNT
+         L      R8,CURRDCB
+         NOTE   (R8)           NOTE THE CURRENT TTR OF FILE
+         ST     R1,CALLAREA    SAVE TTR RETURNED TO US
+         CLC    CALLAREA(3),PXTTR SEE IF THE SAME BLOCK (SAVE RE-READ)
+         BE     P46NORED
+         MVC    CALLAREA,PXTTR
+         FIND   (R8),CALLAREA,C GET TO CORRECT BLOCK
+         XC     CALLAREA(20),CALLAREA
+         MVC    33(3,R8),=AL3(P46EOF)
+         L      R5,AREADBUF
+         READ   CALLAREA,SF,(8),(5),MF=(E,CALLAREA)
+         CHECK  CALLAREA
+P46NORED JOLRETN RC=0
+P46EOF   JOLERR 509,'EOF WHEN RESETTING FILE FOR REDO'
+         JOLRETN RC=16
+P46AST   EQU    *
+         LH     R1,USER5+4     LOAD COUNTER OF LOOPS WE HAVE DONE
+         LA     R1,1(R1)       ADD ONE TO IT
+         CH     R1,=H'50'      HAVE WE DONE 50 LOOPS?
+         BL     P46LUP2        NO, SO CARRY ON
+         LTR    R6,R6          IS IT A FOREVER TYPE LOOP?         86015
+         BNZ    P46LUP2        YES, SO CARRY ON                   86015
+         JOLERR 110,'YOU HAVE EXCEEDED 50 LOOPS. TYPE ''C'' TO CONTINUE*
+                OR ENTER TO EXIT THE LOOP'
+*        TGET  TWORK,1
+         LA     R0,1             LENGTH OF REPLY
+         LA     R15,CALLAREA     WORK AREA
+         ST     R15,CALLAREA STORED IN WORKAREA
+         MVI    CALLAREA,X'80'   SET OPTIONS
+         L      R1,CALLAREA      SET R1 TO X'80',AL3(CALAREA)
+         SVC    93               TGET
+         OI     CALLAREA,C' '    MAKE UPPER CASE
+         CLI    CALLAREA,C'C'    IS IT C FOR CONTINUE?
+         BNE    P46EXIT          NO, SO JUST EXIT
+         LA     R1,0             RESET COUNT TO ZERO
+P46LUP2  EQU    *
+         STH    R1,USER5+4
+         CLEAR  CP
+P46EXIT  JOLRETN RC=0
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         DC      S(*,*,*,*,*,*,*,*)
+         LTORG
+UJP46GO  JOLSAVE                                                  J52
+         ORG    UJP46GO                                           J52
+GOTORTN  EQU    *                                                 J52
+         ENTRY  GOTORTN                                           J52
+         ORG
+         CALL  UJP46RED                                           J52
+         JOLRETN RC=(15)                                          J52
+         LTORG
+         END

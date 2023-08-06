@@ -1,0 +1,52 @@
+         MACRO                                                          SETSPC01
+&NAME    SETSPEC                                                        SETSPC02
+.* THIS MACRO WILL EXAMINE A FIELD SUCH AS OPTED AND CONVERT            SETSPC03
+.*  SAY OPTCD=C TO THE CORRECT BIT PATTERN REQUIRED FOR DYNAMIC         SETSPC04
+.*  ALLOCATION.                                                         SETSPC05
+.*                                                                      SETSPC06
+.* EG  SETSPC OPTCD,DAPOPTCD,(M,02),(C,04)                              SETSPC07
+.*                                                                      SETSPC08
+         LCLA  &THIS,&LTHISP,&ADDROK                                    SETSPC09
+         LCLC  &L                                                       SETSPC10
+&L       SETC 'L'''                                                     SETSPC11
+&LTHISP  SETA  L'&SYSLIST(1)                                            SETSPC12
+&ADDROK  SETA  0                                                        SETSPC13
+         AIF   ('&NAME' EQ '').NONAM                                    SETSPC14
+&NAME    EQU   *                                                        SETSPC15
+.NONAM   ANOP                                                           SETSPC16
+&THIS    SETA  3              PREPARE TO START                          SETSPC17
+.TMORE   AIF   ('&SYSLIST(&THIS)' EQ '').END  END OF LIST ? -> OUT      SETSPC18
+         AIF   (L'&SYSLIST(1) EQ 1).NOLOOP                              SETSPC19
+         AIF   (K'&SYSLIST(&THIS,1) EQ 1).NORMAL                        SETSPC20
+.* HERE WE SHALL GENERATE SIMPLE CLC'S                                  SETSPC21
+         CLC   &SYSLIST(1),=CL&LTHISP'&SYSLIST(&THIS,1)' EQ TO VALUE?   SETSPC22
+         BNE   XB&THIS&SYSNDX    NO SKIP                                SETSPC23
+         MVC   &SYSLIST(2),=X'&SYSLIST(&THIS,2)' SHIFT IN VALUE         SETSPC24
+         MVC   &SYSLIST(1),BLANKS                                       SETSPC25
+         AGO   .GENX                                                    SETSPC26
+.NOLOOP   ANOP                                                          SETSPC27
+         CLI   &SYSLIST(1),C'&SYSLIST(&THIS,1)'  AREA=VALUE?            SETSPC28
+         BNE   XB&THIS&SYSNDX                                           SETSPC29
+         OI    &SYSLIST(2),X'&SYSLIST(&THIS,2)'                         SETSPC30
+         MVI   &SYSLIST(1),C' '   BLANK FOR ERROR TEST LATER            SETSPC31
+         AGO   .GENX                                                    SETSPC32
+.NORMAL  ANOP                                                           SETSPC33
+         AIF (&ADDROK EQ 1).SKIPLD                                      SETSPC34
+         LA    R15,&L&SYSLIST(1)+&SYSLIST(1)-1 R15=END                  SETSPC35
+         LA    R14,1          SET R14 TO INCREMENT                      SETSPC36
+&ADDROK  SETA  1                                                        SETSPC37
+.SKIPLD  LA    R1,&SYSLIST(1) LOAD R1 WITH ADDRESS OF STRING            SETSPC38
+         CLI   0(R1),C'&SYSLIST(&THIS,1)' IS CHAR=                      SETSPC39
+         BE    XA&THIS&SYSNDX                   YES                     SETSPC40
+         BXLE  R1,R14,*-8                 ROUND LOOP                    SETSPC41
+         B     XB&THIS&SYSNDX                  DIDN'T FIND IT -> OUT    SETSPC42
+XA&THIS&SYSNDX MVI   0(R1),C' '     BLANK FOR ERROR CHECK LATER         SETSPC43
+         OI    &SYSLIST(2),X'&SYSLIST(&THIS,2)' TURN ON BIT             SETSPC44
+.GENX    ANOP                                                           SETSPC45
+XB&THIS&SYSNDX EQU  *                                                   SETSPC46
+.* END ROUND                                                            SETSPC47
+&THIS    SETA  &THIS+1                                                  SETSPC48
+         AGO   .TMORE                                                   SETSPC49
+.END     ANOP                                                           SETSPC50
+.*       SETUP &SYSLIST(1),&SYSLIST(2)   SETUP THE PARAMETER NOW 84290  SETSPC51
+         MEND                                                           SETSPC52

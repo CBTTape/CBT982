@@ -1,0 +1,118 @@
+TIEFQMRA RMODE 24
+TIEFQMRA AMODE 31
+*
+         GENSAVE  CSECT=TIEFQMRA
+         L     R15,X'010'          ADDRESS OF CVT
+         L     R15,0(0,R15)        TCB WORDS
+         L     R15,4(,R15)         ADDRESS OF MY TCB
+         L     R15,TCBTIO-TCB(,R15) TIOT ADDRESS
+         L     R2,TCBSWA-TCB(,R15)  SWA ADDRESS
+         LR     R6,R15
+         OPEN  (SNAP,(OUTPUT))
+         SNAP  DCB=SNAP,ID=10,PDATA=(ALL),SDATA=(SWA)
+         CLOSE (SNAP)
+         LA    R4,CALLAREA
+         EXTRACT (4),'S',FIELDS=(TIOT)
+         L     R1,CALLAREA
+         ST    R1,ATIOT        SAVE ADDRESS OF TIOT
+         LR    R6,R1
+         LA     5,EPA                  GET ADDRESS OF THE EPA
+         USING  SWAMMEPA,5             ESTABLISH EPA ADDRESSABILITY
+         LA     1,QMPA                 GET ADDRESS OF THE QMPA
+         USING  IOPARAMS,1             ESTABLISH QMPA ADDRESSABILITY
+         XC     IOPARAMS(36),IOPARAMS  INITIALIZE THE QMPA
+         MVI    QMPOP,QMREAD           INDICATE READ FUNCTION
+         MVI    QMPCL,1                INDICATE 1 EPA IS BEING PASSED
+         STCM   5,7,QMPACL             PUT 3-BYTE EPA ADDRESS IN QMPA
+         XC     SWAMMEPA,SWAMMEPA      INITIALIZE THE EPA
+         USING  TIOT1,6                ESTABLISH ADDRESSABILITY TO TIOT
+         MVC    SWROWVA,TIOEJFCB       SVA OF JFCB MOVED TO EPA
+         L      R1,TIOEJFCB
+         DC   H'0'
+         LA     8,JFCBCOPY             SET THE POINTER TO THE JFCB
+         ST     8,SWBUFPTR             SET BUFFER POINTER IN EPA
+         DC     X'010D'                SAM31 31 BIT
+* OK, POP INTO SUP MODE, SHIFT RECORD, RETURN
+         LA    R1,X'3C'
+         SVC 107
+         IEFQMREQ                      COPY SWA BLOCK TO THE BUFFER
+         LA    R1,X'24'        MODESET
+         SVC 107
+         DC   H'0'
+         USING  INFMJFCB,8             ESTABLISH ADDRESSABILITY TO JFCB
+*
+         DS    0D
+SNAP DCB DDNAME=SNAP,DSORG=PS,RECFM=VBA,MACRF=W,BLKSIZE=882,LRECL=125
+         DS    0D
+         DC    C'JFCBJFCBJFCBJFCB'
+JFCBCOPY DS    CL176                   BUFFER TO READ THE JFCB INTO
+         DC    C'EPA EPA EPA EPA '
+EPA      DS    CL8
+         DC    C'QMPAQMPAQMPAQMPA'
+QMPA     DS    CL36
+CALLAREA DS    40F
+         DS    0D
+         DC    CL8'ATIOT'
+ATIOT    DC    A(0)
+JCTTTR   DC    F'0'
+JCTSSTR  DC    F'0'
+         CVT DSECT=YES
+         IKJTCB
+         IEFAJCTB
+         IEFJESCT
+         IEFZB506
+         IEFQMNGR
+TIOT     DSECT
+         IEFTIOT1
+         IEFJFCBN
+         END
+         ST     8,SWBUFPTR             SET BUFFER POINTER IN EPA
+*        L     2,SWVA             OLD SVA ADDRESS
+*        L     3,SWBLKPTR         @ OF HIGH SVA
+         L     4,TIOEJFCB       SVA OF JFCB MOVED TO EPA
+         OPEN  (SNAP,(OUTPUT))
+         SNAP  DCB=SNAP,ID=10,PDATA=(ALL),SDATA=(SWA)
+         DC     X'010D'                SAM31
+      MODESET  KEY=ZERO
+         IEFQMREQ                      COPY SWA BLOCK TO THE BUFFER
+      MODESET  KEY=NZERO
+         DC   H'0'
+            ABEND   0
+            GENRETN
+         USING  INFMJFCB,8             ESTABLISH ADDRESSABILITY TO JFCB
+*
+SNAP DCB DDNAME=SNAP,DSORG=PS,RECFM=VBA,MACRF=W,BLKSIZE=882,LRECL=125
+         DS    0F
+CALLAREA DS    40F
+         DS    0D
+         DC    CL8'ATIOT'
+ATIOT    DC    A
+JCTTTR   DC    F
+JCTSSTR  DC    F
+         DC    CL8'JFCBJFCB'
+         DC    CL8'JFCBJFCB'
+JFCBCOPY DS    CL176                   BUFFER TO READ THE JFCB INTO
+         DC    CL8'EPA EPA '
+         DC    CL8'EPA EPA '
+EPA      DS    CL28
+         DC    CL8'QMPAQMPA'
+         DC    CL8'QMPAQMPA'
+QMPA     DS    CL36
+         DS    0F
+         DC    CL8'SWEPSWEP'
+         DC    CL8'SWEPSWEP'
+SWEPAPTR DS    F
+SWAPARMS SWAREQ MF=L
+         TITLE 'TASK CONTROL BLOCK'
+         IKJTCB
+         CVT DSECT=YES
+         IEFJESCT
+         IEFZB506
+         IEFZB505    LOCEPAX=YES
+         IEFQMNGR
+         IEFAJCTB
+TIOT     DSECT
+         IEFTIOT1
+         IEFJFCBN  LIST=YES
+*
+            END

@@ -1,0 +1,9 @@
+* SUBSYS AND LONG VOLUME SUPPORT
+DDLENXTR DS    H               LENGTH OF RECORD TO BE WRITTEN     87150
+         DS    H               SPARE
+DDETYPE  DS    X                                                  87150
+#DDSUBS  DS    H
+DDSUBS   DS    CL100
+#DDVOL   DS    H
+DDLONGVL DS    CL200
+LENDDEXT EQU   *-DDLENXTR

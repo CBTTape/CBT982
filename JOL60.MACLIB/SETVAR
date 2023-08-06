@@ -1,0 +1,61 @@
+         MACRO
+&L       SETVAR &VAR,&VALUE
+         LCLA  &A
+         LCLC  &C
+         AIF   ('&L' EQ '').NL
+&L       DS    0H
+.NL      ANOP
+         MVC   SYMBOLIC,=CL8&VAR
+         MVC   ICOMMAND,=CL8'MACRO'
+         AIF   ('&VALUE'(1,1) EQ '#').VCHAR
+         AIF   (T'&VALUE EQ 'C').CHARS
+         AIF   (T'&VALUE EQ 'H').HALF
+         AIF   (T'&VALUE EQ 'N').NUM
+         AIF   (T'&VALUE EQ 'R').VLNUM
+         AIF   (T'&VALUE EQ 'G').VLNUM
+         AIF   ('&VALUE'(1,1) EQ '''').NUM
+         AIF   ('&VALUE'(1,1) EQ '(').NUM
+         AIF   ('&VALUE'(1,2) EQ '=C').CLIT
+&C       SETC   T'&VALUE
+         MNOTE 4,'&C '
+.VLNUM   ANOP
+&A       SETA  L'&VALUE                                           J50
+         AIF   (&A LT 5).VLNOK                                    J50
+         MNOTE 12,'NUMBER &VALUE IS TOO LONG'                     J50
+         MEXIT                                                    J50
+.VLNOK   ANOP
+&C       SETC  '01030715'((&A*2)-1,2)                             J50
+         ICM   R0,&C,&VALUE                                       J50
+         AGO   .CNVTNUM                                           J50
+.HALF    ANOP
+         LH    R0,&VALUE                                          J50
+         AGO   .CNVTNUM                                           J50
+.FULL    ANOP
+         L     R0,&VALUE                                          J50
+         AGO   .CNVTNUM                                           J50
+.NUM     ANOP
+         IHBINNRA ,&VALUE
+.CNVTNUM ANOP
+         CVD   R0,DBL
+         UNPK  WORK(5),DBL
+         OI    WORK+4,C'0'
+*        MVC   #WORK,=Y(5)                                        J53
+         LA    15,5            Set Length to 5                    J53
+         LTR   R0,R0           Is Number 0                        J53
+         BNZ   *+8             No                                 J53
+         LA    R15,0           Yes, set length to 0 (null)        J53
+         STH   R15,#WORK                                          J53
+         AGO   .DOIT
+.CLIT    ANOP
+&A       SETA  K'&VALUE-4
+         MVC   WORK(&A),&VALUE
+         MVC   #WORK,=Y(&A)
+         AGO   .DOIT
+.VCHAR   ANOP
+         MVC   #WORK(256),&VALUE COPY THE DATA                    J50
+         AGO   .DOIT
+.CHARS   ANOP
+         MVC   WORK(L'&VALUE),&VALUE
+         MVC   #WORK,=Y(L'&VALUE)
+.DOIT    $CALL UJP85ASN
+         MEND

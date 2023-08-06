@@ -1,0 +1,824 @@
+         TITLE 'UJE98INI:INITIALISATION ROUTINES'
+         JOLSAVE CSECT=UJE98INI
+* THIS CSECT IS CALLED IMMEDIATELY AFTER THE JOL SCHEDULER GETS CONTROL
+*    AND IT  OPENS THE FILES ETC
+* SECOND DETERMINE WHETHER WE ARE RUNNING UNDER 'HASP' OR 'OS'
+*    IF THERE IS A DD-CARD FOR '$$PRINT' THEN THE SYSOUT FILE
+*    ASSOCIATED WITH THAT FILE WILL BE USED SIMILIARLY TO THE
+*    'HASP' SYSTEM LOG,I.E ALL COMMENTS WILL GO OUT TO IT.
+         SPACE 3
+* NOTE *** UNDER VS, WE ATTACH RATHER THAN XCTL TO THE USER PROGRAM
+*     AS WE SAVE TIME THEN BY NOT CLOSING AND RE-OPENING OUR FILES.
+*     SO, LET'S SEE IF THEY ARE OPEN, AS TO OPEN AGAIN WOULD DEFEAT
+*     THE WHOLE EXERCISE, WOULDN'T IT?
+         SPACE 1
+         TM INSTRUCT+48,X'10'                                     74365
+         BO  SCHEDGO                                              74365
+         SPACE 1
+         MVC STMT,=CL4'   0'
+&C1      SETC  (1-&X8)'AQMRAW'
+&C2      SETC  (1-&X8)'IBMRTN'
+&C3      SETC  (1-&X8)'JOBQ'
+&C4      SETC  (1-&X8)'JCTTTR'
+         CALL  UJE70OPN,(&C1,&C2,INSTRUCT,PRINT,RETN,&C3,         ******
+               &C4,VS,ATCB),MF=(E,CALLAREA)                       *****
+*** ABOVE OPENS REQUIRED FILES, AND :-                            *****
+*    1. SETS 'JCTTTR' TO CORE ADDRESS, OR TTR ON JOBQ.            *****
+*    2. LOADS (MAYBE) AN IBM ROUTINE TO ACCESS JOBQ.              *****
+*    3. OPENS 'INSTRUCT'                                          *****
+*    4. OPENS 'PRINT' IF $$PRNT DD CARD PRESENT                   *****
+*    5. OPENS 'JOBQ'  IF $$JOBQ DD CARD PRESENT AND ¬MFT |MVT|MVS *****
+*    6. SETS 'VS' TO ' ' | '1' | '2' | 'M'                        *****
+*    7. SETS 'ATCB' = A(OUR TCB)                                  *****
+           SPACE 3                                                *****
+         L     R4,ATCB               ADDRESS MY TCB
+         L     R14,TCBJSCB-TCB(,R4)           MY JSCB
+         ICM   R14,7,JSCBCSCA-JSCB(R14)       MY CSCB
+         MVC   JBNAME,CSCBUJNM-CSCB(R14)      WOT IME CALLED
+SCHEDGO  DS    0H
+         CALL  UJE97SPC                SPACE UP PRINTING A BIT
+         L     R1,ATASKPRM      CLEAR USER'S PARM
+         XC    0(2,R1),0(R1)
+       SPACE
+* NOW CHECK THAT THE INSTRUCT AND RETNCODE FILES ARE OPEN
+         SR    R8,R8
+         TM    INSTRUCT+48,X'10'
+         BO    FILE1OK
+         LA    R8,1
+         JOLERR 501,'NO DD CARD FOR $$INST'
+FILE1OK  DS    0H                                                 75128
+         L     R4,TCBJSCB-TCB(,R4)          MY JSCB
+         ICM   R4,7,JSCBFCTA-JSCB(R4)         FIRST FCT
+         BZ    E98NOFCT              EXIT IF NONE ?!! & SSSSSSSSS
+         SPACE
+*   FOUND THE FCT CHAIN. NOW FIND A DATASET ENTRY
+         SPACE
+         USING FCT,R4
+E98NXFCT DS    0H
+         CLC   FCTACSN,=CL8'&DDINST' Q... IS THIS MY INSTRUCTION FILE?
+         BE    E98FFCT               A... YES, GO AND FIX IT
+         ICM   R4,7,FCTNFCTA         NEXT FCT
+         BNZ   E98NXFCT              BR IF THERE IS ONE
+E98NOFCT JOLERR 500,'NO FCT FOR THE INSTRUCTION FILE'
+E98FFCT  DS    0H    FOUND THE FCT, NOW COPY THE DSNAME
+         MVC   SYSINDSN(L'FCTFLN),FCTFLN   COPY THE FILE NAME
+         LA    R1,SYSINDSN+L'FCTFLN-1 ADDR LAST BYTE
+         CLI   0(R1),C' '           TRUNCATE TRAILING BLANKS
+         BNE   *+8
+         BCT   R1,*-8
+         LA    R0,SYSINDSN
+         SR    R1,R0
+         STH   R1,#SYSINDS            STORE LENGTH
+         L     R15,FCTVCT            ADDRESS VOLUME INFORMATION
+         MVC   SYSINVOL,8(R15)       COPY THE VOLUME SERIAL NUMBER
+         ZAP   DDCTR,=P'0'           INITIALISE DD COUNTER
+         SPACE 2
+         FIND  INSTRUCT,MBRRETN,D
+         B     E98INITR(R15)
+E98INITR B     E98GOTMB
+         B     E98FIND4
+         B     E98FIND8
+MBRRETN  DC    CL8'$$RETN'
+         SPACE 3
+E98FIND8 JOLERR 504,'I/O ERROR READING DIRECTORY'
+         SPACE 3
+E98FIND4 DS    0H
+* THE $$RETN MEMBER HASN'T BEEN SET UP APPARENTLY
+         JOLERR 109,'JOL MONITOR VERSION IS ',                   74365 *
+               '4.0-B  '                                         76200
+         CALL  UJE97SPC                SPACE UP PRINTING A BIT
+*          LA R1,READAREA
+*          USING READAREA,R1
+*          CLEAR READAREA  ****** FOR TESTS ONLY ?????
+         LA    R0,READAREA
+         L     R1,=A(L'READAREA)
+         SLR   R15,R15        ZEROES TO ALL THE AREA
+         MVCL  R0,R14
+*          DROP R1
+*          XC TTR$RETN(100),TTR$RETN                              75311
+           MVI   COND,C' ' CLEAR COND TO BLANKS                    DASD
+           MVC   COND+1(L'COND-1),COND                             DASD
+           WRITE E98DEC9,SF,RETN,READAREA,'S'
+           CHECK E98DEC9
+           NOTE RETN
+           ST  R1,TTR$RETN
+           STOW RETN,STOWBLK,A
+           LTR R15,R15
+           BZ  E98RDJCT
+           JOLERR 503
+E98GOTMB DS    0H
+* WE HAVE NOW FOUND THE $$RETN MEMBER OF THE DATA SET
+           LH R2,INSTRUCT+X'3E'
+           MVC INSTRUCT+X'3E',=Y(&RETNSIZ)                         DASD
+           READ E98DECBX,SF,INSTRUCT,RETNAREA
+           CHECK E98DECBX
+           STH R2,INSTRUCT+X'3E'
+           NOTE INSTRUCT
+           ST  R1,TTR$RETN     FOR REWRITING
+* FIND OUT HOW MUCH DATA WE READ (ALSO USED FOR REWRITING)
+           L  R1,E98DECBX+16   IOB ADDRESS
+           LH R14,INSTRUCT+X'3E'  BLOCKSIZE
+           SH R14,14(R1)  MINUS RESIDUAL COUNT
+           STH R14,RETNBLKS    LENGTH OF RETN BLOCK
+           SPACE 3
+           MVC STMT,DBL
+         POINT INSTRUCT,TTR$INST
+E98RDJCT DS    0H
+           AIF   (&X8).X8420
+           SPACE 3
+* BETTER SET UP THE JOBNAME ETC
+           LA  R4,CALLAREA
+           EXTRACT (4),'S',FIELDS=(TIOT)
+           L   R1,CALLAREA
+           ST  R1,ATIOT        SAVE ADDRESS OF TIOT
+* NOW READ IN JCT AND SCT
+           GETJOBQ JCTDECB,JCTTTR                                 *****
+           MVC CALLAREA(3),JCTSSTR  POINT TO CURRENT SCT
+E80RDSCT DS    0H
+           MVI CALLAREA+3,0
+           GETJOBQ SCTDECB,CALLAREA
+*****************************************************************
+* NOW BECAUSE OS DOES NOT UPDATE THE CURRENT JCT
+*     SCT POINTER AFTER A STEP HAS BEEN BYPASSED,I MUST
+*     CHECK THAT THE SCT I'VE JUST READ IN IS THE RIGHT ONE
+*     FOR THIS OS STEP.
+*     IF ITS NOT,I STEP ON TO THE CORRECT ONE.
+* ALSO THE CURRENT OS STEP COUNTER MUST BE UPDATED COS I USE
+*     IT IN THE SCRATCH ROUTINE
+******************************************************************
+* WE'LL USE THE TIOT STEP NUMBER,COS THAT MUST BE RIGHT ?????
+           SPACE
+           ST R1,CALLAREA
+           MVC  JCTSSTR(3),CALLAREA
+* NOW CHECK THAT THE STEPS ARE RIGHT
+           L R1,ATIOT          GET TIOT ADDTRESS
+           CLC SCTSNAME,8(R1)   RIGHT STEP ?
+           BE E98T1ST          TEST IF 1ST TIME IN THIS OS STEP
+* OK THEN,STEP ON TO READ NEXT SCT,AND ADD 1 TO CURRENT
+*     JCT STEP COUNTER
+           SR R1,R1
+           IC R1,JCTSNUMB
+           LA R1,1(R1)
+           STC R1,JCTSNUMB
+           MVC CALLAREA(4),SCTANSCT  NEXT SCT ADDRESS
+           B  E80RDSCT
+E98T1ST  DS   0H
+.X8420     ANOP
+           SPACE 6
+           CLI TASKIND,C' '    IS THIS THE FIRST TIME I'VE BEEN CALLED
+*                              THIS OS STEP ?
+           BE  E98RETN0        YES,SO NOW FILES ETC INITIALISED,GO BACK
+*                              TO THE MAIN-LINE LIKE A GOOD BOY.
+           SPACE 3
+* THE SCHEDULER HAS BEEN RE-ATTACHED AFTER AN XCTL TO A PROBLEM
+*    PROGRAM. THEREFORE WE MUST DO NICE THINGS LIKE PRINT OUT
+*    THE RETURN CODES ETC,
+* WE HAD BETTER STORE ITS RETURN CODE IN THE TABLE ANYWAY
+           LH R1,NOIDS
+           MH R1,=H'18'
+           LA R1,IDSTART(R1)
+           USING IDOVLY,R1
+           MVC IDRETN,TASKRETN
+           MVI IDRETN,0        TURN OFF HIGH ORDER BITS FOR COMPARISONS
+*                              IN THE 'IF' STATEMENT LATER
+******* MORE FOR  MAXCC,LASTCC   SEPT 75
+         TM    TASKRETN,TCBFA   DID AN ABEND OCCUR?      CHG26028 76200
+         BO    E98LMAX        YES, SO LEAVE LASTCC AND MACHG26028 76200
+         MVC  LASTCC,IDRETN   LASTCC DONE
+         CLC   MAXCC,LASTCC
+         BH    E98LMAX
+         MVC   MAXCC,LASTCC   MAXCC DONE
+         DROP  R1
+E98LMAX  UNPK  CALLAREA(9),TASKSSI(5)
+         TR    CALLAREA(8),HEX
+         MVC   ENDMSSI,CALLAREA 3(5)
+*        OI    ENDMSSI+7,X'F0'
+* NOW SEE IF TASK ABENDED OR RETURNED PROPERLY.
+         TM    TASKRETN,TCBFA                  ABEND ?
+         BZ    NOTABND
+         MVI   ERRORIND,1     TURN ON ABEND INDICATOR    CHG26028 76200
+* WAS IT A USER ABEND OR A SYSTEM ABEND ?
+         L     R1,TASKRETN
+         N     R1,=X'00FFF000'
+         BZ    USERABND
+         UNPK  CALLAREA(9),TASKRETN(5)
+         TR    CALLAREA(8),HEX
+         MVC   ENDMRETC(4),CALLAREA+1
+         MVC   ENDMRETC+5(3),CALLAREA+5
+         MVI   ENDMRETC,C'S'
+         MVI   ENDMRETC+4,C'-'
+           JOLERR 307,'STEP ',TASKLABL,' LM ',TASKNAME,' SSI ',   74365*
+               ENDSSI,' SYSTEM ABEND ',ENDRETC                    74365
+E98CLRAB CLEAR TASKRETN    CLEAR ABEND                   CHG26028 76200
+*        B     E20R16       TAKE BRANCH TO COND CODE TERMINATE   C DASD
+         B     E98RETN0                                          A DASD
+           SPACE 3
+NOTABND    XC TASKRETN(2),TASKRETN
+USERABND DS    0H
+         L   R0,=X'0000FFFF'  IF NEGATIVE NUMBER LETS SHOW IT      DASD
+         N   R0,TASKRETN
+         CVD R0,DBL
+         OI  DBL+7,X'0F'                                           DASD
+         UNPK ENDRETB,DBL                                          DASD
+         CLI ENDRETB,C'0'                                          DASD
+         BNE ENDMSSOK  ITS A BIG ONE                               DASD
+         MVI ENDRETB,C' '  PRINT AS BEFORE (4 BYTE RETN CODE)      DASD
+ENDMSSOK DS    0H
+         TM  TASKRETN,TCBFA  ABEND ?
+         BO  E98TYPER
+         JOLERR 105,'STEP ',TASKLABL,' LM ',TASKNAME,' SSI ',     74365*
+               ENDSSI,' RETURNED ',ENDRETB                         DASD
+         AIF   (&X8).X8440
+*                                                                 76200
+* TO HANDLE THE STOP WHEN, WE MUST EXAMINE THE JCT JOB TERMINATION76200
+* INDICATORS, AND COMPARE THIS RETURN CODE AND IF NECESSARY,      76200
+* TERMINATE THE RUN.                                              76200
+*                                                                 76200
+* WE HAVE RESERVED TO US 1 JOB COND OF 'EQ,4000', AND SO WE CAN   76200
+* FLUSH THE JOB BY SETTING 4000 ANY TIME WE WISH.                 76200
+*                                                                 76200
+*                                                                 76200
+         LA    R1,JCTJDPCD                                        76200
+         LA    R15,JCTJDPCD+4+28-1 END LOOP INDIC                 76200
+         LA    R14,4               LENGTH OF TABLE                76200
+E98DEPL  CLI   2(R1),0       ANY COND (END LOOP)            76200
+         BE    E98RETN0            END -> RETURN                  76200
+         IC    R6,2(R1)            GET DEPENDENCY CODE AND        76200
+*                                  GET REDY FOR EXECUTE           76200
+         CLC   0(2,R1),TASKRETN+2 COMPARE                        76200
+         EX    R6,E98GO40          BRANCH IF TRUE                 76200
+         BXLE  R1,R14,E98DEPL      LOOP THEN ...                  76200
+.X8440   ANOP
+         B     E98RETN0                                           76200
+         AIF   (&X8).X8460
+E98GO40  BC    0,E98R16       EXECUTED  *****                     76200
+E98R16   DS    0H
+E20R16   DS    0H
+* DUE TO USING MVS MACRO, MUST MOVE JOBNAME BEFORE 'JOLERR'
+            MVC  TASKLABL,JCTJNAME
+           JOLERR 408,'JOB ',TASKLABL,                                 *
+               ' TERMINATED DUE TO CONDITION CODES'
+           B   E98RET4K
+.X8460   ANOP
+         FIX   '"STOP WHEN ANY" NEEDS TO BE HANDLED: I SUGGEST PASSING .
+               THE INFO FROM THE COMPILER AS FIRST INSTRUCTION'
+E98TYPER   JOLERR 306,'STEP ',TASKLABL,' LM ',TASKNAME,' SSI ',   74365*
+               ENDSSI,' USER ABEND ',ENDRETB                       DASD
+         B     E98CLRAB                                  CHG26028 76200
+E98RET4K  DS    0H
+           XC TASKRETN(2),TASKRETN
+* THE NEXT MVC WILL STOP MVS FROM RUNNING AFTER A ABEND            DASD
+* THIS PROBLEM IS BEING WORKED ON AS OF 4/1/77                     DASD
+* SORRY ABOUT THE "IF ERROR LOGIC"                                 DASD
+*          MVC TASKRETN(4),=F'&RSVDRC'                             DASD
+* THIS PROBLEM IS NOW FIXED IN THE MONTOR AS OF 7/10/77            DASD
+           MVI TASKIND,C'1'
+           JOLRETN RC=&RSVDRC
+E98RETN0 DS    0H
+         CALL  UJE97SPC                SPACE UP PRINTING A BIT
+           MVI TASKIND,C'1'
+           JOLRETN
+STOWBLK    DC  CL8'$$RETN'
+STOWTTR    DC  XL3'00'
+STOWC      DC  X'00'
+           DS CL50
+ENDSSI     DS 0CL8
+ENDMSSI    DS  CL8
+ENDRETB    DS 0CL5            FOR MINUS RETURN CODES               DASD
+ENDRETC    DS 0CL8
+ENDMRETC   DS CL8
+           DS H
+           DC   80S(*)
+           LTORG
+           TITLE 'UJS23ER:WTP,WTO ERROR MESSAGES'
+UJS23ER    CSECT
+           USING *,R15
+           STM R14,R12,12(R13)
+           LA  R0,SAVEAREA
+           ST  R0,8(R13)
+           ST  R13,SAVEAREA+4
+           BAL R13,STARTERR
+SAVEAREA   DS  18F
+STARTERR   DS    0H
+           DROP R15
+           USING SAVEAREA,R13
+* R14 IS THE RETURN ADDRESS BUT IT ALSO POINTS TO A LIST OF INSTRUCTION
+*    S WHICH ARE TO BE EXECUTED
+* THEY CAN BE :-
+*    MVC   CONSTANT
+*    LA    VARYING STRING
+           CLEAR S23MSSG       CLEAR MESSAGE AREA
+* NEW, END DEC 1974. IF AN ERROR MESSAGE IS BEING ISSUED, THEN OFFSET
+*    THE MESSAGE AND PUT '***' IN IT.
+           LA  R1,S23MSSG                                         74365
+         CLC   =C'DISPLAY ',ICOMMAND                     CHG30062 76200
+         BE    S23OFF10                                  CHG30062 76200
+         CLC   =C'TYPE ',ICOMMAND                        CHG30062 76200
+         BE    S23OFF10                                  CHG30062 76200
+         CLC   =C'RETURN ',ICOMMAND                      CHG30062 76200
+         BE    S23OFF10       PUT 10 BLANKS IN START     CHG30062 76200
+         B     S23TSEV                                   CHG30062 76200
+S23OFF10 MVC   0(10,R1),BLANKS OFFSET MESSAGE BY 10      CHG30062 76200
+         LA    R1,10(R1)      SKIP BLANKS                CHG30062 76200
+         B     S23START       GO FORM UP MESSAGE         CHG30062 76200
+S23TSEV  CLI   S23SEV,2                                  CHG30062 76200
+         BNL   S23REALE       REAL ERROR, PUT JOB NAME   CHG30062 76200
+         MVC   0(5,R1),BLANKS                            CHG30062 76200
+         LA    R1,5(R1)                                  CHG30062 76200
+         B     S23START                                  CHG30062 76200
+S23REALE MVC   0(4,R1),=C'***('  PUT '***('              CHG30062 76200
+&C       SETC  (&X8)'JBNAME'.(1-&X8)'JCTNAME'
+         MVC   4(8,R1),&C        + JOBNAME               CHG30062 76200
+         MVI   12(R1),C')'       + ')'                   CHG30062 76200
+         LA    R1,13(R1)         SKIP ABOVE              CHG30062 76200
+S23START   MVC 0(3,R1),=C'JOL' SHIFT IN 'JOL'                     74365
+           LA  R1,3(R1)        SKIP OVER IT SO WE WON'T OVER-WRITE IT
+S23LUP1  DS    0H
+           CLI 0(R14),X'D2'    MOVE ?
+           BE  S23MUV1
+           CLI 0(R14),X'41'    LA ?
+           BE  S23LA1
+           B   S23END1         SHOULD BE '00'
+           SPACE
+S23MUV1    EX  R0,0(R14)        EXECUTE THE MOVE
+           SR  R0,R0
+           IC  R0,1(R14)       LENGTH MOVED
+           AR  R1,R0           ADD TO OUTPUT POSN
+           LA  R1,1(R1)        COS ASSMBLR REMOVED 1
+           LA  R14,6(R14)      SKIP MVC
+           B   S23LUP1
+           SPACE
+S23LA1   DS    0H
+           EX  0,0(R14)        EXECUTE THE LA R15,VARYING STRING
+           ST  R14,0(R13)      SAVE REGISTER 14 IN SAVE AREA
+           LH  R14,0(R15)      LOAD LENGTH OF THE STRING
+           LTR  R14,R14        SEE IF STRING LENGTH = 0
+           BZ  RESET14         NO DATA TO MOVE
+           BCTR R14,0
+           EX  R14,ERRMUV
+           LA  R1,1(R14,R1)    STEP 1 SO NEXT MOVE GOES ONTO RIGHT
+*                              SPOT IN BUFFER
+RESET14  DS    0H
+           L   R14,0(R13)      RELOAD R14
+           LA  R14,4(R14)      STEP OVER THE LA
+           B   S23LUP1
+* OOPS   WTO   'JOLE00-99 CANNOT ALLOCATE ERROR AREA'
+*        ABEND 16,DUMP,STEP
+ERRMUV   MVC   0(*-*,R1),2(R15) **** EXECUTED
+         SPACE
+S23END1  DS    0H
+         LA    R14,2(R14)      BRANCH AROUND '0' AT END OF LIST
+         L     R15,4(R13)       LOAD OLD SAVE ADDRESS
+         ST    R14,12(R15)     RESET OLD RETURN ADDRESS
+         MVC   0(3,R1),=C' AT'  SHIFT IN 'AT'
+         MVC   4(4,R1),S23STMT                                    75003
+         OC    S23STMT,S23STMT
+         BNZ   S23SETL
+         MVC   4(4,R1),STMT                                       75003
+*        OC    4(4,R1),=C'0000' JCS NOTICED BINARY ZEROES IN THERE
+S23SETL  LA    R14,S23MSSG-12 THE -8 IS FOR THE 'AT STMT'         75128
+S23TEST0 CLI   4(R1),C'0'     LEADING ZERO?                       75003
+         BNH   S23SR          -> NO                               75003
+         MVC   4(4,R1),5(R1)  DROP ZERO                           75003
+         BCT   R1,S23TEST0                                        75003
+S23SR    DS    0H                                                 75003
+         SR    R1,R14
+         XC    #S23LNE2,#S23LNE2   CLEAR LENGTH                   76200
+         CH    R1,#S23MAX          CHECK FOR A BIG MESSAGE        76200
+         BNH   S23SHORT            ITS OK, KEEP GOING             76200
+* NOW WE HAVE A MESSAGE THATS GREATER THAN 96 BYTES AND IF        76200
+* WE DONT MAKE TWO LINES OUT OF IT, THE OS WRITER OR HASP...ECT   76200
+* WILL CHOP IT OFF                                                76200
+* SO WE ARE NOW GOING TO TAKE A LOOK AT THE MESSAGE FORM +96 BACK
+* AND WHEN WE FIND A COMMA OR A BLANK THAT WILL END LINE 1 AND
+* START LINE 2
+         STH   R1,#S23LNE2         SAVE OLD LENGTH FOR LATER      76200
+         LA    R15,S23MSSG         POINT TO THE START OF THE MSG  76200
+         AH    R15,#S23MAX         GET TO +96                     76200
+         LA    R1,30               STOP LOOKING AFTER 30 BYTES    76200
+S23LOOK  DS    0H                                                 76200
+         CLI   0(R15),C' '         IS IT A BLANK                  76200
+         BE    S23ENDLK                                           76200
+         CLI   0(R15),C','         HOW ABOUT A COMMA              76200
+         BE    S23ENDLK                                           76200
+         BCTR  R15,0               BACKUP,1 BYTE                  76200
+         BCT   R1,S23LOOK          RETURN                         76200
+S23ENDLK DS    0H                                                 76200
+         LR    R1,R15              R1 = NEW END FOR LINE 1        76200
+         LA    R14,#S23LREC   POINT TO START OF MESSAGE           76200
+         SR    R1,R14              CALC NEW LENGTH FOR LINE 1     76200
+         AH    R14,#S23LNE2        POINT R14 TO END OF MESSAGE    76200
+         SR    R14,R15             CALC LENGTH FOR LINE 2         76200
+         LA    R14,19(R14) LEAVE SOME BLANKS ON CONT LINE         76200
+         STH   R14,#S23LNE2        SAVE IT FOR LATER              76200
+         CLEAR S23LNE2                                            76200
+         MVC   S23LNE2+15(L'S23LNE2-16),1(R15)      SAVE LINE 2   76200
+S23SHORT DS    0H                                                 76200
+         XC    #S23BLKS(8),#S23BLKS CLEAR VB DESCRIPTOR ETC       76200
+           STH R1,#S23LREC
+           LA  R1,4(R1)
+           STH R1,#S23BLKS
+           XC S23STMT,S23STMT
+* GREAT,NOW WHERE ARE WE GOING TO PUT THIS FANTASTIC PIECE OF
+*    INFORMATION ?
+           TM  PRINT+48,X'10'
+           BZ  S23WTO
+           WRITE S23DECB,SF,PRINT,#S23BLKS
+           CHECK S23DECB
+S23WTO   DS    0H
+* NOW IF THE SEVERITY IS >=12 THE MESSAGE IS TYPED ON THE CONSOLE,
+*    OTHERWISE A WTO WITH ROUTCDE=11 IS QUITE SATISFACTORY,UNLESS
+*    WE HAVE A PRINT DD CARD,IF WHICH CASE WE CAN RETURN NOW
+           CLI S23SEV,3
+           BL  S23TPRNT
+* HERE A REAL WTO IS REQUIRED,SO SET UP ROUTE-CODES 2 & 11
+           MVC #S23MSSG,=XL2'8000'
+           LH  R15,#S23LREC
+           LA  R15,#S23LREC(R15)
+           MVC 0(4,R15),=X'04004020' DESC 6 RTE 11,2              75311
+           CLI  VS,C'2'    MVS ?                                   DASD
+           BNE  S23TNMVS   NOPE                                    DASD
+           MVC 0(4,R15),=X'04004004' DESC 6 RTE 2,14 JESMSG        DASD
+S23TNMVS DS    0H                                                  DASD
+         WTO   MF=(E,#S23LREC)
+           B  S23GOBAK
+           SPACE 3
+S23TPRNT DS    0H                                                 75311
+         TM    PRINT+48,X'10' DID WE PUT MESSAGE ON PRINTER FIX-X 76200
+         BO    S23GOBAK       YES, DON'T FILL WTP ON JCL LOGFIX-X 76200
+* SET UP A WTO WITH ROUTCDE=11
+           MVC #S23MSSG,=XL2'8000'
+           LH  R15,#S23LREC
+           LA  R15,#S23LREC(R15)
+           MVC 0(4,R15),=X'00000020' ROUTCODE   11                75128
+           CLI  VS,C'2'   MVS ??                                   DASD
+           BNE  S23NMVS   NOPE                                     DASD
+           MVC 0(4,R15),=X'00000004' ROUTCODE 14 FOR JESMSG        DASD
+S23NMVS  DS    0H                                                  DASD
+*          LA  R1,#S23LREC
+         WTO   MF=(E,#S23LREC)
+S23GOBAK DS    0H
+         CLC   #S23LNE2,=X'0000'   DO WE HAVE A SECOND LINE       76200
+         BE    S23GOBK2            NOPE                           76200
+         LH    R1,#S23LNE2         LOAD LENGTH OF LINE2           76200
+         XC    #S23LNE2,#S23LNE2   CLEAR                          76200
+         MVC   S23MSSG,S23LNE2     OVERLAY OLD WITH NEW           76200
+        CLI  S23LNE2,C' '  CHECK FOR BLANK SECOND LINE             DASD
+        BNE  S23SHORT                                              DASD
+        LR   R15,R1        LOAD LENGTH OF MESSAGE                  DASD
+        BCTR R15,0         SUBTRACT 1 FOR EXECUTE INST             DASD
+        EX   R15,S23CLCBL                                          DASD
+        BE   S23GOBK2      ITS BLANK  LETS NOT PRINT IT            DASD
+         B     S23SHORT            RETURN AND WRITE LINE2         76200
+S23CLCBL CLC  S23LNE2+1(*-*),S23LNE2                              DASD
+S23GOBK2 DS    0H                                                 76200
+         CLI S23SEV,5           JOL TERMINAL ERROR ?
+         BNE  S23LMRET
+         AIF   (&X8).X8480
+         JOLCLOSE (INSTRUCT,,PRINT,,RETN,,JOBQ),MF=(E,CALLAREA)
+         AGO   .NX8480
+.X8480   ANOP
+         JOLCLOSE (INSTRUCT,,PRINT,,RETN),MF=(E,CALLAREA)
+.NX8480  ANOP
+         ABEND 1,DUMP STEP
+S23LMRET DS    0H
+         JOLRETN
+         LTORG
+         DC   80S(*)
+         AIF   (&X8).X8500
+         TITLE 'UJEISPDQ:KEEP EXTRA PDQ ISAM ENTRYS'               DASD
+* THIS LITTLE CSECT WILL KEEP THE 2ND AND 3RD ENTRIES       *      DASD
+* WHICH ARE IN THE PDQ FROM A ISAM DATASET                  *      DASD
+*                                                           *      DASD
+* NOW ALL A J.O.L. PROGRAMMER HAS TO DO IS SAY              *      DASD
+* CATLG ON ANY 1 OF THE 3 DCLS WHICH DEFINE                 *      DASD
+* INDEX, PRIME OR OVFLOW                                    *      DASD
+*                                                           *      DASD
+* AND THE KEEP MODULE WILL CALL THIS GUY AND                *      DASD
+* HE WILL SEARCH THE PDQ FOR MORE ENTRIES AND               *      DASD
+* HANDLE THEM THE SAME WAY                                  *      DASD
+*                                                           *      DASD
+* ALSO THE JFCB VOL COUNT WILL BE UPDATED TO A MAX OF 3     *      DASD
+* SO WHEN THE CATALOGUE MODULE GETS CONTROL THE VOL COUNT   *      DASD
+* AND VOLUMES ARE IN GOOD SHAPE                             *      DASD
+*                                                           *      DASD
+*                                                           *      DASD
+* SO CLEM IF YOUR READING THESE COMMENTS ALL I DID          *      DASD
+* WAS COPY YOUR WORK IN THE UJE81PDQ MODULE                 *      DASD
+* AND ADDED A FEW THINGS HERE AND THERE                     *      DASD
+*                                                           *      DASD
+* J.O.L. IS NOW BETTER THAN JCL WHEN IT COMES TO ISAM       *      DASD
+*                                                           *      DASD
+         JOLSAVE CSECT=UJEISPDQ                                    DASD
+* THIS CSECT MUST FIND THE PDQ ENTRY THAT REFERS TO THE DSNAME     DASD
+*    IN THE DSNAME FIELD. A 4 IS RETURNED IF IT CAN'T              DASD
+*                                                                  DASD
+******                                                             DASD
+* CHECK IF JCTPDIP = 0 (MAY BE IF RUNNING UNDER                    DASD
+*                       TSO).                                      DASD
+******                                                             DASD
+         SPACE 1                                                   DASD
+         CLC   JCTPDIP,=F'0'                                       DASD
+         BE    EISRTN                                              DASD
+         MVI   EISDSN,0      SET DSN SERCH ARG TO ZERO             DASD
+         MVI   ISINPDQ,2     SET SERCH NO. TO 2                    DASD
+         CLI   VS,C'2'       MVS                                   DASD
+         BNE   EISGO         NO START LOOKING FOR SECOND CONCAT    DASD
+         MVI   ISINPDQ,1     SET SERCH NO. TO 1                    DASD
+*REMEMBER THAT THE KEEP GOT RID OF THE 1ST ENTRY ALREADY--MVS ONLY-DASD
+EISGO    DS    0H                                                  DASD
+         GETJOBQ PDQDECB2,JCTPDIP                                  DASD
+         B     EISGOTRD                                            DASD
+EISREAD1 GETJOBQ PDQDECB2,CALLAREA                                 DASD
+EISGOTRD DS    0H                                                  DASD
+         CLI   VS,C'2'   MVS?                                      DASD
+         BNE   EISNMVS1                                            DASD
+EISMVDS1 LA    R14,*+4       POINT TO MVS CLC AREA                 DASD
+         CLC   DDDSNAME,PDIDSN1                                    DASD
+         BE    EISPASS1                                            DASD
+         CLC   DDDSNAME,PDIDSN2                                    DASD
+         BE    EISPASS2                                            DASD
+         CLC   DDDSNAME,PDIDSN3                                    DASD
+         BE    EISPASS3                                            DASD
+* NOT IN PDI, GET NEXT                                             DASD
+         CLC   =AL3(0),PDINPDIP  IS THIS THE LAST BLOCK?           DASD
+         BE    EISRTN    YES, NOT FOUND THEN                       DASD
+         GETJOBQ  PDQDECB2,PDINPDIP                                DASD
+         B     EISMVDS1                                            DASD
+EISNMVS1 DS    0H                                                  DASD
+         LA     R14,*+4         POINT TO NEXT CLC                  DASD
+         CLC   DDDSNAME,PDQDSN1                                    DASD
+         BE    EISPASS1                                            DASD
+         CLC   DDDSNAME,PDQDSN2                                    DASD
+         BE    EISPASS2                                            DASD
+         CLC   DDDSNAME,PDQDSN3                                    DASD
+         BE    EISPASS3                                            DASD
+* NOT IN THAT BLOCK,GET THE NEXT                                   DASD
+         CLC   =AL3(0),PDQNPDQ LAST BLOCK IN PDQ ?                 DASD
+         BE    EISRTN        YES,THERE-FORE COULDN'T FIND DSET     DASD
+         MVC   CALLAREA,PDQNPDQ                                    DASD
+         MVI   CALLAREA+3,0                                        DASD
+*                                                                  DASD
+         B     EISREAD1                                            DASD
+EISPASS1 MVC   PDQDSNNO,=H'0'                                      DASD
+         B     EISPDQB                                             DASD
+EISPASS2 MVC   PDQDSNNO,=H'1'                                      DASD
+         B     EISPDQB                                             DASD
+EISPASS3 MVC   PDQDSNNO,=H'2'                                      DASD
+EISPDQB  DS    0H                                                  DASD
+* THERE USED TO BE A NOTE FOR JOBQ HERE, NOT NEC NOW               DASD
+         ST    R1,APDQDIR       AND SAVE IT                        DASD
+         ST    R14,EISR14       SAVE RETURN POINTER                DASD
+         SR    R1,R1            CLEAN UP R1                        DASD
+         IC    R1,EISDSN        LOAD SEARCH ARG                    DASD
+         LA    R1,1(R1)         UP IT BY 1                         DASD
+         STC   R1,EISDSN        PUT THE BUGGER BACK                DASD
+         CLC   EISDSN,ISINPDQ   DO WE HAVE A HIT                   DASD
+         BE    EISGOOD          ...YEP                             DASD
+EISTRYA  DS    0H                                                  DASD
+         L     R14,EISR14       RELOAD R14 WITH GOOOOD STUFF       DASD
+* NOW RETURN TO THE NEXT COMPARE INSTRUCTION  HOPEFULLY            DASD
+         CLC   PDQDSNNO,=H'0'                                      DASD
+         BE    10(R14)                                             DASD
+         CLC   PDQDSNNO,=H'1'                                      DASD
+         BE    20(R14)                                             DASD
+*        CLC   PDQDSNNO,=H'2'                                      DASD
+         B     30(R14)                                             DASD
+EISGOOD  DS    0H                                                  DASD
+         CLI   VS,C'2'     MVS                                     DASD
+         BNE   EISNMVS2                                            DASD
+* GET SIOT FOR MVS SYSTEMS                                         DASD
+         LH    R1,PDQDSNNO                                         DASD
+         MH    R1,=AL2(PDILEN)                                     DASD
+         LA    R14,PDISIOT1(R1)   GET SIOT ADDRESS LOCN            DASD
+         MVC   CALLAREA,0(R14)                                     DASD
+         B     EISGETSI         GO GET THE SIOT                    DASD
+EISNMVS2 DS    0H                                                  DASD
+         MVC   CALLAREA,PDQABLK                                    DASD
+         MVI   CALLAREA+3,0                                        DASD
+         GETJOBQ PDQDECB,CALLAREA                                  DASD
+* NOW GET THE SIOT AS WELL                                         DASD
+         LH    R1,PDQDSNNO     DATA SET NUMBER                     DASD
+         MH    R1,=AL2(PDQBLKLN) LENGTH OF BLOCK                   DASD
+         LA    R1,PDQASIOT(R1)   ABSOLUTE ADDRESS                  DASD
+         MVC   CALLAREA(3),0(R1) SIOT TTR                          DASD
+         MVI   CALLAREA+3,0                                        DASD
+EISGETSI DS    0H                                                  DASD
+         GETJOBQ SIOTDECB,CALLAREA                                 DASD
+EISINPDQ DS    0H                                                  DASD
+* NOW JUST BECAUSE THE NAME APPEARS IN THE PDQ DOESN'T MEAN FOR    DASD
+*    1 SECOND THAT IT HASN'T :-                                    DASD
+*          1.  BEEN SCRATCHED                                      DASD
+*          2.  BEEN ALREADY KEPT                                   DASD
+         LH    R1,PDQDSNNO     1ST,2ND OR 3RD NAME IN PDQ ?        DASD
+         CLI   VS,C'2'    IS IT AN MVS SYSTEM?                     DASD
+         BNE   EISNMV3S  NO                                        DASD
+* OK, MVS HAS DIFFERENT TYPE OF PASSED DATA SET Q                  DASD
+         MH    R1,=AL2(PDILEN)                                     DASD
+         LA    R14,PDITERM1(R1)                                    DASD
+         B     EISNMVS3                                            DASD
+EISNMV3S MH    R1,=AL2(PDQBLKLN)                                   DASD
+         LA    R14,PDQTERM(R1)                                     DASD
+EISNMVS3 DS    0H                                                  DASD
+         TM    0(R14),X'C0'    OLD,DELETE ?                        DASD
+         B     *+8             ****************                    DASD
+         BO    EISAGN                                              DASD
+         SPACE 3                                                   DASD
+*** LAST BYTE OF JFCB TTR =0 IN SIOT                               DASD
+         GETJOBQ JFCBDECB,SCTPJFCB  GET THE JFCB                   DASD
+         CLI   JFCBVOLS,X'FF'  UNOPENED SCRATCH VOLUME ?           DASD
+         BNE   EISNOTFF        GO WRITE BACK JFCB,SIOT             DASD
+*          JOLERR 205,'DSID ''',DDDSID,''' DSNAME ''',#DSNAME,     DASD
+*              ''' NOT KEPT:UNOPENED SCRATCH VOLUME'               DASD
+         B     EISAGN                                              DASD
+EISNOTFF DS    0H                                                  DASD
+         NI    JFCBIND2,B'01111111' TELL OS AN OLD DATA SET        DASD
+         OI    JFCBIND2,B'01000000'                                DASD
+         PUTJOBQ JFCBDECB                                          DASD
+         MVC   CALLAREA,SIOT                                       DASD
+         MVI   CALLAREA+3,0                                        DASD
+         GETJOBQ SIOTDECB,CALLAREA                                 DASD
+         CLI   DDDISP+1,C'L'  LAST USE OF DATA SET ?               DASD
+*                             IF WE CAN LET OS UNLOAD ?            DASD
+         BNE   EISNLAST       NOT LAST USE                         DASD
+* MARK SIOT AND LET IT THINK WE HAVE FINISHED WITH                 DASD
+*  THE DATASET (WHICH WE HAVE, OF COURSE).                         DASD
+         NI    SCTSDISP,X'FF'-SIOTRETN-S3400DSP-PRIVATE            DASD
+         OI    SCTSDISP,8     TURN KEEP ON                         DASD
+         OI    SCTSBYT2,SCTRECVD MARK RECIEVED                     DASD
+         B     EISMAKOL       MAKE IT OLD, RE-WRITE SIOT           DASD
+EISNLAST DS    0H                                                  DASD
+         OI    SCTSDISP,B'00001000'   SIOT = KEEP                  DASD
+EISMAKOL OI    SCTSBYT4,1     MARK OLD                             DASD
+         PUTJOBQ SIOTDECB                                          DASD
+         SPACE 3                                                   DASD
+* NOW PUT THE VOLSERS INTO DDVOLUME    NO DUPS OFCOURCE            DASD
+         SR    R14,R14        CLEAR REG14                          DASD
+         IC    R14,JFCBNVOL   INSERT JFCB VOLUME COUNT             DASD
+         LA    R1,JFCBVOLS    POINT TO JFCB VOLSERS                DASD
+EISLOADV LA    R15,DDVOLUME   POINT TO JOL VOLSER AREA             DASD
+         CLC   0(6,R15),0(R1) EQUAL VOLUMES ?                      DASD
+         BE    EISNMOVE       YEP DONT BOTHER TO ADD IT            DASD
+EISLUP   CLC   0(6,R15),BLANKS BUCKET EMPTY FOR NEW GUY ?          DASD
+         BE    EISMOVE        YEP GO DO IT                         DASD
+         LA    R15,6(R15)     BUMP TO NEXT ENTRY                   DASD
+         C     R15,=A(DDVOLUME+30) HOPE WE DONT HAVE TO MANY       DASD
+         BNH   EISLUP         NOPE                                 DASD
+         B     EISCVOL        ERROR HERE BETTER TELL SOMEONE       DASD
+EISMOVE  MVC   0(6,R15),0(R1) INSERT NEW VOLSER                    DASD
+EISNMOVE LA    R1,6(R1)       UP TO NEXT JFCB VOLSER               DASD
+         BCT   R14,EISLOADV   RETURN TO LOOK                       DASD
+EISCVOL  LA    R15,DDVOLUME   POINT TO JOL VOLSER AREA AGAIN       DASD
+         LA    R14,5          STOP AFTER FIVE                      DASD
+         SR    R1,R1          CLEAR COUNTER                        DASD
+EISJFVOL CLC   0(6,R15),BLANKS END OF VOLSER LIST ?                DASD
+         BE    EISTJFCB       YES SIR                              DASD
+         LA    R1,1(R1)       UP COUNTER                           DASD
+         LA    R15,6(R15)     UP POINTER                           DASD
+         BCT   R14,EISJFVOL    RETURN                              DASD
+EISTJFCB STC   R1,JFCBNVOL    STORE NEW VOLCOUNT IN JFCB VOL COUNT DASD
+EISDVOL  DS    0H                                                  DASD
+         BAL   R14,E00FXVOL    SET UP VOLUME(S) IN #VOL            DASD
+* NOW TO MARK THE PDQ                                              DASD
+* TEST IF MVS, DIFFERENT...                                        DASD
+         CLI   VS,C'2'   MVS?                                      DASD
+         BNE   EISNMVS4  NOPE ->                                   DASD
+* MVS SIOT CONTAINS THE UCB POINTER, MVT THE PDG DOES              DASD
+         LH    R14,SCTUTYPE                                        DASD
+         B     EISTUNIT                                            DASD
+EISNMVS4 DS    0H                                                  DASD
+         MVC   CALLAREA,PDQABLK                                    DASD
+         MVI   CALLAREA+3,0                                        DASD
+         GETJOBQ PDQDECB,CALLAREA                                  DASD
+         LH    R1,PDQDSNNO                                         DASD
+         MH    R1,=AL2(PDQBLKLN)                                   DASD
+         L     R14,PDQUCBS(R1) GET UCB POINTER FOR DEVICE TYPE     DASD
+         MVC   SCTUTYPE,16(R14) MOVE IN UCB DEVICE TYPE            DASD
+EISTUNIT DS    0H                                                  DASD
+EISDA    NI    SCTUTYPE+1,X'FF'-UCBRR TURN OFF 'SHARE'             DASD
+EISNOTDU DS    0H                                                  DASD
+         SPACE 2                                                   DASD
+         CLI   VS,C'2'  MVS AGAIN?                                 DASD
+         BNE   EISNMVS5                                            DASD
+         LH    R1,PDQDSNNO                                         DASD
+         MH    R1,=AL2(PDILEN)                                     DASD
+         LA    R14,PDITERM1(R1)                                    DASD
+         B     EISMARK9                                            DASD
+EISNMVS5 DS    0H                                                  DASD
+         LA    R14,PDQTERM(R1)                                     DASD
+EISMARK9 DS    0H                                                  DASD
+         NI    0(R14),X'0F'     TURN OFF TOP 4 BITS                DASD
+         CLI   DDDISP+1,C'L'   LAST USE,IE OLD,KEEP ?              DASD
+         BNE   EISPASS                                             DASD
+         OI    0(R14),B'01000000' OLD,KEEP                         DASD
+         NI    0(R14),B'11000000'  INDICATE RECIEVED               DASD
+         B     EISMARKD                                            DASD
+EISPASS  OI    0(R14),B'11100000' OLD,PASS                         DASD
+EISMARKD DS    0H                                                  DASD
+         CLI   VS,C'2'    MVS AGAIN?????                           DASD
+         BNE   EISNMVS6                                            DASD
+         SH    R14,=H'44'         BACKUP TO DSNAME                 DASD
+         MVI   0(R14),C' '        WIPE OUT THE NAME IN PDQ         DASD
+         PUTJOBQ  PDQDECB2                                         DASD
+         B     EISRETN0                                            DASD
+EISNMVS6 DS    0H                                                  DASD
+         PUTJOBQ PDQDECB                                           DASD
+         SPACE 3                                                   DASD
+EISRETN0 DS    0H                                                  DASD
+         CLI   ICOMMAND,C'K'   IS THIS A KEEP INSTRUCTION?         DASD
+         BNE   EISAGN       NO,SO NO MESSAGE,JUST RETURN           DASD
+         JOLERR 101,'DSID ''',DDDSID,''' DSNAME ''',#DSN,            * :
+               ''' KEPT ON VOL(S) ',#VOL                           DASD
+EISAGN   CLI   VS,C'2'        MVS                                  DASD
+         BE    EISAGNVS       YEP                                  DASD
+         CLI   ISINPDQ,3        ARE WE ALL DONE HERE               DASD
+         BE    EISRTN           .....YOU BETCHYA                   DASD
+         MVI   ISINPDQ,3        SET SERCH TO DSN # 3               DASD
+         B     EISTRYA        GO BACK TO GET EM                    DASD
+EISAGNVS CLI   ISINPDQ,2        ARE WE ALL DONE HERE               DASD
+         BE    EISRTN           .....YOU BETCHYA                   DASD
+         MVI   ISINPDQ,2        SET SERCH TO DSN # 2               DASD
+         B     EISTRYA        GO BACK TO GET EM                    DASD
+EISRTN   MVI   ISINPDQ,C'1'     SET THIS GUY BACK TO A ONE         DASD
+         JOLRETN RC=0                                              DASD
+EISR14   DS    F                                                   DASD
+EISDSN   DS    1C                                                  DASD
+         LTORG                                                     DASD
+.X8500   ANOP
+         AIF   (&X8).X8520
+     TITLE 'UJEDEVNM:SEARCH DEVNAMET'                              DASD
+          JOLSAVE CSECT=UJEDEVNM                                   DASD
+*******************************************************************DASD
+*  SEARCH THE SYSTEMS DEVICE NAME TABLE TO OBTAIN THE             *DASD
+*  THE DEVICE TYPE NEEDED FOR A CAMLST FOR A SCRATCH              *DASD
+*  OR  KEEP                                                       *DASD
+*                                                                 *DASD
+*  SEARCH ARGUMENT = DDUNIT IN INSTRUCT FILE                      *DASD
+*  DEVNAMET FORMAT                                                *DASD
+*  EACH ENTRY IS 12 BYTES                                         *DASD
+*  BYTES 1-8 = UNIT NAME  ECT '3330-1' OR 'TAPE'                  *DASD
+*  BYTES 9-12 = CODE    X'3070200D'                               *DASD
+*                                                                 *DASD
+*******************************************************************DASD
+          LOAD EP=DEVNAMET   LOAD THE KNOW IT ALL                  DASD
+          LTR  R1,R0         GET ADDRESS OF HIM                    DASD
+          BZ   EDVDEAD       SORRY                                 DASD
+          L    R15,0(R1)     LOAD NUMBER OF ENTRIES IN TABLE       DASD
+          MH   R15,=H'12'    MULT BY TABLE ENTRRY SIZE             DASD
+          LA   R1,4(R1)      ADD 4 TO START ADDRESS OF TABLE       DASD
+          AR   R15,R1        CALC ENDD OF TABLE                    DASD
+          LA   R14,12        INCREMENT                             DASD
+          CLC  DDUNIT,0(R1)  HOPE ITS HERE                         DASD
+          BE   EDVALIVE      GO DO THE SCRATCH NOW                 DASD
+          BXLE R1,R14,*-10   ROUND ROBIN                           DASD
+EDVDEAD   JOLRETN RC=4                                             DASD
+EDVALIVE DS    0H                                                  DASD
+          MVC  SCTUTYPE,8(R1) MOVE IN THE DEVICE TYPE              DASD
+          JOLRETN RC=0                                             DASD
+.X8520   ANOP
+       TITLE 'UJELOCAT:LOCATE CATALOGUED DATASETS'                 DASD
+         JOLSAVE CSECT=UJELOCAT                                    DASD
+*        AIF   (&X8).X8540
+         L     R15,=V(E05VOLS)         LOAD CAMLIST ADDRESS        DASD
+         USING VOLINFO,R15                                         DASD
+         ST    R15,ELOLOCAT+12         POINT TO LOCATE AREA        DASD
+         LA    R6,300(R15)             GO UP A FEW AND SAVE POINTERDASD
+         MVC   0(44,R6),DSNAME         MOVE TO LOCATE AREA         DASD
+         MVC   DSNAME,0(R6)            MOVE DSNAME IN              DASD
+         LOCATE ELOLOCAT                                           DASD
+         LTR   R15,R15                 DID LOACTE FIND ANYTHING ?? DASD
+         BNZ   ELORETN4                NOPE                        DASD
+         JOLRETN RC=0  WE FOUND OUR STIFF LETS LEAVE               DASD
+ELORETN4 DS    0H                                                  DASD
+         MVC  DSNAME,0(R6)            MOVE BACK ORGINAL DATA SET NADASD
+         B    RETN4                   TELL THE CALLER WE FAILED    DASD
+ELOLOCAT CAMLST NAME,DSNAME,,0                                     DASD
+.X8540   ANOP
+*        B    RETN4
+         DC C'COMPILE DATE=&SYSDATE.,TIME=&SYSTIME.'               DASD
+         LTORG                                                     DASD
+         DS    0D
+         PRINT GEN,NODATA
+         AIF  (NOT &X8).NOX8MAC
+         TITLE 'FIXED LOW CORE'
+         XAMFLC  DSECT=YES
+PSA      EQU   FLC
+PSATOLD  EQU   FLCTOLD            FOR MVS,F4 COMPATIBILITY
+         TITLE 'COMMUNICATIONS VECTOR TABLE'
+         XAMCVT  DSECT=YES
+         TITLE 'TASK CONTROL BLOCK    '
+         XAMTCB  DSECT=YES
+TCBFLGS1 EQU   TCBFLAG1       EQUIVALENT FIELDS ON F4,X8
+         TITLE 'REQUEST BLOCK         '
+         XAMRB   DSECT=YES
+         TITLE 'FILE CONTROL TABLE    '
+         XDDFCT
+         TITLE 'JOB-STEP CONTROL BLOCK'
+         XDDJSCB
+JSCBLEN  EQU   *-JSCB         MY NAME FOR ITS LENGTH
+JSCBDISP EQU   0              MVS,F4 NAME FOR DISPLACEMENT TO START
+JSCBOPTS EQU   JSCBSTS
+         TITLE 'COMMAND SCHEDULER CONTROL BLOCK'
+         XDDCSCB
+.NOX8MAC ANOP
+           END

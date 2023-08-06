@@ -1,0 +1,19 @@
+UJM00ABC CSECT                                                   88036
+         DC    A(X'0FF000')                                      88036
+         DC    A(X'013000')    X13 (OPEN ERRORS)                 88036
+         DC    A(X'FFF000')                                      88036
+         DC    A(X'014000')    014 (SOME CLOSE ERRORS)           88036
+         DC    A(X'0FF000')                                      88036
+         DC    A(X'004000')    X04 (GETMAIN)                     88036
+         DC    A(X'0FF000')                                      88036
+         DC    A(X'805000')    X05 (FREEMAIN(                    88036
+         DC    A(X'0FF000')                                      88036
+         DC    A(X'006000')    X06 (CONTENTS MANAGEMENT)         88036
+         DC    A(X'0FF000')                                      88036
+         DC    A(X'00A000')    X0A (GETMAIN/FREEMAIN)            88036
+         DC    A(X'F00000')                                      88036
+         DC    A(X'F00000')    FXX (MISSING SVC)                 88036
+         ENTRY UJM00ABE                                          88036
+UJM00ABE DS    0F                                                88036
+.END     ANOP                                                     J40B
+         END   UJM00MN

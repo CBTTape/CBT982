@@ -1,0 +1,8 @@
+         PUNCH ' ALIAS NOP0,NOP10'                               88036
+NOP      CSECT                                                   88036
+NOP0     SLR   15,15                                             88036
+         BR    14                                                88036
+NOP10    LA    15,10                                             88036
+         BR    14                                                88036
+         ENTRY NOP0,NOP10                                        88036
+         END

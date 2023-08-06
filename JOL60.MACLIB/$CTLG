@@ -1,0 +1,11 @@
+         MACRO
+&L       $CTLG
+         GBLB  &X8,&MVS,&MVSXA,&XA,&VS1
+&L       IHBINNRA &SYSLIST(1)
+.*       AIF   (&X8).X8
+.*       IFOS  =X8,&C
+         SVC   26
+         MEXIT
+.X8      ANOP
+         $CALL UJS03UCT
+         MEND

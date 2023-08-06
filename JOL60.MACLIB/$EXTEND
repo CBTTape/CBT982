@@ -1,0 +1,6 @@
+         MACRO                                                   88036
+&L       $EXTEND &DAMCB                                          88036
+         IHBINNRA &DAMCB                                         88036
+         L     15,X'038'(,1)   LOAD ADDRESS OF EXTEND ROUTINE    88036
+         BALR  14,15           BRANCH TO IT                      88036
+         MEND                                                    88036

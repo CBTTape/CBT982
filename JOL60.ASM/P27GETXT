@@ -1,0 +1,537 @@
+P27GETXT TITLE 'UJP27TXT, UJP27ATR '                             J51
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1980.
+* JOL COPYRIGHT CCS-JOL 1988      1991
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0  ^     ^   0        L
+*                   J         0  O     O   0        L
+*                   J         0            0        L
+*                   J         0     V      0        L
+*                   J         0            0        L
+*                   J         0   <____>   0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+         PRINT OFF                                                J50
+         COPY  JOLCOM
+*      COPY CPY/JOLCOMD.CPY
+         PRINT ON                                                 J50
+*        COPY  P28PARMS                                           J50
+*
+* This routine simply gets the next text item in PANEL (UJP27PNL)
+*      or POPUP (P29), and sets various attributes and colors as
+*      necessary.
+*
+XX3      DSECT
+UJP27TXT JOLSAVE CSECT=UJP27TXT
+         TITLE 'UJP27TXT  GET TEXT, FIX ATTRS'                   J51
+* void         p27gettext()
+* {
+*
+* /* Get the text and attributes and store in "default" */
+* /* On exit, Tkn will point 1 past the comma. */
+*
+        L       R10,P27GBL
+        USING   PANELWRK,R10
+*       WTO     'P27GETXT Called'
+*
+*     if (Tkn[0] == '(') gettkn(Tkncurr); /* Get next token */
+        CLI      TKN,C'('
+        BNE      P@1
+        GETTKN   TKNCURR
+        STH      R1,TKNCURR
+P@1     DS       0H
+*
+*     if (Tkn[0] == ',') gettkn(Tkncurr); /* Get next token */
+*
+        CLI      TKN,C','
+        BNE      P@2
+        GETTKN   TKNCURR
+        STH      R1,TKNCURR
+P@2     DS       0H
+*
+* internal_loop:
+*
+PINTLUP DS       0H
+*
+*     if (Tkncurr > stackno) return;/* end of parameters */
+*
+         CLC     TKNCURR,TKNNO
+         BNH     P@3
+P@RET0   JOLRETN RC=0
+P@3      DS      0H
+*
+*     if (Tkn_type is numeric
+*
+        CLI      TKNTYPE,0            Numeric
+        BE       P@RET0
+*
+*     if (Tkn[0] == ')') return;
+*
+        CLI      TKN,C')'
+        BE       P@RET0
+*
+*     if (Tkn[0] == '(') goto  backup;
+*                           /* In  someone leaves a bracket off !! */
+*
+        CLI      TKN,C'('
+        BE       P@BACK
+*
+*     if (Tkn[0] == '/')   /* In  someone leaves a bracket off !! */
+*     {
+*
+        CLI      TKN,C'/'
+        BE       P@BACK
+        B        P@4
+*
+* backup:
+*         Tkncurr = Tkncurr - 1;
+*
+P@BACK  DS       0H
+        LH       R1,TKNCURR
+        SH       R1,=H'1'
+        STH      R1,TKNCURR
+*
+*         cpychar(Tkn,')');
+        MVC      #TKN,=H'1'
+        MVC       TKN(2),=C') '
+        JOLRETN   RC=0
+*         return;
+*     }
+*
+P@4     DS       0H
+*
+*     if (Tkn[0] == ',')
+*     {
+*
+        CLI      TKN,C','
+        BNE      P@5
+*
+*         gettkn(Tkncurr);                /* Skip ',' */
+        GETTKN   TKNCURR
+        STH      R1,TKNCURR
+        JOLRETN  RC=0
+*         return;
+*     }
+*
+P@5     DS       0H
+*
+*     if (Tkn[0] == '\'')
+        CLI      TKN,C''''
+        BNE      P@6
+*
+*     {   if ((clclit(Tkn, "''") == 0))
+*              clear(Tkn)
+*         else dropquotes(Tkn);
+*
+        DROPQUSR #TKN
+*
+*         cat(default_txt , Tkn);
+          CAT DEFTXT,TKN
+*         cat(default_with_attrs , Tkn);
+          CAT DEFTXTA,TKN
+*         gettkn(Tkncurr);                /* Get next token */
+P29SKPTK  DS     0H
+        GETTKN   TKNCURR
+        STH      R1,TKNCURR
+*         goto internal_loop;
+        B        PINTLUP
+*     }
+*
+*
+P@6     DS       0H
+*
+*
+*     if (!t_attrib()) {
+        CALL    UJP27ATR
+        LTR     R15,R15
+        BZ      P29SKPTK
+*           {
+*       jolerr  'P27412','Symbol ''',#TKN,''' Invalid in POPUP'
+        JOLERR  415,'Symbol ''',#TKN,''' Invalid in POPUP'
+*       WTO      TKN
+*
+*     gettkn(Tkncurr); /* get real text */
+        GETTKN   TKNCURR
+        STH      R1,TKNCURR
+*     goto internal_loop;
+*  } /* Procedure */
+*
+        B        PINTLUP
+        JOLRETN
+        LTORG
+         DC   140S(*)
+*
+*
+XX4      DSECT
+UJP27ATR JOLSAVE CSECT=UJP27ATR
+         TITLE 'UJP27TXT  CHECK ATTRIBUTES (BOLD, RED ETC)'      J51
+        L       R10,P27GBL
+        USING   PANELWRK,R10
+*       WTO     'UJP27ATR Called'
+*char         t_attrib(void)
+*
+* /* Test Attributes */
+*{
+*      static char        * attr_txt[] = {
+*                          "BRIGHT",
+*                          "BOLD",
+*                          "DARK",
+*                          "",
+*                          "UNDERLINE",
+*                          "FLASH",
+*                          "REVERSE",
+*                          "INVISIBLE"};
+*
+*      static char        * color_txt[] = {
+*                          "BLACK",
+*                          "RED",
+*                          "GREEN",
+*                          "YELLOW",
+*                          "BLUE",
+*                          "MAGENTA",
+*                          "CYAN",
+*                          "WHITE"};
+*      int          kk;
+*
+*    for (kk = 0; kk <= 7; kk++)
+*    {
+*         if (memcmp(Tkn , attr_txt[kk], length(Tkn)) ==0)
+*         {
+*              if ((kk==0 ) || (kk==1))   /* Bold or Bright ? */
+*                  bold_specified = true;
+*
+*              if (kk >= 2) kk = kk - 1;
+*              catlit(default_with_attrs, "\033[");
+*              catchar(default_with_attrs, kk + 49);
+*              catchar(default_with_attrs, 'm');
+*              return true;
+*         }
+*    }
+*
+*/*  fix - was commented * /
+*  else;
+*    if ((strcmp(Tkn, "BRIGHT") == 0))          p27fixattr('1');
+*    else  if ((strcmp(Tkn, "BOLD") == 0))      p27fixattr('1');
+        CLC     =C'BRIGHT ',TKN
+        BE      A@BOLD
+        CLC     =C'HI ',TKN
+        BE      A@BOLD
+        CLC     =C'BOLD ',TKN
+        BNE     A@1
+*A@BOLD  P27FXATR X'F4'
+A@BOLD  DS      0H
+         CLI   VIDSFE,0         Does this Terminal take colors ?  J51
+         BE    CANTBOLD         No, so ignore colours, attributes J51
+         LH    R1,#DEFTXTA             GET CURRENT LENGTH OF STRING
+         LA    R1,3(R1)                ADD 3 FOR COLOR RESET
+         STH   R1,#DEFTXTA             RESET
+         LA    R1,DEFTXTA-3(R1)        POINT TO END OF STRING
+         MVC   0(1,R1),VIDSA           Fujitsu OR IBM Set Attribute
+         MVI   1(R1),X'42'             SET COLOUR TYPE
+         MVC   2(1,R1),VIDHICLR        SET THE Default 'hi' COLOUR
+        B       ATRDUN1                                           J52
+CANTBOLD DS     0H
+         LH    R1,#DEFTXTA             GET CURRENT LENGTH OF STRING52
+         LA    R1,2(R1)                ADD 2 FOR Mono BOLD        J52
+         STH   R1,#DEFTXTA             RESET                      J52
+         LA    R1,DEFTXTA-2(R1)        POINT TO END OF STRING     J52
+         MVC   0(1,R1),VIDSF           Fujitsu OR IBM Set Attribute52
+         MVI   1(R1),X'E8'             Make BOLD                  J52
+        B       ATRDUN1
+A@1     DS      0H
+*    else  if ((strcmp(Tkn, "NORMAL") == 0))    p27fixattr('2');
+        CLC     =C'NORMAL ',TKN
+        BNE     A@2
+        P27FXATR X'00'
+         CLI   VIDSFE,0         Does this Terminal take colors ?  J51
+         BE    CANTNORM         No, so ignore colours, attributes J51
+         LH    R1,#DEFTXTA             GET CURRENT LENGTH OF STRING
+         LA    R1,3(R1)                ADD 3 FOR COLOR RESET
+         STH   R1,#DEFTXTA             RESET
+         LA    R1,DEFTXTA-3(R1)        POINT TO END OF STRING
+         MVC   0(1,R1),VIDSA           Fujitsu OR IBM Set Attribute
+         MVI   1(R1),X'42'             SET COLOUR TYPE
+         MVC   2(1,R1),VIDLOCLR        SET THE Default 'lo' COLOUR
+        B       ATRDUN1                                           J52
+CANTNORM DS     0H
+         LH    R1,#DEFTXTA             GET CURRENT LENGTH OF STRING52
+         LA    R1,2(R1)                ADD 2 FOR Mono BOLD        J52
+         STH   R1,#DEFTXTA             RESET                      J52
+         LA    R1,DEFTXTA-2(R1)        POINT TO END OF STRING     J52
+         MVC   0(1,R1),VIDSF           Fujitsu OR IBM Set Attribute52
+         MVI   1(R1),X'60'             Make NORMAL                J52
+        B       ATRDUN1
+A@2     DS      0H
+*    else  if ((strcmp(Tkn, "UNDERLINE") == 0)) p27fixattr('4');
+        CLC     =C'UNDERLINE ',TKN
+        BNE     A@3
+        P27FXATR X'F4'
+        B       ATRDUN1
+A@3     DS      0H
+*    else  if ((strcmp(Tkn, "FLASH") == 0))     p27fixattr('5');
+        CLC     =C'FLASH ',TKN
+        BE      P@FLASH
+        CLC     =C'BLINK ',TKN
+        BNE     A@4
+P@FLASH P27FXATR X'F1'
+        B       ATRDUN1
+A@4     DS      0H
+*    else  if ((strcmp(Tkn, "REVERSE") == 0))   p27fixattr('7');
+        CLC     =C'REVERSE ',TKN
+        BNE     A@5
+        P27FXATR X'F2'
+        B       ATRDUN1
+A@5     DS      0H
+*    else  if ((strcmp(Tkn, "INVISIBLE") == 0)) p27fixattr('8');
+        CLC     =C'INVISIBLE ',TKN
+        BNE     A@6
+        P27FXATR X'00'
+        B       ATRDUN1
+A@6     DS      0H
+*/ *  fix - was commented */
+*
+*
+*
+* /* Test Colours */
+*
+*    for (kk = 0; kk <= 7; kk++)
+*    {
+*         if (memcmp(Tkn , color_txt[kk], length(Tkn))==0)
+*         {                                  /* Overriding attribute */
+*
+*              if (bold_specified == false)     /* ANSI doesn't have a
+*                                                OFF, unfortunately */
+*              {
+*                 catlit (default_with_attrs , "\033[0;");
+*                 cat    (default_with_attrs,  videobackground);
+*                 catchar(default_with_attrs , 'm');
+*              }
+*
+*              catlit(default_with_attrs , "\033[3");
+*              catchar(default_with_attrs,kk + 48);
+*              catchar(default_with_attrs , 'm');
+*              return true;
+*         }
+*    }
+*
+*
+* /*  fix - was commented * /
+*
+*    else    if ((strcmp(Tkn, "BLACK") == 0))   p27fixcolour('0');
+        CLC     =C'BLACK ',TKN
+        BNE     C@1
+        P27FXCOL X'00'
+        B       COLRDUN1
+C@1     DS      0H
+*    else    if ((strcmp(Tkn, "RED") == 0))     p27fixcolour('1');
+        CLC     =C'RED ',TKN
+        BNE     C@2
+        P27FXCOL X'F2'                        F2 ?                J51
+        B       COLRDUN1
+C@2     DS      0H
+*    else    if ((strcmp(Tkn, "GREEN") == 0))   p27fixcolour('2');
+        CLC     =C'GREEN ',TKN
+        BNE     C@3
+        P27FXCOL X'F4'                        F4 ?
+        B       COLRDUN1
+C@3     DS      0H
+*    else    if ((strcmp(Tkn, "YELLOW") == 0))  p27fixcolour('3');
+        CLC     =C'YELLOW ',TKN
+        BNE     C@4
+        P27FXCOL X'F6'                        F6 ?                J51
+        B       COLRDUN1
+C@4     DS      0H
+*    else    if ((strcmp(Tkn, "BLUE") == 0))    p27fixcolour('4');
+        CLC     =C'BLUE ',TKN
+        BNE     C@5
+        P27FXCOL X'F1'                        F1 ?
+        B       COLRDUN1
+C@5     DS      0H
+*    else    if ((strcmp(Tkn, "MAGENTA") == 0)) p27fixcolour('5');
+*    else    if ((strcmp(Tkn, "MAG") == 0))     p27fixcolour('5');
+        CLC     =C'MAGENTA ',TKN
+        BNE     C@6
+        P27FXCOL X'F3'                        F3 ?                J51
+        B       COLRDUN1
+C@6     DS      0H
+*    else    if ((strcmp(Tkn, "CYAN") == 0))    p27fixcolour('6');
+        CLC     =C'CYAN ',TKN
+        BNE     C@7
+        P27FXCOL X'F5'                        F5 ?                J51
+        B       COLRDUN1
+C@7     DS      0H
+*    else    if ((strcmp(Tkn, "WHITE") == 0))   p27fixcolour('7');
+        CLC     =C'WHITE ',TKN
+        BNE     C@8
+        P27FXCOL X'F7'                        F7 ?
+        B       COLRDUN1
+C@8     DS      0H
+        B       THI@LITE
+*  / *  fix - was commented */
+*
+*
+ATRDUN1  B     AT@DONE
+COLRDUN1 B     CL@DONE
+AT@DONE  DS    0H
+CL@DONE  DS    0H
+         JOLRETN RC=0
+*
+*
+*
+THI@LITE DS    0H
+*
+*    if (((clclit(Tkn, "HIGHLIGHT") == 0))
+*    ||  ((clclit(Tkn, "HI") == 0)))
+*    {
+*        catlit (default_with_attrs,"\033[0;");
+*        cat    (default_with_attrs,videobackground);
+*        catchar(default_with_attrs,';');
+*        cat    (default_with_attrs , videohighlight);
+*        catchar(default_with_attrs , 'm');
+*    }
+*
+*    else if (clclit(Tkn, "NORMAL") == 0)
+*    {
+*        catlit (default_with_attrs,"\033[0;");
+*        cat    (default_with_attrs,videobackground);
+*        catchar(default_with_attrs,';');
+*        cat    (default_with_attrs , videolowlight);
+*        catchar(default_with_attrs , 'm');
+*    }
+*    else    if ((clclit(Tkn, "CTR") == 0)) centre = true;
+        CLC     =C'CTR ',TKN
+        BE      TISCTR                                            J52
+        CLC     =C'CENTRE ',TKN                                   J52
+        BE      TISCTR                                            J52
+        CLC     =C'CENTER ',TKN                                   J52
+        BNE     T@1                                               J52
+TISCTR  DS      0H                                                J52
+        OI     P27FLAGS,P27F1CTR CENTRE THE LINE                  J40B
+        B       SPECDUN1
+T@1     DS      0H
+*    else    if ((clclit(Tkn, "MENUBAR") == 0))
+        CLC     =C'MENUBAR ',TKN
+        BNE     T@2
+*    {
+*        if (currrow < 3)
+        CLC    CURRROW,=H'3'
+        BH     P27MENER
+*        {
+        MVI    P27MENUB,1         Specify MenuBar Flag
+        OI     P27FLAGS,P27F1CTR CENTRE THE LINE
+        B       SPECDUN1
+*            menubar = true;
+*            centre = true;
+*        }
+*        else
+P27MENER DS    0H
+*        {
+*            jolerrlit("P27325", "MENUBAR must be specified first");
+         JOLERR 325,'MENUBAR must be specified first'
+         JOLRETN  RC=4
+*            return false;
+*        }
+*    }
+*
+T@2     DS      0H
+*
+        CLC     =C'BOX ',TKN
+        BNE     THELPL
+         JOLRETN  RC=0
+*    else    if ((clclit(Tkn, "HELPLINE") == 0))
+THELPL  CLC     =C'HELPLINE ',TKN
+        BNE     T@3
+*    {
+*            helpline = true;
+*            centre = true;
+        MVI    P27HELPL,1         Specify Help Flag
+        OI     P27FLAGS,P27F1CTR CENTRE THE LINE
+        B       SPECDUN1
+*    }
+*
+T@3     DS     0H
+*
+* /* else if Tkn='TEXT'    then txt_mode:='1'b; */
+* /* else if Tkn='ENDTEXT' then txt_mode:='0'b; */
+*    else if ((clclit(Tkn, "BOX") == 0)) draw_box = true;
+*    else if ((clclit(Tkn, "NOCLS") == 0)) clscr = false;
+*    else
+*    if ((clclit(Tkn, "LM") == 0)) {
+        CLC     =C'LM ',TKN
+        BNE     T@4
+*        p27getnum(); /* get LHS Margin  */
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+        TNUM    #TKN
+        LTR     R15,R15
+        BZ      LM@OK
+*
+*        if (number == 0)
+*        {
+         JOLERR 316,'LM ''',#TKN,''' Incorrect'
+*            cpylit(errtext, "LM incorrect:");
+*            cat   (errtext, Tkn);
+*            jolerr("P27315");
+*            return false;
+         JOLRETN RC=4
+*        }
+LM@OK    DS     0H
+         STH    R1,LHSMARG
+*        lhs_margin = number;
+*        if (draw_box)
+*             screen_width = 78 - (lhs_margin + rhs_margin);
+*        else screen_width = 80 - (lhs_margin + rhs_margin);
+*        return true;
+         JOLRETN RC=0
+*    }
+*    else
+T@4     DS     0H
+*    if ((clclit(Tkn, "RM") == 0))
+        CLC     =C'RM ',TKN
+        BNE     T@5
+*    {
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+        TNUM    #TKN
+        LTR     R15,R15
+        BZ      RM@OK
+*        p27getnum(); /* get LHS Margin  */
+*
+*        if (number == 0) {
+         JOLERR 317,'RM ''',#TKN,''' Incorrect'
+*            cpylit(errtext, "RM incorrect:");
+*            cat   (errtext, Tkn);
+*            jolerr("P27316");
+*            return false;
+         JOLRETN RC=4
+*        }
+*        rhs_margin = number;
+RM@OK    DS     0H
+         STH    R1,RHSMARG
+*        if (draw_box)
+*        screen_width = 78 - (lhs_margin + rhs_margin);
+*        else screen_width = 80 - (lhs_margin + rhs_margin);
+*        return true;
+         JOLRETN RC=0
+*    }
+*    else if ((clclit(Tkn, "NOWAIT") == 0)) nowait = true;
+*    else {
+*        return false;
+*    }
+T@5      DS      0H
+         JOLRETN RC=4
+SPECDUN1 DS      0H
+         JOLRETN RC=0
+*    return true;
+*} /* Procedure */
+         LTORG
+         DC   140S(*)

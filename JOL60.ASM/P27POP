@@ -1,0 +1,1925 @@
+P27POP   TITLE 'UJP27TXT, UJP27ATR '                             J51
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1980.
+* JOL COPYRIGHT CCS-JOL 1988      1991
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0  ^     ^   0        L
+*                   J         0  O     O   0        L
+*                   J         0            0        L
+*                   J         0     V      0        L
+*                   J         0            0        L
+*                   J         0   <____>   0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+*
+***********************************************************************
+*                                                                     *
+*                                                                     *
+*                                                                     *
+*                                                                     *
+*                   DO JOL POPUP                                      *
+*                                                                     *
+*                                                                     *
+*         Note: Mainframes don't have rodents (yet!)                  *
+*                                                                     *
+*                                                                     *
+*                                                                     *
+*   Now, the PC version saves the part of the screen that is          *
+*   about to be over-written, then calls the Jol Panel Routine.       *
+*                                                                     *
+*   What this means is that Jol itself protects what would normally   *
+*   be 3270 non-protected fields.                                     *
+*                                                                     *
+*                                                                     *
+*   We can't do this on a 3270, so we will resend the screen          *
+*   with only enough unprotected fields for the "pop-up".             *
+*                                                                     *
+*                                                                     *
+*                                                                     *
+*                                                                     *
+***********************************************************************
+*
+*        PRINT OFF                                                J50
+         COPY  JOLCOM
+*      COPY CPY/JOLCOMD.CPY
+         PRINT ON                                                 J50
+         COPY  P28PARMS                                           J50
+POPCOLOR EQU   VCYAN             Set default color of CYAN        J51
+*
+* This is the Jol popup.
+*
+* It differs from the PC version in a number of ways - due to the
+*    totally different method needed to get data to and from the
+*    3270 type screens.
+*
+* For example, on a PC it is quite easy to write bits of data to
+*    the screen, whereas a 3270 requires that you do it all in one
+*    write, otherwise severe inefficencies will result.
+*
+* Also, on the PC we simulate a 3270 screen.  We make the protected
+*    fields whereas they are all done for us on a 3270.
+*
+* Finally, there are two main types of 3270's - those will accept
+*    colors, and those that won't.
+* The ones that won't have further limitations - the attribute byte
+*    for highlighting etc cannot be adjacent to any text, so if
+*    we put out a BOLD, we MUST have a blank before the next character.
+*
+* This means that the screen must be a little different.
+*
+* Now, to the nittyy gritty.
+*
+* We have saved away the parameters that were used to create the
+*    original screen.  These parameters have the row and color
+*    attributes of each part of the text.
+* Additionally (for the PANEL REREAD feature), we have the names
+*    of the symbolic variables that were written to the screen.
+*    Thus, when we have a PANEL REREAD, we can clear out all the
+*    unprotected fields, and simply write out the current values
+*    of the symbolic variables.
+*
+* SO.....
+*
+* Popup simply writes the POPUP to the screen, and waits for a
+*    reply to come back to us.
+*
+* If the cursor is not within the POPUP, we simply throw the entire
+*    PANEL back up on the screen - in other words we will ignore
+*    all input if we are in a popup, and the user enters data
+*    out of the popup area!
+*
+* First, we will analyse the POPUP and try and work out where
+*    it goes on the screen etc, and the maximum width of the box.
+*
+*
+*
+*
+*       void         reverse_pop(int row, int col, int width)
+*
+*
+*
+********************************************************************
+*
+*
+*       int          ujp27pop()
+*
+         AGO   .INCOMP                                            J52
+P29POPWK  DATASECT
+MAXROW    DC  H'0'
+*         ENTRY MAXROW
+MAXWIDTH  DC  H'0'
+*         ENTRY MAXWIDTH
+#RETALTF  DC  H'0'
+RETALTFL  DC  CL30' '
+MENUCOLX  DC  H'10'        *** NOT USED - in JOLCOM now Feb 92.
+*
+#MENBART  DC       H'0'
+MENBARTX  DS  CL400
+MENBARIT  DS  30A  /* POINTS TO START OF MENU ITEM */
+*
+#MENUTKN  DS  H      /* Count of below
+*         ENTRY #MENUTKN
+MENUTKN   DS  30H  /* TOKEN NUMBER OF MACRO
+*
+#MENUTXT  DS  H      /* Count of below
+          ENTRY #MENUTXT
+MENUTXT   DS  CL400              was 250
+*
+ALTKEYS   DS  CL40
+*         ENTRY ALTKEYS
+*
+ALTFLDS   DS  CL20
+ALTPOSN   DS  A
+*
+I29       DC  H'0'
+*J29      DC  H'0'
+K29       DC  H'0'
+*LEN@TXT  DC  H'0'
+TROW      DC  H'0'
+*LCOL      DC  H'0'
+*
+BLANKPOS  DC  A(0)
+FLDPOSN   DC  A(0)
+ALT@POSN  DC  A(0)
+TESTBRAK  DC  A(0)
+TMPCHAR   DC  CL2' '
+TMPCHAR2  DC  CL2' '
+TXT       DC  A(0)
+ALTCOL    DC  H'0'
+TALTKEY   DC  A(0)
+POPSTRM   DS  CL9000
+.INCOMP  ANOP                                                     J52
+********************************************************************
+TGETREAD DSECT          We base this over TGETAREA to see what came*
+AID      DS    CL1      in from the terminal                       *
+CURSOR   DS    CL2                                                 *
+ISBA     DS    CL1                                                 *
+IADD1    DS    CL1                                                 *
+IADD2    DS    CL1                                                 *
+ITEXTI   DS    CL100                                               *
+*                                                                  *
+********************************************************************
+*
+*
+*         extern        char transalt[54] ;
+*      /*   ={' ','1','2','3','4','5','6','7','8','9','0','-','=',' ',
+*             ' ',' ','Q','W','E','R','T','Y','U','I','O','P','[',']',
+*             ' ',' ','A','S','D','F','G','H','J','K','L',';','\'',' ',
+*             ' ',' ','Z','X','C','V','B','N','M',',','.','/'};
+*         */
+*
+*         extern int     Ret_Alt_Field_Col;   /* Set in PANELUN.c */
+*
+********************************************************************
+*
+XX1      DSECT
+UJP27POP JOLSAVE CSECT=UJP27POP
+         TITLE 'UJP27POP : DO POPUP'                             J51
+*       WTO     'UJP27POP Called'
+*
+********************************************************************
+*
+*    /*                                        Pop up Menu */
+*   { int  dr, dc;/* Work locs only */
+*    int  max_width=25;    /* Calculate max width of pop_up (15 min) */
+*
+         L    R10,P27GBL
+         USING PANELWRK,R10
+         B       P27GO
+         TOMASM ' .data'
+P27SELE  DS    0H
+         DC    X'1DF0'           BOLD, PROTECTED                  J60
+         DC    C'Select'
+         DC    C'<'                                               J50
+         DC    X'1DC8'           BOLD, UN-PROTECTED               J50
+*        DC    C' '              SPACE FOR attribute              J50
+         DC    C' '              SPACE FOR USER TO ENTER          J50
+         DC    X'1DF0'           BOLD, PROTECTED, Autoskip        J60
+*        DC    C' '              SPACE FOR attribute              J50
+         DC    C'>'                                               J50
+         DC    X'1D60'           NORMAL                           J50
+*        DC    X'1D',C'['        NORMAL                           J50
+         DC    C'or Move Cursor  __'
+*        DC    C'or Use Arrow Keys '
+         DC    C'___'                                             cvc
+P27SELEL EQU   *-P27SELE -4      -4 FOR 4 SF'S IN FIELDS
+P27SCRNL EQU   *-P27SELE-4       -4 FOR 4 SF'S IN FIELDS          cvc
+         TOMASM ' .code'
+P27GO    DS     0H
+*       L       R10,=V(PANELWRK)
+*       L       R6,=V(P29POPWK)
+        L       R6,AP29PWK       Get address of POPWK in JOLCOM   J52
+        USING   P29POPWK,R6
+        MVC    MAXWIDTH,=AL2(P27SCRNL)
+*
+*         int           max_row;
+*
+*         int           Ret_Alt_Field_Len;
+*         char          Ret_Alt_Field[30];
+*
+*         int           Menu_Bar_Text_Len;
+*         char          Menu_Bar_Text[400];
+*  char         *Menu_Bar_Items[30];  /* ->  Start of Menu Item */
+*
+*
+*       int           Menu_Macro_Tknno[30]; /* Token Number of Macro
+*                                              to execute for POPUP */
+*
+*         char          Alt_Keys[40];
+*
+*         char          Alt_Fields[20];
+*
+*         int           i;
+*         int           j,k;
+*         int           len_Text;
+*
+*         char          *blank_posn;
+*         char          *field_posn;
+*         char          *alt_posn;
+*         char          *test_bracket;
+*         static char   TMPCHAR[2];
+*         static char   temp_char2[2];
+*         char          *Text;
+*         int           alt_column;
+*         char          *taltkey;
+*         extern        char transalt[54] ;
+*      /*   ={' ','1','2','3','4','5','6','7','8','9','0','-','=',' ',
+*             ' ',' ','Q','W','E','R','T','Y','U','I','O','P','[',']',
+*             ' ',' ','A','S','D','F','G','H','J','K','L',';','\'',' ',
+*             ' ',' ','Z','X','C','V','B','N','M',',','.','/'};
+*       */
+*
+*         extern int     Ret_Alt_Field_Col;   /* Set in PANELUN.c */
+*
+*           if (Mouse_avail)
+*
+         MVC   CURRROW,=H'2'  SET THE CURRENT ROW NUMBER COUNTER
+*        MVC   CURRROW,=H'1'  SET THE CURRENT ROW NUMBER COUNTER 88036
+         MVC   CURRCOL,=H'1'  SET THE CURRENT COLUMN NUMBER COUNTER
+         MVC   #MENUTXT,ZERO  Clear the text area                 cvc
+         ICM   R4,15,SCRNROWS Terminal Area been initialised ?    J50
+         BNZ   P29NOGTM                                           J50
+         CALL  P27INIT        Find terminal type etc.             J50
+P29NOGTM DS    0H                                                 J50
+         LA    R4,POPSTRM     Point to work area
+         USING #PARM,R4
+         MVC   #LINES,SCRNROWS
+         MVC   #COLUMNS,SCRNCOLS
+         MVC   #COLUMNS,=F'80'                                    J60
+         MVC   #TERMFLG,SCRNTYPE
+         LA    R5,#ITEMDSC
+         USING DITEM,R5
+         XC    #SCITEMS(LFIXED+3),#SCITEMS
+         LA    R7,4000(R4)    POINT TO END OF WORK AREA
+         MVI   P27COLOR,POPCOLOR DEFAULT COLOUR (see POPCOLO EQU) J51
+         MVI   P27HI,0           TURN OFF HIGHLIGHTS              J50
+*   nowait = false;
+*   clscr = true;
+*   txt_mode = false;
+*   re_read_addr = NULL;
+*       CLC     MOUSE_AVAIL,=H'0'
+*       BE      @16@122
+*
+*               show_cursor();              /* Show Mouse */
+*
+*       CALL    SHOW_CURSOR
+@16@122 DS      0H
+*
+*
+*           mvc(icommand, "MACRO   ",8);
+*
+        MVC ICOMMAND,=CL8'MACRO'
+*
+*           mvc(symbolic, "SYSPOP  ",8);
+*
+        MVC SYMBOLIC,=CL8'SYSPOP'
+*
+*           x[1] = "";
+*
+        MVC     #WORK,=H'0'
+*
+*           ujp85asn();
+*
+        CALL$   UJP85ASN
+*
+*           memset(Menu_Macro_Tknno,0, sizeof(Menu_Macro_Tknno) *2);
+*
+* size  XC      MENUTKN(L'MENUTKN),MENUTKN
+* size  XC      MENBARIT(L'MENBARIT),MENBARIT
+        XC      MENUTKN(30*2),MENUTKN
+        XC      MENBARIT(30*4),MENBARIT
+        XC      ALTKEYS,ALTKEYS
+*
+*           Menu_Bar_Text_Len=0;
+*
+        MVC     #MENBART,=H'0'
+*
+*           disp_peekbox(scrn_save,0,0,24,79);
+*
+*      NO need to read the current screen on mainframes !!!
+*
+*           display_str(blue_ascii);
+*
+*       blue_ascii
+*       CALL    display_str
+*
+*
+*           Alt_Keys[0]='\0';
+*
+*      NO ALT keys on 3270's !!!
+*
+*           currrow = 1;
+*
+*       MVC     CURRROW,=H'1'
+        MVC     CURRROW,=H'2'
+*
+*           GETTKN(2);
+*
+        MVC     TKNCURR,=H'2'
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+*
+*       lhs_margin= Ret_Alt_Field_Col;          /* Set in PANELUN.c */
+*
+         CLC   MENUCOL,ZERO                                       J52
+         BNE   P29COLOK                                           J52
+         MVC   MENUCOL,=H'1'                                      J52
+P29COLOK DS    0H                                                 J52
+        MVC     LHSMARG,MENUCOL      cvc fix from menu
+*
+*           if ((clclit(x[2], "AT") == 0))
+*
+        CLC     =C'AT ',TKN
+        BNE     @16@170
+*
+*           {
+*               p27getnum();
+*
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+*       CALL    P27GETNO
+*
+*               lhs_margin=number;                /* Save number */
+*
+        TNUM    #TKN
+        STH     R1,LHSMARG
+*
+*      i = gettkn(Tkncurr); /* gettkn;  (* get current token number *)
+*
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+*
+*           }
+*
+@16@170 DS      0H
+*
+*           fsmode = true;
+*
+*       MVI     fsmode,1
+P29MAIN DS      0H
+*
+*
+*
+*p29main:
+*
+*    /* Now the parameters for POPUP are like this:-
+*            1. (
+*            2. color 'Literal to be displayed'.
+*            3. Optional [, routine (Jol Macro) to handle popup]
+*            4. ) end of sub-parameters.
+*
+*      First, we must loop around and see how wide each pop-up line is,
+*       then we can calculate if the popup will fit.
+*
+*
+*       */
+*
+* t_bracket:
+*
+*           if (Tkn[0] == '(') {
+*
+        CLI     TKN,C'('
+        BNE     @16@410
+*
+*                clear(outtext);
+*                clear(outtext_with_attrs);
+*                clear(default_txt);
+*                clear(default_with_attrs);
+*
+        LA      R1,0
+        STH     R1,#OUTTXT
+        STH     R1,#OUTTXTA
+        STH     R1,#DEFTXT
+        STH     R1,#DEFTXTA
+*
+*
+*text_in:
+*                p27_pop_parameters();
+*
+        CALL    UJP29POP          ARAMETERS
+*
+*                if (length(outtext) > max_width)
+*
+        LH      R1,#OUTTXT
+        CH      R1,MAXWIDTH
+        BNH     P29MAIN
+*
+*                    max_width=length(outtext);
+*
+        STH     R1,MAXWIDTH
+*
+*                goto p29main;
+*
+        B       P29MAIN
+*
+*
+@16@410 DS      0H
+*           }
+*
+*           if (Tkn[0] == ')')
+*
+        CLI     TKN,C')'
+        BNE     @16@458
+*
+*           {
+OKTOSKIP DS     0H
+* ok_to_skip:
+*      i = gettkn(Tkncurr); /* gettkn;   (* get current token number *)
+*
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+*
+*               goto p29main;
+*
+        B       P29MAIN
+@16@458 DS      0H
+*
+*           }
+*           if (Tkncurr > stackno) goto p27wrap; / end of parameters
+*
+        CLC     TKNCURR,TKNNO
+        BH      P29WRAP
+*
+*
+*           if (Tkn[0] == '/') {
+*
+        CLI     TKN,C'/'
+        BNE     @16@530
+*
+*line_feed:
+*               currrow = currrow + 1;
+*
+        LH      R1,CURRROW
+        LA      R1,1(R1)
+        STH     R1,CURRROW
+*
+*              goto p29main;
+*
+        B       P29MAIN
+@16@530 DS      0H
+*
+*           }
+*
+*
+*           if (Tkn[0] == '\'')
+*
+        CLI     TKN,C''''
+        BE      @16@626
+*
+*              goto invalid_pop;
+*
+*           if (t_ident(Tkn))
+*
+        CLI     TKN,C'_'
+        BE      ISIDENT
+        CLI     TKN,C'@'
+        BE      ISIDENT
+        CLI     TKN,C'$'                                          cvc
+        BE      ISIDENT                                           cvc
+        CLI     TKN,C'A'
+        BL      @16@602
+        CLI     TKN,C'Z'
+        BH      @16@602
+*
+ISIDENT DS      0H
+*           if (*x[Tkncurr-2] == ',')
+*
+        LH      R1,TKNCURR
+        SH      R1,=H'2'
+        STH     R1,TKNCURR
+        GETTKN  TKNCURR
+        LA      R1,1(R1)
+        STH     R1,TKNCURR
+        CLI     TKN,C','
+        BE      OKTOSKIP
+@16@602 DS      0H
+*
+*               goto ok_to_skip;
+*
+*           if (!t_attrib())
+*
+        CALL    UJP27ATR
+        LTR     R15,R15
+        BZ      P29ATDN1
+@16@626 DS      0H
+*
+*           {
+*
+*invalid_pop:
+*
+*
+*       jolerr  'P27412','Symbol ''',#TKN,''' Invalid in POPUP'
+        JOLERR  412,'Symbol''',#TKN,''' Invalid in POPUP'
+*
+*
+*      i = gettkn(Tkncurr); /* gettkn;   (* get current token number *)
+*
+P29ATDN1 DS    0H
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+*
+*           }
+*           goto p29main;
+*
+        B       P29MAIN
+*
+*
+P29WRAP DS      0H
+* p27wrap:
+*
+*  /* Pass two.  This time we will loop around and actually put out
+*                the box and pop-ups */
+*
+*
+*  /* Prepare to draw a box for the Pop - up */
+*
+*           if (lhs_margin + max_width > 80)
+*
+        LH      R1,LHSMARG
+        AH      R1,MAXWIDTH
+        CH      R1,=H'80'
+        BNH     @16@770
+*
+*           {
+*               lhs_margin=  80 - max_width;
+*
+        LA      R1,80
+        SH      R1,MAXWIDTH
+        STH     R1,LHSMARG
+@16@770 DS      0H
+*
+*           }
+*
+*           /* Draw a box around and Allow for Japanese Machines */
+*
+*           if ((draw_box) && (ibm_direct_write))
+*
+*        CLI     DRAW_BOX,0
+*        BNE     @@42
+*        B       @16@1226
+*@@42    DS      0H
+*        CLI     IBM_DIRECT_WRITE,0
+*        BNE     @@43
+*        B       @16@1226
+*@@43    DS      0H
+*
+*           {   int trow, brow;         /* Top Row, Bottom Row */
+*               int lcol, rcol;         /* Left Column, Right Column */
+*
+*               trow=1;                 /* Start at Row 1 */
+*
+*       MVC     TROW,=H'1'
+        MVC     TROW,=H'2'
+*
+*               brow=currrow+1+1;  /* Leave room for [ ] select box */
+*
+*cvc delLH      R1,CURRROW
+*       LA      R1,2(R1)
+*       STH     R1,BROW
+*
+*
+*               lcol=lhs_margin;
+*
+*cvcdel LH      R1,LHSMARG
+*       STH     R1,LCOL
+*
+*
+*               rcol=max_width+lhs_margin+3;
+*
+*cvcdel LH      R1,MAXWIDTH
+*       AH      R1,LHSMARG
+*       AH      R1,=H'3'
+*       STH     R1,REPCOLNO
+*
+*
+* The PC version wrote out each part of the POPUP separately.
+*
+* This version will form up a picture of the POPUP ready to be
+*   displayed in one WRITE.
+*
+*$$$    /* Blank the area in the box */
+*
+*           blanks[rcol-lcol]='\0';/* Temporarily shorten the string */
+*
+*               for (dr = trow+1; dr <= brow; dr++)  /* Do Sides */
+*               {
+*                  gotorc(dr, lcol);
+*               }
+*
+*        blanks[rcol-lcol]=' ';          /* Reset the string string */
+*
+*               for (dc = lcol; dc <= rcol; dc++)     /* Do Top Row */
+*
+*               {
+*                  gotorc(trow, dc);
+*                  display_char("\xc4");
+*               }
+*               gotorc(trow, lcol);
+*
+*               display_char("\xda");                 /* LHS TOP - */
+*               gotorc(trow, rcol);
+*               display_char("\xb7");   /* bf */      /*         - */
+*               for (dr = trow+1; dr <= brow; dr++)   /* Do Sides  */
+*               {
+*                  gotorc(dr, lcol);
+*                  display_char("\xb3");              /* -         */
+*                  gotorc(dr, rcol);
+*                  display_char("\xba");
+*               }
+*               for (dc = lcol; dc <= rcol; dc++)
+*               {
+*                  gotorc(brow, dc);
+*                  display_char("\xc4");
+*               }
+*               gotorc(brow, lcol);
+*
+*               display_char("\xc0");
+*
+*               gotorc(brow, rcol);
+*
+*               display_char("\xbd" /* "\xd9"*/ );
+*           }
+*
+*
+* So, Set up the TOP row with ______________  and Select Msg
+*
+         MVI   P27HI,0           TURN OFF HIGHLIGHTS              J50
+         MVI   P27COLOR,POPCOLOR DEFAULT COLOUR (see POP EQU)     J51
+*       MVC     TXTROWNO,=H'1'
+        MVC     TXTROWNO,=H'2'                                    row
+        MVC     TXTCOLNO,LHSMARG
+        MVC     REPROWNO,=H'0'
+        MVC     REPCOLNO,=H'0'
+        MVC     RPLYLEN,=H'0'
+        MVI     LITERAL,C'_'
+        LH      R1,MAXWIDTH
+         LA    R1,4(R1)          Add 4 for number of attributes   J52
+*       EX      R1,P29TOPR
+*P29TOPR  MVC     LITERAL+1(*-*),LITERAL
+       MEMCPY  LITERAL+1,LITERAL,R1
+        STH     R1,TXTLEN
+         LH    R1,TXTLEN
+        MVC    LITERAL(P27SELEL),P27SELE Select [ ] or Arrow Keys Msg
+*NO replyAH    R1,RLITLEN
+        MVC     TXTCOLR,P27COLOR
+         AR    R5,R1          BUMP UP TO POINT TO NEW SPOT IN TABLE
+*        LA    R5,LFIXED(R5)  POINT OVER FIXED AREA IN PARM LIST
+         AH    R5,=AL2(LFIXED)  cvc simulator bug
+*       XC    DITEM(LFIXED),DITEM  Clear next item row and col numbers
+        XC    TXTROWNO(LFIXED),TXTROWNO next item row and col numbers
+*
+* OK, now set up 2nd row.
+*
+*       MVC     CURRROW,=H'2'
+        MVC     CURRROW,=H'3'
+*           gettkn(2);
+*
+        MVC     TKNCURR,=H'2'
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+*
+*           if ((clclit(x[2], "AT") == 0))
+*
+        CLC     =C'AT ',TKN
+        BNE     @16@1274
+*
+*           {
+*               p27getnum();
+*
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+*
+*      i = gettkn(Tkncurr); /* gettkn;  (* get current token number *)
+*
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+*
+*           }
+*
+@16@1274 DS     0H
+*
+*           }
+*
+*           display_str(default_with_attrs);
+*
+*       LA      R1,DEFATTR
+*       CALL    DISPLAY_STR
+*          rplylen = -1; *
+        MVC     RPLYLEN,ZERO   =H'-1'
+*
+*           rowno=1;
+*
+*       MVC     TXTROWNO,=H'1'
+        MVC     TXTROWNO,=H'2'                                    row
+*
+*           currrow=0;
+*
+*       MVC     CURRROW,=H'1'
+        MVC     CURRROW,=H'2'                                     row
+*
+*           i=0;
+*
+        MVC     I29,ZERO
+*
+*           k=0;
+*
+        MVC     K29,ZERO
+*
+*
+P28MAIN2 DS    0H
+*p29main2:
+*
+*    /* Now the parameters for POPUP are like this:-
+*             1. (
+*             2. color 'Literal to be displayed'.
+*             3. ) end of sub-parameters.
+*
+*   First, we must loop around and see how wide each pop-up line is,
+*     then we can calculate if   the popup will fit.
+*
+*    */
+*
+*
+*       WTO 'MAIN2 Entered'
+*           if (Tkn[0] == '(')
+*
+        CLI     TKN,C'('
+        BNE     @16@1922
+*
+*           {
+*                clear(outtext);
+*
+        MVC     #OUTTXT,=H'0'
+*
+*                clear(outtext_with_attrs);
+*
+        MVC     #OUTTXTA,=H'0'
+*
+*                clear(default_txt);
+*
+        MVC     #DEFTXT,=H'0'
+*
+*                clear(default_with_attrs);
+*
+        MVC     #DEFTXTA,=H'0'
+*
+         MVI   P27COLOR,POPCOLOR DEFAULT COLOUR (see POP EQU)     J51
+        MVI     P27ATTR,0
+*
+* text_in2:
+*                p27_pop_parameters();
+*
+        CALL    UJP29POP
+*
+*
+*       /* Get Hot key here */
+*
+* /* Now start at 1st position,and work out the allowable ALT Fields*/
+*
+*        /*   for (i=0,k=0; i<No_Alt_Keys; i++) */
+*
+*             {
+*                 field_posn=outtext;               /* Get an Item */
+*
+* What we are trying to do here is find the hot_key.
+*
+* It can be:  F{i}les   ie the i is the hot key.
+*        or   Files     ie the Files is the hot key.
+*
+*
+        LA      R1,OUTTXT
+*
+*                 test_bracket=strchr(field_posn,'{');
+*
+        LA      R14,1
+        LA      R15,OUTTXT
+        AH      R15,#OUTTXT
+*       LA      R15,L'OUTTXT(R1)
+P29FLB  CLI     0(R1),C'{'
+        BE      P29GOTB1
+        BXLE    R1,R14,P29FLB
+        B       P29NOCRL            No Curly Bracket
+*
+P29NOCRL DS     0H
+*                 if (test_bracket==NULL)
+*                 {
+*                    for (alt_posn=field_posn; *alt_posn != '\0';
+*                         alt_posn++)
+*
+        LA      R1,OUTTXT
+        LA      R14,1
+        LA      R15,OUTTXT
+        AH      R15,#OUTTXT
+*       LA      R15,L'OUTTXT(R1)
+@16@1490 DS     0H
+*
+*                    {
+*                        if (isupper(*alt_posn))
+*
+P29TUPP CLI     0(R1),C'A'
+        BL      P29TULP
+        CLI     0(R1),C'Z'
+        BH      P29TULP
+        B       TESTDUP             Got an Upper case
+P29TULP BXLE    R1,R14,P29TUPP
+        B       ALL@LOW             All Lower Case
+@16@1538 DS     0H
+*
+*                            goto test_dup;
+*                    }
+*       all_lower:
+*                    alt_posn=field_posn;
+*
+ALL@LOW DS     0H
+        LA      R1,OUTTXT
+@16@1586 DS     0H
+*
+*                    *alt_posn= toupper(*alt_posn);
+*
+*       OI      0(R1),C' '        370 way
+        OC      0(1,R1),BLANKS    MAKE OI NEXT LISTING cvc
+*       MEMUPR  0(R1),1
+*
+*test_dup:
+*
+@16@1610 DS     0H
+TESTDUP  DS     0H
+        ST      R1,ALTPOSN
+*                    if (strchr( Alt_Keys,*alt_posn) != 0) {
+*
+        LA      R14,L'ALTKEYS
+P29TDUP LA      R15,ALTKEYS(R14)
+        CLC     0(1,R1),0(R15)
+        BE      P29DUP
+        BCT     R14,P29TDUP
+        LA      R15,ALTKEYS        Test First key
+        CLC     0(1,R1),0(R15)
+        BE      P29DUP
+        B       @16@1682
+*
+*                        Panel_Err2("Duplicate Pop_Up Keys Found");
+*
+P29DUP  DS      0H
+        JOLERR  405,'Duplicate Pop_Up Keys Found'
+*
+RETN04   DS     0H
+*                        return(4);
+*
+        JOLRETN  RC=4
+@16@1682 DS      0H
+*                    }
+*                    else
+*                    {
+*                        if ((Menu_Bar_Text_Len + length(outtext))
+*                             < sizeof (Menu_Bar_Text))
+*
+        LH      R1,#MENUTXT
+        AH      R1,#OUTTXT
+        CH      R1,=AL2(L'MENUTXT)
+        BL      CATMENPP
+        JOLERR  406,'Popup Text Too Long'
+         B     RETN04                                             J52
+*
+*                        {
+*                           strcpy(&Menu_Bar_Text[Menu_Bar_Text_Len],
+*                           outtext);
+*
+*
+CATMENPP DS    0H
+        LH      R1,#MENUTXT       Reload current length of #MENUTXT
+        LA      R1,MENUTXT(R1)     Point to end of current MENUTXT
+        LH      R15,#OUTTXT
+        LA      R15,2(R15)        Add 1 for length word            J50
+       EX       R15,P29MVCTT
+P29MVCTT MVC       0(*-*,R1),#OUTTXT
+*       MEMCPY  0(R1),#OUTTXT,R15
+        LH      R14,#MENUTXT
+        AR      R15,R14
+        STH     R15,#MENUTXT
+*
+*             Menu_Bar_Items[k]= &Menu_Bar_Text[Menu_Bar_Text_Len];
+*
+*       LH      R15,#MENUTXT
+        LA      R15,MENUTXT(R14)
+        LH      R1,K29
+        SLL     R1,2
+        ST      R15,MENBARIT(R1)
+*
+*                                 /* Points to Start of Menu Item */
+*             Menu_Bar_Text_Len=Menu_Bar_Text_Len+length(outtext) + 1;
+*             }
+*               else
+*                        {
+*                           Panel_Err2("PopUp Panel Text Too Long");
+*                           return 4;
+*                        }
+*                        Alt_Keys[k]=*alt_posn;
+*
+        LH      R1,K29
+        L       R15,ALTPOSN
+        IC      R15,0(R15)
+        STC     R15,ALTKEYS(R1)
+*
+*                        Alt_Keys[k+1]='\0';
+*
+        SR      R15,R15
+        STC     R15,ALTKEYS+1(R1)
+*
+*                        alt_posn++;
+*
+        L       R15,ALTPOSN
+        LA      R15,1(R15)
+        ST      R15,ALTPOSN
+*
+*                        temp_char[0]=*alt_posn;
+*
+        IC      R1,0(R15)
+        STC     R1,TMPCHAR
+*
+*                        *alt_posn='\0';
+*
+*cvc    MVI     1(R1),0
+*
+*                        alt_column=alt_posn-outtext;
+*
+*       S       R1,=A(OUTTXT)
+        LA      R0,OUTTXT
+        SR      R15,R0
+        STH     R15,ALTCOL
+*
+*                        gotorc(currrow+1,alt_column + 1 + lhs_margin);
+*cvc
+*       add     ax,word ptr DGROUP:_lhs_margin
+*       LA      R1,1(R1)
+*       push    ax
+*       LH      R1,word ptr DGROUP:_currrow
+*       LA      R1,1(R1)
+*       push    ax
+*       CALL    gotorc
+*       pop     cx
+*       pop     cx
+*
+*
+*
+*Move the text to the 3270 buffer
+*
+*                rowno++;
+*
+        LH      R1,CURRROW
+        LA      R1,1(R1)
+        STH     R1,CURRROW
+        STH     R1,TXTROWNO
+*
+*                colno=lhs_margin+2;
+*
+        LH      R1,LHSMARG
+*       LA      R1,2(R1)
+        STH     R1,TXTCOLNO
+*
+        MVC     TXTATTR,P27ATTR
+        MVC     TXTCOLR,P27COLOR
+*
+*                p27display();
+*
+* NO!!! We don't display the line on a 3270.
+*
+        MVC     LITERAL(80),BLANKS
+        MVI     LITERAL,C'|'            Put in Line on LHS
+* Now shift the string in, after the "| "
+        LH      R1,#OUTTXT A cvc
+        S       R1,ONE
+        BM      P29NONO
+*       EX      R1,P29MUVPP
+*P29MUVPP MVC     LITERAL+2(*-*),OUTTXT A cvc
+       MEMCPY  LITERAL+2,OUTTXT,R1 vc
+*
+P29NONO  LH    R1,#SCITEMS
+         LA    R1,1(R1)
+         STH   R1,#SCITEMS
+         LH    R1,MAXWIDTH               Get width of box
+         SH    R1,=H'4'                                           J52
+         LA    R15,LITERAL(R1)
+         MVI   3(R15),C'|'               Rhs Box
+         LA    R1,4(R1)                  Count in the rhs ]
+* NO !!! AH    R1,RLITLEN
+         STH   R1,TXTLEN
+*
+*                        temp_char2[0]=Alt_Keys[k];
+*
+        LH      R1,K29
+        IC      R15,ALTKEYS(R1)
+        STC     R15,TMPCHAR2
+*
+*                        *alt_posn=temp_char[0];
+*
+        L       R1,ALTPOSN
+        MVC     0(1,R1),TMPCHAR
+*
+*
+* Check if color, and add in a color change and go to cursor, and
+* the HOTKEY.
+*
+*    if (black_and_white == true)
+*
+        CLI     MONOSCRN,0
+        BNE     POPBW
+*
+*                         display_str(red_bold);
+* BOTHER...
+* I made a GOTORC Macro, but it adds to a varying length string.
+* SO ... We'll use #WORK until this is altered.
+*
+         MVC   #WORK,=H'3'
+         MVC   WORK(1),VIDSA           Fujitsu OR IBM Set Attribute
+         MVC   WORK+1(2),=X'42F2'      Red
+DORED    LH    R15,ALTCOL                                         J51
+         AH    R15,LHSMARG                                        J51
+         LA    R15,2(R15)                                         J60
+         LH    R14,CURRROW                                        J51
+*        LA    R14,1(R14)                                         J60
+*        S     R14,ONE                                            J51
+         GOTORC  (R14),(R15),#WORK       Set Buffer Address
+         LA    R1,WORK
+         AH    R1,#WORK
+         MVC   0(1,R1),TMPCHAR2
+*        MVI   1(R1),X'0E'             Fujitsi SFE (Zappable)
+         MVC   1(1,R1),VIDSA           Fujitsu OR IBM Set Attribute
+         MVC   2(2,R1),=X'4200'        BACK TO DEFAULT Colour
+         MVC   2(2,R1),=X'42F5'        BACK TO DEFAULT COLOUR CVC J60
+         LH    R1,#WORK
+         LA    R1,4(R1)
+         STH   R1,#WORK
+         LA    R14,22
+         LA    R15,79
+         GOTORC  (R14),(R15),#WORK       Set Buffer Address
+         LH    R1,TXTLEN
+         LA    R15,LITERAL(R1)
+         AH    R1,#WORK
+         STH   R1,TXTLEN
+         MVC   0(20,R15),WORK
+*                        display_str(temp_char2);
+*
+*
+POPBW   DS     0H
+*
+         LH    R1,TXTLEN
+         AR    R5,R1          BUMP UP TO POINT TO NEW SPOT IN TABLE
+*        LA    R5,LFIXED(R5)  POINT OVER FIXED AREA IN PARM LIST
+         AH    R5,=AL2(LFIXED)  cvc simulator bug
+*        XC    DITEM(LFIXED),DITEM  Clear next item row and col numbers
+         XC    TXTROWNO(LFIXED),TXTROWNO m row and col numbers
+*
+*                        k++;
+*
+        LH      R1,K29
+        LA      R1,1(R1)
+        STH     R1,K29
+*
+*                    }
+*                 }
+*
+        B       P28MAIN2
+P29GOTB1 ST     R1,TESTBRAK
+*
+*                 else                                /* Found { */
+*                 {
+*                    alt_posn=test_bracket+1;
+*
+        LH      R1,TESTBRAK
+        LA      R1,1(R1)
+        ST      R1,ALTPOSN
+        B       @16@1586
+@16@1922 DS     0H
+*
+*                    *alt_posn= toupper(*alt_posn);
+*                    goto test_dup;
+*                 }
+*             }
+*
+*                goto p29main2;
+*           }
+*
+*           if (Tkn[0] == ')')
+*
+        CLI     TKN,C')'
+        BNE     @16@1970
+@16@1946 DS     0H
+*
+*           {
+*ok_to_skip2:
+*     i = gettkn(Tkncurr); /* gettkn;   (* get current token number *)
+*
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+*
+*               goto p29main2;
+*
+        B       P28MAIN2
+@16@1970 DS     0H
+*
+*           }
+*      if (Tkncurr > stackno) goto p27wrap2; /* end of parameters */
+*
+        CLC     TKNCURR,TKNNO
+        BNH     @@47
+        B       P27WRAP2
+@@47    DS      0H
+*
+*
+*
+*           if (Tkn[0] == '/') {
+*
+        CLI     TKN,C'/'
+        BNE     @16@2042
+*
+*       line_feed2:
+*               currrow = currrow + 1;
+*
+        LH      R1,CURRROW
+        LA      R1,1(R1)
+        STH     R1,CURRROW
+*
+*               goto p29main2;
+*
+        B       P28MAIN2
+*
+@16@2042 DS     0H
+*           }
+*
+*           if (t_ident(Tkn))
+*
+        CLI     TKN,C'_'
+        BE      ISIDENT2
+        CLI     TKN,C'@'
+        BE      ISIDENT2
+        CLI     TKN,C'$'                                          cvc
+        BE      ISIDENT2                                          cvc
+        CLI     TKN,C'A'
+        BL      @16@2114
+        CLI     TKN,C'Z'
+        BH      @16@2114
+ISIDENT2 DS      0H
+*
+*           if (*x[Tkncurr-2] == ',')
+*
+        LH      R1,TKNCURR
+        SLL     R1,2
+*       L       R15,ATKN1
+*       USING   TKNX,R15
+*       LH      R14,TKNDESC-8(R1)
+        SH      R1,=H'10'                   370 simulator bug
+        LH      R14,TKNDESC(R1)
+*       N       R14,=X'0000FFFF'
+        LA      R1,TKNSTRG(R14)
+        CLI     0(R1),C','
+        BNE     @16@2114
+*       DROP    R15
+*
+*           {
+*               Menu_Macro_Tknno[k] = Tkncurr-1;
+*
+        LH      R14,K29
+        SLL     R14,1
+        LH      R1,TKNCURR
+        SH      R1,=H'1'
+        STH     R1,MENUTKN(R14)
+*
+*               goto ok_to_skip2;
+*
+        B       @16@1946
+@16@2114 DS     0H
+*
+*           }
+*
+*
+*           if (!t_attrib()) {
+*
+        CALL    UJP27ATR
+        LTR     R15,R15
+        BZ      P29SKPAT
+*
+*                cpylit(errtext,"Symbol ");
+*
+        JOLERR  416,'Symbol ''',#TKN,''' Invalid in POPUP'
+*
+*     i = gettkn(Tkncurr); /* gettkn; (* get current token number *)
+*
+P29SKPAT DS     0H
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+*
+*           }
+*           goto p29main2;
+*
+        B       P28MAIN2
+P27WRAP2 DS     0H
+*
+*
+*p27wrap2:
+*
+*
+* Set up the BOTTOM row with |____________|
+*
+         MVI   P27HI,0           TURN OFF HIGHLIGHTS              J50
+         MVI   P27COLOR,POPCOLOR DEFAULT COLOUR (see POP EQU)     J51
+        MVC     TXTCOLNO,LHSMARG
+        MVC     REPROWNO,=H'0'
+        MVC     REPCOLNO,=H'0'
+        MVC     RPLYLEN,=H'0'
+         MVI   TESTR,0           no default reply                 J50
+        LH      R1,LHSMARG
+        STH     R1,TXTCOLNO
+        LH      R1,CURRROW
+        LA      R1,1(R1)
+        STH     R1,CURRROW
+        STH     R1,TXTROWNO
+        MVC     TXTCOLR,P27COLOR
+        MVI     LITERAL,C'_'
+        LH      R1,MAXWIDTH
+         SH    R1,=H'4'                                           J52
+        LA      R1,4(R1)           for ?b  <txt>  b?
+        STH     R1,TXTLEN
+*       EX      R1,P29BOTPR
+*P29BOTPR MVC      LITERAL+1(*-*),LITERAL
+       MEMCPY  LITERAL+1,LITERAL,R1
+        MVI     LITERAL,C'['
+         LH    R1,TXTLEN
+         LA    R1,LITERAL-1(R1)     Point to end of string
+         FIX 'if | in wrong spot'
+*        LA    R1,LITERAL(R1)     Point to end of string
+         B     DUM                                                J50
+DUM     MVI      0(R1),C'['
+*NO replyAH    R1,RLITLEN
+         LH    R1,TXTLEN
+         AR    R5,R1          BUMP UP TO POINT TO NEW SPOT IN TABLE
+*        LA    R5,LFIXED(R5)  POINT OVER FIXED AREA IN PARM LIST
+         AH    R5,=AL2(LFIXED)  cvc simulator bug
+         LH    R1,#SCITEMS
+         LA    R1,2(R1)
+         STH   R1,#SCITEMS
+*
+*           gotorc(1,lhs_margin+8);
+*
+*cvc    GOTORC  (1,lhs_margin+8)
+*
+*           max_row=currrow;
+*
+        LH      R1,CURRROW
+        STH     R1,MAXROW
+*
+*           currrow=1;
+*
+*       MVC     CURRROW,=H'1'
+        MVC     CURRROW,=H'2'                                     row
+*
+BADMENKY DS     0H
+*
+*
+*       /* Now get the Key pressed */
+*
+*
+*bad_menu_key:
+*             Cntl = false;
+*
+*       MVC     CNTL,ZERO
+*
+*             Syspfk = 0;
+*
+        MVC     SYSPFK,ZERO
+*
+*
+*             getkey();            /* Get char from Keyboard */
+*
+*3270 - DISPLAY SCREEN
+*
+         SPACE 2
+         LA    R0,4000(R4)    GET WORK AREA FOR SCREEN HANDLER FIX DJD
+         LR    R15,R0         se t up dummy name for popup        J50
+         S     R15,=F'16'                                         J50
+         MVC   0(16,R15),BLANKS                                   J50
+         LR    R1,R4          POINT TO START OF PARAMETER AREA
+         MVI   NOCLS,1           Tell P28 not to clear screen     J52
+         MVI   SETCURSR,1                                         J52
+        LH      R14,LHSMARG                                       J52
+        LA      R14,10(R14)      Point to < >                     J60
+         STC   R14,SETCURSC      Set Cursor Column                J52
+         MVI   SETCURSR,2        Set Cursor Row                   row
+        CALL    UJP28SCR
+*
+*
+*
+*
+* For 3270's we simply wait for the user to press enter, or the PFK,
+*     after maybe moving the cursor keys.
+*
+*        CLC   SYSPFK,=H'0'
+*        BE    CHKPOP
+         LR    R9,R15       SAVE THE RETURN CODE
+         LH    R0,SYSPFK                                          J52
+         CVD   R0,DBL
+         UNPK  WORK(2),DBL
+         OI    WORK+1,X'F0'  SET ZONE BITS
+         MVC   #WORK,=H'2'
+         MVC   SYMBOLIC,=CL8'SYSPFK'
+         CALL$ UJP85ASN
+         LTR   R9,R9          CHECK RETURN CODE FROM 28
+         BZ    P27REC         RECIEVE DATA BACK
+P27SERR  JOLERR 410,'Error Occurred in Screen Handler'
+         JOLRETN RC=16
+P27REC   EQU   *
+         CLC   SYSPFK,=H'0'
+         BE    CHKPOP
+         LR    R8,R1          SAVE R1 (RETURNED STRINGS)
+         LH    R9,CURRROW     LOAD THE LAST ROW OUTPUT        **CVC
+         LA    R9,1(R9)       SET +1 SO CURSOR ENDS UP THERE  **CVC
+         LA    R9,1           SET LINE TO 1  ****************
+*cvc     STLINENO LINE=(R9),MODE=OFF SET LINE, AND TURN OFF FS **CVC
+*        STFSMODE   OFF
+         JOLRETN
+*
+CHKPOP   DS    0H
+* Check  if user coded A <Hot Key> in Row 1                       J50
+         L     R8,TGETAREA       Returned by P28SCR               J50
+         USING TGETREAD,R8                                        J50
+         CLI   ISBA,0            A character entered ?            J50
+         BE    P29CURS           No, check where the Cursor is    J50
+         IC    R1,IADD1       GET FIRST ADDRESS
+         N     R1,=F'63'      TURN OFF ALL BITS EXCEPT LAST 6
+         IC    R15,IADD2      GET 2ND ADDRESS
+         N     R15,=F'63'     TURN OFF ALL BITS EXCEPT LAST 6
+         SLL   R1,6           SHIFT FIRST ADDRESS 6 BITS TO THE LEFT
+         AR    R15,R1        ADD THE RESULTS. R15 HAS ADDR REL TO 0 POS
+         SLR   R0,R0             GET READY FOR DIVIDE             J50
+         LR    R1,R15                                             J50
+         D     R0,#COLUMNS                                        J50
+*        D     R0,=F'80'                                          J50
+* r1 has the row, and r0 the column                               J50
+*        CH    R1,ZERO           Was the data entered in Row 0(1) J50
+         CH    R1,=H'1'          Was the data entered in Row 0(1) r2
+         BNE   P29CURS           No, check where the Cursor is    J50
+*        OI    ITEXTI,C' '       Make Upper Case                  J50
+         MEMUPR ITEXTI,1         Make Upper Case                  J50
+         B     P29DOHOT          Go do the Hot Key                J50
+*                                                                 J50
+P29CURS  DS    0H                                                 J50
+*      if (cntl)
+*      {
+*    Binary_Input_Char = ord(Input_Char); /* Get Binary Equivalent  */
+*
+*              switch (Binary_Input_Char)
+*
+*                 {
+*        case 1:                /* Mouse Action, and Cursor moved */
+*
+*                       if ((wherex() > rcol)
+*                       ||  (wherex() < lhs_margin))
+*
+        LH      R1,WHEREX
+        LH      R0,LHSMARG
+         AH    R0,MAXWIDTH       SEE IF CURSOR IN AREA            J50
+         CR    R1,R0             OUT OF RIGHT HAND SIDE?          J50
+        BH      BADKEY
+        LH      R1,WHEREX        GET CURSOR COLUMN
+        CH      R1,LHSMARG       CHECK IF LEFT OF LEFT MARGIN
+        BL      BADKEY
+*
+*                          goto pop_esc;
+*
+*       B        BADKEY
+@16@2498 DS      0H
+*
+*                       goto change_row;
+*
+*        case 72:                                                   /*
+*                   if (currrow<2)
+*
+*       CLC     CURRROW,=H'2'
+*       BNL     @16@2594
+*
+*                   {   beep();
+*
+*       B       BADKEY
+@16@2594 DS     0H
+*
+*                       goto bad_menu_key;
+*                   }
+*                   if (currrow!=1)             /* Reset reverse ? */
+*                   {
+*                      reverse_pop(currrow, lhs_margin +2, max_width);
+*                   }
+*                   currrow--;
+*
+*                   if (currrow == 1) gotorc(1,lhs_margin+8);
+*
+*                   else
+*                   {  gotorc(currrow,lhs_margin+1);
+*
+*                      reverse_pop(currrow, lhs_margin +2, max_width);
+*                   }
+*                   goto bad_menu_key;
+*
+*
+*                   break;
+*
+*
+*        case 80:                               /*  Down  */
+*
+*       change_row:
+*
+*                   if (currrow>max_row)
+*
+        CLC     WHEREY,MAXROW
+        BNH     @16@2834
+        B       BADKEY
+@16@2834 DS     0H
+* The 3270 cursor is in the "box" defined by the POPUP.
+*
+        LH      R14,WHEREY
+         SH    R14,=H'2'                                          row
+         BNP   @16@3530          Just return to caller            J52
+        B       P29GOTHT
+*
+*                   {   beep();
+*                       goto bad_menu_key;
+*                   }
+*
+*                   if (currrow!=1)             /* Reset reverse ? */
+*
+*       CLC     CURRROW,=H'1'
+*       BE      @16@2882
+*
+*                   {
+*                      reverse_pop(currrow, lhs_margin +2, max_width);
+*
+@16@2882 DS     0H
+*
+*                   }
+*
+*                   if (Binary_Input_Char == 1)
+*
+*
+*                       currrow=wherey() -1;
+*
+*                   gotorc(currrow,lhs_margin+1);
+*                   reverse_pop(currrow, lhs_margin +2, max_width);
+*
+*                   gotorc(currrow,lhs_margin+1);
+*
+*                   if (Binary_Input_Char == 1)
+*
+*       B       BADMENKY
+@@51    DS      0H
+        B       @16@2498
+@16@3002 DS     0H
+*
+*                   {
+*                       i=currrow-2;
+*                       goto got_enter;
+*                   }
+*
+*                   goto bad_menu_key;
+*                   break;
+*             }
+*
+*                 if (Syspfk != 0)
+*
+        CLC     SYSPFK,=H'0'
+        BNE     BADKEY
+*
+*                 {    goto bad_key;
+*                      Binary_Input_Char = 13;
+*                      Input_Char = '\015';
+*                 }
+*
+*                                                                 J50
+*        /*  Alt characters here  */
+*                 if (Binary_Input_Char <= sizeof (transalt))
+*                 {
+*                     Input_Char = transalt[Binary_Input_Char];
+*
+*                     taltkey = strchr(Alt_Keys,Input_Char);
+*
+*                     if (taltkey == NULL) beep();
+*
+@16@3098 DS     0H
+*                     else {
+*                         i=taltkey-Alt_Keys;
+*
+*                         strcpy(Ret_Alt_Field,Menu_Bar_Items[i]);
+*
+*cvc    mov     bx,di
+*       shl     bx,1
+*       lea     ax,word ptr MENUBARITEM
+*       add     bx,ax
+*       push    word ptr [bx]
+*       lea     ax,word ptr RETALTFL
+*       push    ax
+*       CALL    strcpy
+*
+*                         strupr(Ret_Alt_Field);
+*
+        MEMUPR  RETALTFL,L'RETALTFL
+@16@3122 DS     0H
+*
+*       /*                Binary_Input_Char = 13;
+*                         Input_Char = '\015'; */
+*                     }
+*                  }
+*                }
+*
+*/* Here is an ordinary character.  Must check for valid key, and wait
+*   for an ENTER, if the cursor is at the top */
+*
+*
+*       /*-----------------------------
+*       endofedit
+*       */
+*           if ((Alt_Keys[0] != '\0')
+*           &   (Ret_Alt_Field[0] == 0)
+*           )
+*
+        CLI     ALTKEYS,0
+        BE      @16@3170
+        LA      R1,1
+        B       @16@3194
+@16@3170 DS     0H
+        SR      R1,R1
+@16@3194 DS     0H
+*cvc    push    ax
+        CLI     RETALTFL,0
+        BNE     @16@3242
+        LA      R1,1
+        B       @16@3266
+@16@3242 DS     0H
+*cvc    xor     ax,ax
+@16@3266 DS     0H
+*cvc    pop     dx
+*cvc    test    dx,ax
+*
+*           {
+*       /*      Input_Char = *Field_Str_Ptr[1];/ * Get Menu_Bar Key */
+*
+*       test_key:
+*             Input_Char= toupper(Input_Char);
+*
+*cvc    OI      INPUTCHR,C' '
+*
+*
+P29DOHOT DS    0H                Do the Hot Key as Coded          J50
+*
+* Here, ITEXTI contains the character typed in.
+*
+*             taltkey = strchr(Alt_Keys,Input_Char);
+*cvc fix , go  forward
+        LA      R14,1
+P29STCH LA      R15,ALTKEYS-1(R14)
+        CLC     ITEXTI(1),0(R15) see if we can find the key
+        BE      P29GOTHT         OK, Got the Hot key
+        CH      R14,=AL2(L'ALTKEYS)
+         LA    R14,1(R14)        Bump to next character           J52
+        BL      P29STCH          round again.
+BADKEY  DS      0H
+*
+*
+*       bad_key:
+*             {  beep();
+*
+*cvc    CALL    BEEP                                              J60
+*
+*                goto  bad_menu_key;
+*
+        B       BADMENKY
+*
+P29GOTHT DS     0H
+         STH   R14,I29                                            J50
+*
+*R14 has the index into the ALTKEY table, R15 -> the character    J50
+*             }
+*             else {
+*
+*                 i=taltkey-Alt_Keys;
+*
+@16@3362 DS     0H
+*
+* got_enter:
+*                 if (i<0)
+*
+        LH      R1,I29
+        LTR     R1,R1
+        BP      @16@3458
+*
+*                 {
+*                    *Ret_Alt_Field = '\0';
+*
+        MVC     RETALTFL,ZERO
+*
+*                    clear(Tkn);
+*
+        MVC     #TKN,=H'0'
+        MVI      TKN,C' '
+*
+*                 }
+*
+        B       @16@3482
+@16@3458 DS     0H
+*
+*                 else
+*                 {
+*                    strcpy(Ret_Alt_Field,Menu_Bar_Items[i]);
+*
+        LH      R1,I29
+        SLL     R1,1
+        SLL     R1,1
+        L       R1,MENBARIT-4(R1)
+        MVC     #RETALTF(L'RETALTFL),0(R1)
+*
+*                    gettkn(Menu_Macro_Tknno[i+1]);
+*
+        LH      R1,I29
+        SLL     R1,1
+        LH      R1,MENUTKN(R1)
+*cvc    lea     ax,word ptr MENUTKN
+*       add     bx,ax
+*       push    word ptr [bx]
+*       CALL    gettkn
+        STH     R1,TKNCURR
+        GETTKN  TKNCURR
+@16@3482 DS     0H
+*
+*                 }
+*                 strupr(Ret_Alt_Field);
+*
+        MEMUPR  RETALTFL,L'RETALTFL
+*
+*                 Binary_Input_Char = 13;
+*
+*cvc    LA      R1,13
+*       STH     R1,BINCHAR
+*
+*                 Input_Char = '\015';
+*
+*cvc    mov     byte ptr DGROUP:_Key_Board_Values+2,13
+*
+*             }
+*           }
+*
+*
+*
+*       /* Ordinary key here */
+*
+*           else
+*           {
+*                 goto test_key;
+*           }
+*
+*           mvc(symbolic, "SYSPOP  ",8);
+*
+        MVC     SYMBOLIC,=CL8'SYSPOP'
+*
+*           x[1] = Ret_Alt_Field;
+*
+        MVC     #WORK(100),#RETALTF
+*
+*           ujp85asn();
+*
+        CALL$   UJP85ASN
+*
+*
+*           disp_pokebox(scrn_save,0,0,24,79);
+*
+*cvc    RESTORE SCREEN
+*
+*           p27reset_attr();        /* Reset Attributes for TXT */
+*
+*cvc    CALL    p27reset_attr
+*
+*           curs_at(24, 1); /* CVC FEB 11, 87 : Pretty Screen */
+*
+*cvc    GOTORC  24,1
+*
+*
+*           return(0);
+*
+@16@3530 DS     0H
+*
+*       }
+*
+        JOLRETN RC=0
+        LTORG
+         DC   140S(*)
+*
+*
+*XX2      DSECT
+UJP29POP JOLSAVE CSECT=UJP29POP
+         TITLE 'UJP29POP : DO POPUP (INTERNAL ROUTINE)'          J51
+*       { int          dc;
+*       /* Start of sub_parameter. Tkn contains a "(". */
+*
+*           rplylen = -1; /* Set if a reply */
+*
+*       WTO     'UP29POP Called'
+        L       R10,P27GBL
+        USING   PANELWRK,R10
+*       L       R6,=V(P29POPWK)
+        L       R6,AP29PWK       Get address of POPWK in JOLCOM   J52
+        USING   P29POPWK,R6
+        USING   #PARM,R4
+        USING   DITEM,R5
+        MVC     RPLYLEN,ZERO    =H'-1'
+*
+*           currrow = currrow + 1;
+*
+*       LH      R1,CURRROW
+*       LA      R1,1(R1)
+*       STH     R1,CURRROW
+*
+*
+*           colno = lhs_margin;
+*
+        LH      R1,LHSMARG
+        STH     R1,TXTCOLNO
+*
+*
+*           p27reset_attr();
+*
+*       CALL    p27reset_attr
+*
+*
+*           p27gettext(); /* gets the text, fixes attributes */
+*
+        CALL    UJP27TXT
+*
+*                 /* on return, Tkn contains the next token */
+*           cpy(outtext , default_txt);
+*
+        MVC     #OUTTXT(L'OUTTXT),#DEFTXT
+*
+*           cpy(outtext_with_attrs , default_with_attrs);
+*
+        MVC     #OUTTXTA(L'OUTTXTA),#DEFTXTA
+*
+*
+*           clear  (default_txt);
+*
+        MVC     #DEFTXT,=H'0'
+*
+*           cpylit (default_with_attrs , "\033[0;");
+*
+*cvc    MVC     default_with_attrs(xx),=C
+*
+*           cat    (default_with_attrs , videobackground);
+*
+*cvc    CAT    (DEFATTR,VIDEOBACKGROUND);
+*
+*           catchar(default_with_attrs , ';');
+*
+*cvc    CATCHAR(DEFATTR,';');
+*
+*           cat    (default_with_attrs , videohighlight);
+*
+*cvc    CAT    (DEFATTR,VIDEOHIGHLIGHT);
+*
+*           catchar(default_with_attrs , 'm');
+*
+*cvc    CATCHAR(DEFATTR,'M');
+*
+*           rowno = currrow;
+*
+*cvc    LH      R1,CURRROW
+*cvc    STH     R1,TXTROWNO
+*
+*
+*           if (Tkncurr > stackno) return;/* end of parameters */
+*
+        CLC     TKNCURR,TKNNO
+        BH      @14@410
+*
+*           if (Tkn[0] == ')') return;
+*
+        CLI     TKN,C')'
+        BE      @14@410
+*
+*
+*       /* ok, we have a reply symbolic name here */
+*
+*           if (Tkncurr > stackno) return;/* end of parameters */
+*
+        CLC     TKNCURR,TKNNO
+        BH      @14@410
+*
+*           if (Tkn[0] == ')') return;
+*
+        CLI     TKN,C')'
+@14@410 DS      0H
+*
+*
+*
+*       p27retnf:;
+*        } /* Procedure */
+*
+        JOLRETN  RC=15
+        LTORG
+*
+*void         p27_pop_parameters(void)
+*{*int          dc;
+*/* Start of sub_parameter. Tkn contains a "(". */
+*
+*   rplylen = -1; /* Set if a reply */
+*
+*   currrow = currrow + 1;
+*
+*   colno = lhs_margin;
+*
+*   p27reset_attr();
+*
+*   p27gettext(); /* gets the text, fixes attributes */
+*                        /* on return, Tkn contains the next token */
+*   cpy(outtext , default_txt);
+*   cpy(outtext_with_attrs , default_with_attrs);
+*
+*
+*   clear  (default_txt);
+*   cpylit (default_with_attrs , "\033[0;");
+*   cat    (default_with_attrs , videobackground);
+*   catchar(default_with_attrs , ';');
+*   cat    (default_with_attrs , videohighlight);
+*   catchar(default_with_attrs , 'm');
+*
+*   rowno = currrow;
+*
+*   if (Tkncurr > stackno) return;/* end of parameters */
+*   if (Tkn[0] == ')') return;
+*
+*/* ok, we have a reply symbolic name here */
+*
+*   if (Tkncurr > stackno) return;/* end of parameters */
+*   if (Tkn[0] == ')') return;
+*
+*
+*p27retnf:;
+*} /* Procedure */
+*
+*
+*void         reverse_pop(int row, int col, int width)
+*{
+* unsigned      ch_att;
+*
+* char           temp_char;
+* unsigned char  background;
+* unsigned char  foreground;
+* unsigned char  normal_text_attr;
+* unsigned char  temp_text_attr;
+* unsigned char  temp_video_attr;
+* int            end_col;
+*
+* end_col=width+col;
+*
+* for (col=col; col < end_col; col++)
+* {
+*         disp_move(row,col);
+*         ch_att=disp_peekw(row+1, col+1);
+*
+*         normal_text_attr=ch_att >>8;
+*         temp_char=ch_att & 0xff;
+*
+*         background = (normal_text_attr & 0x70) >> 4;
+*         foreground = (normal_text_attr & 0x07);
+*         temp_video_attr = (foreground << 4) + background;
+*         normal_text_attr = normal_text_attr & 0x88;
+*         normal_text_attr = normal_text_attr + temp_video_attr;
+*
+*         ch_att=(normal_text_attr <<8 ) + temp_char;
+*
+*         disp_pokew(row,col,ch_att);
+* }
+*}
+         DC   140S(*)

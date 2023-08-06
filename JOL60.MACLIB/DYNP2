@@ -1,0 +1,65 @@
+         MACRO
+         DYNP2 &P,&OPT,&CODE,&KEY,&TYP=X,&L=1,&IN=C,&IN2=IC
+.*  CODES CODE TYPE PARAMS
+.*  CHANGED OCT 77
+.*  CODES SUPPLIED AT EXECUTION CHECKED FOR ZERO.
+.*          IF ZERO, TU POINTER SET TO ZERO.
+.*  CHANGED MAY 78 TO TEST FOR '*' AS SYSOUT CLASS
+         GBLA  &K,&T,&S
+         GBLC  &R,&B,&ADR
+         GBLB  &NUM
+         AIF   ('&P'EQ'').E
+         LCLA  &I,&J
+         LCLC  &C,&D
+&T       SETA  &T+1
+.A       ANOP
+&I       SETA  &I+1
+         AIF   ('&P'EQ'&OPT(&I)').D
+         AIF   (&I LE N'&OPT).A
+&ADR     SETC  '&P'
+         DYNPA
+         AIF   (NOT &NUM).A1
+&C       SETC  '('.'&P'.')'.'&B'.'&P'.'&KEY'(2,K'&KEY-2)
+TU&R&T   DC    AL2(&K,1,&L),AL&L&C
+         AGO   .E
+.A1      ANOP
+&D       SETC  'STORE'.'&KEY'(2,K'&KEY-2).' IN TU'
+         AIF   ('&P'(1,1) NE'(').B
+&C       SETC  '&P'(2,K'&P-2)
+D&R&S    ST&IN &C,TU&R&T+6&B&D
+         AGO   .C
+.B       ANOP
+D&R&S    &IN2  1,&P                     GET CODE
+         ST&IN 1,TU&R&T+6&B&D
+.C       ANOP
+         SR    1,1
+         AIF   ('&IN'EQ'C').C1
+         C&IN  1,TU&R&T+6     CHECK FOR ZERO CODE
+         AGO   .C2
+.C1      CLI   TU&R&T+6,X'00'    CHECK FOR ZERO CODE
+.C2      AIF   (&K NE 24).C3
+.*  CHECK FOR * ON SYSOUT CLASS
+&J       SETA  &S+1
+&S       SETA  &S+2
+         BE    D&R&S
+         STH   1,TU&R&T+2         CLEAR # FOR DEFAULT
+         CLI   TU&R&T+6,C'*'      CHECK FOR 'DEFAULT CLASS'
+         BE    D&R&J
+         MVI   TU&R&T+3,X'01'    RESTORE #
+D&R&J    LA    1,TU&R&T          ADDRESS OF TU
+         AGO   .C4
+.C3      ANOP
+&S       SETA  &S+1
+         BE    D&R&S
+         LA    1,TU&R&T         ADDRESS OF TU
+.C4      ANOP
+&J       SETA  4*(&T-1)
+D&R&S    ST    1,TUPL&R+&J    STORE TU POINTER
+&S       SETA  &S+1
+         B     D&R&S
+.D       ANOP
+&C       SETC  '&KEY'(2,K'&KEY-2)
+TU&R&T   DC    AL2(&K,1,&L),&TYP'&CODE(&I)'&B&P&C
+.E       ANOP
+&K       SETA  &K+1
+         MEND

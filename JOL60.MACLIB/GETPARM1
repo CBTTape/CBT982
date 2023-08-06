@@ -1,0 +1,6 @@
+         MACRO
+&NAME    GETPARM1 &PARM1
+&NAME    LA     R1,&PARM1
+         L      R15,=V(GETPARM1)
+         BALR   R14,R15
+         MEND

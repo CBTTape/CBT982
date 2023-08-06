@@ -1,0 +1,9 @@
+         MACRO
+&LABEL   $SVC99
+         COPY  JOLGLOBL                                           J40B
+         AIF   (&DEBUG).DBG                                       J40B
+&LABEL   SVC  99             CALL DYNAMIC ALLOCATION
+         MEXIT                                                    J40B
+.DBG     ANOP                                                     J40B
+&LABEL   $CALL UJS99SVC                                           J40B
+         MEND

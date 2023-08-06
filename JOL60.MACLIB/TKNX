@@ -1,0 +1,29 @@
+         TITLE 'TOKEN DSECT AREA --- DECODED STATEMENT'
+         AIF   ('&TYPE' EQ 'SCHED').TKNEQU
+TKNX     &SECTTYP             START OF TOKEN AREA
+         AGO .DOTKNS
+.TKNEQU  ANOP
+TKNX     DS   0D
+.DOTKNS  ANOP
+TKNNO    DS    H               NO OF TOKENS PRESENT
+TKNCURR  DS    H               CURRENT TOKEN NO,INITIALLY 1
+TKNDESC  DS    512XL4          DESCRIPTORS:FORMAT IS
+*                              AL(1) LENGTH OF TOKEN
+*                              AL(1) TYPE      0=NUMERIC.
+*                                              1=SPECIAL CHARACTER
+*                                              2=IDENTIFIER
+*                                              3=A LITERAL STRING
+*                                              16,ERROR,LITERAL STRING
+*                                              HAS NO ENDING QUOTE
+*                              AL2 OFFSET FROM START OF STRING OF
+*                                              TOKEN
+* THE NEXT FIELDS DESCRIBE WHAT IS RETURNED AFTER THE GETTKN MACRO
+TKNTYPE  DS    C               VALUES ARE 0,1 ETC (SEE DESCRIPTORS
+*                              ABOVE).
+#TKN     DS    H               LENGTH OF STRING IN THE NEXT LOCN.
+TKN      DS    CL253           LENGTH OF REQUESTED TOKEN
+#TKNSTRG DS    H               LENGTH OF STRING IN THE NEXT LOCN.
+TKNSTRG  DS    CL2048          STRING WHICH HAS BEEN (OR IS TO BE)
+*                              SPLIT INTO TOKENS
+         DS    0D
+TKNSIZE  EQU   *-TKNX

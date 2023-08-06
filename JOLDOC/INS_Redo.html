@@ -1,0 +1,350 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Mozilla SeaMonkey">
+  <title>Redo</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>REDO</u></font><font size="5"><u><span
+ style="font-weight: normal;"><span style="font-weight: bold;"></span> </span></u></font><u>-
+
+
+      </u><font size="5"><i><u><span style="font-weight: normal;">Immediate
+Instruction</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">REDO</span> instruction gives the user a
+looping facility.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <div style="margin-left: 40px;"><b><br>
+LABEL<span style="font-style: italic;"> label</span>;<br>
+      <br>
+      </b>
+      <div style="margin-left: 40px;"><b style="font-style: italic;">any
+JOL
+code;</b><br>
+      </div>
+      <b><br>
+REDO<span style="font-style: italic;"> label</span> [ FOREVER ] ;<br>
+      <br>
+      </b><span style="font-style: italic;">where</span><b><br>
+      <br>
+      <span style="font-style: italic;">label&nbsp;</span>
+&nbsp;&nbsp;&nbsp; &nbsp;</b>is a <span style="font-weight: bold;">1
+to 7</span> character label name.<b><br>
+      <br>
+      </b>The keyword <span style="font-weight: bold;">LABEL</span>
+must appear in the Jol code to identify that the user may wish to REDO
+that section of the code.<b><br>
+      <br>
+      </b></div>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      </td>
+      <td align="left" valign="top">
+      <p><br>
+The <span style="font-weight: bold;">REDO</span> statement allows you
+to <span style="font-weight: bold;">REDO</span> a set of instructions
+within a macro or an included member; it allows you to repeat Jol code
+in the preprocessor phase.<br>
+      <br>
+You can <span style="font-weight: bold;">REDO</span> from any nested
+level of a <span style="font-weight: bold;">DO</span> group to a lower
+level, for example:<br>
+      <br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4><br>
+      </h4>
+      </td>
+      <td
+ style="font-weight: bold; background-color: rgb(153, 255, 255);"
+ align="left" valign="top">
+      <div style="margin-left: 40px;"><br>
+      </div>
+&nbsp; LABEL A;<br>
+      <div style="margin-left: 40px;">IF <span
+ style="font-style: italic;">statement</span><br>
+      </div>
+      <div style="margin-left: 40px;">THEN DO;<br>
+      <div style="margin-left: 40px;"><span style="font-style: italic;">Jol
+statements</span><br>
+. . .;<br>
+IF <span style="font-style: italic;">expression</span><br>
+THEN DO;<br>
+      <div style="margin-left: 40px;"><span style="font-style: italic;">Jol
+statements</span><br>
+. . .;<br>
+IF . . .<br>
+THEN DO;<br>
+      <div style="margin-left: 40px;">REDO A;<br>
+      </div>
+END;<br>
+      </div>
+      </div>
+      <div style="margin-left: 40px;">END;<br>
+      </div>
+      </div>
+      <div style="margin-left: 40px;">END;<br>
+      </div>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">
+      <h4><br>
+      </h4>
+      </td>
+      <td style="vertical-align: top;"><br>
+With this example the <span style="font-weight: bold;">REDO</span>
+instruction is coded at the third level and refers back to a first
+level Jol statement.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">
+      <h4>Notes</h4>
+      <br>
+      </td>
+      <td style="vertical-align: top;">
+      <ol>
+        <li>See also the <span style="font-weight: bold;">GOTO</span>
+instruction.</li>
+        <li>The <span style="font-weight: bold;">REDO</span>
+instruction cannot be used for execution type statements, for example:</li>
+      </ol>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">STEP01:
+RUN
+PROG1;</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">IF PROG1 &gt; 0 (e.g. did not
+not run)</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN REDO STEP01 ;</span><br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;">is incorrect and will not be
+allowed in Jol.<br>
+      </div>
+      <br>
+      <ol start="3">
+        <li>To stop possible continuous looping there is a limitation
+of 50 loops in a <span style="font-weight: bold;">REDO</span>
+command.&nbsp; An error message will appear on the screen and allow the
+user to stop or continue.&nbsp; If Jol is running as a batch job, the
+loop will stop after fifty iterations.</li>
+      </ol>
+      <br>
+      <div style="margin-left: 40px;">Use the <span
+ style="font-weight: bold;">FOREVER</span> option to repeat the loop
+indefinitely.<br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      <span style="font-weight: normal;">Suppose you require a tape
+number to be entered by the user of your Jol program.&nbsp; You decide
+that the tape number must be from 1 to 25, and wish to validate that
+the User has entered a number within that range.&nbsp; The following
+code will be repeated until the correct value is entered.</span><br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td
+ style="vertical-align: top; background-color: rgb(153, 255, 255);"><br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">PANEL
+('Tape
+Numbers
+Must Range From 01-25')</span><br>
+      </div>
+///&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* Space Screen Down */<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">('Enter
+Tape
+Number
+=====&gt;',ANS1,2,'10') </span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">;</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      </div>
+      <span style="font-weight: bold;">LABEL VALIDATE;</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;"><br>
+TYPEANS1 = TYPE(ANS1);</span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">IF&nbsp;&nbsp;&nbsp; TYPEANS1 ^=
+'NUM'</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">| &nbsp;&nbsp;&nbsp; ANS1 &gt;
+25 | ANS1 &lt; 10</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN DO;</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">PANEL
+REREAD
+FROM
+ANS1&nbsp; /* </span>Place Cursor at ANS1<span
+ style="font-weight: bold;"> */</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+'Tape Numbers Must Range From 01-25'</span><span
+ style="font-weight: bold;">;</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">/* Error Message is at Top of
+Screen */</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">REDO VALIDATE;</span><br
+ style="font-weight: bold;">
+      </div>
+      <span style="font-weight: bold;">END;</span><br
+ style="font-weight: bold;">
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+If the terminal Operator does not type in a number then the <span
+ style="font-weight: bold;">PANEL</span> is redisplayed again and the
+error message appears on the screen.&nbsp; If the Operator types in a
+number that is too small or too large then the <span
+ style="font-weight: bold;">PANEL</span> is also redisplayed.<br>
+      <br>
+The <span style="font-weight: bold;">REREAD FROM</span> clause places
+the cursor at the beginning of the field in error as a convenience for
+the Operator.&nbsp; The message that follows is displayed on the top of
+the terminal.<br>
+      <br>
+You may have more than one error message on the Panel and verify each
+field before redisplaying the screen rather than every time an error is
+detected.&nbsp; You can also put the error message above or below the
+corresponding error and thus not confuse the Operator where the error
+is as this example shows:<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td
+ style="vertical-align: top; background-color: rgb(153, 255, 255);">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">ERR01='
+';</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">ERR02=' ';</span><br
+ style="font-weight: bold;">
+      </div>
+      <span style="font-weight: bold;">LABEL SCR01;</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><br style="font-weight: bold;">
+      <span style="font-weight: bold;">PANEL ('</span><span
+ style="font-weight: bold;">Tape Numbers Must Range From 01-25</span><span
+ style="font-weight: bold;">')</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+%ERR01')</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">('ENTER TAPE NUMBER
+=====&gt;',ANS1,2,'10')</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+%ERR02')</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">('IS THIS A BACKUP JOB
+==&gt;',ANS2,1,'N') ;</span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">ERR01=' ';&nbsp; &nbsp;
+&nbsp;&nbsp; /* Clear Error Message 1 */</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">ERR02='
+';&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* Clear Error Message 2 */</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">TYPEANS1 = TYPE(ANS1);</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">IF&nbsp;&nbsp;&nbsp; TYPEANS1 ^=
+'NUM'</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">| &nbsp;&nbsp;&nbsp; ANS1 &gt;
+25 | %ANS1 &lt; 10</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN ERR01='</span><span
+ style="font-weight: bold;">Tape Numbers Must be in the Range From 01-25</span><span
+ style="font-weight: bold;"></span><span style="font-weight: bold;">';</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">IF ANS2='N' | ANS2='Y'</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN ;</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">ELSE ERR02='ANSWER Y OR N ONLY';</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">/* See if any messages to be
+displayed&nbsp; */</span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">IF ERR01 ^= '' |&nbsp; ERR02 ^=
+'' </span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN REDO SCR01;</span><br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+The <span style="font-weight: bold;">PANEL</span> will be re-displayed
+until the correct values have been input.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

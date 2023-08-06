@@ -1,0 +1,236 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Allocate</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>ALLOCATE</u></font><font size="5"><u><span
+ style="font-weight: normal;"><span style="font-weight: bold;"></span> </span></u></font><u>-
+
+
+      </u><font size="5"><i><u><span style="font-weight: normal;">Immediate
+Instruction</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">ALLOCATE</span> instruction Dynamically
+Allocates Data Sets, including <span style="font-weight: bold;">SYSOUT</span>
+or Printer files.&nbsp; Allocated data sets can be accessed with the <span
+ style="font-weight: bold;">OPENFILE, GETFILE, READ, PUTFILE</span> or <span
+ style="font-weight: bold;">WRIT</span>E instructions, or used with <span
+ style="font-weight: bold;">INVOKE</span>d or <span
+ style="font-weight: bold;">CALL</span>ed programs.&nbsp; The <span
+ style="font-weight: bold;">ALLOCATE</span> instruction can be used
+instead of the <span style="font-weight: bold;">TSO ALLOCATE</span> or
+      <span style="font-weight: bold;">JCL DD</span> card to allocate a
+data set.<br>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <div style="margin-left: 40px;"><b><br>
+{ ALLOCATE | ALLOC }</b>&nbsp;&nbsp;&nbsp;&nbsp; <span
+ style="font-style: italic;">options</span><br>
+      <br>
+      </div>
+&nbsp;where the <span style="font-style: italic;">options</span> are
+all those for the <span style="font-style: italic;">Data Set Declare</span>
+plus:<br>
+      <div style="margin-left: 40px;"><br>
+      <span style="font-weight: bold;">{ F | FILE } {</span><span
+ style="font-style: italic;"> ddname</span><span
+ style="font-weight: bold;"> }</span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">CATLG | DELETE | KEEP | SCRATCH
+| UNCATLG</span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">MOD | NEW | OLD | READ | SHR |
+UPDATE</span><br>
+      <br>
+      </div>
+&nbsp; where:<br>
+      <br>
+      <div style="margin-left: 40px;">
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">CATLG </td>
+            <td style="vertical-align: top;">Specifies the data set
+name, volume and unit will be recorded in the system catalog.&nbsp; It
+is the default for new data sets.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">DELETE</td>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">DELETE</span>s the data set when it is <span
+ style="font-weight: bold;">FREE</span>d.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">KEEP</td>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">KEEP</span>s the data set when it is <span
+ style="font-weight: bold;">FREE</span>d.&nbsp; It is the default for
+old data sets.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">MOD</td>
+            <td style="vertical-align: top;">Specifies data will be
+added to an existing data set.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">NEW</td>
+            <td style="vertical-align: top;">Specifies the data set is
+new, that is, it does not currently exist.&nbsp;
+The final disposition of the data set will be as specified with the <span
+ style="font-weight: bold;">CATLG, DELETE, KEEP</span>
+or <span style="font-weight: bold;">UNCATLG</span> disposition
+parameters.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">READ |
+SHR</td>
+            <td style="vertical-align: top;">Specifies the data already
+exists, and is to be allocated as a Shared
+data set; other Users may also Read the data set at the same time.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">SCRATCH</td>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">SCRATCHE</span>s the data set when it is <span
+ style="font-weight: bold;">FREE</span>d</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">UNCATLG</td>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">UNCATALOG</span>s the data set when it is <span
+ style="font-weight: bold;">FREE</span>d</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">UPDATE
+| OLD</td>
+            <td style="vertical-align: top;">Specifies the data set
+already exists.&nbsp; Allocation will enque it so
+that no other User can Read or Update the data set until it has been <span
+ style="font-weight: bold;">FREE</span>d.</td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Allocating Data Set</h4>
+      </td>
+      <td align="left" valign="top">
+      <p>Before data sets can be accessed with <span
+ style="font-weight: bold;">READ, GETFILE, PUT</span> or <span
+ style="font-weight: bold;">PUTFILE</span> instructions, the data set
+must be allocated or connected to the current address space.&nbsp; You
+can use the <span style="font-weight: bold;">ALLOCATE</span>
+instruction to do this.<br>
+      <br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+        <li><span style="font-weight: normal;">&nbsp;If the file cannot
+be <span style="font-weight: bold;">ALLOCATED</span>, <span
+ style="font-weight: bold;">%LASTCC</span> is set non-zero; this
+condition can be tested with the <span style="font-weight: bold;">IF</span>
+statement.&nbsp; Successful allocation can be tested by coding:</span></li>
+      </ol>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">IF
+%LASTCC=0
+THEN ...</span><br style="font-weight: normal;">
+      </div>
+      <ol start="2">
+        <li><span style="font-weight: normal;">All allocation failure
+messages are the standard System Messages.&nbsp; Refer to the Operating
+System Message Manual in the case of difficulties.</span></li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+1 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALLOC F(INPUT5) SYS1.CONTROL.LIB(%DAY)
+SHR ;<br>
+      <div style="margin-left: 80px; font-weight: normal;">/* Opens
+member depending on the day */<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;">OPENFILE INPUT5
+INPUT;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; /* Open
+the file */<br>
+IF ^ EOF(INPUT5) THEN<br>
+READ FILE(INPUT5) INTO(A);<br>
+further processing ....<br>
+      </div>
+      <br>
+2 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ALLOC FILE(OUTPUT2) TEMP.OUTPUT NEW<br>
+      <div style="margin-left: 80px;">5 TRACKS<br>
+FB 80, 800;<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">File
+
+      <span style="font-weight: bold;">OUTPUT2</span> is allocated to a
+new data set <span style="font-weight: bold;">TEMP.OUTPUT</span>.&nbsp;
+The
+data set is allocated 5 TRACKS, with a Fixed Record Format of 80
+byte records, and a Blocksize of 800 characters.</span><br>
+      </div>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

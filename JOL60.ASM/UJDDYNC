@@ -1,0 +1,23 @@
+UJDDYNC  TITLE 'JOL DYNAMIC ALLOCATION CONSTANTS'
+         COPY  JOLGLOBL
+         $UJEPARM
+         PRINT ON,DATA
+         AIF   (&X8).X8ZEDS                                      88036
+         AIF   (&F4).F4ZEDS                                      88036
+         IEFZB4D0
+         IEFZB4D2
+         AGO   .IBMZEDS                                          88036
+.F4ZEDS  ANOP
+         AIF   (&X8).X8ZEDS                                       J40B
+         KDJZB4D0                                                 J40B
+         KDJZB4D2                                                 J40B
+         AGO   .IBMZEDS                                           J40B
+.X8ZEDS  ANOP                                                    88036
+         KDJZB4D0
+         KDJZB4D2
+.IBMZEDS ANOP                                                    88036
+UJDDYNC  CSECT
+         ENTRY UJEDYNC                                           88036
+UJEDYNC  DC    CL8'DYNCON'                                       88036
+         COPY  DYNAREAS
+         END

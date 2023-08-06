@@ -1,0 +1,114 @@
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974,1975
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1976,1980
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+  FIX 'SET %SYSACCT'
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+           COPY JOLCOM
+         JOLSAVE CSECT=UJP94INI                                   75128
+* THIS MODULE RECEIVES CONTROL AT THE START OF A NEW JOB
+*    FIRST CALL,IT DECODES THE COMPILER PARM FIELD
+*    IF AN *JOL CARD IS PRESENT,IT DECODES THE OPTIONS ON IT
+* ANOTHER MODULE THEN (IF REQD) PRINTS OUT THE OPTIONS IN SHORT
+*    OR LONG FORM.
+           SPACE 3
+* THE ALLOWABLE OPTIONS ARE LISTED IN THE TABLE 'OPTIONS'
+           SPACE
+         MVC   ICOMMAND,=CL8'MACRO' SO ASSIGNMENT ROUTINE         75128
+*                             AND DECLARE ROUTINES WON'T DO SO    75128
+*                             MUCH MESSING ROUND STORING VALUES   75128
+         SPACE 2
+           USING JOLCOM,R2
+           USING TKNX,R3
+         L     R4,AJOLGEN                                         75128
+         USING GENDETS,R4                                        75128
+         MVC   WORK(80),BLANKS                                    75128
+         MVC   #WORK,ZERO                                         75128
+         MVC   SYMBOLIC,=CL8'SYSLABEL'                            75128
+         $CALL UJP85ASN                                           75128
+         MVC   SYMBOLIC,=CL8'SYSMACNM'                            75128
+         $CALL UJP85ASN                                           75128
+         MVC   SYMBOLIC,=CL8'SYSSCMD'                             75128
+         $CALL UJP85ASN                                           75128
+         MVC   #WORK+1(2),=X'01F0'
+         MVC   SYMBOLIC,=CL8'SYSLEVEL'                            75128
+         $CALL UJP85ASN
+         MVC   SYMBOLIC,=CL8'SYSNLIST'                            75128
+         $CALL UJP85ASN
+         MVC   SYMBOLIC,=CL8'SYSPFK'                              87080
+         $CALL UJP85ASN                                           87080
+         MVC   SYMBOLIC,=CL8'LASTCC'                              87080
+         $CALL UJP85ASN                                           87080
+         MVC   SYMBOLIC,=CL8'MAXCC'                               J60
+         $CALL UJP85ASN                                           J60
+         MVC   SYMBOLIC,=CL8'PANELS'                              J60
+         CLI   IFTSO,C' '                                         J60
+         BE    P94NPANL                                           J60
+         MVI   #WORK+1,3      SET LENGTH TO 3                     J60
+         MVC   WORK(3),=CL3'YES'                                  J60
+         $CALL UJP85ASN       STORE %PANEL                        J60
+         MVC   SYMBOLIC,=CL8'GUI'                                 J60
+         $CALL UJP85ASN       STORE %GUI                          J60
+         B     P94SPOL
+P94NPANL DS    0H                                                 J51
+         MVI   #WORK+1,2      SET LENGTH TO 2                     J60
+         MVC   WORK(2),=CL2'NO'                                   J60
+         $CALL UJP85ASN       STORE %PANEL                        J60
+         MVC   SYMBOLIC,=CL8'GUI'                                 J60
+         $CALL UJP85ASN       STORE %GUI                          J60
+P94SPOL  EQU   *                                                  J60
+         MVI   #WORK+1,0      SET LENGTH TO 0                     J60
+*  SET UP '%SPOOL'                                                75128
+         MVC   SYMBOLIC,=CL8'SPOOL'                               75128
+         MVI   #WORK+1,4      SET L'WORK=4                        75128
+         MVC   WORK(4),BLANKS CLEAR IT FIRST IN CASE NO SPOOL SYS 75128
+         LM    R7,R9,P94CON1  LOAD BXLE CONSTANTS                 75128
+P94FSPL  CLC   SPOOL,0(R7)    NOW FIND CORRECT SPOOLING SYSTEM    75128
+         BE    P94GOTSP       GOT IT ? YES,GO SHIFT SPOOL NAME    75128
+         BXLE  R7,R8,P94FSPL  NO, TRY NEXT ENTRY                  75128
+         B     P94NSPL        DIDN'T GET IT AT ALL, STORE BLANKS  75128
+P94GOTSP MVC   WORK(4),1(R7)  DID GET IT, SHIFT CORRECT NAME IN   75128
+P94NSPL  EQU   *                                                  75128
+         $CALL UJP85ASN       AND STORE VALUE IN SYMBOLIC TABLE   75128
+         SPACE 3                                                  75128
+         MVC   WORK(3),DEFSYS     NOW %SYSTEM
+         MVI   #WORK+1,L'DEFSYS
+         MVC   SYMBOLIC,=CL8'SYSTEM'                              75128
+         $CALL UJP85ASN       AND STORE VALUE IN SYMBOLIC TABLE   75128
+           JOLRETN
+         SPACE 3
+P94CON1  DC    A(*+12,5,P94CON1E-5)
+         DC    C'HHASP'
+         DC    C'AASP '
+         DC    C'1JES1'
+         DC    C'2JES2'
+         DC    C'3JES3'
+P94CON1E EQU   *
+         DC    C'3JES3'                                           75128
+         DC    C'3JES3'                                           75128
+         DC    C'3JES3'                                           75128
+          DC S(*,*,*,*)
+          DC S(*,*,*,*)
+          DC S(*,*,*,*)
+          DC S(*,*,*,*)
+       DC S(*,*,*,*)
+       DC S(*,*,*,*)
+       DC S(*,*,*,*)
+       DC S(*,*,*,*)
+           END

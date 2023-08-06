@@ -1,0 +1,237 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Introduction</title>
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>Introduction</u></font><font size="5"><u><span
+ style="font-weight: normal;"></span></u></font><font size="5"><i><u><span
+ style="font-weight: normal;"></span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">Jol is a high-level, English-like,
+Universal Command Language. A Command Language is the highest level of
+communication between you and the computer. Command languages tell the
+computer what to do, when to do it, and what to do with the result.
+Programming Languages, such as <span style="font-weight: bold;">PL/I</span>
+and <span style="font-weight: bold;">COBOL</span>, give the computer
+detailed instructions on how to do it.<br>
+      <br>
+&nbsp;Jol commands are coded in a free format English-like language
+similar to <span style="font-weight: bold;">TSO CLISTs, PL/I, Pascal</span>
+and <span style="font-weight: bold;">"C"</span>. These commands are
+then interpreted and run <span style="font-style: italic;">immediately
+in foreground (under TSO)</span>, or in a <span
+ style="font-style: italic;">background </span>region, either with or
+without JCL, or under full control of a monitor which uses Dynamic
+Allocation instead of JCL. The same command language can operate both
+in <span style="font-style: italic;">foreground</span>&nbsp; and in <span
+ style="font-style: italic;">background</span>.<br>
+      <br>
+With Jol you can:<br>
+      <br>
+      <ul>
+        <li>Use Jol's extremely comprehensive Macro language to write
+your own Jol commands tailored specifically to your installation. <br>
+        </li>
+      </ul>
+      <ul>
+        <li>Use simple <span style="font-weight: bold;">IF, THEN,
+ELSE, AND/OR</span>, and <span style="font-weight: bold;">DO</span>
+logic to test return codes, symbolic variables, calendar information,
+or <span style="font-weight: bold;">ABEND</span>&nbsp; situations.</li>
+      </ul>
+      <ul>
+        <li>Define, initialize, test, branch and perform arithmetic on
+Symbolic Variables. Hence, you can create data set names, programs and
+instructions depending on symbolic variable or parameter information.</li>
+      </ul>
+      <ul>
+        <li><span style="font-weight: bold;">ALLOCATE , READ</span> and
+          <span style="font-weight: bold;">WRITE </span>to data sets
+during the compilation.&nbsp; Therefore, you can access data, and
+dynamically alter your job depending on other data on your computer.</li>
+      </ul>
+      <ul>
+        <li>Write full screen data entry panels.</li>
+      </ul>
+&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; In other words, Jol complements <span
+ style="font-weight: bold;">JCL, CLIST</span>s and <span
+ style="font-weight: bold;">SPF</span> in one easy to use and learn
+Command Language.<br>
+&nbsp;&nbsp;&nbsp; &nbsp;<br>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">
+      <h4>Procedural Programming</h4>
+      </td>
+      <td style="vertical-align: top;">Jol programs are written in a
+procedural format that is already familiar to Programmers using
+programming languages such as <span style="font-weight: bold;">COBOL</span>,
+      <span style="font-weight: bold;">PASCAL </span>or <span
+ style="font-weight: bold;">PL/I</span>.&nbsp; The procedural format
+provides you the flexibility to solve the most complex type of
+requirements in a logical straightforward manner.<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; In <span style="font-weight: bold;">COBOL</span>&nbsp;
+or <span style="font-weight: bold;">PL/I</span> , you <span
+ style="font-weight: bold;">DEFINE</span>&nbsp; or <span
+ style="font-weight: bold;">DECLARE</span> variables and then use
+instructions to alter those variables.&nbsp; In Jol, you also <span
+ style="font-weight: bold;">DEFINE</span> or <span
+ style="font-weight: bold;">DECLARE</span> Data Set and Program details
+which may&nbsp; be required for your job and then you use simple
+instructions such as <span style="font-weight: bold;">RUN</span>&nbsp;
+and <span style="font-weight: bold;">SOR</span>T&nbsp; to set the job
+in motion.&nbsp; In Jol:<br>
+&nbsp;&nbsp;&nbsp; <br>
+      <ul>
+        <li><span style="font-style: italic;">Data Set </span>declarations&nbsp;
+specify <span style="font-style: italic;">record-format, volume,
+unit,&nbsp; space</span>&nbsp; and other information.</li>
+      </ul>
+      <ul>
+        <li><span style="font-style: italic;">Program&nbsp; declarations</span>
+specify whether the program's internal filenames (<span
+ style="font-weight: bold;">DDNAMES</span> ) <span
+ style="font-style: italic;">read , write , update</span>&nbsp; or <span
+ style="font-style: italic;">extend</span>&nbsp; the data set variables
+previously described.</li>
+      </ul>
+      <ul>
+        <li>Instructions&nbsp; such as <span style="font-weight: bold;">RUN,
+IF ... THEN, COPY, SORT,</span> and <span style="font-weight: bold;">PRINT</span>
+manipulate these variables as you would variables in other high level
+languages.&nbsp;&nbsp; Other simple instructions are provided to test
+errors or
+conditions, submit&nbsp; jobs and so on.&nbsp;&nbsp;&nbsp; <br>
+        </li>
+      </ul>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">
+      <h4>Analysing Your Job</h4>
+      </td>
+      <td style="vertical-align: top;">You tell Jol which data sets you
+require and describe the programs you wish to execute specifying
+whether they are to read, write, update or extend the data sets you
+have described.&nbsp; Later, you use simple instructions to run your
+programs, sort data sets, test conditions and so on.&nbsp; Jol examines
+in detail the instructions and declarations you have given, and
+automatically:<br>
+&nbsp;&nbsp;&nbsp; <br>
+      <ul>
+        <li>Passes newly created or old data sets to following programs
+requiring them.</li>
+      </ul>
+      <ul>
+        <li>Finds input data sets that are not created in your job,
+that is, data sets that are External to your job.</li>
+      </ul>
+      <ul>
+        <li>Determines which data sets are used only to pass
+information from one program to another (temporary). Unless a <span
+ style="font-weight: bold;">KEEP</span> or <span
+ style="font-weight: bold;">CATALOG</span>&nbsp; instruction is used,
+new&nbsp; data sets are automatically deleted at the end of the job.</li>
+      </ul>
+      <ul>
+        <li>Determines which data sets are used as work files, and
+organizes that the volumes containing or receiving these data sets will
+be mounted when your job executes</li>
+      </ul>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Error Detection</h4>
+      </td>
+      <td align="left" valign="top">
+      <p>Before the Jol Compiler allows the job to execute, it runs
+detailed validation checks on the instructions and declarations that
+have been made available.&nbsp; Jol checks that no execution of an
+instruction will cause your job to fail at any stage, and that there
+are no data sets or libraries missing.&nbsp; If errors are detected the
+job is not allowed to execute (unless the <span
+ style="font-weight: bold;">LET</span> option is specified). If the job
+was allowed to run, it would fail at that point having wasted whatever
+computer time was necessary to reach that stage.&nbsp; These types of
+error detection often save hours of otherwise wasted computer time.<br>
+      <br>
+Jol also checks that you are not executing an instruction that would
+cause your job to fail to execute correctly. For instance, if one of
+your programs creates a data set that is required as an input data set
+to a later program, a check is made to see that you do not delete it
+accidentally before your later program reads it.&nbsp; In this case,
+Jol would ignore the <span style="font-weight: bold;">SCRATCH </span>instruction.<br>
+      <br>
+Another type of error that Jol detects before allowing your job to
+begin executing is when you attempt to read a data set that you are not
+creating in your job and also cannot be found in the <span
+ style="font-weight: bold;">System Catalog</span>.<br>
+      <br>
+Any errors or warnings are highlighted in your Jol program and they may
+also be printed on a separate page after your program has been listed.<br>
+      <br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      <span style="font-weight: normal;"><span
+ style="font-style: italic; font-weight: bold;"></span></span><br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

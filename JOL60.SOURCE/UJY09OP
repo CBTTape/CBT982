@@ -1,0 +1,71 @@
+        PRINT OFF
+        COPY  JOLCOM
+        PRINT ON,GEN,DATA
+* THIS ROUTINE OPENS A PRE-EXISTING DATA SET (PDS) AND
+*    COPIES OUT ALL THE DATA PRESENTED ON THE COMMAND TO THAT
+*    MEMBER, CLOSES IT AND RETURNS.
+*
+* IT WILL NOT BE DOCUMENTED AS THEY WILL BE REPLACED LATER
+* BY MORE CONVENTIAL ROUTINES.*******
+          JOLSAVE CSECT=UJY09OP
+          L    R8,ADCBS
+          USING DCBS,R8
+           GETTKN 2
+           BAL   R14,DROPQUOT
+           MVC  #WORK(50),#TKN   SAVE DSNAME
+           GETTKN 3              GET MEMBER NAME
+* DSNAME IS IN #WORK(50)
+* MEMBER NAME IS IN #TKN (IF PRESET)
+          DYNPARM DDNAME=SPARE2,DISP=(SHR),DSN=(44,#WORK),        ++++++
+               MEMB=(10,#TKN)
+           LTR   R15,R15
+           BZ    Y09OK2
+           JOLERR 202,'CANNOT ALLOCATE DSN ''',#WORK,''' MEMBER ',  ++++
+               #TKN,''''
+Y09OK2    EQU  *
+* DATA SET ALLOCATED, NOW OPEN IT
+           L     R9,ASPR2DCB
+           USING  IHADCB,R9
+           MVI   DCBRECFM,0
+           MVC   DCBLRECL,=H'0'
+           MVC   DCBBLKSI,=H'0'
+*         OPEN (SPRDCB2,(OUTPUT))
+          LA   R1,SPRDCB2
+          ST   R1,CALLAREA
+          MVI  CALLAREA,X'8F'
+          LA   R1,CALLAREA
+          SVC  19
+          LTR  R15,R15
+          BZ   R010
+          JOLERR 101,'CANNOT OPEN OUTPUT FILES FOR SAVESYMS'
+          JOLRETN RC=4
+R010      DS   0H
+* THIS ROUTINE SIMPLY PUTS A CARD IMAGE TO THE DCB 'SPRDCB2'
+          LA    R7,4
+LOOP      GETTKN  (R7)      GET NEXT TOKEN
+          LR    R7,R1       RESET TO NEXT TOKEN
+          CLI   TKN,C' '    IS IT BLANK?
+          BE    Y09CLOS
+          CLC   =H'80',#TKN
+          BH    Y09OK3
+          JOLERR 103,'LENGTH OF TOKEN ''',#TKN,''' > 80 CHARS'
+Y09OK3    BAL   R14,DROPQUOT
+          PUT   (R9),TKN
+          B     LOOP
+*         CLOSE (SPRDCB2,(REREAD))
+Y09CLOS   EQU  *
+          L    R1,ASPR2DCB
+          ST   R1,CALLAREA
+         OI    CALLAREA,X'80'
+          LA   R1,CALLAREA
+          SVC  20
+          FREEPOOL SPRDCB2
+          DYNPARM DDNAME=SPARE2,VRB=UN
+          DROP  R9
+          DROP  R8
+          JOLRETN
+          LTORG
+        PRINT OFF
+          DCBD DSORG=PS,DEVD=DA
+        PRINT ON,GEN,DATA
+          END

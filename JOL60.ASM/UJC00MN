@@ -1,0 +1,2476 @@
+UJC00MN    TITLE 'MAIN COMPILER ROUTINE FOR JOL'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973
+*  1974,1975
+* COPYRIGHT CCS 1971-1976
+* COPYRIGHT CCS 1980
+* COPYRIGHT CCS 1982
+* COPYRIGHT CCS-JOL 1988
+          COPY   JOLCOM
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 6
+***********************************************************************
+*
+* NOTE                    NOTE                    NOTE
+*     NOTE            NOTE    NOTE            NOTE    NOTE
+*         NOTE    NOTE            NOTE    NOTE            NOTE    NOTE
+*             NOTE                    NOTE                    NOTE
+*
+***********************************************************************
+*
+* VERSION 0 OF JOL, (THE PL1 VERSION) USED TO GENERATE 'REAL' JCL.
+*  THIS WAS CONSIDERED BY SOME TO BE SLOW AND INEFFICENT. UNFORTUNATELY
+*  I TENDED TO AGREE, AND WROTE A MONITOR FOR JOL.
+* THIS IS RELATIVELY EFFICENT, BUT NOW WE BACK-TRACK AND PROVIDE
+*  AN OPTION TO GENERATE 'REAL' JCL FOR THESE REASONS:-
+*          1.  IT WILL FUNCTION ON ANY VERSION OF THE IBM
+*              OPERATING SYSTEM.
+*          2.  IT WILL BE MUCH, MUCH MORE MARKETABLE.
+*              (AND THAT IS EXTREMELY,REPEAT, IMPORTANT)
+*
+***********************************************************************
+*
+* ALSO, WE WILL NOW GENERATE REAL STEPNAMES FOR THE MONITOR VERSION,
+*  AND FOR THE 'REALJCL' VERSION.
+*
+* WHEN A STEP IS OUTPUT, IT IS NOW KEPT IN THE STACK. IF A DUPLICATE
+*  STEP IS OUTPUT, IT IS CHANGED TO A $$STMT TYPE OF NAME SO THAT
+*  THERE ARE NO DUPLICATES OUT THERE.
+* MACROS CAUSE ALL SORTS OF PROBLEMS BECAUSE OF THEIR NAMES, AND
+*  THEY MOST OFTEN HAVE DUPLICATE NAMES.
+*  THE REAL PROBLEMS THERE ARE :-
+*          1.  A MACRO MAY HAVE A NAME THAT HAS ALREADY BEEN CREATED
+*              IN A PREVIOUS INVOCATION OF THE SAME MACRO.
+*              SO: ANY IF STATEMENT REFERRING TO THE SECOND EXEC
+*                  CAN BE CHANGED TO COND=($$NNNN) TYPE THING.
+*
+*              WHERE THE PROBLEM IS IS THIS:-
+*                  WE HAVE TO HOLD THE NAME OF ANY PROGRAM EXECUTED
+*                  IN THE TABLE SO WE KNOW IF THE NAME IS 'RUN' TWICE,
+*              THIS MEANS THAT THE LEVEL HAS TO BE SET TO 0 BEFORE
+*                  THE TABLE IS RE-ORGED, UNLESS THE NAME WAS ALREADY
+*                  IN THE STACK AT LEVEL 0.
+*
+*
+*
+*              SO...
+*          2.  THE SECOND PROBLEM IS THIS:-
+*              A MACRO INVOCATION GENERALLY HAS A LABEL ON IT, AND
+*              THIS LABEL IS THE LABEL THAT PEOPLE REFER TO WHEN
+*              THEY TEST THE RETURN CODE.
+*              SO WE HAVE TO REMEMBER THE STEP NAME WE USED ON THE
+*              MACRO TO GENERATE COND TESTS.
+*
+*              WE DO THIS BY COPYING INTO THE ADDRESS AND STMT FIELDS
+*              IN THE IDTABLE THE STEP-NAME WE USED.
+*
+*          3.  WE WANT TO KNOW WHEN 2 STEPS ARE EXECUTED IN A MACRO
+*              WHEN WE ARE GENERATING REAL ICL, COS WE CAN ONLY
+*              ALLOW THE USER TO TEST THE FIRST STEP OF A MACRO,
+*              WHEREAS THE MONITOR RETURNS THE HIGHEST NUMBER
+*              TO THE LABEL FOR TESTING.
+*
+*
+* NOW LETS LOOK AT SOME OF THE PROBLEMS INVOLVED IN GENERATING
+*  REAL JCL.
+*
+*    1. CATLG ETC CAN EASILY BE MANAGED BY EXTRA STEPS WITH DISPOSITION
+*       PROCESSING
+*    2. IF STATEMENTS ARE THE BIG PROBLEM.
+*       WE WILL DEVOTE THE REST OF THIS SECTION TO DESCRIBING THE 'IF'
+*       PROBLEMS.
+*
+*    IF...
+*
+*    1. JCL SAYS IF A=10 THEN BYPASS STEP(S).
+*       JOL ADDS A RIDER TO THAT AND SAYS IF STEP A EXECUTED AS WELL.
+*    2. JOL ALLOWS YOU TO TEST A RETURN CODE WITH ANOTHER.
+*       THAT IS IMPOSSIBLE WITH JCL.
+*    3. JOL ALLOWS VERTUALLY UNLIMITED NUMBER OF TESTS.
+*    4. JOL ALLOWS EXPRESSIONS LIKE (A=10|B=20 & C=30) & A=20.
+*    5. JOL ALLOWS MULTIPLE IFS
+*
+*
+*
+*
+*
+*
+*    SO ONWARDS AND LETS SEE WHAT WE CAN DO, AND WHAT WE CANNOT DO.
+*
+*
+*    1. IF A THEN...
+*       A. THIS CAN BE ACCOMPISHED BY EITHER IGNORING THE TEST IF
+*          THE STEP ALWAYS EXECUTED (WHICH WE KNOW IN THE COMPILE
+*          STAGE) OR
+*
+*       B. //$$STMT EXEC PGM=UJERETN1,COND=((A,NE,0),(A,EQ,0))
+*          IF $$STMT STEP DID EXECUTE, THEN STEP A DID NOT.
+*          SO ON THE STEP THAT IS TO EXECUTE SUBJECT TO THE TEST,
+*          WE CAN SAY
+*          //REALSTEP EXEC PGM=REALPROG,COND=($$STMT,EQ,1) AND
+*          THIS STEP WILL THEREFORE BE BYPASSED IF A DID NOT EXECUTE.
+*
+*
+*    2. IF A=10 THEN ...
+*
+*       A. IF THE STEP IS ALWAYS EXECUTED
+*          //REALSTEP EXEC PGM=REALPROG,COND=(A,NE,10)
+*          ALL WE HAVE TO DO IS REVERSE ALL THE
+*              =   TO  NE
+*              ¬=      EQ
+*              ETC
+*
+*       B. IF THE STEP MAY HAVE EXECUTED, THEN
+*
+*          //$$STMT EXEC PGM=UJERETN1,COND=(A,EQ,10)
+*          THE ABOVE STEP WILL ONLY EXECUTE IF A DID NOT EXECUTE,
+*          OR DID EXECUTE, BUT THE RETURN CODE WAS NOT EQUAL 10.
+*          //REALSTEP EXEC PGM=REALNAME,COND=($$STMT,EQ,1)
+*          THE REALSTEP WILL EXECUTE ONLY IF THE $$STMT DID NOT.
+*          HENCE, IF A=10 THEN ...
+*
+*    3. IF A=10 | B=20 THEN ...
+*
+*       A. IF A AND B MUST ALWAYS HAVE EXECUTED, THEN
+*          //REALSTEP EXEC PGM=REALPROG,COND=((A,NE,10),(B,NE,20))
+*
+*       B. IF A AND B MAY NOT HAVE EXECUTED
+*          //$$STEP01 EXEC PGM=UJERETN1,COND=(A,EQ,10)
+*          //$$STEP02 EXEC PGM=UJERETN1,COND=(B,EQ,20)
+*          //REALSTEP EXEC PGM=REALPROG,COND=(($$STEP01,EQ,1),
+*          //          ($$STEP02,EQ,1))
+*
+*
+*
+*
+*    4. IF A=10 & B=20 THEN ...
+*
+*       A. IF A AND B MUST ALWAYS HAVE EXECUTED
+*          //$$STMT EXEC PGM=UJERETN1,COND=((A,EQ,10),(B,EQ,20))
+*          THE ABOVE WILL EXECUTE ONLY IF A¬=10 OR B¬=10
+*          THEN:
+*          //REALSTEP EXEC PGM=REALPROG,COND=($$STMT,EQ,1)
+*
+*       B. IF A AND B MAY NOT HAVE EXECUTED
+*          AS ABOVE
+*
+*
+*    5. IF A=10 THEN DO;
+*
+*          WE CREATE A STEP FOR EACH'DO' AND TEST IT.
+*          EACH LEVEL OF DO CREATES A NEW STEP WHICH IS TESTED
+*          ALONG WITH ANY OTHER COND.
+*
+*          FOR EXAMPLE:-
+*              IF A=10 THEN DO;
+*                  RUN B;
+*                  IF B=25 THEN RUN C;
+*              END;
+*          THIS WILL PRODUCE
+*          //$$STMT01 EXEC PGM=UJERETN1,COND=(A,EQ,10)
+*          //B  EXEC PGM,COND=($$STMT01,EQ,1)
+*          //C  EXEC PGM,COND=(($$STMT01,EQ,1),(B,NE,25))
+*
+*          IF RUNC HAD BEEN ANOTHER DO, A GENERATE OF ANOTHER
+*          STEP WOULD SUFFICE FOR THE NEXT 'DO' LEVEL.
+*
+*    6.    IF  (A/B) &C
+*
+*          NOT SUPPORTED.
+*
+*    7.    ELSE
+*          SIMPLY (?) TAKE THE REVERSE COND.
+*
+***********************************************************************
+* IMPLEMENTATION
+*
+* WHEN 'REAL' JCL IS TO BE GENERATED, A FURTHER GETMAIN WILL BE
+*  PERFORMED FOR A TABLE CONTAINING,LEVELS AND NESTS (AS USUAL)
+*  BUT INSTEAD OF HAVING 'T'|'F'|'?' INIT IT WILL HAVE ANY
+*  STEPNAMES THAT MAY HAVE BEEN GENERATED FOR DO GROUPS.
+* THIS TABLE WILL BE
+*              8 CHARS
+*            X 8 NESTS
+*            X 6 LEVELS
+*            = 384 BYTES.
+*
+* IN ADDITION, A STRING OF 200 BYTES WILL BE OBTAINED WHERE THE
+*    LAST CONDITION CODE WILL BE STORED.
+*
+* THE TABLE WILL BE RESET (CLEARED) BY THE END PROCESSOR WHEN IT
+*  IS CLEARING THE SMALLER TABLE
+*
+           PRINT DATA
+           JOLSAVE CSECT=UJC00MN
+*    THIS IS THE MAIN CONTROLLING MODULE OF THE COMPILER SECTION OF
+*          JOL
+*    WHEN THIS CSECT GAINS CONTROL,ALL PRE-PROCESSING,INCLUDES ETC
+*          HAVE BEEN PERFORMED.
+*    THIS CSECT CALLS THE APPROPRIATE ROUTINES TO HANDLE DECLARES,
+*          RUNS,CATALOGUES ETC.
+           SPACE 3
+           USING JOLCOM,R2
+           SPACE
+* FIRST OFF INITIALISE THE ODD VARIABLE
+         CLEAR LEVEL,NEST,COND,SAVENEST,TOTIDS,OVERRIDE,STARTAT
+         CLEAR STOPAT                                       FIX-X 76200
+         ZAP   PCKDSTMT,=P'0'  FOR $$VRNNNN USED IN VREFS         87150
+         CLEAR         CURREALL,                                  75311*
+               NOSTEPS                                            75311
+         LA    R0,200                                              DASD
+         STH   R0,MAXSTEPS                                        75311
+         STH   R0,MAXREALL                                        75311
+         L     R1,AIDTBL
+         L     R3,ATKN1
+         USING TKNX,R3
+         L     R10,ACATCNTL                                       76200
+         USING CATX,R10                                           75128
+         MVC   PRLASTL,=X'7FFF'   SET OFFSET IN BLOCK VERY HIGH
+         MVC   PRBLKN,ZERO  SET CURRENT BLOCK NO=ZERO
+         L     R15,APRBUF
+         MVC   0(4,R15),ZERO  CLEAR CURRENT BLOCKLENGTH
+         DROP  R10                                                75128
+         MVC   LINECNT,=H'100' NEW PAGE BY SETTING A HIGH LINE COUNT
+         MVC     WORK2BLK,=H'100'   SO INPUT RTNS DON'T THINK
+*                                   BLOCK ZERO IS IN
+         SPACE 2
+* NOW IT WOULD SEEM APPROPRIATE TO READ THE FIRST STATEMENT
+           SPACE 2
+           MVC TITLE2,=CL20'COMPILER PHASE'                       74303
+          $CALL UJC50RD
+           B   C00R01(R15)
+C00R01     B   C00FIRST        GOT STATEMENT 1 IN NORMALLY.
+           B   C00ERR1         FIRST READ SHOULDN'T HAVE ANYTHING
+           B   C00ERR1         BUT A ZERO VALUE,SO WE'LL QUITE
+           B   C00ERR1         HAPPILY ABORT HIM.
+C00ERR1  JOLERR 401,'PREPROCESSOR DID NOT GENERATE ANY STATEMENTS'
+C00RETNF   JOLRETN RC=16
+           SPACE 3
+C00FIRST   EQU *
+* THE FIRST STATEMENT APPARENTLY MADE THE GRADE SUCCESSFULLY SO
+*    NOW WE HAD BETTER GO TO THE APPROPRIATE HANDLING ROUTINES
+           B   C00GOTIN
+           SPACE
+C00SPLIT  $CALL UJSPLIT
+C00READ    EQU  *
+C00MAINL   EQU *               THIS IS THE MAIN-LINE.
+           MVI OVERRIDE,C' '   CLEAR OVERRIDE INDICATOR
+          $CALL UJC50RD
+           B   C00R02(R15)
+C00R02     B   C00GOTIN        GOT INSTRUCTION,DEAL WITH IT
+           B   C00RETN0        EOF RETN
+           B   C00RETNF        ERROR
+           B   C00RETNF        ERROR
+           B   C00RETNF        ERROR
+           SPACE 3
+C00GOTIN   EQU *               GOT AN INSTRUCTION,SO DEAL WITH IT.
+           GETTKN  NO=1        GET THE STATEMENT TYPE
+* NOW SET UP A FEW VALUES IN THE SECTION 'INSTRUCT' WHICH WILL BE
+*    WRITTEN OUT WHEN THE INSTRUCTION HAS BEEN DECODED
+           MVC ISTMT,STMT
+           OC ISTMT,=C'0000'
+           MVC  ICOMMAND,TKN   SAVE INSTRUCTION IN ICOMMAND
+           MVC ILABEL,LABEL
+           MVC ILENGTH,=AL2(IBODY)
+           CLEAR TRANS
+           MVC  ILEVEL,LEVEL+1
+           MVC INEST,NEST+1
+           SPACE 3
+           LH  R4,LEVEL        LEVEL INDICATOR
+           SLL R4,3            *8 (WE ALLOW 8 NESTS PER LEVEL)
+           LH R0,NEST
+           AR R4,R0
+           LA  R4,COND(R4)     THERE NOW WE CAN LOOK AT THE CONDS
+           CLI LABEL,C' '
+           BNE C00LABOK
+           MVC LABEL(2),=C'$$'
+           MVC LABEL+2(4),STMT
+C00LABOK   EQU  *
+           CLC =C'IF ',TKN     IS IT AN 'IF'?
+           BNE C00TDO          NO,TEST IF A 'DO'
+           MVI 0(R4),C'T'      SET COND INITIALLY TRUE.
+          $CALL UJC04IF        EVALUATE THE 'IF'
+           B  C00IFRT(R15)
+C00IFRT    B   C00READ         TRUE,GO TO READ
+           B   C00IFQU         UNDETERMINED,ALREADY OUTPUT FOR
+*                              EXECUTE PHASE,SO SET COND='?',
+*                              GO TO READ.
+           B   C00IFQU
+           B   C00IFERR
+           B   C00IFERR
+C00IFQU    MVI 0(R4),C'?'      SET '?' INDICATOR
+           B   C00READ
+C00IFERR   EQU  *
+P00IFALS   EQU  *
+C00IFALS   EQU  *
+           MVI 0(R4),C'F'      SET FALSE IN COND
+           SPACE 3
+* HERE WE HAD AN ERROR,OR THE 'IF' WAS FALSE
+*     WE MUST SKIP ANY 'DO' 'END' GROUPS,OR SINGLE
+*     INSTRUCTIONS. HOWEVER,IF THE INSTRUCTION IS NOT A VALID
+*     INSTRUCTION OF JOL'S,IT WOULD HAVE BEEN EXPANDED BY THE
+*     MACRO PHASE,AND SO WE MAY HAVE A LOT OF INSTRUCTIONS
+*     TO SKIP.
+C00IFRD1  $CALL UJC50RD        READ NEXT INSTRUCTION
+           LTR R15,R15
+           BNZ C00R01(R15)     FIX EOF ETC
+           CLC =C'DO ',ICOMMAND DOS REQUIRE LOOKING UNTIL MATCHING
+           BE  C00IFDO1        'END' FOUND
+           SPACE
+           CLC =C'IF ',ICOMMAND  IF THEN,IF THEN ?
+           BE  C00IFRD1        YES,SKIP THIS 'IF'
+           SPACE
+           BAL R14,C00TINST    SEE IF A NORMAL JOL INSTRUCTION,
+*                              IF NOT,MUST BE AN EXPANDED MACRO
+*                              AND WE MUST IGNORE ALL TILL A MATCHING
+*                              'END' (JUST LIKE A 'DO').
+           LTR R15,R15
+           BZ  C00READ         SKIP NORMAL INSTRUCTION NOW.
+           SPACE
+C00IFDO1   EQU *
+           LA  R4,1            SET NUMBER OUTSTANDING 'ENDS'=1
+C00IFRD2  $CALL UJC50RD       $CALL READ ROUTINE
+           LTR R15,R15
+           BNZ C00R01(R15)     FIX EOF ETC (SHOULD GIVE ERROR?)
+* OK,GOT NEXT AFTER DO OR MACRO START.
+           CLC =C'END ',ICOMMAND
+           BNE C00IFTDO        TEST IF ANOTHER 'DO' ETC
+           SH  R4,=H'1'        SET END COUNTER=ITSELF -1
+           BZ  C00READ         GOOD,FINISHED IF FALSE CONDITION
+           B   C00IFRD2        GO READ AGAIN
+           SPACE 3
+C00IFTDO   EQU *
+           CLC =C'DO ',ICOMMAND
+           BNE C00TIFMC        TEST IF ANOTHER MACRO START
+C00IFDO2   EQU *
+C00IFD02   LA  R4,1(R4)        INCREASE END COUNTER
+           B   C00IFRD2        AND READ AGAIN
+           SPACE
+C00TIFMC   BAL R14,C00TINST    JOL OR MACRO TESTER
+           LTR R15,R15
+           BZ  C00IFRD2        WAS JOL INSTRUCTION,READ A NEW ONE
+           B   C00IFDO2        WAS MACRO,SET END COUNTER UP AGAIN
+           SPACE 3
+           SPACE 3
+C00TDO     CLC =C'DO ',TKN     OS IT A DO ?
+           BNE C00TEND         TEST IF IT IS AN END
+           LH  R1,NEST
+           LA R1,1(R1)
+           CH  R1,=H'8'        TOO MANY NESTS
+           BH  C00DOERR
+           STH  R1,NEST
+           MVC INEST,NEST+1
+         OPINST INST
+           B  C00READ
+C00DOERR JOLERR 406,'TOO MANY CONCURRENT DO''S'
+           B   C00READ
+C00TEND     EQU *
+           CLC =C'END ',TKN    IS IT END ?
+           BNE C00TELSE
+           LH  R1,NEST
+           SH  R1,=H'1'
+           BM C00DROPL         REDUCE LEVEL BY 1
+           STH R1,NEST
+C00PUT   EQU   *                                                  75128
+         OPINST INST                                              75128
+C00CLRC    MVI 0(R4),C' '      CLEAR CURRENT COND
+           B   C00READ
+           B *+4
+           B *+4
+           B *+4
+           SPACE 2
+UJC47EXI DS    0H                                                 87150
+         MVC   ICOMMAND,=CL8'END'
+         ENTRY UJC47EXI                                           87150
+C00DROPL   LH  R1,LEVEL
+           SH  R1,=H'1'
+           BM  C00LEVER
+           STH R1,LEVEL
+           LA R15,SAVENEST(R1) RESET THE ORIGINAL NEST FOR THE
+           MVC NEST+1(1),0(R15) PREVIOUS LEVEL
+           MVC INEST,0(R15)
+* HERE THERE USED TO BE A CALL TO UJS18RID,WHICH MERELY RESET     74303
+*    THE NOIDS FIELD WHEN THE END OF A MACRO WAS FOUND.           74303
+* THE FOLLOWING CODE DOES THE SAME,BUT SAVES SOME 200 ODD BYTES   74303
+           LA  R14,20          LENGTH OF TABLE                    74303
+           LR  R15,R14         INTO R15 AS WELL
+           MH  R15,NOIDS       * NOIDS
+           L   R1,AIDTBL       LOAD START ADDRESS OF TABLE IN R1
+           AR  R15,R1          R15=END OF TABLE
+           SR  R15,R14         SO WE DON'T GO TOO FAR (BXLE¬BXH)
+         LR    R4,R1         WE WILL MOVE ANY IDS BACK THERE      75128
+* NOTE ABOVE INSTRUCTION: NOIDS=1 IF ONE IDENTIFIER NAME IN
+*    TABLE.BY MULTIPLYING 1 X 20 AND ADDING THE ADDRESS WE
+*    HAVE THE STOP ADDRESS=120 (IF TABLE STARTS AT 100)
+           USING IDTABLE,R1
+C00TLEVZ EQU   *                                                  75128
+           CLC IDLEVEL,LEVEL+1
+           BH  C00END99
+         MVC   0(IDNEST+L'IDNEST-IDNAME,R4),IDNAME                75128
+         LA    R4,IDNEST+L'IDNEST-IDNAME(R4) STEP UP R4           75128
+C00END99 BXLE  R1,R14,C00TLEVZ ROUND LOOP                         75128
+          LR  R1,R4       GET LAST USEFUL POSN IN TABLE
+           ST  R1,ANEXTID      R1 POINTS TO NEXT FREE LOCATION
+           LH R15,NOIDS
+           SR  R0,R0           GET READY TO DIVIDE R0,R1 BY 20
+           STH R0,NOIDS        SET TO 0,SAVES DOING IT LATER MAYBE
+           S   R1,AIDTBL       R1= DIFFERNCE,IE NO ENTRIES * 20
+           BNP C00PUT          IF ¬>0,NOIDS=0,2 LINES ABOVE
+           D   R0,=F'20'       /20
+           CH  R15,TOTIDS
+           BL  *+8
+           STH R15,TOTIDS
+           STH R1,NOIDS
+           B  C00PUT
+           SPACE 2
+C00LEVER JOLERR 207,'TOO MANY END''S'
+           B  C00READ
+C00TELSE   EQU  *
+           CLC =C'ELSE ',TKN
+           BNE  C00TOTHR       NOT ELSE EITHER
+             OPINST INST    OP THE ELSE
+            B      C00MAINL  AND BACK TO MAIN-LINE
+            AGO .SKIPOEL
+           CLI 1(R4),C' '      ELSE AFTER A COMDITION TEST ?
+           BNE  C00ELSOK
+         JOLERR 303,'ELSE IGNORED'
+C00FIXEL   MVC TKNSTRG(4),BLANKS  DROP THE ELSE
+           B   C00SPLIT        RESPLIT THE TOKENS AND PERFORM INSTRUCT
+C00ELSOK   CLI 0(R4),C'T'      WAS LAST CONDITION 'TRUE'
+           BNE C00TELSF        NO,TEST IF FALSE
+           MVI 0(R4),C'F'      SET COND TO FALSE
+           B   C00IFALS        GO TO FALSE IF PROCESSOR
+           SPACE
+C00TELSF   EQU  *
+           CLI 0(R4),C'F'      LAST 'IF' FALSE
+           BNE C00TOTHR        NO GO AND DEAL WITH IT AS A '?' INSTRUCT
+           MVI 0(R4),C'T'      SET COND TO 'T'
+           B   C00FIXEL
+.SKIPOEL    ANOP
+C00TOTHR   EQU  *              NOT IF OR ELSE,UNLESS IT WAS IN A '?'
+*                              LOOP
+* WELL THAT WAS TRUE  SO CALL THE APPROPRIATE SKIP ROUTINES
+* OK,NOW SEE IF THE 2ND TOKEN IS AN'=' SIGN
+           GETTKN NO=2
+           CLI TKN,C'='
+           BE  C00ASSIN
+           GETTKN NO=1
+           CLC =C'DCL ',TKN    IS IT 'DCL'
+           BE  C00DCL
+           CLC =C'DECLARE ',TKN OR IS IT 'DECLARE'
+           BE  C00DCL
+           CLC =C'DEFINE ',TKN OR MAYBE A DEFINE ?
+           BE  C00DCL
+           B   C00FNDRT        GO FIND ADDRESS OF THE ROUTINE FROM
+*                              THE JOLINST TABLE
+C00DCL     EQU *
+* BEFORE TRYING TO FIND THE ADDRESS OF THE CORRECT PROCESSING ROUTINE
+*    FOR DECLARES WE MUST FIRST OF ALL SEE IF WE ARE IN THE MIDDLE OF
+*    DO LOOP,BECAUSE IF WE ARE WE CAN'T HANDLE A DECLARE (OR AN
+*    ASSIGNMENT).
+* HOWEVER, A MACRO((IE.DIFFERENT LEVEL) CAN HAVE A DECLARE AS
+*   LONG A S  IT ISN'T AFTER AN 'IF ' STATEMENT
+           LH R1,LEVEL
+           SLL R1,3            MULT *8
+           LA R1,COND(R1)      NOW LOOKING AT COND(LEVEL)
+           LR  R15,R4
+           LA  R14,1
+C00TQ5     CLI 0(R1),C'?'      Q CONDITION ?
+           BE  C00ERR2
+           BXLE R1,R14,C00TQ5
+           B   C00DCLOK
+           SPACE
+C00ERR2    EQU *
+         JOLERR 402,'DECLARATION FOUND AFTER EXECUTION ''IF'''
+           B  C00CLRC          CLEAR CURRENT COND,GET NEXT INSTRUCTION
+C00DCLOK   EQU *
+* FINE WE HAVE A DECLARE AND IT IS IN A GOOD POSITION,SO WE CAN PROCESS
+*    IT
+* BUT FIRST,IS IT A DCL PROG,OR A DCL DS TYPE OF STATEMENT ?
+* ***
+           GETTKN NO=3
+           CLC =C'DS ',TKN
+           BE  C00DCLDS
+           CLC =C'* ',TKN
+           BE  C00DCLDS
+           CLC =C'SYSOUT ',TKN
+           BE  C00DCLDS
+           CLC =C'PRINTER ',TKN
+           BE  C00DCLDS
+           CLC =C'PUNCH ',TKN
+           BE  C00DCLDS
+           CLC =C'DATA ',TKN
+           BE  C00DCLDS
+           CLC =C'PROGRAM ',TKN
+           BE  C00DCLPG
+           CLC =C'PROG ',TKN
+           BE  C00DCLPG
+         JOLERR 405,'UNRECOGNISABLE DECLARE'
+           B  C00CLRC          CLEAR CURRENT COND,GET NEXT INSTRUCTION
+           SPACE 3
+C00DCLDS   BAL    R7,C00VLNTH       GO VALIDATE DSID LENGTH TO 8 ORDASD
+           CLEAR TKN                                               DASD
+           MVC TKN(3),=C'DS '
+           B   C00FNDRT
+C00DCLPG   BAL    R7,C00VLNTH       GO VALIDATE DSID LENGTH TO 8 ORDASD
+           CLEAR TKN                                               DASD
+           MVC TKN(5),=C'PROG '
+           B   C00FNDRT
+***************************************************************    DASD
+* REJECT A DSID OR PROGRAM NAME GREATER THAN 8 BYTES          *    DASD
+***************************************************************    DASD
+C00VLNTH   EQU   *                                                 DASD
+           GETTKN NO=2       RETRIEVE DSID OR PGMID                DASD
+           CLC  #TKN,=H'8'   CHECK LENGTH                          DASD
+           BNHR   R7         IF GOOD  JUST RETURN                  DASD
+           JOLERR  411,'IDENTIFIER ''',#TKN,'''',                      *
+               '  EXCEEDS MAXIMUN LENGTH OF 8 BYTES, DCL IGNORED'  DASD
+           B    C00CLRC      REJECT IT                             DASD
+C00ASSIN   EQU *
+           WXTRN UJC85ASN
+           L   R15,=V(UJC85ASN)
+           B   C00RCALL        REAL CALL THAT LABEL SAYS          75311
+C00NODCL   EQU  *
+C00FNDRT   EQU *
+         L     R1,=V(CJOLINST) LOAD ADDRESS OF TABLE WITH THE     75128
+*                              INSTRUCTION NAMES AND THE ADDRESSES
+*                              OF THE ROUTINES TO HANDLE THEM.
+           LM  R7,R9,0(R1)     LOAD BXLE ADDRESS CONSTANTS FOR
+*                              THE ABOVE TABLE.
+C00FINDR   CLC TKN(12),0(R7)   COMPARE INSTRUCTION WITH THAT IN TABLE
+           BE  C00GOTRT        GOT THE ROUTINE TO HANDLE IT.
+           BXLE  R7,R8,C00FINDR
+* BIT OF A FAIL,BECAUSE THE ROUTINE COULD NOT BE FOUND
+* HOWEVER,NOT ALL IS LOST BECAUSE
+* THE MACRO STATEMENTS WOULD HAVE BEEN PROCESSED IN THE
+*     PRE-PROCESSOR PORTION OF JOL
+* HERE THEN,WE MUST OUTPUT A 'MACRO' STATEMENT TO THE OPTIMISER
+*     POTION AND UP THE LEVEL NUMBER BY 1
+           SPACE
+* IF THIS IS AN INCLUDE,IGNORE IT COS ITS BEEN FIXED
+           CLC =C'INCLUDE ',ICOMMAND
+           BE C00MAINL
+           IFNULL ICOMMAND,C00MAINL                               75311
+           SPACE 3
+* DO THE LEVEL NUMBER FIRST
+           CLC =C'$$',LABEL
+           BE C00NLABM         NL MACRO LABEL
+           USING IDTABLE,R1
+          $CALL UJS17FID,LABEL                                    74303
+            LTR R15,R15       DID WE FIND A NAME ALREADY           DASD
+            BNZ C00IDOK2      NOPE                                 DASD
+            CLC IDLEVEL,LEVEL+1                                    DASD
+             BE  C00IDOK2      OK  LETS JUST OVERLAY THIS GUY      DASD
+            LR  R1,R0              REG-0 POINTS TO EMPTY LOCATION  DASD
+C00IDOK2  EQU   *                                                  DASD
+          MVI  IDTYPE,X'02'    MACRO TYPE                         75128
+           MVC IDSTMT,STMT
+           MVI IDUSED,1
+           MVC IDNAME,LABEL
+            MVC  IDLEVEL,LEVEL+1    SHIFT IN LEVEL NUMBER    75049
+            MVC  IDADDR,ZERO        THAT WILL STOP AN ABEND  75049
+*                                   IF RUN MACRO DONE.       75049
+           LH R1,NOIDS
+           LA R1,1(R1)
+           STH R1,NOIDS
+           DROP R1
+C00NLABM   EQU  *
+           LH R1,LEVEL
+           LA R15,SAVENEST(R1)
+           LA R1,1(R1)
+           CH R1,=H'12'                                           82200
+           BNH C00LEVOK
+         JOLERR 408,'TOO MANY LEVELS OF MACRO NESTING'
+           B  C00CLRC          CLEAR CURRENT COND,GET NEXT INSTRUCTION
+C00LEVOK   EQU *
+           STH R1,LEVEL
+           MVC 0(1,R15),NEST+1
+           SR R0,R0
+           STH R0,NEST
+           STC R0,INEST
+           MVC ILENGTH,=AL2(IBODY+18)
+           MVC ITEXT+2(8),ICOMMAND SAVE MACRO NAME
+           MVC ITEXT+10(8),LABEL  AND LABEL
+           MVC ITEXT(2),=H'16'  SET UP PSUEDO LENGTH
+           MVC ICOMMAND,=CL8'MACRO'
+           MVC ILEVEL,LEVEL+1
+         OPINST INST
+           B C00MAINL
+           SPACE
+C00INVAL JOLERR 404,'''',#TKN,''' IS NOT YET IMPLEMENTED'
+*                              WHAT THE POOR USER WANTS.
+           B  C00CLRC          CLEAR CURRENT COND,GET NEXT INSTRUCTION
+           SPACE 3
+C00GOTRT   L   R15,12(R7)      LOAD ADDRESS
+         L     R15,0(R15)     LOAD ROUTINE ADDRESS                75128
+C00RCALL   EQU  *
+           LTR R15,R15         =0 ?,I.E WXTRN ?
+           BZ  C00INVAL        YEP,INVALID INSTRUCTION
+C00CALL   $CALL (15),(JOLCOM,TKNX,TRANS)
+           B  C00CLRC          CLEAR CURRENT COND,GET NEXT INSTRUCTION
+           SPACE 3
+           SPACE 3
+C00RETN0   EQU *
+* WELL WE'VE FINISHED, BUT WE MUST OUTPUT THE LAST BLOCK ON THE
+* 'INST' FILE SO THAT THE NEXT PHASE CAN READ IT IN
+         SPACE 1                                                  75128
+* FIRST OF ALL, CHECK THAT THE 'STARTAT' INSTRUCTION WAS FOUND    75128
+         IFNULL STARTAT,C00STAOK   IFBLANK, ALL IS WELL           75128
+         JOLERR 409,'LABEL ''',STARTAT,                           75128*
+               ''' NOT FOUND FOR STARTAT INSTRUCTION'
+         CLEAR STARTAT
+C00STAOK EQU   *                                                  75128
+* CHECK IF STOPAT CODED, AND FOUND                          FIX-X 76200
+         IFNULL STOPAT,C00STPOK OK -> END                   FIX-X 76200
+         CLI   STOPAT,X'FF'   DID WE FIND LABEL ANYWHERE ?  FIX-X 76200
+         BE    C00STPOK       YES  -> END                   FIX-X 76200
+         JOLERR 310,'LABEL ''',STOPAT,                      FIX-X 76200*
+               ''' NOT FOUND FOR STOPAT, INSTRUCTION',      FIX-X 76200*
+               ':- ENTIRE JOB WILL RUN'                     FIX-X 76200
+C00STPOK   CLEAR STOPAT                                           76200
+          MVC  #TKN,=H'-1'    SET OUTPUT NEGATIVE                 76200
+          OPINST #TKN         OUTPUTS LAST BLOCK FOR US
+           JOLRETN
+           SPACE 3
+C00TINST   EQU *               THIS ROUTINE IS CALLED WHEN IT
+*                              MUST BE KNOWN WHETHER OR NOT AN
+*                              INSTRUCTION IS A 'JOL' INSTRUCTION
+*                              OR AN ALREADY EXPANDED 'MACRO'
+           SR R15,R15
+* TRY NORMAL JOL TABLE ENTRY INSTRUCTIONS
+           L  R1,=V(CJOLINST)
+           LM R7,R9,0(R1)
+C00INLP    CLC ICOMMAND,0(R7)
+           BCR 8,R14
+           BXLE R7,R8,C00INLP
+* WELL IT MAY BE AN ASSIGNMENT
+           LR  R7,R14          SAVE RETURN ADDRESS
+           GETTKN 2
+           CLI TKN,C'='
+           BNE C00MAC1
+           GETTKN 1
+           SR  R15,R15
+           BR  R7
+C00MAC1    GETTKN 1
+           LA  R15,4
+           BR  R7
+           SPACE 3
+UJC36ST    EQU  *         PROCESS START AT LABEL
+           ENTRY   UJC36ST
+           GETTKN 2
+           JOLSTOR  'START AT LABEL',STARTAT,#TKN
+           B   C00MAINL
+         CNOP  0,8                                          FIX-X 76200
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           JOLSAVE CSECT=UJC04IF
+           TITLE 'UJC04IF:-HANDLE IF STATEMENT'
+* THIS MODULE RECIEVES CONTROL WHEN AN'IF'STATEMENT HAS BEEN FOUND
+*    IN THE PRE-PROCESSED TEXT.
+* IT'S DUTIES ARE CONSIDERABLY EASIER THAN THE PRE-PROCESSORS 'IF'.
+*    UJC04IF MUST VALIDATE THE 'IF' AND SET UP A 'STEP-NAME' IN'COND'
+* WHICH IS THE NAME OF THE STEP WHICH CONTAINS A VALUE OF 0 | 1 IF
+* THE STATEMENT WAS DETERMINED TO BE TRUE OR NOT.
+*    THE ACTUAL IF STATEMENT IS WRITTEN OUT TO THE CONTROL PDS TO BE
+* DETERMINED AT EXECUTE TIME.
+* HOWEVER:-SEE THE PLM TO SEE HOW ALL THIS WORKS.
+           SPACE 3
+***** NOTE **** ALTHOUGH THIS IMPLEMENTION WILL ALLOW RETURN CODES
+*    TO BE TESTED,COMPARED ETC,EXPRESSIONS ARE NOT YET ALLOWED
+*****
+**** THE FOLLOWING VETS ARE APPLIED TO THE 'IF' STATEMENT,BUT NOT
+*    NECESSARILY IN THIS ORDER.
+           SPACE
+*    1.    ALL ARITHMETIC AND CONCATENATION SYMBOLS ARE ILLEGAL
+*          THESE ARE +,-,/,*,||.
+*    2.    LITERAL STRING,IF 'STRING' ARE ILLEGAL.
+*    3.    THERE MUST BE AN EQUAL NUMBER OF LEFT '(' & RIGHT ')'
+*          BRACKETS.
+*    4.    FOLLOWING A '(' THERE CAN ONLY BE
+*              A) '('
+*              B) <IDENTIFIER>
+*              C) <NUMBER>
+*    5.    FOLLOWING A ')' THERE CAN ONLY BE
+*              A) ')'
+*              B) '&'
+*              C) '|'  D)'' (NULL STRING)
+*    6.    AFTER THE FIRST TOKEN IN A SUB-EXPRESSION THERE CAN ONLY BE
+*              A) ')'
+*              B) '&'
+*              C) '|'
+*
+*          A SUB-EXPRESSION IS TAKEN TO BE THE FIRST<NUMBER> | .
+*              <IDENTIFIER> AFTER:-
+*              A) '('
+*              B) '|'
+*              C) '&'
+           SPACE 3
+* NOW BECAUSE OF COMPEXITY OF THESE VETS,THEY ARE BROKEN DOWN INTO
+*    VERY SIMPLE STEPS.
+           SPACE
+* FIRST OF ALL I AM GOING TO MERELY CHECK POINTS 1,2 AND 3 ABOVE
+           SPACE
+           XC  #WORK,#WORK
+*          LA  R1,WORK
+*          USING  WORK,R1
+*          CLEAR WORK
+*          DROP  R1
+           MVC ILENGTH,=AL2(IBODY) SET UP 'IF' ETC                75311
+           MVC #WORK(IBODY+2),ILENGTH
+           SPACE
+           SR  R10,R10                         '(' COUNTER
+           SR  R9,R9                           ')' COUNTER
+           SR  R8,R8                           ERROR INDICATOR
+           LA  R7,2            SKIP THE 'IF'
+IFVT1GET   EQU  *
+           GETTKN REG=R7
+           CLI TKNTYPE,0                       NUMERIC ?
+           BE  IFVT1NUM                         YEP->TEST >4095
+           CLI TKNTYPE,3                       LITERAL STRING ?
+*                                               NO->SEE IF <IDENTIFIER>
+           BNE IFVT1IDT
+           LA  R8,1                            SET ERROR INDICATOR ON.
+         JOLERR 301,'INVALID SYMBOL ''',#TKN,''' IGNORED'
+           B   IFVT1LUP
+IFVT1IDT   EQU *
+           CLI TKNTYPE,2                       <IDENTIFIER> ?
+           BNE IFVT1SPC                         -> DEAL WITH SPEC CHAR
+* HERE IT IS AN IDENTIFIER,MUST SEE THAT IT EXISTS.
+           CLC =C'ANY ',TKN
+           BE  IFVT1LUP
+           CLC =C'ALL ',TKN
+           BE  IFVT1LUP
+           CLC =C'ERROR ',TKN
+           BE  IFVT1LUP
+         CLC   =C'MAXCC ',TKN                                     75128
+         BE    IFVT1LUP                                           75128
+         CLC   =C'LASTCC ',TKN                                    75128
+         BE    IFVT1LUP                                           75128
+          $CALL UJS17FID,TKN                                      74303
+           LTR R15,R15
+           BZ  IFVT1GOT
+         JOLERR 302,'TEST FOR ''',#TKN,''' IMPOSSIBLE:-NOT DECLARED'
+           LA  R8,1                            SET ERROR INDICATOR
+           B   IFVT1LUP                        GO TO BCT.
+           SPACE
+IFVT1GOT   EQU *
+           USING  IDTABLE,R1
+* NOW SEE IF IT IS A STEP-NAME OR SOMETHING ELSE DISARTROUS.
+           TM  IDTYPE,X'03'    PROGRAM OR MACRO TYPE?             75128
+           BO   IFERR15       BOTH ON=DSID TYPE
+           BZ    IFERR15       NONE ON IS SOMETHING ELSE
+* SEE IF OUTPUT YET
+           CLI IDUSED,0        USED YET?
+           BNE IFIDENT1
+         JOLERR 216,'STEP ''',#TKN,''' NOT EXECUTED:-TEST MARKED FALSE'
+           B  IFVT1LUP
+IFERR15    EQU  *
+         JOLERR 315,'TEST FOR ''',#TKN,''' INVALID AS ''',#TKN,''' IS N*
+               OT A PROGRAM OR MACRO NAME'
+           B  IFVT1LUP
+IFVT1NUM   TNUM #TKN
+           SPACE 3
+* NUMBER FOUND,SEE IF >4095
+           LTR R15,R15
+         BNZ   IFNUMER1                                           75128
+           CH  R1,=H'4095'                                        75128
+           BH  IFNUMER1
+           B  IFVT1LUP
+IFNUMER1 JOLERR 403,'NUMBER ',#TKN,' IS GREATER THAN 4095:- NO PROGRAM *
+               CAN ISSUE A RETURN CODE > 4095'
+           B   IFVT1LUP
+           SPACE 3
+IFIDENT1   EQU *
+           LH  R15,#TKN
+           LR  R14,R15
+         LA   R15,TKN(R15)    POINT TO SPOT AFTER TKN END         75128
+           MVC 0(4,R15),IDSTMT
+           OC 0(4,R15),=C'0000'
+           LA  R14,4(R14)
+           STH R14,#TKN
+           B   IFVT1LUP
+IFVT1SPC   EQU *
+* NOW A SPECIAL CHARACTER HAS BEEN FOUND.
+*    THE SIMPLEST THING TO DO IS TO LOOK FOR ONLY THE VALID
+*    SPECIALS ,IE &,|,(,) AND SIMPLY FLAG THE REST AS ERRORS.
+           CLI TKN,C'('
+           BE  IFLEFT1                         ADD1 TO REGISTER
+           CLI TKN,C')'
+           BE  IFRITE1
+           CLI TKN,C'&&'
+           BE  IFVT1LUP                         OK
+           CLI TKN,C'|'
+           BE  IFVT1LUP
+           CLI TKN,C'='
+           BE IFVT1LUP
+           CLI TKN,C'¬'
+           BE IFVT1LUP
+           CLI TKN,C'<'
+           BE IFVT1LUP
+           CLI TKN,C'>'
+           BE IFVT1LUP
+         JOLERR 304,'INVALID SPECIAL SYMBOL ''',#TKN,''' IGNORED'
+           LA  R8,1                            ERROR INDICATOR.
+* WHEW,I THINK THAT IS THE END OF THE FIRST 'IF' VET
+*  NOW JUST QUIETLY LOOP BACK AND GET THE NEXT TOKEN AND CHECK IT.
+IFVT1LUP   EQU *
+* CONCATENATE STRING TO #WORK NOW
+        BAL  R14,CONCAT
+        LTR  R15,R15          DID IT CONCAT?                      75128
+          BZ  C04CONOK        NO,SO DO CONCATENATION
+         JOLERR 414,'IF TOO COMPLEX'
+          B   IFRETN16        OUT
+C04CONOK EQU  *                                                   75128
+* NOW CHECK IF WE HAVE REACHED THE END OF THE INPUT STRING
+          LA  R7,1(R7)    ADD 1 TO TOKEN POINTER
+          CH  R7,TKNNO    REACHED THE 'THEN' ?
+          BL  IFVT1GET    NO,GET NEXT SYMBOL OLD BEAN.
+           BE  IFVT1GET  **********
+* RIGHT IF IT FELL THROUGH HERE,IT IS THE REAL END.
+           LTR R8,R8                           ANY ERRORS ?
+           BZ  IFTESTBR                         NO,SO CARRY ON
+         JOLERR 405,'IF STATEMENT DELETED'
+           JOLRETN RC=16
+IFTESTBR   CR  R10,R9                          NUMBER '(' = #')'
+           BE  IFVET2                           ALL LOOKS WELL
+           BL  IFRITEER
+         JOLERR 406,'TOO MANY ''('''
+           B   IFRETN16
+IFRITEER JOLERR 407,'TOO MANY '')'''
+           B   IFRETN16
+IFLEFT1    LA  R10,1(R10)
+           B   IFVT1LUP
+IFRITE1    LA  R9,1(R9)
+           B   IFVT1LUP
+IFRETN16   EQU  *
+           JOLRETN RC=16
+           EJECT
+IFVET2     EQU *
+* NOW A FEW FUN AND GAMES WHILE WE FURTHER CHECK OUT THE VALIDITY OF
+*    THE 'IF'. OH WELL..
+* NOW THIS TIME WE HAVE TO WORK FORWARDS,SO A BXLE LOOP MUST BE
+*    SET UP.
+           LA  R5,2                            START (SKIP IF)
+           LA  R6,1                            INCREMENT
+           LH  R7,TKNNO                        STOP(#OF TOKENS)
+           LA  R7,1(R7)                                           75311
+IF2LUP     EQU  *
+           GETTKN REG=R5
+           CR  R1,R7                                              75311
+           BNH TIFVT1RT                                           75311
+IFINVEND JOLERR 408,'STATEMENT ENDS PREMATURELY OR INCORRECTLY'
+           B   IFRETN16
+TIFVT1RT   CLI TKN,C'('
+           BE  IFVT2RT
+           CLI TKN,C')'
+           BE  IFVT2LFT
+* WELL HERE IT MUST BE THE START OF A 'SUB-EXPRESSION'
+IFSUB      EQU *
+* NOW WE HAVE VETTED THE'IF'FAIRLY THOUGHLY BUT WE'LL CHECK IT A BIT
+*    FURTHER (IF ERROR HERE IT IS AN INTERNAL ERROR).
+           CLI TKNTYPE,0                       <NUMBER> ?
+           BE  IFSUB1OK
+           CLI TKNTYPE,2                       <IDENTIFIER>
+           BE  IFSUB1OK
+         JOLERR 509,'''',#TKN,''''
+           B   IFRETN16
+           SPACE
+IFSUB1OK   GETTKN REG=R1                       GET NEXT TOKEN
+* THIS SHOULD BE '|' OR '&' | <OPERATOR>
+           LA  R9,=C'| && = < > ¬=¬<¬><=>='
+           LA  R15,18(R9)
+           LA  R14,2
+IFVT2SUB   EQU *
+           CLC TKN(2),0(R9)
+           BE  IFSUB2OK
+           BXLE R9,R14,IFVT2SUB
+           CR  R1,R7                                              75311
+           BNL ENDIF2VT                                           75311
+IFINVALS   EQU *
+         JOLERR 410,'INVALID SYNTAX AT/BEFORE ''',#TKN,''''
+           B   IFRETN16
+IFSUB2OK   EQU *
+           CLI TKN,C'&&'
+           BE  IFENDSUB                        END-SUB EXPRESSION
+           CLI TKN,C'|'
+           BE  IFENDSUB
+* WELL NOW WE ARE LEFT WITH AN OPERATOR
+*    THEREFORE THE NEXT TOKEN SHOULD BE A <NUMER> | <IDENTIFIER>
+           GETTKN REG=R1
+           STH R1,TKNCURR
+           CR  R1,R7                                              75311
+           BH  IFINVEND                                           75311
+           CLI TKNTYPE,0                       <NUMBER>
+           BE  IFSUB3OK
+           CLI TKNTYPE,2                       <IDENTIFIER>
+           BE  IFSUB3OK
+         JOLERR 411,'INVALID SYMBOL ''',#TKN,''' AFTER OPERATOR'
+           B   IFRETN16
+IFSUB3OK   LR  R5,R1                           POINTER TO NEXT TOKEN
+           GETTKN REG=R5
+           CR  R1,R7                                              75311
+           BNL ENDIF2VT                                           75311
+           CLI TKN,C'&&'                       NEW CONNECTOR ?
+           BE  IFSRTSUB
+           CLI TKN,C'|'                        NEW CONNECTOR ?
+           BE  IFSRTSUB
+           CLI TKN,C'('
+           BE IFVT2RT
+           CLI TKN,C')'
+           BE IFVT2LFT
+           B   ENDIFVT2                        BXLE
+IFSRTSUB   GETTKN REG=R1                       GET NEXT TKN
+           LR  R5,R1
+           B   IFSUB                           GO VET'SUB-EXPRESSION'
+           SPACE 3
+IFENDSUB   EQU *
+* GUY CODED  IF  A &
+*    TOKEN CONTAINS &
+           GETTKN REG=R1                       GET NEXT TOKEN
+           CR  R1,R7                                              75311
+           BH  IFINVEND                                           75311
+           LR  R5,R1
+           B   IFSUB                           VET 'SUB-EXPRESSION'
+           SPACE 3
+IFVT2RT    EQU *
+* NOW WE HAVE FOUND A '('
+           GETTKN REG=R1
+           CLI TKN,C'('
+           BE  IFVT2RT
+           SPACE
+           CLI TKNTYPE,2                       <IDENTIFIER>
+           BE  IFSUB
+           CLI TKNTYPE,0                       <NUMBER>
+           BE  IFSUB
+         JOLERR 412,'AFTER ''(''',#TKN,''' IS INVALID'
+           B   IFRETN16
+IFVT2LFT   EQU *
+         CNOP  0,8                                          FIX-X 76200
+* WE HAVE FOUND A ')'
+           GETTKN REG=R1
+           CR  R1,R7                                              75311
+           BNL ENDIF2VT                                           75311
+           CLI TKN,C')'                        ANOTHER ')'
+           BE  IFVT2LFT
+           CLI TKN,C'&&'
+           BE  IFENDSUB
+           CLI TKN,C'|'
+           BE  IFENDSUB
+         JOLERR 413,'AFTER '')''',#TKN,''' IS INVALID'
+           B   IFRETN16
+ENDIFVT2   EQU *
+           BXLE R5,R6,IF2LUP
+* NOW WE HAVE NEARLY PERMORED ALL THE VETS.
+           SPACE 3
+* NOW THAT IS REALLY IT.
+*    ALL WE HAVE TO DO IS WRITE THE STATEMENT OUT SOMEWHERE.
+ENDIF2VT       EQU  *
+* NOW SET UP THE LENGTH OF THE ACTUAL 'IF' STRING
+*     BECAUSE ALTHOUGH #WORK CONTAINS A LENGTH THERE IS
+*     ANOTHER ONE IN THE MIDDLE OF THE STRING
+            LH R1,#WORK                                           75311
+         LA    R1,2(R1)                                           88300
+         STH   R1,#WORK       ADD COS #WORK IS A FEW BYTES SHORT  75311
+           SH  R1,=AL2(IBODY+2)                                   88300
+           STH R1,CALLAREA
+           MVC #WORK+IBODY(2),CALLAREA
+         OPINST #WORK
+           JOLRETN
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           LTORG
+           TITLE 'UJC10TYP:-HANDLE TYPE INSTRUCTION'
+           JOLSAVE CSECT=UJC10TYP
+           ORG UJC10TYP
+UJC11DIS   EQU  *
+           ENTRY UJC11DIS,UJC23RTN
+UJC23RTN   EQU *
+           ORG
+           GETTKN NO=2                         SEE IF 2ND TOKEN IS '('
+           CLI TKN,C'('
+           BNE TYPMSSGE                        MUST BE THE MESSAGE
+* HERE IT IS TYPE('MESSAGE')
+           GETTKN NO=4
+           CLI TKN,C' '                        BLANK ?,SHOULD BE ')'
+           BE  GET10TK3                        BUT IF NOT DON'T WORRY
+           CLI TKN,C')'
+           BE  GET10TK3
+         JOLERR 201,'INVALID SYNTAX'
+GET10TK3   GETTKN NO=3                         GET MESSAGE TEXT.
+           B   SETUPTYP
+           SPACE 3
+TYPMSSGE   EQU *
+* THIS 'TYPE' HAS NOT GOT A '('.
+           CLC TKNNO,=H'2'
+         BNH   SETUPTYP                                           75128
+         JOLERR 205,'INVALID SYNTAX'
+           SPACE 3
+SETUPTYP   EQU *
+* NOW THE MESSAGE REQUIRED TO GO OUT SHOULD BE IN TKN
+           SPACE
+* TEST MESSAGE TEXT VALID.
+           CLI TKN,C' '                        IS THERE AN OPERAND ?
+         BE    TYPOPOK                                            75128
+           CLI TKNTYPE,0                       NUMERIC OPERAND ?
+           BE  TYPOPOK                          THAT'S OK
+           CLI TKNTYPE,3                       LITERAL STRING OPERAND ?
+           BE  TYPOPOK                          THAT'S OK TOO
+           CLI TKNTYPE,2                       IDENTIFIER ?
+*                                              BUT IT WILL DO
+           BE  TYPOPNG                          THAT'S NOT TOO GOOD,
+* HERE IT MUST BE A SPECIAL CHARACTER,AND THAT'S NO GOOD AT ALL
+TYPERR03 JOLERR 303,'MESSAGE TEXT INVALID''',#TKN,''''
+           JOLRETN RC=16
+           SPACE 3
+TYPOPNG  JOLERR 204,'MESSAGE TEXT SHOULD BE IN QUOTES'
+*              ED BY THIS IMPLEMENTATION'
+TYPOPOK    CLC #TKN,=H'100'                    LAST CHECK TO SEE THAT
+*                                              THE MESSAGE LENGTH IS
+*                                              NOT EXCESSIVE
+           BL  MUVTYPMS                         OK->MOVE TYPE MESSAGE
+         JOLERR 202,'MESSAGE TEXT TRUNCATED'
+           MVC #TKN,=H'100'
+MUVTYPMS   MVC ITEXT,#TKN
+           LA  R1,IBODY+2      LENGTH MESSAGE CONSTANTS+2
+           AH  R1,#TKN
+           STH R1,ILENGTH
+         OPINST INST
+           JOLRETN
+           DC  S(*,*,*,*)                                         74303
+           DC  S(*,*,*,*)                                         74303
+           DC  S(*,*,*,*)                                         74303
+           DC  S(*,*,*,*)                                         74303
+           TITLE 'HANDLE SIGNAL(ERROR)COMMAND'
+           JOLSAVE CSECT=UJC12SIG
+* THIS CSECT HANDLES THE SIGNAL ERROR COMMAND
+           SPACE 3
+* THE FORMAT OF THE SIGNAL IS:-
+*    SIGNAL ERROR SEVERITY,'MESSAGE'
+* OR SIGNAL ERROR(SEVERITY,'MESSAGE')
+           LA  R5,2                            START AT 2ND TOKEN
+           GETTKN REG=R5                       GET THE'ERROR'
+           CLC =C'ERROR ',TKN                   ERROR ?
+           BNE SIG01                           NO-DON'T WORRY
+           LR  R5,R1                           YES,PREPARE TO GET NEXT
+*                                              TOKEN.
+SIG01      GETTKN REG=R5
+           CLI TKN,C'('                         '(' ?
+           BNE SIG02                           NO-DON'T WORRY
+           LR  R5,R1
+SIG02      GETTKN REG=R5                       GET SEVERITY CODE
+           CLI TKNTYPE,0                       TOKEN NUMERIC ?
+           BNE SIGERR01
+           CLC #TKN,=H'1'                      LENGTH OF TOKEN 1 BYTE ?
+           BNE SIGERR01
+           CLI TKN,C'4'                        <4
+           BH  SIGERR01
+           IC  R6,TKN                          SAVE 1 BYTE SEVERITY
+*                                              CODE
+           GETTKN REG=R1                       GET NEXT TOKEN,WHICH
+*                                              SHOULD BE A COMMA
+           CLI TKN,C','
+           BNE SIG03
+           LR  R5,R1
+SIG03      GETTKN REG=R5                       GET MESSAGE TEXT
+           CLI TKN,C' '                        IS THERE ANY TEXT
+           BE  SIGERR02                         ->NO
+           CLI TKNTYPE,0                       IS IT NUMERIC ?
+           BE  SIGOK                            YEP
+           CLI TKNTYPE,3                       LITERAL ?
+           BE  SIGOK                            YEP
+           CLI TKNTYPE,2                       IDENTIFIER ?
+           BE  SIGWARN1                         YEP->ISSUE A WARNING
+* MUST BE SPECIAL CHARACTER,SO I'LL FIX THE GUY.
+         JOLERR 201,'MESSAGE TEXT INVALID''',#TKN,''''
+C12BADSE   EQU  *
+           LA  R6,C'4'
+C12BADMS   EQU  *
+           MVC TKN(15),=C'ERROR SIGNALLED'
+           MVC #TKN,=H'15'
+           B  MUVSIG
+SIGWARN1 JOLERR 102,'MESSAGE TEXT SHOULD BE IN QUOTES'
+*              BY THIS IMPLEMENTATION'
+SIGOK      EQU *
+* NOW WE SHALL FIX UP THE MESSAGE TEXT,IF THIS TOKENS LENGTH < 60
+           CLC #TKN,=H'98'
+           BL  MUVSIG
+           MVC #TKN,=H'98'
+         JOLERR 203,'MESSAGE TEXT TRUNCATED'
+MUVSIG     MVC ITEXT+4(L'ITEXT-4),TKN SHIFT IN ACTUAL MESSAGE
+           STC R6,ITEXT+2             R6 CONTAINS SEVERITY CODE,
+*                                              DID YOU REMEMBER ?
+           MVI ITEXT+3,C','
+           LH  R1,#TKN         LOAD CURRENT LENGTH OF MESSAGE
+           LA  R1,2(R1)        ADD 2 COS WE PUT 'SEVERITY'+ A COMMA IN
+           STH R1,DBL          STORE IN WORK LOCN FOR A SECOND
+           MVC ITEXT(2),DBL    NOW IN LENGTH OF COMMAND TEXT
+           LA  R1,IBODY+2                      LENGTH BODY OF RECORD
+*                                              TOO BE WRITTEN OUT
+           AH  R1,DBL          ADD LENGTH OF RECORD
+           STH R1,ILENGTH
+         OPINST INST
+           JOLRETN
+SIGERR01 JOLERR 204,'INVALID SEVERITY, RANGE IS 1 TO 4'
+           B  C12BADSE
+SIGERR02 JOLERR 105,'NO MESSAGE TEXT PROVIDED'
+           B  C12BADMS
+         CNOP  0,8                                          FIX-X 76200
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+      LTORG
+           TITLE 'UJC13STP:-HANDLE STOP INSTRUCTION'
+UJC13AT    CSECT                                                76200
+            USING *,R15
+           L   R15,=V(UJC13STP)                                   76200
+           BR R15                                                 76200
+         DROP R15
+           LTORG                                                  76200
+           JOLSAVE CSECT=UJC13STP
+* A STOP INSTRUCTION CAN BE:-
+*    STOP
+* OR STOP 'MESSAGE'
+* OR STOP('MESSAGE')
+* OR STOP NUMBER
+* OR STOP(NUMBER)
+* OR STOP WHEN .....VARIOUS CONDITIONS
+* OR STOP AT STEP                                        CHG30008 76200
+           SPACE 3
+         CLC   ICOMMAND,=CL8'STOPAT'                      CHG3008 76200
+         BE    C13AT                                      CHG3008 76200
+* LET'S HAVE A LOOK AND SEE IF IT IS JUST STOP
+           GETTKN NO=2                         GET 2ND TOKEN
+           CLI TKN,C' '                        BLANK ?
+           BE  JUSTSTOP                         ->YEAH,JUST STOP
+           CLI TKN,C'('                        IS TOKEN A '('
+           BE  STOPMSSB                         TIS A STOP WITH A MSSG
+TESTSTPX   EQU *
+           CLI TKNTYPE,0                       STOP <NUMBER> ?
+           BE  STOPMSSG                         YES GO FIX
+           CLI TKNTYPE,3                       STOP <LITERAL> ?
+           BE  STOPMSSG                         YES GO FIX
+           CLI TKNTYPE,1                       SPECIAL CHAR ?
+           BE  STOPERR3                        IF ITS NOT '(' I DON'T
+*                                              WANT TO KNOW ABOUT ANY
+*                                              OTHER SPECIALS THANKS
+           SPACE 3
+* HERE THE TOKEN MUST BE AN IDENTIFIER,AND IT COULD BE A'WHEN','BEFORE'
+*    OR 'AFTER' OR COULD BE SOME-ONE FORGOT TO PUT QUOTES AROUND
+*    HIS MESSAGE
+           CLC =C'WHEN ',TKN
+           BE  STOPWHEN
+         CLC   =C'AT ',TKN                               CHG30008 76200
+         BE    C13AT                                     CHG30008 76200
+         JOLERR 201,'MESSAGE TEXT SHOULD BE IN QUOTES'
+*              S IMPLEMENTATION'
+STOPMSSG   CLC #TKN,=H'100'
+           BL  MUVSTOPM
+         JOLERR 202,'MESSAGE TEXT TRUNCATED'
+           MVC #TKN,=H'100'
+MUVSTOPM   MVC ITEXT,#TKN
+           LA R1,IBODY+2
+           AH  R1,#TKN
+           STH R1,ILENGTH
+         OPINST INST
+           JOLRETN
+           SPACE 3
+STOPMSSB   EQU *
+* HERE THE TOKEN CONTAINS A '('
+           GETTKN NO=3
+           B   TESTSTPX
+           SPACE 3
+STOPERR3 JOLERR 303,'SYMBOL ''',#TKN,''' INVALID'
+STOPRT16   JOLRETN RC=16
+           SPACE 3
+STOPWHEN   EQU *
+         MVC   #WORK(2),=H'10'     SET=0                 JOL30007 76200
+         MVC   WORK(10),=CL10'(4000,EQ),'
+         IFVALUE NEST,C13ERR5                            JOL30007 76200
+         GETTKN 3                                        JOL30007 76200
+         CLI   TKN,C' '                                  JOL30007 76200
+         BNE   C13GO1                                    JOL30007 76200
+         JOLERR 306,'INVALID STOP WHEN'                  JOL30007 76200
+         JOLRETN RC=0                                    JOL30007 76200
+C13GO1   CLC   =C'ANY ',TKN   ANY ?                      JOL30007 76200
+         BNE   C13ATER7       NO -> ERROR                JOL30007 76200
+         GETTKN (R1)          SHOULD BE AN OPERATOR      JOL30007 76200
+         LM    R5,R7,C13OPCON                            JOL30007 76200
+         CLC   TKN(2),0(R5)                              JOL30007 76200
+         BE    C13GOTOP                                  JOL30007 76200
+         BXLE  R5,R6,*-10                                JOL30007 76200
+         JOLERR 307,'INVALID OPERATOR ''',#TKN,''':-STOP IGNORED'
+         JOLRETN RC=16                                   JOL30007 76200
+C13GOTOP MVI   TKN,C'('       OPEN                       JOL30007 76200
+         MVI   #TKN+1,1                                  JOL30007 76200
+         BAL   R14,CONCAT                                JOL30007 76200
+         GETTKN (R1)          GET NUMBER                 JOL30007 76200
+         CLI   TKNTYPE,0      NUMERIC ?                  JOL30007 76200
+         BE    C13NUM1                                   JOL30007 76200
+         JOLERR 308,'NUMBER EXPECTED NOT ''',#TKN,''''   JOL30007 76200
+         JOLRETN RC=16                                   JOL30007 76200
+C13NUM1  CLI   #TKN+1,4       DONT USE TNUM-> DESTROYS R1JOL30007 76200
+         BH    C13ERR9        >4 DIGITS                  JOL30007 76200
+         BL    C13NUMOK       <4 DIGITS,OK               JOL30007 76200
+         CLC   =C'4095',TKN                              JOL30007 76200
+         BL    C13ERR9        NUMBER TOO BIG             JOL30007 76200
+C13NUMOK BAL   R14,CONCAT     CONCAT NUMBER IN           JOL30007 76200
+         MVI   #TKN+1,4       SET TKN LENGTH TO 4        JOL30007 76200
+         MVI   TKN,C','       PUT IN A COMMA             JOL30007 76200
+         MVC   TKN+1(2),2(R5)   SHIFT OS OPERATOR                 76200
+         MVI   TKN+3,C')'       PUT IN LAST ')'                   76200
+         BAL   R14,CONCAT     CONCATENATE IT             JOL30007 76200
+         GETTKN (1)           SEE IF END, OR MORE        JOL30007 76200
+         CLI   TKN,C' '       END ?                      JOL30007 76200
+         BE    C13ENDWH       YES                        JOL30007 76200
+         CLI   TKN,C'|'       CONNECTOR ?                JOL30007 76200
+         BNE   C13ERR10       NO, ERROR                  JOL30007 76200
+         MVI   TKN,C','                                  JOL30007 76200
+         BAL   R14,CONCAT     CONCATENATE CONNECTOR      JOL30007 76200
+         GETTKN (R1)                                     JOL30007 76200
+         B     C13GO1         ROUND LOOP                 JOL30007 76200
+C13ATER7 JOLERR 311,'EXPECTED ''ANY'':-FOUND ''',        JOL30007 76200*
+               #TKN,''''                                 JOL30007 76200
+         JOLRETN RC=16                                   JOL30007 76200
+C13ERR9  JOLERR 309,'MAX NUMBER ALLOWED 4095,FOUND ',    JOL30007 76200*
+               #TKN                                      JOL30007 76200
+         JOLRETN RC=16                                   JOL30007 76200
+C13ERR5  JOLERR 305,'STOP WHEN CANNOT BE EXECUTED IN ',  JOL30007 76200*
+               'A DO GROUP OR AFTER AN IF'               JOL30007 76200
+C13ENDWH L     R5,AJOBDETS
+         USING JOBDETS,R5
+         IFDYNAM C13SAVEW   DYNAMIC ALLOCATION ? SAVE TKNSTRNG    86290
+         IFTSO   C13SAVEW   DYNAMIC ALLOCATION ? SAVE TKNSTRNG    86290
+         IFOS  =X8,C13SAVEW                                       J40B
+         JOLSTOR 'JOB CONDITION CODES',JOBCOND,#WORK     JOL30007 76200
+         JOLRETN RC=0                                    JOL30007 76200
+C13SAVEW DS     0H
+         JOLSTOR 'JOB CONDITION CODES',JOBCOND,#TKNSTRG           86200
+         JOLRETN RC=0                                             86200
+         DROP   R5
+STOPAFT  EQU   *
+STOPBEF  EQU   *
+         JOLERR 404,'STOP ',#TKN,' NOT YET IMPLEMENTED'
+         B     STOPRT16                        RETURN 16
+C13AT    EQU   *                                          CHG3008 76200
+         GETTKN 1                                        JOL30008 76200
+         CLC   =C'STOPAT ',TKN                           JOL30008 76200
+         BE    C13TKN2                                   JOL30008 76200
+         GETTKN 3                                        JOL30008 76200
+         B     C13STPAT                                  JOL30008 76200
+C13TKN2  GETTKN 2                                        JOL30008 76200
+C13STPAT JOLSTOR 'STOP AT LABEL',STOPAT,#TKN             JOL30008 76200
+         JOLRETN RC=0                                   JOL30008 76200
+C13ERR10    JOLERR 310,'EXPECTED ''|'':-FOUND',                   76200*
+               #TKN
+        JOLRETN RC=16
+           SPACE 3
+JUSTSTOP   MVC TKN(22),=C'STOP EXECUTED AT STMT '
+           MVC TKN+22(4),STMT
+           MVC #TKN,=H'26'
+           B   STOPMSSG
+C13OPCON DC    A(*+12,4,C13CONE-4)                       JOL30007 76200
+         DC    C'= EQ'                                   JOL30007 76200
+         DC    C'¬=NE'                                   JOL30007 76200
+         DC    C'> LT'                                   JOL30007 76200
+         DC    C'< GT'                                   JOL30007 76200
+         DC    C'¬>GE'                                   JOL30007 76200
+         DC    C'¬<LE'                                   JOL30007 76200
+         DC    C'>=LE'                                   JOL30007 76200
+         DC    C'<=GE'                                   JOL30007 76200
+C13CONE  EQU   *                                         JOL30007 76200
+         CNOP  0,8                                       JOL30007 76200
+           DC  S(*,*,*,*)                                         74303
+           DC  S(*,*,*,*)                                         74303
+           DC  S(*,*,*,*)                                         74303
+           DC  S(*,*,*,*)                                         74303
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                   FIX-X 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                   FIX-X 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                   FIX-X 76200
+          LTORG
+           TITLE 'PERFORM RUN INSTRUCTION'
+C24SAVE    DSECT                                                  75311
+           DS  18F                                                75311
+C24ADD     DS  A               ADDRESS OF CURRENT DD (WE NEED     75311
+*                              THIS WHEN EXAMINING FOR CONCAT-    75311
+*                              ENATED VOLREFS)                    75311
+C24CURRN   DS  A               CURRENT DD NUMBER WE ARE           75311
+*                              EXAMINING                          75311
+*                                                                 75311
+C24AID   DS    A
+C24SAVEL   EQU (*-C24SAVE)                                        75311
+           JOLSAVE CSECT=UJC24RUN,SIZE=C24SAVEL                   75311
+           USING C24SAVE,R13                                      75311
+           USING JOLCOM,R2
+           USING TKNX,R3
+* WE HAVE FOUND A RUN STATEMENT.
+           GETTKN NO=2         GET THE PROGRAM NAME
+         $CALL UJS16PID,TKN   FIND WHERE THE DETAILS ARE          75128
+           LTR R15,R15
+           BZ  C24GOTPM        GOT THE PROGRAMS DETAILS.
+         JOLERR 401,'PROGRAM ''',#TKN,''' HAS NOT YET BEEN DEFINED'
+C24RETNF   JOLRETN RC=16
+C24GOTPM    EQU  *
+           USING IDTABLE,R1
+           TM  IDTYPE,X'02'                                       75128
+           BZ  C24IDOK                                            75311
+C24NPROG JOLERR 402,'CANNOT RUN ''',#TKN,''':- IT IS NOT A PROGRAM'
+           JOLRETN RC=16
+C24IDOK    EQU  *
+* NOW WE MUST TRANSFER THE DETAILS TO AN AREA OF SO THAT THEY     75128
+*  WON'T GET OVER-WRITTEN BY OTHER THINGS.                        75128
+* FOR 3.0 THERE IS A SPECIAL AREA RESERVED FOR PROGRAM DECLARES   75128
+* R0 CONTAINS THE ADDRESS OF WHERE THINGS ARE NOW.                75128
+         LR    R9,R1          SAVE R1                    JOL30003 76200
+         L     R1,APROGWRK    GET SPECIAL AREA ADDRESS            75128
+         LR    R4,R1          SAVE IT                             75128
+         BAL   R14,MOVEDATA   SHIFT PROGRAM DETAILS               75128
+         LR    R1,R9          RESTORE R1                 JOL30003 76200
+         SPACE 3                                                  75128
+           MVI IDUSED,1
+           CLC =C'$$',LABEL
+           BE C24NLABX
+           CLC LABEL,IDNAME
+           BE C24NLABX
+          $CALL UJS17FID,LABEL                                    74303
+            LTR R15,R15       DID WE FIND A NAME ALREADY          75049
+            BNZ C24IDOK2      NOPE                                75049
+            CLC IDLEVEL,LEVEL+1                                   75311
+             BE  C24ERR8
+            LR  R1,R0
+            B   C24IDOK2
+C24ERR8  JOLERR 308,'LABEL ''',LABEL,''' HAS ALREADY BEEN DEFINED:-IGNO*
+               RED'
+            B   C24CRTLB     IGNORE,IF USED, ERROR LATER         75049
+C24IDOK2   MVI  IDTYPE,X'02'   MACRO NAME TYPE                    75128
+           MVC IDLEVEL,LEVEL+1                                   75049
+           MVC IDADDR,ZERO  STOP ABEND IF SOMEONE RUNS A LABEL   75049
+           MVC IDSTMT,STMT
+           MVI IDUSED,1
+           MVC IDNAME,LABEL
+           LH R1,NOIDS
+           LA R1,1(R1)
+           STH R1,NOIDS
+           B   C24CRTLB
+C24NLABX   EQU  *
+           MVC LABEL,TKN                                          75311
+           MVC IDSTMT,STMT
+C24CRTLB   EQU  *
+*******************************************************************DASD
+*  CHECK FOR A STARTAT STEP  AND IF IT DOES NOT MATCH THE ONE     *DASD
+*  WERE PROCESSING CURRENTLY RETURN TO THE MAIN PHASE             *DASD
+********************************************************02-25-78***DASD
+          IFNULL  STARTAT,C24NOSAT                                 DASD
+          B       C24SKIPR      JUST SKIP THIS RUN                 DASD
+C24NOSAT  EQU    *                                                 DASD
+           USING PGMDETS,R4
+*                                                                 75311
+* NOW WE HAVE TO SEE IF THE STEP NAME HAS ALREADY BEEN OUTPUT,    75311
+*  AND IF SO WE WILL GENERATE A $$STMT TYPE STEP-NAME, OTHERWISE  75311
+*  WE'LL USE THE ONE SPECIFIED                                    75311
+           CLC NOSTEPS,MAXSTEPS HAVE WE ALREADY OUTPUT THE        75311
+*                              MAXIMUM NUMBER OF STEPS THAT WE    75311
+*                              WILL CHECK FOR DUPLICATES ?        75311
+           BE  C24DUPST        YES, SAME AS DUPLICATE STEP THEN   75311
+           LH  R15,NOSTEPS                                        75311
+           L   R1,ASTEPTBL                                        75311
+           SLL R15,3           *8                                 75311
+           AR  R15,R1                                             75311
+           LA  R14,8                                              75311
+           CLC LABEL,0(R1)                                        75311
+           BE  C24DUPST        MAKE DUPLICATE STEP                75311
+           BXLE  R1,R14,*-10                                      75311
+           MVC 0(8,R1),LABEL                                      75311
+           LH  R1,NOSTEPS                                         75311
+           LA  R1,1(R1)                                           75311
+           STH R1,NOSTEPS                                         75311
+           MVC PGMSTEP,LABEL                                      75311
+           B   C24OPDOX                                           75311
+C24DUPST   MVC PGMSTEP(2),=C'$$'                                  75311
+           MVC PGMSTEP+2(4),STMT                                  75311
+           OC  PGMSTEP+2(4),=C'0000'                              75311
+C24OPDOX   EQU *                                                  75311
+* NOW OUTPUT A 'DO' TO HELP THE LATER PHASE (AN IF COULD HAVE BEEN
+*                              BEFORE THIS INSTRUCTION).
+           MVC ILENGTH(2),=AL2(IBODY)
+           MVC ICOMMAND,=CL8'DO'
+           LH  R1,NEST
+           LA R1,1(R1)
+           STH R1,NEST
+           STC R1,INEST
+         OPINST ILENGTH
+           CLC LABEL,BLANKS
+           BNE C24LABOK
+           MVC LABEL,PGMID     MOVE IN DECLARE NAME
+C24LABOK   MVC PGMLABEL,LABEL
+* NOW OUTPUT PGM DETAILS.
+           MVC #PGMDETS,=AL2(PGMLEN)
+           MVC PGMESTMT,STMT
+           OC  PGMESTMT,=C'0000'
+         OPINST #PGMDETS
+C24TPARM   EQU *
+* NOW FIX UP PARM FIELD INFO
+* CODE FOR LONG PARM TO GO IN LABELLED AS J60.        CLEM CLARKE 10330
+*                                                    NOV 26, 2010   J60
+* IF || CODED AFTER 1ST FIELD, OUTPUT MANY PARM RECS.NOV 26, 2010   J60
+           CLC TKNNO,=H'3'     IS THERE A PARAMETER ?
+           BL  C24NOPM         NO
+           GETTKN NO=3
+           CLC =C'PARM ',TKN
+           BNE C24TBRA         TEST IF A BRACKET
+           GETTKN REG=R1       GET NEXT TOKEN
+           CLI TKN,C' '        ANYTHING AFTER PARM?
+           BE  C24ISPRM        NO,SET TKN='PARM' AND USE IT AS THE
+*                              PARAMETER
+C24TBRA    CLI TKN,C'('
+           BNE C24TEQU         TEST IF 'EQUAL' SIGN
+           GETTKN REG=R1       SKIP BRACKET
+           CLI TKN,C')'        CLOSING BRACKET,I.E NO PARM
+           BNE C24USETN        NO,USE WHAT'S IN TKN
+           B   C24NOPRM        WASN'T A PARM
+C24TEQU    CLI TKN,C'='
+           BNE C24USETN        NO,SO USE WHATS IN TOKEN NOW
+           GETTKN (1)
+           B   C24USETN
+           SPACE
+C24ISPRM   MVI #TKN+1,4                                           74303
+           MVC TKN(4),=C'PARM'                                    74303
+*                                                                 74303
+* IF || CODED AFTER 1ST FIELD, OUTPUT MANY PARM RECS.NOV 26, 2010   J60
+C24USETN   EQU *
+           STH R1,TKNCURR                                         74303
+           MVC ICOMMAND,=CL8'PARM '
+           MVC ISTMT,STMT
+           MVC ILABEL,LABEL
+         $CALL UJS98QU,#TKN   DROP DOUBLE QUOTES,SET L'TKN  FIX-X 76200
+           LA  R1,IBODY
+           LA R1,2(R1)
+           AH  R1,#TKN
+           STH  R1,INST
+           MVC ITEXT,#TKN
+         OPINST INST
+           GETTKN TKNCURR      GET TOKEN AFTER PARM                 J60
+           CLC  =C'||',TKN                                          J60
+           BNE  C24GETEN       END OF PARMS                         J60
+* NOW LOOP AROUND OUTPUTING MULTIPLE PARM RECORDS UNTIL END OF PARM J60
+           GETTKN (R1)         GET NEXT BIT OF PARM                 J60
+           B    C24USETN       STORE R1 AND OUTPUT NEXT BIT OF PARM J60
+C24GETEN   GETTKN TKNCURR      GET TOKEN AFTER PARM               74303
+           CLI TKN,C' '                                           74303
+           BE  C24POK09                                           74303
+           CLI TKN,C')'                                           74303
+           STH R1,TKNCURR                                         74303
+           BE  C24GETEN                                           74303
+         JOLERR 307,'EXCESS INFORMATION STARTING ''',#TKN,''' IGNORED'
+C24POK09   EQU *                                                  74303
+C24NOPRM   EQU *
+C24NOPM    EQU *
+* NOW WE ARE READY TO THINK SERIOUSLY ABOUT FIXING UP THE POOR
+*    GENTLEMAN'S DD CARDS.
+           SPACE 3
+***********************************************************************
+*
+* THERE HAS BEEN AN ERROR IN THIS VERSION OF JOL EVER SINCE DAY 1 75311
+*    OF THE ASSEMBLER RE-WRITE.                                   75311
+* WHEN VOLREFS ARE USED IN CONCATENATED DATA SETS,JOL USED TO     75311
+*    GENERATE $$VRNNNN DD CARDS IN THE MIDDLE OF THE CONCATENATED 75311
+*    DD-CARDS.                                                    75311
+*                                                                 75311
+* THIS WILL NOW BE CURED.                                         75311
+*                                                                 75311
+*    1. WE HAVE A DD-CARD READY TO CREATE FOR NEXT PHASE.         75311
+*    2. SAVE ADDRESS OF THIS ENTRY OF PGMDETS DDNAME              75311
+*    3. IS THIS A DSID ?                                          75311
+*    4.    YES                                                    75311
+*    5.    FIND THE DSID.                                         75311
+*    6.    DOES IT CONTAIN A VREF ?                               75311
+*    7.    YES                                                    75311
+*    8.    POP OUT $$VR CARD                                      75311
+*    9. IS NEXT A CONCATENATION ?                                 75311
+*   10.    YES                                                    75311
+*   11.    GO TO 3.                                               75311
+*   12.    NO, PICK UP ORIGINAL START POINT (SAVED AT 2)          75311
+*          AND OUTPUT REAL DDNAMES TILL NEXT HAS A REAL DDNAME    75311
+*          (IE END OF CONCATENATION).                             75311
+*          IF ANY DSIDS CONTAIN VREFS THIS TIME, BLANK OUT VOLUME 75311
+*          AND THE GENERATE PHASE WILL FIX VREFS PROPERLY FOR US  75311
+*                                                                 75311
+***********************************************************************
+           LA  R9,TRANS
+           USING DDDSNDET,R9
+         SPACE 3
+* NOW THE FOLLOWING IS A MAJOR CHANGE FROM EARLIER VERSIONS OF JOL75128
+*                                                                 75128
+* PREVIOUS VERSIONS USED TO BREAK ANY PROGRAM DECLARE DETAILS     75128
+*  INTO MANY SMALL BLOCKS CONTAINING INFORMATION ABOUT PROGRAMS   75128
+*  AND DD DETAILS.                                                75128
+* THIS ONE HAS THE PROGRAM DECLARE SET IN 1 BIG BLOCK, SO NOW     75128
+*  WE ONLY HAVE TO STEP DOWN THE BLOCK PICKING UP DD DETAILS.     75128
+* ALSO: A DSNAME MAY BE SPECIFIED AS WELL AS A DSID               75128
+         SPACE 2                                                  75128
+         LA    R5,PGMDD1                                          75128
+         USING PGMDDOV,R5                                         75128
+         SR    R7,R7          COUNTER OF NUMBER OF DDS WE HAVE    75128
+*                             OUTPUT SO FAR                       75128
+C24MAINL CH    R7,PGMNODDS    FINISHED OUTPUTTING DD'S (THERE MAY 75128
+*                             BE NONE OF COURSE)                  75128
+         BNL   C24RETN0       YES, POP OUT END                    75128
+           SPACE 3
+* NOW CHECK FOR VOLUME REFERENCES.
+           ST  R5,C24ADD       SAVE THE ADDRESS OF THE CURRENT DD 75311
+           ST  R7,C24CURRN     SAVE CURRENT R7 TOO                75311
+C24VTST1   TM  PGMUSE,B'00000100' DSID / DSNAME TYPE ENTRY ?      75311
+           BZ  C24DSID1        DSID ENTRY                         75311
+           LA  R5,9+52+8+8(R5)   STEP OVER DSNAME ENTRY           80290
+C24VLUP1   LA  R7,1(R7)        ADD 1 TO NUMBER OF DDS             75311
+           CH  R7,PGMNODDS                                        75311
+           BNL C24VLUP2                                           75311
+* CHECK IF NEXT ITEM A CONCATENATE | NOT                          75311
+           CLI PGMDDNAM,C' '   BLANK DDNAME MEANS CONCATENATION   75311
+           BNE C24VLUP2        NO, SO NOW OUTPUT REAL DD-CARDS    75311
+           B   C24VTST1        YES, TEST FOR VOLREFS.             75311
+           SPACE 3                                                75311
+* NOW LETS TEST THE DSID TYPE                                     75311
+C24DSID1   $CALL UJS17FID,PGMDSID  FIND THE DSID                  75311
+           LTR R15,R15         DID WE FIND IT ?                   75311
+           BNZ C24EVRF1        NO, SKIP TO NEXT ENTRY (DON'T      75311
+*                              GIVE ERROR MESSAGES AS THEY WILL   75311
+*                              BE DUPLICATED LATER THEN).         75311
+           SPACE 1                                                75311
+* NOW CHECK IF THIS DSID HAS A VREF                               75311
+* NOTE *** TO SAVE READING DSID'S UNNECESSARILY FROM THE WORKFILE,75311
+*    WE HAVE TURNED ON A BIT IN THE ID-TABLE IF THIS DSID         75311
+*    CONTAINS A VOLREF.                                           75311
+           USING IDTABLE,R1                                       75311
+           TM  IDTYPE,B'00000111' DSID AND VREF ?                 75311
+           BM  C24EVRF1        EITHER IS NOT A DSID, OR IS A DSID 75311
+           BZ  C24EVRF1        BUT WITHOUT A VREF                 75311
+           SPACE 3                                                75311
+* NOW WE MUST ALSO SEE IF THIS HAS ALREADY BEEN USED, AND
+* IF SO WE CAN IGNORE ALL THIS PROCESSING FOR VREFFED ITEMS.
+         SPACE 1
+         CLI   IDUSED,1       USED YET?                            DASD
+         BE    C24EVRF1       GOOD,IGNORE MUCH PROCESSING          DASD
+         SPACE 1
+* HMM... FIX VREF ...                                             75311
+*                                                                 75311
+* THE USER COULD HAVE CODED SOMETHING LIKE A VREF WHICH ITSELF    75311
+*    CONTAINS A VREF, OR THE VREF'D ITEM COULD EVEN CONTAIN       75311
+*    A REAL VOLUME NAME.                                          75311
+           SPACE 1                                                75311
+* IF WE HAVE A VREF TO A VREF, WE HAVE TO OUTPUT ALL THE VREFS    75311
+*    IN THE REVERSE ORDER.                                        75311
+* ALSO, WE DONT WANT TO FOLLOW THE CHAIN TOO FAR COS IT IS        75311
+*    BETTER TO REFER TO THE EARLIEST PART OF THE CHAIN POSSIBLE   75311
+*    IN CASE SOMEONE REFERENCES THE 3RD LABEL AND WRITING LABEL   75311
+*    4. IT IS BETTER TO HAVE THE JOB JCL OFF IF THE 3RD LABEL     75311
+*    HASN'T BEEN WRITTEN, RATHER THAN WASTING TIME RUNNING UP     75311
+*    THE TAPE.                                                    75311
+*                                                                 75311
+* AS MENTIONED EARLIER, WE HAVE TO FOLLOW THE CHAIN, SO WE HAVE   75311
+*    TO BUILD ONE UP, AND WE'LL DO THIS IN #TKN, WHICH IS AN      75311
+*    AREA THAT IS CURRENTLY UNUSED                                75311
+           SPACE 2                                                75311
+           $CALL UJS16GID,PGMDSID READ FIRST DSID INTO 'TRANS'    75311
+           CLI  IDUSED,1      USED YET? YES GO AWAY                DASD
+           BE   C24EVRF1                                           DASD
+           MVC #TKNSTRG,ZERO                                      75311
+C24VRLU9   CLI DDVOLUME,C'-'   VREF ?                             75311
+           BNE C24VREFR        NO, MUST BE REAL VOL | ' ' (SCRATCH75311
+*                              )                                  75311
+           CLI DDVOLUME+1,C'''' VOLREF 'DSNAME' ?                 75311
+           BNE C24VRDSI        NO, VREF TO DSID                   75311
+* SO WE HAVE A VREF TO A DSNAME.                                  75311
+*    CREATE A DUMMY DSID THEN                                     75311
+           MVC TKN(L'DDVOLUME-1),DDVOLUME+1                       75311
+           MVC #TKN,=AL2(L'DDVOLUME-1) SET LENGTH                 75311
+           BAL R14,DRPBTKN     DROP BLANKS OFF END                75311
+           $CALL UJS60DSN      EXAMINE NAME IN QUOTES AND         75311
+*                              SPLIT INTO DSNAME AND GENERATION   75311
+*                              NUMBERS                            75311
+           MVC DDDSNAME,WORK                                      75311
+           MVC DDMBR,WORK+100  SHIFT GDG IF ANY                   75311
+           MVC DDPASSW,WORK+120                                   80290
+           MVI DDTYPE,DDREALDS SET UP TYPE OF DSID                75311
+         CLEAR DDVOLUME                                           75311
+           CLI DDMBR,C' '      ANY MEMBER / GDG NUMBER ?          75311
+           BE  C24VDSOK        NO                                 75311
+           CLI DDMBR,C'('      GDG ?                              75311
+           BNE C24VDSOK        NO, LEAVE TYPE SET AS IT IS THEN   75311
+           MVI DDTYPE,DDGDGREL YES, SET RELATIVE BIT              75311
+C24VDSOK   EQU *                                                  75311
+           BAL R10,C24OPVR     OUTPUT TO NEXT PHASE               75311
+C24EVRF1   LA  R5,25+8(R5)     STEP OVER DSID                   80290
+           B   C24VLUP1        BACK FOR NEXT VREFD (?) ITEM       75311
+           SPACE 3                                                75311
+C24VREFR   EQU *                                                  75311
+* HERE WE HAVE A REAL VOLUME, OR A REFERENCE TO A SCRATCH         75311
+*                             OR CATALOGUED VOLUME                75311
+*    VOLUME (IE END OF CHAIN)                                     75311
+           CLI DDVOLUME,C' '   SCRATCH ?                          75311
+           BE  C24VRSCR        YES                                75311
+* HERE THE VREFD ITEM CONTAINS A REAL VOLUME                      75311
+*                                                                 75311
+* SO WE CAN REFERENCE THIS DSID AGAIN, AND NOT MUCK AROUND,       75311
+*    WE SHALL COPY THE VOLUME INFO TO THE DSID AND RE-WRITE IT    75311
+           MVC WORK(DDCATLGS-DDVOLUME),DDVOLUME                   75311
+           $CALL UJS16GID,PGMDSID RE-READ ORIGINAL DSID           75311
+           LR  R10,R1          SAVE ENTRY INTO TABLE OF THE       75311
+*                              NAME                               75311
+           MVC DDVOLUME(L'DDVOLUME),WORK        COPY REAL VOL     82300
+           $CALL UJS15OP,(DDDSNDET)            OUTPUT TO WORKFILE 75311
+           LR  R15,R1          SAVE TTR ADDRESS IT WENT OUT TO    75311
+*                              ON THE FILE                        75311
+           LR  R1,R10          RESET R1 TO POINT TO THE TABLE     75311
+           ST  R15,IDADDR      RESET ADDRESS                      75311
+           MVI IDTYPE,3        RESET TYPE (TURN OFF VREF INDIC    75311
+*                              IN TABLE)                          75311
+           B   C24EVRF1        GO TO END OF THIS DSID PROCESSING  75311
+           SPACE 3                                                75311
+C24VRDSI   EQU *                                                  75311
+* HERE WE HAVE A VREF TO ANOTHER DSID.                            75311
+           LH  R14,#TKNSTRG    GET LENGTH OF DSID STRING WE       75311
+           LR  R15,R14         - ARE BUILDING                     75311
+           LA  R14,TKNSTRG(R14)                                   75311
+           MVC 0(8,R14),DDDSID SAVE DSID                          75311
+* NOW WE MUST GET THE NEXT DSID IN THE CHAIN                      75311
+           MVC #TKN,=H'8'      SET LENGTH TO 8 FOR ERR MESSAGES   75311
+           MVC TKN(8),DDVOLUME+1 SHIFT REQD DSID                  75311
+           $CALL UJS16GID,TKN  TRY TO LOAD ITS DETAILS NOW        75311
+           LTR R15,R15         DID WE ?                           75311
+           BZ  C24TVRTY                                           75311
+           JOLERR 405,'CANNOT FIND VOLREF ''',#TKN,''''           75311
+           B   C24EVRF1        IGNORE IT THEN.                    75311
+C24TVRTY   EQU *                                                  75311
+           TM  IDTYPE,X'03'    IS IT A DSID THEN ?                75311
+           BO  C24TVRUS        YES, TEST IF IT HAS ALREADY BEEN   75311
+*                              USED, COS IF SO WE CAN VREF BACK   75311
+*                              TO ITS DSNAME                      75311
+           JOLERR 406,'VOLREF ITEM ''',#TKN,''' IS NOT A DATASET' 75311
+           B   C24EVRF1        SKIP THIS ITEM NOW                 75311
+*******************************************************************DASD
+*                                                                  DASD
+* WHEN DOING A VOLREF TO A DSID THAT HAS BEEN CREATED IN A PRIOR   DASD
+* STEP  THAT SEEMS TO BE OK....BUT WHEN THE JOB IS RESTARTED       DASD
+* IN A STEP AFTER THE STEP WHERE ITS CREATED THE VOLREF            DASD
+* DSID IS NEVER SET UP ....THIS FIX WILL CHECK THE RESTART BYTE    DASD
+*                                                                  DASD
+*******************************************************************DASD
+C24TVRUS   CLI IDUSED,0        THIS ONE USED ?                    75311
+           BE  C24VRLU9        NO, CONTINUE CHAIN AFTER CHECKING  75311
+           CLI IDUSED,02      THIS ONE BYPASSED DUE TO RESTART ?   DASD
+           BE  C24VRLU9       YES, CONTINUE CHAIN AFTER CHECKING   DASD
+           SPACE 1                                                75311
+* HERE WE HAVE A VREF TO A DSID THAT HAS BEEN USED. THIS IS AN    75311
+*    EARLY END TO THE CHAIN WE HAVE BEEN BUILDING                 75311
+           SPACE 1                                                75311
+* NOW WE MUST OUTPUT THIS ONE, THEN CONTINUE UP THE CHAIN         75311
+*    WE HAVE BEEN BUILDING                                        75311
+* NOW CHECK IF THIS IS THE FIRST REFERENCE IN THE STRING
+* SO WE DON'T OUTPUT UNNESSARY VOLREFS
+         CLC   #TKNSTRG,ZERO                                      75311
+*        BL    C24EVRF1            (WAS BE: FIXES VOLREFS CVC)    87150
+         BE    C24EVRF1        IS BE AGAIN: FIXES VOLREFS CVC)    88150
+         FIX   'LOOP'
+           BAL R10,C24OPVR     OUTPUT THIS DSID                   75311
+           B   C24UNCHN        UNCHAIN NOW                        75311
+           SPACE 3                                                75311
+C24VRSCR   EQU *                                                  75311
+* NOW WE FINISHED THE CHAIN BY FINDING A SCRATCH VOLUME.          75311
+           FIX 'THIS LINE SHOULD OPERATE IF NOCAT IS SPECIFIED'
+*                                                        JOL30007 82300
+* CHECK IF NOCAT, AND ISSUE MESSAGE SAYING WILL BE CATLGDJOL30007 82300
+* WHEN OUTPUT.                                           JOL30007 82300
+         TM    PARMSRCH,X'01' NOCAT                      JOL30007 82300
+*        BO    C24FORCE       YES,MESSAGE                JOL30007 82300
+         BO    C24NMARK       DON'T MARK THE DATA SET    JOL30007 88300
+         CLI   DDCATLGS,C' '  NOCAT ON DSID              JOL30007 82300
+*        BNE   C24FORCE       YES, FORCE OUTPUT          JOL30007 82300
+         BNE   C24NMARK       DON'T MARK THE DATA SET    JOL30007 88300
+           B    C24FORCE
+           B    C24FORCE
+           B    C24FORCE
+           B    C24FORCE
+           B    C24FORCE
+C24FORCE   MVI IDUSED,1        MARK IT USED                       75311
+C24NMARK   BAL R10,C24OPVR     OUTPUT THE CURRENT DSID            75311
+           SPACE 3                                                75311
+C24UNCHN   EQU *                                                  75311
+* THE DSID CHAIN IS IN '#TKNSTRG', AND THE 1ST ENTRY IN THERE     75311
+*    IS THE REAL ONE (WHICH WE DON'T WANT TO OUTPUT YET)          75311
+           LH  R15,#TKNSTRG                                       75311
+           SH  R15,=H'8'       -8                                 75311
+           BNP C24EVRF1        END THEN IF ¬> 0                   75311
+           STH R15,#TKNSTRG    RESET STRING LENGTH                75311
+           LA  R15,TKNSTRG+8(R15)                                 75311
+           MVC TKN(8),0(R15)                                      75311
+           MVC #TKN,=H'8'                                         75311
+           $CALL UJS16GID,TKN  GET IT                             75311
+           MVI IDUSED,1        MARK IT USED                       75311
+           BAL R10,C24OPVR     OUTPUT IT                          75311
+           B   C24UNCHN        CONTINUE UNCHAINING                75311
+           SPACE 3                                                75311
+C24VLUP2   EQU *                                                  75311
+           SPACE 1                                                75311
+* AT THIS POINT, WE HAVE TERMINATED THE OUTPUT OF THE VREF        75311
+*    ITEMS, AND ARE READY TO START OUTPUTTING THE REAL DD-CARDS   75311
+           L   R5,C24ADD       GET ADDRESS OF THE ORIGINAL DSID   75311
+           L   R7,C24CURRN     AND THE CURRENT DD NUMBER          75311
+* OK, NOW DETERMINE IF THIS IS A DSID | A DSNAME                  75128
+C24M2    TM    PGMUSE,B'00000100'                                 75128
+         BZ    C24DSID                                            75128
+* SO HERE WE HAVE A DSNAME TO CREATE AND OUTPUT                   75128
+            CLEAR  TRANS
+           LA  R0,DDSPACE-DDOSVB (OVERWRRITTEN ON NEXT LINE-VSAM) 86211
+           LA  R0,DDLEN        USE LONG LENGTH ANYWAY FOR VSAM    86211
+           TM  PGMUSE,B'11000000' NEW,MODS | REWRITES ?           75311
+NOSHORT    BZ  *+8             NOPE, USE SHORT ENTRY              75311
+          ORG  NOSHORT
+          B    *+8             USE  LONG ENTRY ALWAYS             87150
+           LA  R0,DDLEN        YES, USE LONG ENTRY                75311
+           STH R0,DDOSVB
+           XC DDOSVB+2(2),DDOSVB+2
+         CLEAR DDSPECTP,DDSPECT2,                                 80290*
+               DDCANCEL,DDLABEL,DDUNITNO,DDPRIM,DDSEC,DDDIRECT,   80290*
+               DDAEXTRA,                                          J50  *
+               DDBLKSZE,DDLRECL,DDSIZE,DDSIZE2,DDAVREC,DDBUFNO,   80290*
+               DDBUFL,DDRKP,DDKEYLEN,DDOVERFL,DDVOLSEQ,DDMAXVOL,  80290*
+               DDUNITQU,DDBUFNI,DDBUFND
+           MVI DDDD1,C'D'
+           MVC DDSTMT,STMT
+           MVC DDLEVEL,LEVEL+1
+         MVC   DDDDNAME,PGMDDNAM                                  75128
+         MVI  DDTYPE,DDREALDS
+         MVC   DDDSID(2),=C'$$'                                   75128
+         MVC   DDDSID+2(4),STMT                                   75128
+         OC    DDDSID+2(4),=C'0000'                               75128
+         MVC   DDUSE(1),PGMUSE                                    75128
+         MVC   DDDSNAME,PGMDSN                                    75311
+         MVC   DDPASSW,PGMPASSW                                   80290
+         MVC  DDMBR,PGMDSN+L'PGMDSN-8                             75311
+         TM   DDUSE,1        UNITAFF
+         BZ   C24NAF30
+         MVC  DDUNIT,PGMDSN+L'PGMDSN
+C24NAF30 EQU  *
+         $CALL  UJC24DB,  (GET INFO FROM DATA BASE)               J50  .
+               DDDSNDET                                           J50
+         OPINST DDOSVB
+* NOW POINT TO THE NEXT DD ENTRY                                  75128
+           LA  R5,9+52+8+8(R5)   STEP OVER DSNAME ENTRY           80290
+C24MAINZ LA    R7,1(R7)       ADD 1 TO THE NUMBER OF DDS WE       75128
+*                             HAVE DONE                           75128
+         CH    R7,PGMNODDS    REACHED END?
+         BNL   C24MAINL       YES,BACK TO MAIN LOOP               75311
+         IFVALUE PGMDDNAM,C24MAINL NEXT NOT CONCATENATED          75311
+* HERE A CONCATENATION.
+         B     C24M2                                              75311
+         SPACE 2                                                  75311
+C24DSID  EQU   *                                                  75128
+          $CALL UJS17FID,PGMDSID                                  74303
+           USING IDTABLE,R1
+           LTR R15,R15
+           BNZ C24NOTFD
+           TM  IDTYPE,X'03'    IS IT A DATA-SET DECLARE ?         75128
+           BO  C24TUSE1        YES                                75128
+         JOLERR 404,'''',PGMDSID,''' IS NOT A DATA SET VARIABLE AND CAN*
+               NOT BE USED BY A PROGRAM'
+           B   C05NXTDD        SO GO AND GET THE NEXT ONE
+C24TUSE1   EQU *
+           CLI IDUSED,0        HAS THIS ID BEEN OUTPUT TO THE NEXT
+*                              PHASE YET ?
+*          BNE C24DDOUT        YES,SO MERELY POP OUT A CONDENSED
+*                              VERSION OF IT.
+          $CALL UJS16GID,PGMDSID                                  74303
+* GO LOAD INTO CORE.
+           LTR R15,R15
+           BNZ C24NOTFD
+         ST    R1,C24AID      SAVE ADDRESS IN TABLE
+         CLI   IDUSED,0       BEEN USED YET?
+         BNE   C24LUSE
+         TM    PGMUSE,B'11000000'    NEW OR MODS (NOT RE-WRITES TH0)200
+         BZ    C24RD01
+         BO    C24RD01        REWRITES IF BOTH ON..               76200
+         MVI   IDUSED,2       SET WRITE DATA SET
+         B     C24LUSE
+C24RD01    MVI IDUSED,1        MARK IT USED
+* CHECK IF VOLREF AND IF SO CLEAR THE VOLUME, UNIT ETC            75311
+C24LUSE  CLI   DDVOLUME,C'-'   VOLREF ?                           75311
+         BNE   C24NOTVR        NOPE                               75311
+         CLI   DDVOLUME+1,C''''  DSNAME TYPE VOLREF?              75311
+         BNE   C24FIX1        NO,SO GO AS WE ARE
+* NOW WE HAVE A VOLREF TO A 'DSNAME'
+         CLEAR TKN            CLEAR IT BEFORE USE
+         MVC   #TKN,=AL2(L'DDVOLUME-1)
+         MVC   TKN(L'DDVOLUME-1),DDVOLUME+1
+         BAL   R14,DRPBTKN    DROP BLANKS FROM END
+         BAL   R14,DROPQUOT    DROP QUOTES FROM NAME
+         MVI   DDVOLUME,C'*'   TELL LATER ROUTINE VREF HALF FIXED
+         MVC   DDVOLUME+1(L'DDVOLUME-1),TKN SHIFT VREF
+C24NOTVR   EQU *
+C24FIX1    EQU  *
+           MVC DDDDNAME,PGMDDNAM
+           MVC DDDISP(1),PGMUSE
+*NOW WE MUST TEST FOR THE UNIT-AFFS AND FIX ACCORDINGLY
+*     IF A UNIT-REF WAS REQUIRED,THE PGMMBR WOULD CONTAIN THE
+*     DDNAME TO BE USED FOR THE AFFINITY,AND THE BOTTOM BIT
+*     OF THE 'PGMUSE' FIELD WOULD BE TURNED ON.
+* SO THAT THE GENERATE PHASE KNOWS THAT A UNITREF WAS INTENDED,WE
+*     MERELY COPY THE PGMUSE FIELD,AND SET THE 'DDUNIT' FIELD
+*     EQUAL TO THE 'PGMMBR' FIELD
+           TM PGMUSE,1
+           BZ C24NOAFF
+           MVC DDUNIT,PGMMBR+8                                    75311
+C24NOAFF   EQU *
+           $CALL UJS61DD,(DDDSNDET,PGMMBR)                        75311
+* NOW WE DON'T WANT TO OUTPUT DCB INFORMATION IF THIS IS A GDG    75311
+*    DSID USED AS AN 'INDEX', COS A (-1) MAY HAVE DIFFERENT       75311
+*    DCB TO A (+1)                                                75311
+           CLI PGMMBR,C'('     GDG PGM OVER-RIDE ?                75311
+           BNE C24S61          CALL UJS61                         75311
+           TM  PGMUSE,B'11000000' INPUT ?                         75311
+           BM  C24S61          NOPE                               75311
+*          MVC DDDCB(L'DDRECFM+L'DDBLKSZE+L'DDLRECL),BLANKS        DASD
+C24S61     EQU *                                                  75311
+C24NOMEM   EQU *
+* NOW TO CUT DOWN THE NUMBER OF BYTES OF MAIN STORAGE USED        75311
+*  IN THE FINAL TABLE, WE WILL CUT DOWN THE SIZE OF THE RECORD    75311
+*  WE ARE ABOUT TO OUTPUT IF THIS IS A READ DATA SET WITH NO      75311
+*  DCB OR SPACE, MAXVOLS ETC.                                     75311
+*************************************************************      DASD
+*                                                           *      DASD
+* MOD HERE TO NOT CLEAR OUT THE DCB---                      *      DASD
+* WHOEVER CODED IT, LET THEM HAVE IT                        *      DASD
+*                                                           *      DASD
+*************************************************************      DASD
+           TM  DDUSE,B'11000000' INPUT ?                          75311
+           BM  C24NOTIN        NOPE                               75311
+         BO    C24NOTIN (REWRITES IF BOTH ON)                     76200
+         CLC   DDOSVB,=AL2(DDLEN)   DCB EXTRA CODED?
+         BH    C24NOTIN
+         B     C24NOTIN      *****++++++++ VSAM NEEDS LONG RECORDS86211
+* OK, INPUT ONLY HERE                                             75311
+         CLC   =CL8'SORTIN',DDDDNAME
+         BE    C24NOTIN
+         CLC   =CL8'SORTOUT',DDDDNAME
+         BE    C24NOTIN
+* HERE INPUT AND NOT SORTIN OR SORTOUT
+         L     R1,C24AID    CHECK IF OUTPUT ALREADY IN THIS JOB
+         CLI   IDUSED,2    OUTPUT IN THIS JOB?
+         BNE   C24CKDCB     NO,SEE IF WE CAN SHORTEN THE RECORD
+         CLEAR DDPRIM,DDSEC,DDDIRECT  OUT-->DRECFM,DDBLKSZE,DDLRECLDASD
+         CLEAR DDSIZE,DDSIZE2,DDAVREC,DDSIZEQ
+         CLEAR DDRETPD,DDEXPDT
+C24CKDCB   NI  DDSPECT2,X'FF'-X'20' TURN OFF 'NODEF' BIT          75311
+*        CLI   DDRECFM,C'%'     NODCB CODED??                      DASD
+*        BNE   C24CKDCX                                            DASD
+*        CLEAR DDRECFM,DDLRECL,DDBLKSZE                            DASD
+C24CKDCX IFVALUE  DDPRIM,DDSEC,DDDIRECT,C24NOTIN                  80290
+         IFVALUE  DDSPECTP,DDSPECT2,C24NOTIN                      80290
+         IFVALUE  DDRECFM,DDLIMCT,DDOPTCD,DDDENS,DDDSORG,         80290*
+               DDEXPDT,DDCODE,DDFUNC,DDEXTRA,                     80290*
+               DDAEXTRA,                                          J50  *
+               DDCANCEL,DDLABEL,DDUNITNO,DDPRIM,DDSEC,DDDIRECT,   80290*
+               DDBLKSZE,DDLRECL,DDSIZE,DDSIZE2,DDAVREC,DDBUFNO,   80290*
+               DDBUFL,DDRKP,DDKEYLEN,DDOVERFL,DDVOLSEQ,DDMAXVOL,  80290*
+               DDUNITQU,DDBUFNI,DDBUFND,C24NOTIN
+           MVC DDOSVB,=AL2(DDSPACE-DDOSVB) SHORTEN RECORD         75311
+C24NOTIN   EQU *                                                  75311
+         $CALL  UJC24DB,  (GET INFO FROM DATA BASE)               J50  .
+               DDDSNDET                                           J50
+         OPINST DDDSNDET
+         $CALL  UJS16EXT,DDDSNDET CHECK IF EXTRA DATA SUCH AS     87150
+*                              LONG VOLUME OR SUBSYS TO GO OUT    87150
+C05NXTDD  EQU *
+           LA  R5,25+8(R5)     SKIP DD ENTRY                      75311
+        B   C24MAINZ   TEST IF END                                75128
+           SPACE 3
+C24DDOUT   EQU *
+* HERE,WE HAVE ALREADY OUTPUT THIS FORMATTED DD CARD AND IT IS NOT
+*    NECESSARY TO LOAD IT FROM THE WORK FILE AND OUTPUT IT AGAIN
+* HOWEVER,WE MUST OUTPUT A COMPRESSED ONE AND THE NEXT PHASE WILL
+*    PATCH ALL THE REQUIRED INFORMATION UP FOR US.
+           MVC DDOSVB,=AL2(DDVOLUME+L'DDVOLUME-DDOSVB)
+           MVC DDOSVB+2(2),=H'0'
+           B   C05NXTDD                                           75128
+C24NOTFD JOLERR 403,'CANNOT FIND DATA SET VARIABLE ''',PGMDSID,''''
+           B C05NXTDD          FIND NEXT DDCARD ENTRY
+C24RETN0   EQU  *
+C24END     EQU  *
+           MVC ILENGTH(2),=AL2(IBODY)
+           MVC ICOMMAND,=CL8'END'
+           LH  R1,NEST
+           BCTR R1,0
+           STH R1,NEST
+           STC R1,INEST
+         OPINST ILENGTH
+C24SKIPR EQU  *                                                    DASD
+           JOLRETN
+           SPACE 3
+C24OPVR    EQU *                                                  75311
+* OUTPUT VOLREF DSID                                              75311
+         MVI   DDDISP,0        READ, SHR FOR VOLREF               75311
+         MVC DDDISP+1(2),BLANKS  CLEAR OTHER DISPOSITIONS         75311
+         MVC   DDDDNAME(4),=C'$$VR'                               75311
+         UNPK DDDDNAME+4(4),PCKDSTMT                              75311
+         OI    DDDDNAME+7,C'0'                                    75311
+         AP    PCKDSTMT,=P'1'                                     75311
+         MVC   DDOSVB,=AL2(DDSPACE-DDOSVB)                        75311
+         OPINST DDDSNDET                                          75311
+         BR    R10                                                75311
+           DC   S(*,*,*,*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           SPACE 3
+         JOLSAVE CSECT=UJC35CNT
+*
+* THIS CSECT GETS CONTROL WHEN AN 'OPCNTL' INSTRUCTION IS FOUND
+*
+* THE FORMAT IS:-
+*
+*  OPCNTL 'TEXT' AFTER JOBCARD;
+*  OPCNTL 'TEXT' BEFORE JOBCARD;
+*  OPCNTL 'TEXT';  /* IE WHEREVER WE ARE AT NOW */
+*
+* NOW TO SAVE SEARCHING THROUGH A HUGE TABLE JUST BEFORE WE GEN-
+*  ERATE THE JCL, WE ARE GOING TO ALLOW ONLY ONE CNTROL CARD
+*  TO GO OUT BEFORE THE JOBCARD.
+* AS WE HAVE TO SEARCH THE TABLE ANYWAY FOR 'SETUP' INFO, IT
+* DOESN'T REALLY MATTER MUCH WHAT WE DO WITH THE OTHERS.
+*
+* WE WILL ALLOW ONLY ONE **(1)** BEFORE JOBCARD TYPE STATEMENT
+*  TO GO OUT, BUT WE REALLY DON'T CARE HOW MANY GO OUT AFTER.
+* THIS MAY BE CHANGED LATER....
+           GETTKN 3
+           CLC =C'BEFORE ',TKN
+           BE  C35BEFR
+           CLC =C'AFTER ',TKN
+           BE  C35AFT
+           CLI TKN,C' '
+           BE  C35ANY
+           JOLERR 301,'''',#TKN,''' INVALID,''AFTER'' ASSUMMED'
+           B   C35AFT
+           SPACE 2
+C35BEFR    EQU *
+* BEFORE A JOB CARD, WE COULDN'T CARE LESS WHAT TYPE OF CARD
+*  GOES OUT, SO JUST LET IT GO.
+           GETTKN 2
+         L     R4,AJOBDETS
+         USING JOBDETS,R4
+         $CALL UJS98QU,#TKN   DROP DOUBLE QUOTES,SET L'TKN  FIX-X 76200
+           JOLSTOR 'JOB PREFIX CARD',JOBPREF,#TKN
+         DROP R4
+           B  C35CHK4        CHECK 4TH TOKEN TO BE 'JOBCARD' | ''
+           SPACE 2
+C35AFT     MVI ICOMMAND+6,C'A'
+C35ANY   GETTKN 2             GET TEXT AGAIN                      75128
+         $CALL UJS98QU,#TKN   DROP DOUBLE QUOTES,SET L'TKN  FIX-X 76200
+          CLC  #TKN,ZERO   NOTHING TO OUTPUT?
+           BE  C35RETN
+         CLC   #TKN,=AL2(L'ITEXT-2)                               75128
+           BL  C35AFTOK
+           MVC #TKN,=AL2(L'ITEXT-2)
+C35AFTOK   MVC ITEXT,#TKN
+           LA  R1,IBODY+2
+           AH  R1,#TKN
+           STH R1,ILENGTH
+           OPINST INST
+           SPACE 2
+C35CHK4    GETTKN 4
+           CLI TKN,C' '
+           BNE C35CHKJB
+C35RETN    JOLRETN
+C35CHKJB   CLC =C'JOBCARD ',TKN
+           BNE C35ERR2
+           JOLRETN
+C35ERR2    JOLERR 302,'''',#TKN,''' INVALID'
+           JOLRETN RC=16
+           LTORG
+           DC S(*,*,*,*)
+           DC S(*,*,*,*)
+           DC S(*,*,*,*)
+           DC S(*,*,*,*)
+           DC S(*,*,*,*)
+           DC S(*,*,*,*)
+           DC S(*,*,*,*)
+           DC S(*,*,*,*)
+           DC S(*,*,*,*)
+           DC S(*,*,*,*)
+ TITLE 'UJC50RD:-GET STMT AND PRINT AUTOMATICALLY FORMATTED UPD#XXX'
+           JOLSAVE CSECT=UJC50RD
+* THIS CSECT IS THE'READSTMT' CSECT FOR THE MAIN COMPILER MODULE OF JOL
+           SPACE 2
+           USING JOLCOM,R2
+           USING TKNX,R3
+         L     R4,AGENDETS
+         USING GENDETS,R4
+           SPACE
+* INITIALISE AND CLEAR A FEW VARIABLES
+           CLEAR LABEL,THISPRNT                                   75311
+         MVC   #TKNSTRG(2),ZERO
+           SPACE
+* NOW READ A STATEMENT
+C50RDAGN   EQU  *
+*
+* WE MUST READ THE NEXT RECORD FROM THE BSAM FILE INTO            75128
+*  THE TKNX AREA                                                  75128
+         L     R0,APRCNTL                                         75128
+         LA    R1,#TKNSTRG-12                                     75128
+        $CALL  UJS31IN        READ THE RECORD INTO THE AREA       75128
+         LTR   R15,R15        EOF ?
+         BNZ   C50RETNF       YES ->
+* NOW SHIFT THE STATEMENT NUMBERS ETC
+           MVC STMT,#TKNSTRG-8
+           MVC INLINENO,#TKNSTRG-4
+           MVC PRINTIND,#TKNSTRG
+           MVC ISMACRO,#TKNSTRG+1
+           SPACE
+           LH  R1,#TKNSTRG-12
+           SH  R1,=H'14'
+           STH R1,#TKNSTRG
+* NOW SPLIT THE TOKENS AGAIN
+C50SPLT2  $CALL UJSPLIT        SPLIT STATEMENT INTO TOKENS        74303
+         LTR   R15,R15           ERROR?
+         BZ    C50TKN0         OK ? YES,AWAY WE GO                74303
+         JOLERR 405,'ERROR IN STATEMENT'                          75311
+C50NULL  MVC #TKNSTRG(4),=X'00004040'
+         B     C50SPLT2        SET UP NULL STATEMENT              74303
+          SPACE 3
+C50TKN0  EQU *
+           SPACE 1
+* NEW FEATURE 'NPRINT' WILL STOP THE PRINTING OF THE COMPILE      75311
+*    LISTING                                                      75311
+         TM    PARMPRNT,B'00000010' NOLIST ?                      75311
+         BZ    C50LPIND                                           75311
+         MVI PRINTIND,C'1'     TURN OFF PRINT                     75311
+C50CLRTH MVI THISPRNT,C' '     CLEAR THISPRNT                     75311
+         B     C50NPXX                                            75311
+C50LPIND CLI PRINTIND,C' '     DO WE PRINT THIS STMT ?            75311
+         BNE C50CLRTH                                             75311
+         MVI THISPRNT,C'1'     TELL US WE HAVE (WILL?) PRINT      75311
+*                            THIS STATEMENT                       75311
+C50NPXX  EQU *                                                    75311
+           SPACE 3
+* HERE THE TOKENS WERE ALL BEAUTIFULLY SPLIT UP AGAIN,SO NOW PRINT
+*    THE STATEMENT IN SOME SORT OF INDENTED FORMAT.
+           SPACE 3
+* FIRST SEE IF A LABEL IS PRESENT
+           GETTKN NO=2
+           CLI TKN,C':'
+           BNE C50NOLAB                                           74303
+* THERE IS A LABEL,AND IT MUST BE PRINTED ON THE LEFT SIDE
+           GETTKN NO=1         GET THE LABEL
+           CLI PRINTIND,C' '                   DO WE PRINT THIS STMT?
+           BNE C50MUVLB
+         L     R1,APRINTLN    GET ADDRESS OF PRINT BUFFER        775128
+         MVC   5(4,R1),STMT   SHIFT IN STATEMENT NUMBER           75128
+         MVC   17(20,R1),TKN  NOW FIRST 20 BYTES OF THE TKN       75128
+         LA    R14,17(R1)     SET R14=A(BYTE-'TKN'-STARTS-AT)     75128
+         LH    R15,#TKN       LOAD LENGTH OF TOKEN                75128
+         AR    R14,R15        ADD TO 14                           75128
+         MVI   0(R14),C':'    SHIFT IN ':'                        75128
+         SR    R14,R1         CALC LENGTH OF RECORD               75128
+         LA    R14,1(R14)     ADD 1 FOR THE ':'                   75128
+         STH   R14,0(R1)      STORE IT                            75128
+         JOLPRINT             PRINT LINE                          75128
+         L  R1,APRINTLN
+         MVI 1(R1),17          SET LINE LENGTH
+C50MUVLB   EQU *
+           MVC LABEL,TKN       SAVE THE LABEL
+           B   C50RDAGN        READ REST OF STMT
+C50NOLAB   EQU *                                                  74303
+* ALTHOUGH TKN(2) IS NOT A':' THERE COULD HAVE BEEN A LABEL BECAUSE
+*    WE THEN SHIFTED THE STRING DOWN AND RE-SET UP THE TOKENS AND
+*    WE DON'T WANT THE STATEMENT NUMBER PRINTING TWICE
+           CLI LABEL,C' '                      LABEL ?
+           BE  C50PRNTS                        NO,SO START THIS PRINT
+*                                              LINE WILL A STMT NUMBER
+           SPACE
+           B   C50PRNTR                                           74303
+C50PRNTS   EQU *
+           CLI PRINTIND,C' '                   DO WE PRINT THIS STMT?
+           BNE C50PRNTR                                           74303
+         L     R1,APRINTLN         LOAD PRINT BUFFER              75128
+         MVC   5(4,R1),STMT        SHIFT IN STATEMENT NO.         75128
+         MVI   1(R1),17            SET CURRENT LENGTH OF LINE     75128
+C50PRNTR   EQU *                                                  74303
+           SPACE
+* NOW DETERMINE TYPE OF STATEMENT AND PRINT ACCORDINGLY.
+           GETTKN NO=1
+           MVC ICOMMAND,TKN    SET UP COMMAND
+           CLC =C'DCL ',TKN
+           BE  C50DCL                                             74303
+           CLC =C'DECLARE ',TKN
+           BE  C50DCL                                             74303
+           CLC =C'DEFINE ',TKN
+           BE  C50DCL                                             74303
+           SPACE 3
+* NOW IT IS NOT A DECLARE.
+* TEST STARTAT AND STOPAT.                                        76200
+* NOTE STARTAT WAS INCLUDED IN VERSION 3.0 BUT NOW IS MOVED       76200
+*        SO THAT WE CAN CHECK IF THE LABEL WAS FOUND ON           76200
+*        A DECLARE, IN WHICH CASE WE WILL ISSUE AN ERROR          76200
+*        MESSAGE BUT NOT TAKE THE LABEL AS BEING THE STARTAT      76200
+* STOPAT IS NEW FOR 3.1, AND A CHECK IS ALSO MADE TO SEE THAT     76200
+*        IT IS NOT ON A DECLARE STATEMENT.                        76200
+         SPACE 1
+         IFNULL LABEL,C50NST  NO LABEL ON THIS STMT      CHG30074 76200
+         CLC   STOPAT,LABEL   ?                          JOL30008 76200
+         BNE   C50TSTRT       NO,TEST STARTAT THEN       JOL30008 76200
+         MVI   STOPAT,X'FF'   INDICATE WE GOT IT         JOL30008 76200
+         B     C50NST                                    JOL30008 76200
+C50TSTRT CLC   STARTAT,LABEL  IS THIS STARTAT LABEL ?    CHG30074 76200
+         BNE   C50NST         NOPE                       CHG30074 76200
+         CLEAR STARTAT        YES, CLEAR IT              CHG30074 76200
+C50NST   EQU    *
+           CLC =C'END ',TKN
+           BNE C50TRYDO                                           74303
+* END STATEMENT MUST BE PRINTED
+           LH R6,NEST
+           SH R6,=H'1'
+           BNM C50END1                                            74303
+           SR R6,R6
+C50END1    EQU *                                                  74303
+           CLI PRINTIND,C' '                   DO WE PRINT THIS STMT?
+           BNE C50PORD                                            74303
+C50END2    EQU *                                                  74303
+         L     R1,APRINTLN    LOAD PRINT BUFFER                   75128
+         LH    R15,0(R1)      GET CURRENT LENGTH                  75128
+         LA    R15,4(R15)     ADD 4                               75128
+         STH   R15,0(R1)      STORE IT                            75128
+         SPACE 2                                                  75128
+           SH  R6,=H'1'
+           BM  C50PORD                                            74303
+           B   C50END2                                            74303
+           B   C50PORD                                            74303
+           SPACE 3
+C50TRYDO   EQU *                                                  74303
+* NOW HERE IT IS EITHER A 'DO' OR AN ORDINARY STATMENT.
+*    IN ANY CASE IT IS ESSENTIAL TO POSITION THE PRINT LINE THE RIGHT
+*    AMOUNT OF 'INDENTNESS'.
+* IF IT IS A'DO' THEN AFTER PRINTING SOME BLANKS IT IS A SIMPLE
+*    MATTER TO ADD 1 TO 'DOLEVEL'
+           LH  R6,NEST
+           LA R6,1(R6)
+POSNPRNT   EQU *
+           CLI PRINTIND,C' '                   DO WE PRINT THIS STMT?
+           BNE C50TDO2                                            74303
+         L     R1,APRINTLN    ADDRESS PRINT BUFFER                75128
+         LH    R15,0(R1)                                          75128
+         LA    R15,4(R15)                                         75128
+         STH   R15,0(R1)                                          75128
+         SPACE 3                                                  75128
+           BCT R6,POSNPRNT
+* NOW CHECK IF'DO';
+C50TDO2    EQU *                                                  74303
+           CLC =C'DO ',TKN
+           BNE C50PORD                                            74303
+           LH  R1,NEST
+           LA  R1,1(R1)
+           B   C50PORD                                            74303
+           SPACE 3
+C50DCL     EQU *                                                  74303
+*LETS CHECK IF STARTATNEWSTOPAT IS FOUND ON THIS DECLARE.CHG30074 76200
+         IFNULL LABEL,C50DCLNL NO LABEL, BYPASS THIS     CHG30074 76200
+         CLC   STARTAT,LABEL                             CHG30074 76200
+         BE    C50ERRST                                  CHG30074 76200
+         CLC   STOPAT,LABEL                              CHG30074 76200
+         BNE   C50DCLNL                                  CHG30074 76200
+C50ERRST JOLERR 101,'LABEL ''',LABEL,''' IGNORED FOR STARTAT/STOPAT'
+C50DCLNL EQU   *
+* NOW DECLARES ARE PRINTED OFFSETTED A LITTLE.
+           CLI PRINTIND,C' '                   DO WE PRINT THIS STMT?
+           BNE C50TKN1G ONE
+         L     R1,APRINTLN    LOAD A(PRINT LINE)                  75128
+         LH    R15,0(R1)      GET CURRENT LINE LENGTH             75128
+         LA    R15,4(R15)     ADD 4 BLANKS                        75128
+         LA    R14,0(R15,R1)  CALC POINTER TO NEXT LOCN           75128
+         AH    R15,#TKN       ADD LENGTH OF CURRENT TOKEN         75128
+         STH   R15,0(R1)      RESET LENGTH                        75128
+         MVC   0(20,R14),TKN  SHIFT IN 20 BYTES OF TOKEN          75128
+           B  C50TKN1G GONE IT HAS
+           SPACE 3
+C50PORD    EQU *                                                  74303
+* SO FAR ALL I'VE REALLY ACCOMPLISHED IS PRINT THE LABEL (IF THERE WAS
+*    ONE) AND POSITION THE FILE SOMEWHERE NEAR WHERE I WANT TO START
+*    PRINTING.
+* SO LET'S PRINT THE OLE STATEMENT.
+           SPACE
+           CLI PRINTIND,C' '                   DO WE PRINT THIS STMT?
+           BNE C50TKN1G ONE
+         L     R1,APRINTLN    GET A(PRINTBUF)                     75128
+         LH    R15,0(R1)      GET CURRENT LENGTH OF LINE          75128
+         LA    R14,0(R1,R15)  R14= R15+R1                         75128
+         MVC   0(20,R14),TKN  SHIFT 20 BYTES OF TOKEN             75128
+         AH    R15,#TKN       RESET LENGTH                        75128
+         STH   R15,0(R1)       LENGTH                             75128
+* THERE,TOKEN(1) HAS GONE
+* NOW BASICALLY THIS IS A SIMPLE LITTLE LOOP GOING ROUND AND ROUND
+*    UNTIL ALL THE TOKENS HAVE BEEN PRINTED
+* THERE ARE HOWEVER TWO COMPLICATIONS IN THE PRINTING.
+*    1. SPECIAL CHARACTERS ON EITHER SIDE OF A TOKEN DO NOT WARRANT
+*          A BLANK BETWEEN THEM
+*    2. IF THE STATEMENT IS'A DECLARE X PROG' THEN EVERY 'READS' |
+*          'WRITES' LINE DESERVES A LINE FEED.
+* NOW BEFORE I REALLY GET GOING,TWOULD BE NICE TO BE ABLE TO REFERENCE
+*    TOKENS 1,2,3 EASILY
+* REGISTERS 7,8,9 WILL BE SET UP WITH THE ADDRESSES OF THE STARTING
+*    POINTS OF THESE TOKENS (BUT NOT THE LENGTH:-IF A CLC TO A LITERAL
+*    GIVES AN INCORRECT RESULT THAT IS TOUGH BUT TERRIBLY UNLIKELY)
+           SPACE
+C50TKN1G    EQU *
+           CLI PRINTIND,C' '                   DO WE PRINT THIS STMT?
+           BNE C50RETN0
+           LH  R7,TKNDESC+2                    GET OFFSET TKN(1)
+           LH  R8,TKNDESC+2+4                  GET OFFSET TKN(2)
+           LH  R9,TKNDESC+2+4+4                GET OFFSET TKN(3)
+           LA  R15,TKNSTRG                     ABSOLUTE ADDRESS OF STRN
+           AR  R7,R15                          CALC ABSOL ADDR TKN(1)
+           AR  R8,R15                          CALC ABSOL ADDR TKN(2)
+           AR  R9,R15                          CALC ABSOL ADDR TKN(3)
+* NOW SET PREVIOUS TOKEN TYPE INTO R6 SO WE CAN CHECK THEM TO BE
+*    SPECIAL OR NON-SPECIAL TOKENS FOR THE ONE INSERTED BLANK MENTIONED
+*    WAY BACK SOMEWHERE
+           MVC TKNCURR,=H'2'                   GET 2ND TOKEN
+           SR  R6,R6
+           SR R10,R10                          LAST TKN HELD HERE
+*                                              SO '&' & '|' ARE
+*                                              PRINTED WITH A BLANK
+*                                              BETWEEN THEM
+C50GETNX   IC  R6,TKNTYPE                      SAVE TKNTYPE(LAST) 74303
+* GET TKN(X)
+           IC R10,TKN                          SAVE 1ST BIT OF TKN
+           CLC  TKNCURR,TKNNO                  REACHED END OF STACK?
+           BH  UJC50END                         YEP,-> RETURN
+           GETTKN LOCN=TKNCURR
+           STH R1,TKNCURR
+* NOW CALC ADDRESS OF THE NEXT TOKEN SO I CAN LOOK TO SEE IF IT IS
+*    A'READS' | 'WRITES'
+           SLL R1,2                            * 4
+           LH  R1,TKNDESC+2-4(R1)              OFFSET NEXT TOKEN
+           LA  R1,TKNSTRG(R1)                  ABSOLUTE ADDR.
+* NOW SEE IF WE ARE DEALING WITH A 'DCL X PROG'
+           CLC =C'DCL',0(R7)
+           BE  C50ISDCL                                           74303
+           CLC =C'DECLARE',0(R7)
+           BE  C50ISDCL                                           74303
+           CLC =C'DEFINE',0(R7)
+           BE  C50ISDCL                                           74303
+* WELL IT ISN'T A DECLARE SO NOW CHECK IF EITHER THIS TOKEN OR THE
+*    PREVIOUS TOKENS ARE SPECIAL CHARACTERS.
+**** NOTE THE SYMBOLS '|' OR '&' ARE ALWAYS PRINTED WITH A BLANK
+*     ON EITHER SIDE
+C50PRTKN   EQU *                                                  74303
+           CLI  TKN,C'|'                       THIS TOKEN AN '|' SYM ?
+           BE C50NOTSP ECIAL                   YEP,LEAVE ABLANK
+           CLI  TKN,C'&&'                      THIS TOKEN AN '&' SYM ?
+           BE C50NOTSP ECIAL                   YEP,LEAVE ABLANK
+* NOW CKECK IF LAST TOKEN WAS A '|' OR '&'
+           CH  R10,=H'79'                      '|' ?
+           BE C50NOTSP ECIAL                   YEP,LEAVE ABLANK
+           CH  R10,=H'80'                      '&' ?
+           BE C50NOTSP ECIAL                   YEP,LEAVE ABLANK
+           CLI TKNTYPE,1                       THIS TOKEN SPECIAL ?
+           BE  C50SPEC                                            74303
+           CH  R6,=H'1'                        LAST ONE SPECIAL ?
+           BE  C50SPEC                                            74303
+* WELL NEITHER ONE SPECIAL,SO PRINT WILL A BLANK PRECEDING IT.
+         L     R1,APRINTLN    LOAD A(PRINTBUF)                    75128
+         LH    R15,0(R1)      LOAD CURRENT LENGTH                 75128
+         LA    R15,1(R15)     ADD 1 (SHIFT A BLANK,EFFECTIVELY)   75128
+         STH   R15,0(R1)      RESTORE                             75128
+C50NOTSP   EQU  *
+           BAL R12,C50TFIT                     WILL IT FIT ON LINE  ?
+           B   C50GETNX                                           74303
+C50SPEC    EQU *                                                  74303
+           BAL R12,C50TFIT                     WILL IT FIT ON LINE  ?
+           B   C50GETNX                                           74303
+           SPACE 3
+C50ISDCL   EQU *                                                  74303
+* NOW SEE IF'DCL X PROG'
+           CLC =C'PROG',0(R9)                  DCL PROG ?
+           BNE C50PRTKN                        NO,JUST PRINT TOKEN74303
+* SO HERE IT IS 'DCL X PROG'
+*    IF THE NEXT TOKEN (I.E THE ONE NOW ADDRESSED BY R1)
+*    IS:-  1.  READS
+*          2.  WRITES
+*          3.  MODS
+*          4.  REWRITES
+*          5.  UPDATES
+*          6.  CREATES
+*    THEN A NEW LINE MUST BE STARTED
+           CLC =C'READS ',0(R1)
+           BE  C50NEWLN                                           74303
+           CLC =C'WRITES ',0(R1)
+           BE  C50NEWLN                                           74303
+         CLC =C'MODS ',0(R1)
+         BE    C50NEWLN                                           74303
+         CLC =C'REWRITES ',0(R1)
+         BE    C50NEWLN                                           74303
+         CLC =C'UPDATES',0(R1)
+         BE    C50NEWLN                                           74303
+         CLC =C'CREATES ',0(R1)
+         BE    C50NEWLN                                           74303
+         CLC =C'ADDS ',0(R1)                                      86200
+         BE    C50NEWLN                                           74303
+         CLC   =C'MAY ',0(R1)                                     75128
+         BE    C50NEWLN                                           75128
+         CLC =C'USES ',0(R1)
+         BE  C50NEWLN
+         B     C50PRTKN        OK,JUST PRINT IT                   74303
+         SPACE
+C50NEWLN EQU *                                                    74303
+         JOLPRINT                                                 75128
+         L    R1,APRINTLN
+         MVI 1(R1),30
+         BAL   R12,C50TFIT                                        75128
+         B     C50GETNX                                           74303
+UJC50END JOLPRINT                                                 75128
+C50RETN0 EQU    *
+         LH R1,TKNNO
+         SH R1,=H'1'
+         BM    C50SR15
+         STH R1,TKNNO
+         SLL R1,2
+         LH    R15,TKNDESC+2(R1)
+         LA    R15,TKNSTRG(R15)
+         CLI 0(R15),C';'
+         BNE C50SR15
+         SR R14,R14
+         ST R14,TKNDESC(R1)
+         MVI 0(R15),C' '
+C50SR15  JOLRETN RC=0                                             74303
+C50RETNF JOLRETN RC=4                                             74303
+         SPACE 3
+C50TFIT  EQU *
+* THIS LITTLE ROUTINE TESTS THAT THE TKN TO BE PRINTED WILL FIT
+*      ON THE CURRENT LINE, AND PRINTS THE CURRENT TOKEN          75128
+       L       R1,APRINTLN    LOAD A(PRINTBUF)                    75128
+         LH    R15,0(R1)      GET CURRENT LINE POSITION           75128
+         LH    R14,#TKN       LOAD LENGTH OF TOKEN TO GO OUT      75128
+         AR    R15,R14        ADD CURRENT + L'TKN                 75128
+         CH    R15,=H'120'    WILL IT FIT ON LINE ?               75128
+         BH    C50NEWL        NO                                  75128
+C50WILLG STH   R15,0(R1)                                          75128
+         AR    R15,R1         CALC ABS ADDR OF NEXT PRINT BYTE    75128
+         SR    R15,R14        COS WE ARE TOO HIGH                 75128
+         EX    R14,C50MVC9    SHIFT TOKEN                         75128
+         BR    R12            AND RETURN                          75128
+         SPACE 3                                                  75128
+C50NEWL  JOLPRINT             PRINT THE LINE CURRENTLY THERE      75128
+         L     R1,APRINTLN    A(PRINT BUF)                        75128
+         LH    R14,#TKN       LOAD LENGTH OF TOKEN NOW            75128
+         LA    R15,26         CURRENT LENGTH OF LINE              75128
+         AR    R15,R14        ADD L'TKN + CURRENT LINE LENGTH     75128
+         CH    R15,=H'120'    WILL IT FIT IN LINE NOW ?           75128
+         BNH   C50WILLG       YES                                 75128
+* HERE, A NEW LINE HAS BEEN PRINTED BECAUSE THE TOKEN WON'T FIT   75128
+*  AND STILL IT WON'T FIT, THEREFORE IT IS A LONG ONE.            75128
+* WE MUST SHIFT AS MUCH AS WILL FIT, AND PRINT IT, THEN PRINT     75128
+*  THE REST.
+         MVI   1(R1),125      SET LINE AT MAXIMUM                 75128
+         AR    R15,R1         CALC NEXT BYTE TO SHIFT DATA INTO   75128
+         MVC   5(120-26,R1),TKN SHIFT DATA IN             JOL3080 76200
+         MVC   TKN,TKN+120-26 SHIFT TKN STRING ALONG              75128
+         LH    R1,#TKN                                            75128
+         SH    R1,=AL2(120-26) RESET LENGTH                       75128
+         STH   R1,#TKN                                            75128
+         B     C50NEWL        AND ROUND LOOP AGAIN                75128
+         DROP  R4
+C50MVC9  MVC   0(*-*,R15),TKN    EXECUTED                         75128
+         SPACE 3
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           LTORG
+       END

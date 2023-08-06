@@ -1,0 +1,5 @@
+         MACRO
+&L       IFNOK &NOK
+&L       LTR   R15,R15
+         BNZ   &NOK
+         MEND

@@ -1,0 +1,1109 @@
+         MACRO
+         DCBD  &DSORG=,&DEVD=,&PRINT=YES
+         GBLB  &ONESW
+         GBLA  &IEZBITS
+         LCLA  &A0            FOR DSORG= AND DEVD= ANALYSIS LOOPS
+         LCLB  &DSORGIS       SET BY DSORG=IS - ISAM
+         LCLB  &DSORGBX       SET BY DSORG=BX OR CX - BTAM
+         LCLB  &DSORGDA       SET BY DSORG=DA - BDAM
+         LCLB  &DSORGQX       SET BY DSORG=QX OR CX - QTAM
+         LCLB  &DSORGCA       SET BY DSORG=CA - CDAM
+         LCLB  &DSORGCQ       SET BY DSORG=CQ - QTAM DIRECT ACCESS
+.*                                              MESSAGE QUEUE
+         LCLB  &DSORGMQ       SET BY DSORG=MQ - QTAM PROBLEM PROGRAM
+.*                                              MESSAGE QUEUE INTERFACE
+         LCLB  &DSORGXA       SET BY DSORG=XA - EXCP WITH APPENDAGES
+         LCLB  &DSORGQS       SET BY DSORG=QS OR PS - QSAM
+         LCLB  &DSORGBS       SET BY DSORG=BS OR PS OR PO - BSAM,BPAM
+         LCLB  &DSORGXE       SET BY DSORG=XE - EXCP WITH APPENDAGES
+         LCLB  &DSORGLR       SET BY DSORG=LR - DCBLRECL FIELD ONLY
+         LCLB  &DSORGGS       SET BY DSORG=GS - GAM
+         LCLB  &DSORGTX       SET BY DSORG=TX - TCAM LINE GROUP
+         LCLB  &DSORGTQ       SET BY DSORG=TQ - TCAM MESSAGE QUEUE
+         LCLB  &DSORGTR       SET BY DSORG=TR - 3705 LINE GROUP  S22024
+         LCLB  &DEVDDA        DIRECT ACCESS
+         LCLB  &DEVDTA        MAGNETIC TAPE
+         LCLB  &DEVDPT        PAPER TAPE
+         LCLB  &DEVDRD        READER OR OR PUNCH, DEVD=RD OR PC
+         LCLB  &DEVDPR        PRINTER
+         LCLB  &DEVDBS        BINARY SYNCHRONOUS
+         LCLB  &DEVDWT        WORLD TRADE TELEGRAPH
+         LCLB  &DEVDMR        MAGNETIC CARD READER
+         LCLB  &DEVDOR        OPTICAL READER
+         LCLC  &C0            SET TO EACH VALUE OF DSORG AND DEVD
+.*
+.*                  TEST PREVIOUS USE OF THIS MACRO
+.*
+         AIF   (NOT &ONESW).SETSW
+         SYSERMAC   172
+         MEXIT
+.SETSW   ANOP
+&ONESW   SETB  1
+         AIF   (&IEZBITS GT 0).SETBTS
+&IEZBITS SETA  1
+.SETBTS  ANOP
+.*
+.*                  ANALYZE DSORG OPERAND
+.*
+&A0      SETA  N'&DSORG       SET NUMBER OF DSORG ELEMENTS
+.A1      AIF   (&A0 LE 0).D0  IF ZERO, LOOP FINISHED
+&C0      SETC  '&DSORG(&A0)'  SET TO A DSORG ELEMENT
+.*
+.*                  TEST FOR VALID DSORG ELEMENT
+.*
+         AIF   ('&C0' EQ 'IS' OR '&C0' EQ 'PS' OR '&C0' EQ 'BS' OR     C
+               '&C0' EQ 'QS' OR '&C0' EQ 'DA' OR '&C0' EQ 'CX' OR      C
+               '&C0' EQ 'CQ' OR '&C0' EQ 'MQ' OR '&C0' EQ 'LR').A2
+         AIF   ('&C0' EQ 'CA').A2
+         AIF   ('&C0' EQ 'XE' OR '&C0' EQ 'XA' OR '&C0' EQ 'PO' OR     C
+               '&C0' EQ 'BX' OR '&C0' EQ 'QX' OR '&C0' EQ 'GS' OR      C
+               '&C0' EQ 'TX' OR '&C0' EQ 'TQ' OR '&C0' EQ '').A2
+         AIF   ('&C0' EQ 'TR').A2                                S22024
+         SYSERMAC   156,DSORG,&C0
+         AGO   .AA
+.*
+.*                  SET VARIABLE FOR DSORG
+.*
+.A2      ANOP
+&DSORGIS SETB  (&DSORGIS OR '&C0' EQ 'IS')
+&DSORGBX SETB  (&DSORGBX OR '&C0' EQ 'BX' OR '&C0' EQ 'CX')
+&DSORGDA SETB  (&DSORGDA OR '&C0' EQ 'DA')
+&DSORGQX SETB  (&DSORGQX OR '&C0' EQ 'QX' OR '&C0' EQ 'CX')
+&DSORGCQ SETB  (&DSORGCQ OR '&C0' EQ 'CQ')
+&DSORGMQ SETB  (&DSORGMQ OR '&C0' EQ 'MQ')
+&DSORGXA SETB  (&DSORGXA OR '&C0' EQ 'XA')
+&DSORGQS SETB  (&DSORGQS OR '&C0' EQ 'QS' OR '&C0' EQ 'PS')
+&DSORGBS SETB  (&DSORGBS OR '&C0' EQ 'BS' OR '&C0' EQ 'PS' OR '&C0' EQ C
+               'PO')
+&DSORGXE SETB  (&DSORGXE OR '&C0' EQ 'XE')
+&DSORGLR SETB  (&DSORGLR OR '&C0' EQ 'LR')
+&DSORGGS SETB  (&DSORGGS OR '&C0' EQ 'GS')
+&DSORGTX SETB  (&DSORGTX OR '&C0' EQ 'TX')
+&DSORGTQ SETB  (&DSORGTQ OR '&C0' EQ 'TQ')
+&DSORGTR SETB  (&DSORGTR OR '&C0' EQ 'TR')
+&DSORGCA SETB  (&DSORGCA OR '&C0' EQ 'CA')
+.AA      ANOP
+&A0      SETA  &A0-1          DECREMENT ELEMENT COUNTER
+         AGO   .A1            TO DO NEW LOOP
+.*
+.*                  TEST FOR ANY VALID DSORG OPERAND
+.*
+.D0      AIF   (&DSORGIS OR &DSORGBX OR &DSORGDA OR &DSORGQX OR        *
+               &DSORGCQ OR &DSORGMQ OR &DSORGXA OR &DSORGQS OR         *
+               &DSORGBS OR &DSORGXE OR &DSORGLR OR &DSORGGS).D0A
+         AIF   (&DSORGTX OR &DSORGTQ OR &DSORGTR).D0A
+         AIF   (&DSORGCA).D0A
+         SYSERMAC   173
+.D0A     ANOP
+         AIF   (T'&DEVD NE 'O').D1      BRANCH IF DEVD CODED
+         AIF   (&DSORGGS).B1
+         AIF   (NOT (&DSORGQS OR &DSORGBS OR &DSORGXE)).B1
+.*
+.*                  SET DEVD DEFAULTS
+.*
+&DEVDDA  SETB  1
+&DEVDTA  SETB  ('&DSORG' NE '(PO)')
+&DEVDPT  SETB  ('&DSORG' NE '(PO)')
+&DEVDPR  SETB  ('&DSORG' NE '(PO)')
+&DEVDRD  SETB  ('&DSORG' NE '(PO)')
+&DEVDMR  SETB  ('&DSORG' NE '(PO)')
+&DEVDOR  SETB  ('&DSORG' NE '(PO)')
+         AIF   ('&DSORG' EQ '(PO)').D1
+         SYSERMAC   174
+         AGO   .B1
+.D1      ANOP
+.*
+.*                  ANALYZE DEVD OPERAND
+.*
+&A0      SETA  N'&DEVD        SET ELEMENT COUNT
+.D2      ANOP
+         AIF   (&A0 LE 0).B1  IF ZERO, LOOP FINISHED
+&C0      SETC  '&DEVD(&A0)'   SET TO A DEVD ELEMENT
+.*
+.*                  TEST FOR VALID DEVD ELEMENT
+.*
+         AIF   ('&C0' EQ 'DA' OR '&C0' EQ 'TA' OR '&C0' EQ 'PT' OR     *
+               '&C0' EQ 'PR' OR '&C0' EQ 'RD' OR '&C0' EQ 'PC' OR      *
+               '&C0' EQ 'BS' OR '&C0' EQ 'WT').D3
+         AIF   ('&C0' EQ 'MR' OR '&C0' EQ 'OR').D3
+         AIF   ('&C0' EQ '').D4
+         AGO   .D4                 TO DO NEW LOOP
+.*
+.*                  SET VARIABLES FOR DEVD
+.*
+.D3      ANOP
+&DSORGXE SETB  (&DSORGXE OR T'&DSORG EQ 'O')  FORCE EXCP EXTENDED
+&DEVDDA  SETB  (&DEVDDA OR '&C0' EQ 'DA')    DIRECT ACCESS DEVICE
+&DEVDTA  SETB  (&DEVDTA OR '&C0' EQ 'TA')    MAGNETIC TAPE DEVICE
+&DEVDPT  SETB  (&DEVDPT OR '&C0' EQ 'PT')    PAPER TAPE DEVICE
+&DEVDPR  SETB  (&DEVDPR OR '&C0' EQ 'PR')    PRINTER
+&DEVDRD  SETB  (&DEVDRD OR '&C0' EQ 'RD' OR '&C0' EQ 'PC') READER,PUNCH
+&DEVDBS  SETB  (&DEVDBS OR '&C0' EQ 'BS')    BINARY SYNCHRONOUS COMM.
+&DEVDWT  SETB  (&DEVDWT OR '&C0' EQ 'WT')    WORLD TRADE TELEGRAPH
+&DEVDMR  SETB  (&DEVDMR OR '&C0' EQ 'MR')    MAGNETIC CHAR READER
+&DEVDOR  SETB  (&DEVDOR OR '&C0' EQ 'OR')    OPTICAL READER
+.D4      ANOP
+&A0      SETA  &A0-1               DECREMENT ELEMENT COUNTER
+         AGO   .D2                 TO DO NEW LOOP
+.*
+.B1      ANOP
+         AIF   ('&DSORG(1)' EQ 'LR').BA    SKIP OVER COMMENTS
+         SPACE 2
+*                                  FCB SYMBOLIC DEFINITION FOR
+         AIF   (NOT &DSORGIS).B2
+*                                  INDEXD SEQUENTIAL
+.B2      AIF   (NOT (&DSORGQS AND &DSORGBS)).B2A
+*                                  PHYSICAL SEQUENTIAL
+         AGO   .B3
+.B2A     AIF   (NOT &DSORGQS).B2B
+*                                  QSAM
+.B2B     AIF   (NOT &DSORGBS).B3
+*                                  BSAM-BPAM
+.B3      AIF   (NOT &DSORGDA).B4
+*                                  DIRECT ACCESS
+.B4      AIF   (NOT (&DSORGBX AND &DSORGQX)).B4A
+*                                  COMMUNICATIONS LINE GROUP
+         AGO   .B5
+.B4A     AIF   (NOT &DSORGBX).B4B
+*                                  BTAM LINE GROUP
+.B4B     AIF   (NOT &DSORGQX).B5
+*                                  QTAM LINE GROUP
+.B5      AIF   (NOT &DSORGCQ).B6
+*                                  COMMUNICATIONS DIRECT ACCESS QUEUE
+.B6      AIF   (NOT &DSORGMQ).B6A
+*                                  QTAM MESSAGE QUEUE
+.B6A     AIF   (NOT &DSORGTX).B6B
+*                                  TCAM LINE GROUP
+.B6B     AIF   (NOT &DSORGTQ).B6C
+*                                  TCAM MESSAGE QUEUE
+.B6C     AIF   (NOT &DSORGTR).B7
+*                                  3705 LINE GROUP
+.B7      AIF   (NOT (&DSORGXA AND &DSORGXE)).B8
+*                                  EXCP WITH EXTENSION AND APPENDAGES
+         AGO   .BA
+.B8      AIF   (NOT &DSORGXE).B9
+*                                  EXCP WITH EXTENSION
+         AGO   .BA
+.B9      AIF   (NOT &DSORGXA).B0
+*                                  EXCP WITH APPENDAGES
+         AGO   .BA
+.B0      AIF   (NOT &DSORGGS).B00
+*                                  GRAPHICS WITH APPENDAGES
+.B00     AIF   (&DSORGIS OR &DSORGBX OR &DSORGDA OR &DSORGQX OR        C
+               &DSORGCQ OR &DSORGMQ OR &DSORGQS OR &DSORGBS OR         C
+               &DSORGTX OR &DSORGTQ OR &DSORGLR OR &DSORGTR).BA
+         AIF   (&DSORGCA).BA
+*                                  EXCP WITH EXTENSION
+&DSORGXE SETB  1
+.BA      ANOP
+         SPACE 1
+***********************************************************************
+**********                                                  ***********
+**********          VERSION-01 LEVEL-01      05/07/76       ***********
+**********                                                  ***********
+***********************************************************************
+         SPACE 1
+         AIF   (&DSORGGS).SLIP
+         AIF   ('&PRINT' EQ 'YES').LIST
+         PUSH  PRINT
+         PRINT OFF
+.LIST    ANOP
+IHADCB   DSECT
+XBAFCB   EQU   IHADCB
+*/*********************** SPECIFICATIONS BEGIN ************************
+*                                                                     *
+*                                                                     *
+*        CONTROL BLOCK NAME ------- FCB ( FILE CONTROL BLOCK )        *
+*                                                                     *
+*        SIZE --------------------- 12+A BYTE                         *
+*                   (12 ----- LENGTH OF FOUNDATION BLOCK         )    *
+*                   ( A ----- TOTAL LENGTH OF                         *
+*                             DEVICE DEPENDENT SECTION AND            *
+*                             ACCESS METHOD COMMON INTERFACE AND      *
+*                             FOUNDATION BLOCK EXTENSION AND          *
+*                             ACCESS METHOD INTERFACE SECTION    )    *
+*                                                                     *
+*        LOCATION ----------------- REGION , SQA                      *
+*                                                                     *
+*        CREATOR ------------------ PROCESSING PROGRAM                *
+*                                                                     *
+*        PURPOSE ------------------ PROVIDES THE SYSTEM WITH          *
+*                                   INFORMATION ABOUT THE             *
+*                                   CHARACTERISTICS AND PROCESSING    *
+*                                   REQUIREMENTS OF A DATA SET        *
+*                                                                     *
+*                                                                     *
+************************* SPECIFICATIONS END *************************/
+         SPACE 2
+         SPACE 1
+         AIF   (NOT (&DEVDDA OR  &DEVDTA OR &DEVDPT OR &DEVDPR OR      C
+               &DEVDRD OR &DEVDWT OR &DEVDOR OR &DEVDMR)).C4
+***********************************************************************
+*                        DEVICE INTERFACES                            *
+***********************************************************************
+         SPACE 1
+         AIF   (NOT &DEVDDA).C1
+*                        DIRECT ACCESS DEVICES
+         SPACE 1
+DCBRELAD DS      CL4               PARTITIONED ORGANIZATION DATA SET:
+*                                  ADDRESS OF MEMBER CURRENTLY USED
+*                                  (IN THE FORM OF TTRN).
+DCBKEYCN DS      FL1               BLOCK OVERHEAD FOR KEYED BLOCK
+DCBFDAD  DS      CL8               FULL DISK ADDRESS IN THE FORM OF
+*                                  MBBCCHHR. BB IS ALWAYS KEPT ZERO.
+         SPACE 1
+         ORG     DCBFDAD+7
+DCBDCT   DS      0A                SAME AS DCBDCTAD BELOW
+         DS      X                 LAST BYTE OF DCBFDAD
+DCBDCTAD DS      AL3               ADDRESS OF DEVICE CHARACTERISTIC
+*                                  TABLE FOR DEVICE CURRENTLY USED
+         DS      FL1               DCBKEYLE - KEY LENGTH OF DATA SET
+         DS      C                 DEVICE TYPE
+DCBTRBAL DS      FL2               TRACK BALANCE. NUMBER OF BYTES
+*                                  REMAINING ON CURRENT TRACK AFTER A
+*                                  WRITE OPERATION ( THIS VALUE MAY
+*                                  BE NEGATIVE IF THERE ARE NO BYTES
+*                                  REMAINING ON THE TRACK).
+         SPACE 1
+.C1      AIF   (NOT &DEVDTA).C2
+*                        MAGNETIC TAPE DEVICES
+         SPACE 1
+         ORG     XBAFCB
+         DS      CL12              RESERVED
+DCBBLKCT DS      FL4               BLOCK COUNT FOR EACH VOLUME
+         DS      X                 RESERVED
+         DS      C                 DEVICE TYPE
+DCBDEN   DS      FL1               TAPE DENSITY
+*                                  CODE  DENSITY
+DCBMTDN2 EQU     X'83'              2     800RPI
+DCBMTDN3 EQU     X'C3'              3    1600RPI
+DCBMTDN4 EQU     X'D3'              4    6250RPI
+         DS      X                 RESERVED
+         SPACE 1
+.C2      AIF   (NOT &DEVDPT).C3
+*                        PAPER TAPE DEVICES
+         SPACE 1
+         ORG     XBAFCB+8
+DCBLCTBL DS      A                 ADDRESS OF PAPER TAPE CONTROL BLOCK
+DCBIET   DS      0A                ADDRESS OF EDITION TABLE
+DCBPTIEF DS      BL1               EDITION ERROR FLAGS
+DCBPTEM  EQU     X'80'             INVALID EDITION MODE
+DCBPTDL  EQU     X'40'             ITEM LENGTH SHORTER THAN DATA
+DCBPTIL  EQU     X'20'             TOTAL ITM LENGTH LONGER THAN BLKSI
+DCBPTIN  EQU     X'10'             INVALID ITEM COUNT
+DCBPTCD  EQU     X'08'             CODE VALID CHECK ERROR
+DCBPTET  EQU     X'04'             EDITION SELECTED CODE ERROR
+DCBIETA  DS      AL3               ADDRESS OF EDITION TABLE
+DCBCODE  DS      C                 PAPER TAPE CODE BEING USED.
+*                                  THE APPROPRIATE TRANSLATE TABLE IS
+*                                  MADE AVAILABLE
+         DS      C                 DCBDEVT - DEVICE TYPE
+DCBDVPTP EQU     X'54'             PAPER TAPE READER
+DCBDVPTR EQU     X'55'             PAPER TAPE PUNCHER
+DCBPTCCF DS      BL1               CODE CONVERT ERROR FLAGS
+DCBPTCCD EQU     X'80'             INVALID CODE
+DCBPTCDL EQU     X'40'             INVALID DATA LENGTH
+DCBPTCET EQU     X'08'             MANAGEMENT EOT RECORD
+DCBPTCEF EQU     X'04'             MANAGEMENT EOF RECORD
+DCBPTCDR EQU     X'02'             MANAGEMENT DELETE RECORD
+DCBPTFLG DS      BL1               PAPER TAPE FLAGS
+DCBPTFSH EQU     X'80'+X'40'       NOW SHIFT NUMBER
+DCBPTERR EQU     X'01'             ERROR DETECTED READ
+         SPACE 1
+.C3      AIF   (NOT &DEVDPR).C3A
+*                        PRINTER DEVICES
+         SPACE 1
+         ORG     XBAFCB+16
+DCBPRTSP DS      BL1               NORMAL PRINTER SPACING
+*                                  CODE  MEANING
+DCBPRSP0 EQU     X'01'              0    NO SPACING
+DCBPRSP1 EQU     X'09'              1    SPACE ONE LINE
+DCBPRSP2 EQU     X'11'              2    SPACE TWO LINES
+DCBPRSP3 EQU     X'19'              3    SPACE THREE LINES
+         DS      C                 DCBDEVT - DEVICE TYPE
+DCBPRTOV DS      BL1               PRINTER OVERFLOW
+DCBPRBYT DS      BL1               PRINTER INFORMATION
+DCBTRCID EQU     X'02'+X'01'       CURRENT TRANSLATE TABLE NO.
+         SPACE 1
+.C3A     AIF   (NOT &DEVDRD).C3B
+*                        CARD READER,CARD PUNCHER
+         SPACE 1
+         ORG     XBAFCB+16
+DCBMODE  DS      BL1               ACCESS MODE (THE LAST BIT KEPT 1)
+DCBMODEC EQU     X'80'             COLUMN BINARY MODE
+DCBMODEE EQU     X'40'             EBCDIC MODE
+DCBMODEO EQU     X'20'             OPTICAL MARK READ MODE
+DCBMODER EQU     X'10'             READ COLUMN ELIMINATE MODE
+         DS      C                 DCBDEVT - DEVICE TYPE
+         DS    X                   RESERVED
+DCBFUNC  DS    BL1
+DCBFNCBI EQU   X'80'               INTERPRET <PUNCH AND PRINT 2-LINES>
+DCBFNCBP EQU   X'20'               PUNCH
+DCBFNCBW EQU   X'10'               PRINT
+DCBFNCBX EQU   X'04'               THIS DATA SET IS TO BE PRINTED
+DCBFNCBT EQU   X'02'               TWO-LINE PRINT SUPPORT REQUEST
+         SPACE 1
+.C3B     AIF   (NOT &DEVDWT).C3C
+*                        WORLD TRADE TELEGRAPH
+*                        ( NOT SUPPORTED --- OS4/X8 )
+.C3C     AIF   (NOT (&DEVDOR OR &DEVDMR)).C4
+*                        OPTICAL READER AND MAGNETIC CHARACTER READER
+*                        ( NOT SUPPORTED --- OS4/X8 )
+         AIF   (NOT &DEVDOR).C3D
+*                        OPTICAL READER DEVICES
+*                        ( NOT SUPPORTED --- OS4/X8 )
+.C3D     AIF   (NOT &DEVDMR).C4
+*                        MAGNETIC CHARACTER READER
+*                        ( NOT SUPPORTED --- OS4/X8 )
+.C4      AIF   (NOT &DSORGTR).C4A
+*                        3705 LINE TERMINAL
+*                        ( NOT SUPPORTED --- OS4/X8 )
+.C4A     AIF   (NOT (&DSORGIS OR &DSORGDA OR &DSORGQS OR &DSORGBS OR   C
+               &DSORGXE)).C5
+***********************************************************************
+*                        ACCESS METHOD COMMON INTERFACE               *
+***********************************************************************
+         SPACE 1
+         ORG     XBAFCB+16
+DCBKEYLE DS      FL1               KEY LENGTH OF DATA SET
+DCBDEVT  DS      BL1               DEVICE TYPE
+         DS      XL2               DEPENDING ON DEVICES
+         SPACE 1
+          ORG    XBAFCB+20
+DCBBUFCB DS      0A                ADDRESS OF BUFFER CONTROL BLOCK
+DCBBUFNO DS      FL1               NUMBER OF BUFFERS
+DCBBUFCA DS      AL3               ADDRESS OF BUFFER CONTROL BLOCK
+DCBBUFL  DS      H                 BUFFER LENGTH
+DCBDSORG DS      0BL2              DATA SET ORGANIZATION
+DCBDSRG1 DS      BL1               FIRST BYTE OF DCBDSORG
+DCBDSGIS EQU     X'80'             IS - INDEX SEQUENTIAL ORGANIZATION
+DCBDSGPS EQU     X'40'             PS - PHYSICAL SEQUENTIAL
+*                                  ORGANIZATION
+DCBDSGDA EQU     X'20'             DA - DIRECT ORGANIZATION
+DCBDSGPO EQU     X'02'             PO - PARTITIOND ORGANIZATION
+DCBDSRG2 DS      XL1               RESERVED
+DCBIOBAA DS    0A
+DCBLNP   DS    XL1                 F690D12 UNIT LINE POSITION COUNTER
+DCBIOBAB DS    AL3                 ADDRESS OF IOB (CHAINED SCHEDULING)
+         SPACE 1
+***********************************************************************
+*                        FOUNDATION BLOCK EXTENSION                   *
+***********************************************************************
+         SPACE 1
+          ORG    XBAFCB+32
+DCBEODAD DS      0A                ADDRESS OF USER EOD ROUTINE
+DCBBFALN DS      BL1               BUFFER ALIGNMENT
+DCBBFCST EQU     X'40'+X'20'+X'10' SINGLE BUFFERING
+*                                  CONSTANT .100..... IN X8
+DCBBFSTM EQU     B'01000000'       MASK OF DCBFCST
+DCBBFA   EQU     X'02'+X'01'       BUFFER ALIGNMENT
+DCBBFAD  EQU     B'00000010'       DOUBLE WORD BOUNDARY
+DCBBFA1  EQU     B'00000001'       FULL WORD BOUNDARY NOT DOUBLE WORD
+*                                  SPECIFIED BY FCB
+DCBBFA2  EQU     B'00000011'       FULL WORD BOUNDARY NOT DOUBLE WORD
+*                                  SPECIFIED BY FCT
+DCBEODA  DS      AL3               ADDRESS OF USER EOD ROUTINE
+DCBEXLST DS      0A                ADDRESS OF USER'S EXIT LIST
+DCBRECFM DS      BL1               RECORD FORMAT
+DCBREF   EQU     X'80'+X'40'       RECORD FORMAT
+DCBRECF  EQU     B'10000000'       F - FIXED RECORD LENGTH
+DCBRECV  EQU     B'01000000'       V - VARIABL RECORD LENGTH
+DCBRECU  EQU     B'11000000'       U - UNDEFINED RECORD LENGTH
+DCBRECTO EQU     X'20'             T - TRACK OVERFLOW
+DCBRECBR EQU     X'10'             B - BLOCKED RECORDS
+DCBRECSB EQU     X'08'             S - FIXED LENGTH RECORD FORMAT
+*                                      STANDARD BLOCKS
+*                                      VARIABLE LENGTH RECORD FORMAT
+*                                      SPANNED RECORDS
+DCBRECCC EQU     X'04'+X'02'       CONTROL CHARACTER
+DCBRECCA EQU     B'00000100'       A - ANSI CONTROL CHARACTER
+DCBRECCM EQU     B'00000010'       M - MACHINE CONTROL CHARACTER
+DCBRECCO EQU     B'00000110'       C - FACOM CONTROL CHARACTER
+DCBRECC  EQU     B'00000000'       NO CONTROL CHARACTER
+DCBRECKL EQU     X'01'             KEYLEN SPECIFIED IN DCB MACRO
+DCBEXLSA DS      AL3               ADDRESS OF USER'S EXIT LIST
+         SPACE 1
+.C5      AGO   .C8A7
+*
+*
+.C8A7    AIF   (&DSORGLR AND NOT (&DSORGIS OR &DSORGBX OR &DSORGDA OR  C
+               &DSORGQX OR &DSORGCQ OR &DSORGMQ OR &DSORGXA OR         C
+               &DSORGQS OR &DSORGBS OR &DSORGXE OR &DSORGTR)).CF
+***********************************************************************
+*                        FOUNDATION BLOCK BEFORE OPEN                 *
+***********************************************************************
+         SPACE 1
+         ORG     XBAFCB+40
+DCBDDNAM DS      CL8               ACCES NAME IN FD STATEMENT
+DCBOFLGS DS      BL1               FLAGS USED BY I/O SUPPORT.
+*                                  (SEE DCBOFLG FIELD AFTER OPEN)
+DCBIFLG  DS      BL1               FLAGS USED BY I/O SUPERVISOR.
+*                                  (SEE DCBIFLGS AFTER OPEN)
+DCBMACR  DS      0BL2              MACRO INSTRUCTION TYPE
+*                                  (SEE DCBMACRF FIELD AFTER OPEN)
+DCBMACR1 DS      BL1               (FIRST BYTE OF DCBMACR)
+DCBMACR2 DS      BL1               (SECOND BYTE OF DCBMACR)
+         SPACE 1
+***********************************************************************
+*                        FOUNDATION BLOCK AFTER OPEN                  *
+***********************************************************************
+         SPACE 1
+         ORG     XBAFCB+40
+         DS      XL2               RESERVED FOR FUTURE USE
+DCBMACRF DS      0BL2              MACRO INSTRUCTION TYPE
+DCBMACF1 DS      BL1               (FIRST BYTE OF DCBMACRF)
+DCBMRECP EQU     X'80'             EXECUTE CHANNEL PROGRAM.........EXCP
+DCBMRFE  EQU     X'40'             FOUNDATION BLOCK EXTENSION PRESENT..
+*                                  EXCP
+DCBMRAPG EQU     X'20'             APPENDAGES REQUIRED.............EXCP
+DCBMRCI  EQU     X'10'             COMMON INTERFACE PRESENT........EXCP
+DCBMRABC EQU     X'04'             ACCURATE BLOCK COUNT MAINTAINED.EXCP
+DCBPGFXA EQU     X'02'             PAGE FIX APPENDAGE SPECIFIED....EXCP
+DCBAMID1 EQU     X'80'+X'40'       BASIC ACCESS METHOD ID.
+*                                  ALWAYS ZEROS. BSAM-BPAM-BDAM-BISAM
+DCBMRRD  EQU     X'20'             READ            BSAM-BPAM-BDAM-BISAM
+DCBMRPT1 EQU     X'04'             POINT,NOTE      BSAM-BPAM
+DCBMRCRL EQU     X'02'             CNTRL           BSAM
+DCBMRRDK EQU     X'10'             KEY SEGMENT WITH READ     BDAM
+DCBMRRDI EQU     X'08'             ID ARGUMENT WITH READ     BDAM
+DCBMRCK  EQU     X'01'             CHECK. ALWAYS ONE         BDAM
+DCBAMID3 EQU     X'80'             QUEUED ACCESS METHOD ID.  QSAM-QISAM
+*                                  ALWAYS ZEROS.
+DCBMRGET EQU     X'40'             GET                       QSAM-QISAM
+DCBAMID4 EQU     X'20'             SAME AS DCBAMID3          QSAM-QISAM
+DCBMRMVG EQU     X'10'             MOVE MODE                 QSAM-QISAM
+DCBMRLCG EQU     X'08'             LOCATE MODE               QSAM-QISAM
+DCBMACF2 DS      BL1               (SECOND BYTE OF DCBMACRF)
+DCBMR5WD EQU     X'08'             FIVE-WORD DEVICE INTERFACE......EXCP
+DCBMR4WD EQU     X'04'             FOUR-WORD DEVICE INTERFACE......EXCP
+DCBMR3WD EQU     X'02'             THREE-WORD DEVICE INTERFACE.....EXCP
+DCBMR1WD EQU     X'01'             ONE-WORD DEVICE INTERFACE.......EXCP
+DCBAMID2 EQU     X'80'+X'40'       SAME AS DCBAMID1.
+DCBMRWRT EQU     X'20'             WRITE.          BSAM-BPAM-BDAM-BISAM
+DCBMRLMD EQU     X'08'             LOAD MODE BSAM. BSAM
+DCBMRPT2 EQU     X'04'             POINT,NOTE.     BSAM-BPAM
+DCBMRCTL EQU     X'02'             CNTRL           BSAM
+DCBMRWRK EQU     X'10'             KEY SEGMENT WITH WRITE.   BDAM
+DCBMRIDW EQU     X'08'             ID ARGUMENT WITH WRITE.   BDAM
+DCBMRAWR EQU     X'02'             ADD TYPE OF WRITE        BDAM
+DCBAMID5 EQU     X'80'             SAME AS DCBAMID3          QSAM
+DCBMRPUT EQU     X'40'             PUT                       QSAM-QISAM
+DCBAMID6 EQU     X'20'             SAME AS DCBAMID3          QSAM-QISAM
+DCBMRMVP EQU     X'10'             MOVE MODE                 QSAM-QISAM
+DCBMRLCP EQU     X'08'             LOCATE MODE               QSAM-QISAM
+DCBMRSTL EQU     X'80'             SETL                           QISAM
+DCBMRUIP EQU     X'04'             UPDATE IN PLACE(PUTX)          QISAM
+DCBMRSTK EQU     X'02'             SETL BY KEY                    QISAM
+DCBMRSTI EQU     X'01'             SETL BY ID                     QISAM
+DCBDEBAD DS      0A
+DCBIFLGS DS      BL1               ERROR FLAGS USED BY I/O SUPERVISOR
+DCBIBEC  EQU     X'80'+X'40'       ERROR CONDITION INDICATORS
+DCBIFNER EQU     B'00000000'       ERP IS NOT IN PROGRESS
+DCBEX    EQU     B'01000000'       ERP OR  IOS PAGE FIX IN PROGRESS
+DCBIFPEC EQU     B'11000000'       PERMANENT ERROR CONDITION
+DCBIBPCT EQU     X'20'+X'10'       PRINTER CARRIAGE TAPE INDICATORS
+DCBIFC9  EQU     B'00100000'       CHANNEL-9 PRINTER CARRIAGE TAPE
+*                                   PUNCH SENSED
+DCBIFC12 EQU     B'00010000'       CHANNEL-12 PRINTER CARRIAGE TAPE
+*                                   PUNCH SENSED
+DCBIBIOE EQU     X'08'+X'04'       ERP INDICATORS
+DCBIFER  EQU     B'00000000'       ALWAYS USE IOS ERP
+DCBIFNE1 EQU     B'00000100'       NEVER USE IOS ERP
+DCBIFNE2 EQU     B'00001000'       SAME AS ABOVE
+DCBIFNE3 EQU     B'00001100'       SAME AS ABOVE
+DCBIFLDT EQU     B'00000010'       INDICATE LOST PAGE NUMBER
+DCBDEBA  DS      AL3               ADDRESS OF DEB
+DCBREAD  DS      0A                ADDRESS OF READ ROUTINE
+DCBWRITE DS      0A                ADDRESS OF WRITE ROUTINE
+DCBGET   DS      0A                ADDRESS OF GET ROUTINE
+DCBPUT   DS      0A                ADDRESS OF PUT ROUTINE
+DCBOFLG  DS      BL1               FLAGS USED BY I/O SUPPORT
+DCBOFLWR EQU     X'80'             WHEN ON. LAST I/O OPERATION WAS A
+*                                   WRITE OR DATA SET OPENED FOR
+*                                   INPUT OR OUTPUT(BDAM)
+*                                  WHEN OFF. LAST I/O OPERATION WAS A
+*                                   READ OR POINT,OR AD SPECIFIED IN
+*                                   FD STATEMENT
+DCBOFLRB EQU     X'40'             LAST I/O OPERATION WAS A READ
+*                                   BACKWARD MODE
+DCBOFEOV EQU     X'20'             CLOSE FOR CONCATENATING DATA SETS
+DCBOFOPN EQU     X'10'             OPEN SUCCESSFULLY COMPLETED
+DCBOFPPC EQU     X'08'             CONCATENATION OF DATA SETS WITH
+*                                   UNLIKE ATTRIBUTES
+DCBOFTM  EQU     X'04'             TAPE MARK OR END OF FILE MARK READ
+DCBOFUEX EQU     X'02'             WHEN ON. USER EXIT TAKEN
+*                                  WHEN OFF. USER EXIT BEING TAKEN
+DCBOFIOF EQU     X'01'             PROCESSING FOR THIS FCB BY A I/O
+*                                   SUPPORT FUNCTION IS IN PROGRESS
+DCBREADA DS      0AL3              ADDRESS OF READ ROUTINE
+DCBWRITA DS      0AL3              ADDRESS OF WRITE ROUTINE
+DCBGETA  DS      0AL3              ADDRESS OF GET ROUTINE
+DCBPUTA  DS      AL3               ADDRESS OF PUT ROUTINE
+         SPACE 1
+         SPACE 1
+         AGO   .C8B1
+         AIF   (NOT (&DSORGBX OR &DSORGDA OR &DSORGQX OR &DSORGBS)).C8A
+         ANOP
+.C8A     AIF   (NOT (&DSORGIS OR &DSORGQX OR &DSORGMQ OR &DSORGQS OR   C
+               &DSORGTR)).C8B
+         ANOP
+.C8B     AIF   (NOT (&DSORGTX OR &DSORGTR)).C8B1
+*                        TCAM LINE GROUP EXTENSION
+*                        3705 EXTENSION
+*                        ( NOT SUPPORTED --- OS4/X8 )
+.C8B1    ANOP
+***********************************************************************
+*                        ACCESS METHOD DEPENDENT SECTION              *
+***********************************************************************
+         AIF   (NOT (&DSORGXA OR &DSORGXE)).C9
+*                        EXCP WITH EXTENSION OR APPENDAGES
+         SPACE 1
+         ORG   XBAFCB+52
+         AIF   (&DSORGIS OR &DSORGDA OR &DSORGQS OR &DSORGBS).C8C
+DCBOPTCD DS       BL1              OPTION CODES, RESERVED (EXCP)
+         AGO   .C8D
+.C8C     ANOP
+         DS       BL1              OPTCD - OPTION CODES, RESERVD (EXCP)
+.C8D     ANOP
+         AIF   (&DSORGQS OR &DSORGBS).C8E
+         ANOP
+.C8E     ANOP
+         DS       XL7              RESERVED
+         SPACE 1
+         AIF   (NOT &DSORGXA).C9
+*                        EXCP APPENDAGE LIST
+         SPACE 1
+         ORG   XBAFCB+60
+DCBEOEA  DS      CL2               ID OF THE EOE APPENDAGE
+DCBPCIA  DS      CL2               ID OF THE PCI APPENDAGE
+DCBSIOA  DS      CL2               ID OF THE SIO APPENDAGE
+DCBCENDA DS      CL2               ID OF CHANNEL END APPENDAGE
+DCBXENDA DS      CL2               ID OF ABNORMAL END APPENDAGE
+         DS      CL2               RESERVED
+         SPACE 1
+.C9      AIF   (NOT &DSORGIS).CA
+*                        BISAM-QISAM INTERFACE
+         ORG     XBAFCB+52
+DCBOPTCD DS      BL1               OPTION CODES
+DCBX8    EQU     X'04'             X8 USE BIT
+         AIF   (&DSORGQS OR &DSORGBS).C9A
+         ANOP
+         AGO   .C9B
+.C9A     ANOP
+*                                  ---X'80' IS DCBOPTW - SAME AS BSAM
+.C9B     ANOP
+DCBMAC   DS      BL1               DCBMACRF EXPANSION
+DCBMACUR EQU     X'08'             READ-KU (UPDATE)
+DCBMACUW EQU     X'04'             WRITE-K (UPDATE)
+DCBMACAW EQU     X'02'             WRITE-KN (ADD)
+DCBNTM1  DS      FL1               INDEX SIZE
+DCBCYLOV DS      FL1               NO OF CYL OVERFLOW TRACKS
+DCBSYNAD DS      A                 ADDRESS OF SYNAD ROUTINE
+DCBRKP   DS      H                 RELATIVE KEY POSITION
+DCBBLKSI DS      H                 BLOCK SIZE
+DCBLPDT  DS    CL8            ADDRESS OF PRIM LAST TRACK
+DCBNCP   DS      FL1               NO OF CHANNEL PROGRAMS
+         DS      XL3               RESERVED
+DCBSETL  DS      A                 ADDRESS OF CHECK MODULE (BISAM)
+*                                  ADDRESS OF SETL MODULE (QISAM)
+DCBEXCD1 DS      BL1               EXCEPTIONAL CONDITIONS 1
+DCBEXNKY EQU   X'80'          NO RECORD FOUND
+DCBEXNSP EQU   X'20'          SPACE NOT FOUND
+DCBEXINV EQU   X'10'          INVALID REQUEST
+DCBEXIER EQU   X'08'          UNCORRECTABLE INPUT ERROR
+DCBEXOER EQU   X'04'          UNCORRECTABLE OUTPUT ERROR
+DCBEXBLI EQU   X'02'          UNREACHABLE BLOCK   (INPUT)
+DCBEXBLU EQU   X'01'          UNREACHABLE BLOCK   (OUTPUT)
+DCBEXCD2 DS      BL1               EXCEPTIONAL CONDITIONS 2
+DCBEXSEQ EQU     X'80'             SEQUENCE CHECK
+DCBEXDUP EQU     X'40'             DUPLICATE RECORD (WRITE KN)
+DCBEXCLD EQU     X'20'             CLOSED WHEN ERROR WAS DETECTED
+DCBEXOFL EQU     X'10'             OVER FLOW RECORD
+DCBEXLTH EQU     X'08'             ILLEGAL RECORD SIZE
+DCBLRECL DS      H                 LOGICAL RECORD LENGTH
+DCBESETL DS      A                 ADDRESS OF ESETL MODULE
+DCBLRAN  DS      A                 ADDRESS OF READ OR WRITE MODULE
+DCBLWKN  DS      A                 ADDRESS OF WRITE-KN MODULE
+DCBINARE DS      A                 ADDRESS OF INDEX AREA
+DCBINARS DS    F
+DCBEBLKS DS      H                 BLOCKING LENGTH
+DCBSTUS1 DS      BL1               STATUS (LOAD MODE)
+DCBST1PC EQU   X'80'          SHARED AREA (INDEX AND PRIM)
+DCBST1FD EQU   X'40'          FIRST CYLINDER IS SHARED
+DCBST1SD EQU   X'20'          SECOND CYLINDER IS SHARED
+DCBST1FP EQU   X'10'          KEY SEQUENCE CHECK
+DCBCYLCH EQU   X'08'
+DCBSTNSP EQU   X'04'          NO-SPACE CHECK BIT
+DCBRSBUF EQU     X'01'             WHEN STORE BUFFE9 WITH OPEN
+DCBSTUS2 DS    BL1            STATUS 2 (LOAD MODE)
+DCBST2FI EQU   X'80'          SHARED TRACK  (FL AND INDEX)
+DCBFIDAT DS    CL2            TT OF FIRST DATA BLOCK
+DCBFIDAS DS      FL1               SECTOR NUMBER OF DATA BLOCK
+DCBFIDAR DS      FL1               RECORD NUMBER OF DATA BLOCK
+DCBHIRTI DS      FL1               MAX NO OF INDEX ENTRY IN TRACK
+*                                  OF PRIME AREA
+DCBFIMI2 DS      0CL8              DIRECT-ACCESS ADDRESS OF M2 INDEX
+DCBHINDX DS      CL8               DIRECT-ACCESS ADDRESS OF
+*                                  HIGHEST LEVEL INDEX
+DCBM2TTR DS      0FL1              RECORD NUMBER OF M2 INDEX
+DCBHIIR  DS      FL1               RECORD NUMBER OF HIGHEST LEVEL
+*                                  INDEX
+DCBM2TT  DS      0FL2              TT OF M2 INDEX
+DCBHITT  DS      FL2               TT OF HIGHEST LEVEL INDEX
+DCBM2TTS DS      FL1               SECTOR NUMBER OF M2 INDEX
+DCBFTMI3 DS    CL8            DIRECT-ACCESS ADDRESS OF M3 INDEX
+DCBM3TTR DS    FL1            RECORD NUMBER OF M3 INDEX
+DCBM3TT  DS      FL2               TT OF M3 INDEX
+DCBM3TTS DS    FL1
+DCBNLEV  DS    FL1            NO OF INDEX LEVEL  NMAX = 4)
+DCBFIRHH DS    H              HH OF PRIM FIRST CYLINDER
+DCBFIRR  DS    FL1            RECORD NUMBER    (R)
+         DS    FL1            RESERVED
+DCBLDT   DS    FL2            TT OF PRIM DATA TRACK
+DCBHIDAC DS      FL1               LAST RECORD OF SHARED TRACK
+*                                  OF SHARED CYLINDER
+DCBHIRPD DS      FL1               HIGHEST RECORD FOR PRIME AREA
+DCBHIROV DS      FL1               HIGHEST RECORD FOR OVERFLOW
+DCBHIRSH DS      FL1               LAST RECORD OF SHARED TRACK
+         DS      XL4               RESERVED
+         DS      XL4               RESERVED
+DCBNREC  DS      FL4               NO OF LOGICAL RECORD IN PRIME AREA
+DCBST    DS      BL1               CONDITIONS
+DCBSTSSM EQU   X'80'          SINGLE SCHEDULE MODE
+DCBSTKSQ EQU   X'40'          KEY SEQUENCE CHECK
+DCBSTLOD EQU   X'20'          INITIAL LODE
+DCBSTNMC EQU   X'04'          FIRST MACROINSTRUCTION NOT KEY
+*                             RESERVED
+DCBSTLBF EQU   X'02'          LAST BLOCK FULL
+DCBSTLTF EQU   X'01'          LAST TRACK FULL
+DCBFTC1  DS      CL8               DIRECT-ACCESS ADDRESS OF
+*                                  FIRST TRACK OF CYLINDER INDEX
+DCBFTMI1 DS      CL8               DIRECT-ACCESS ADDRESS OF
+*                                  FIRST TRACK OF M1 INDEX
+DCBDACCH DS      CL8               DIRECT-ACCESS ADDRESS OF
+*                                  DATA BLOCK
+DCBKEAD  DS      AL3               KEY SEARCH USE
+DCBR0DAT DS   CL8                  R0 DATA PART
+DCBBLRCD DS      FL2               BLOCKING INFORMATION
+*                                  ( R BYTE POSITION)
+         DS      XL2               RESERVED
+DCBCIXNO DS      H                 NO OF CYLINDER INDEX
+DCBEIXNO DS      H                 USED NO OF CYLINDER INDEX
+         DS      XL4               RESERVED
+DCBCXTT  DS      FL2               TT OF CYLINDER INDEX IN DATA SET
+DCBCXTTR DS      FL1               RECORD ADDRESS OF TRACK OF
+*                                  CYLINDER INDEX
+DCBCXTTS DS      FL1               SECTOR NOUMBER OF TRACK OF
+*                                  CYLINDER INDEX
+DCBM1TT  DS      FL2               TT OF M1 INDEX
+DCBM1TTR DS      FL1               RECORD ADDRESS OF TRACK OF
+*                                  M1 INDEX
+DCBM1TTS DS      FL1               SECTOR NUMBER OF TRACK OF
+*                                  M1 INDEX
+DCBDATT  DS      FL2               TT OF DATA BLOCK IN DATA SET
+DCBDATTR DS      FL1               RECORD ADDRESS OF DATA BLOCK
+*                                  OF TRACK
+DCBDATTS DS      FL1               SECTOR NUMBER OF DATA BLOCK
+*                                  OF TRACK
+DCBTRTT  DS      FL2               TT OF TRACK INDEX IN DATA SET
+DCBTRTTR DS      FL1               R OF TRACK INDEX OF TRACK
+DCBTRTTS DS      FL1               SECTOR NUMBER OF TRACK INDEX
+*                                  OF TRACK
+DCBFDATR DS      FL1               FIRST RECORD ADDRESS OF TRACK
+DCBM1WO  DS      FL1               MAKING CONDITION OF M1 (WORK)
+DCBCYLTT DS      FL2               TT OF DISPOSITION CYLINDER
+DCBQISWO DS   A                    ADRESS OF FCB-WORK AREA (QISAM)
+DCBBISWO DS   A                    ADRESS OF FCB-WORK AREA (BISAM)
+DCBBUF1  DS      A                 ADDRESS OF BUFFER-1
+DCBBUF2  DS   0A                   ADDRESS OF BUFFER-2
+DCBMSWA  DS   A                    ADDRESS OF BUFFER   (BISAM)
+DCBMSWAS  DS   AL4                 BISAM BUFFER SIZE
+DCBWOPOT DS   A                    ADDRESS OF FCB-WORK AREA (LOAD)
+         SPACE 1
+.CA      AIF   (NOT &DSORGDA).CB
+*                        BDAM INTERFACE
+         SPACE 1
+         ORG   XBAFCB+52
+DCBCHECK DS      0A                ADDRESS OF CHECK MODULE
+         AIF   (&DSORGIS).CA1
+DCBOPTCD DS      BL1               OPTION CODES
+         AGO   .CA2
+.CA1     ANOP
+         DS    BL1                 DCBOPTCD - OPTION CODES
+.CA2     ANOP
+         AIF   (&DSORGIS OR &DSORGQS OR &DSORGBS).CA3
+DCBOPTW  EQU     X'80'             WRITE VALIDITY CHECK (DASD)
+*                                  (BSAM, BPAM, QSAM, ISAM, BDAM)
+         AGO   .CA4
+.CA3     ANOP
+*        X'80' IS DCBOPTW - SAME AS BSAM AND ISAM
+.CA4     ANOP
+DCBOPTE  EQU    X'20'              ALWAYS ZERO
+DCBOPTF  EQU    X'10'              FEED  BACK
+DCBOPTA  EQU    X'08'              ALWAYS ZERO
+DCBOPTDB EQU    X'04'              ALWAYS ZERO
+DCBOPTRB EQU    X'01'              RELATIVE BLOCK ADDRESSING
+DCBCHCKA DS     AL3                ADDRESS OF CHECK MODULE
+         AIF   (&DSORGIS).CAA
+DCBSYNAD DS      A                 ADDRESS OF SYNAD ROUTINE
+DCBDRSV0 DS     XL2                RESERVED
+DCBBLKSI DS      H                 MAXIMUM BLOCK SIZE
+         AGO   .CAB
+.CAA     ANOP
+         DS      A                 DCBSYNAD - ADDRESS OF SYNAD ROUTINE
+         DS      XL2               RESERVED
+         DS      H                 DCBBLKSI - MUXIMUM BLOCK SIZE
+.CAB     ANOP
+DCBDRSV1 DS     XL4                RESERVED
+DCBDSQND DS      A                 ADDRESS OF IOB
+         AIF   (&DSORGIS).IA1
+DCBNCP   DS     FL1                NO. OF CHANNEL PROGRAM
+         AGO   .IA2
+.IA1     ANOP
+         DS      FL1               DCBNCP - NO. OF CHANNEL PROGRAM
+.IA2     ANOP
+DCBDRSV3 DS     XL3                RESERVED
+DCBDRSV4 DS     XL4                RESERVED
+DCBDRSV5 DS     XL4                RESERVED
+DCBDRSV6 DS     XL4                RESERVED
+DCBMVXNO DS     FL1                NO. OF ENTRIES IN MULTI VOLUME
+*                                  DATA SET
+DCBDRSV7 DS     XL3                RESERVED
+DCBDFOR  DS      A                 ADDRESS OF FORMAT MODULE
+DCBDFBK  DS      A                 ADDRESS OF FEEDBACK MODULE
+DCBDRSV8 DS     XL4                RESERVED
+         SPACE 1
+.CB      AIF   (NOT &DSORGQX).CC
+*                        QTAM INTERFACE
+*                        ( NOT SUPPORTED --- OS4/X8 )
+.CC      AIF   (NOT &DSORGTQ).CC1
+*                        TCAM MESSAGE QUEUE INTERFACE
+*                        ( NOT SUPPORTED --- OS4/X8 )
+.CC1     AIF   (NOT &DSORGMQ).CD
+*                        QTAM PROBLEM PROGRAM MESSAGE QUEUE INTERFACE
+*                        ( NOT SUPPORTED --- OS4/X8 )
+.CD      AIF   (NOT &DSORGBX).CDF
+*                        BTAM INTERFACF
+*                        ( NOT SUPPORTED --- OS4/X8 )
+.CDF     AIF   (NOT (&DSORGQS OR &DSORGBS)).CX1
+*                        QSAM-BSAM-BPAM COMMON INTERFACE
+         SPACE 1
+         ORG   XBAFCB+52
+         AIF   (&DSORGDA).CDA1
+DCBGERR  DS      0A                ADDRESS OF SYNCHRONIZING ROUTINE
+*                                  FOR GET
+DCBPERR  DS      0A                ADDRESS OF SYNCHRONIZING ROUTINE
+*                                  FOR PUT
+DCBCHECK DS      0A                ADDRESS OF CHECK MODULE
+         AIF   (&DSORGIS).CDA
+DCBOPTCD DS      BL1               OPTION CODES
+         AGO   .CD2
+.CDA1    ANOP
+         DS      0A                DCBGERR, DCBPERR OR DCBCHECK
+.CDA     ANOP
+         DS      BL1               DCBOPTCD - OPTION CODES
+.CD2     ANOP
+DCBOPTU  EQU     X'40'             ALLOW DATA CHECK CASED BY INVALID
+*                                  CHARACTER (1403 PRINTER WITH UCS
+*                                  FEATURE)
+*                                  (BSAM, BPAM, QSAM )
+DCBOPTC   EQU    X'20'             CHAINED SCHEDULING USING PCI
+*                                  (QSAM)
+DCBOPTET EQU     X'01'             OPTION CODES EXTENSION EXISTS
+         AIF   (&DSORGDA).CD1
+DCBGERRA DS      0AL3              ADDRESS OF SYNCHRONIZING ROUTINE
+*                                  FOR GET
+DCBPERRA DS      0AL3              ADDRESS OF SYNCHRONIZING ROUTINE
+*                                  FOR PUT
+DCBCHCKA DS      AL3               ADDRESS OF CHECK MODULE
+         AGO   .CD3
+.CD1     ANOP
+         DS      AL3               DCBGERRA, DCBPERRA OR DCBCHCKA
+.CD3     AIF   (&DSORGIS OR &DSORGDA OR &DSORGMQ).CDB
+DCBSYNAD DS      0A                ADDRESS OF USER-PROVIDED SYNAD
+*                                  ROUTINE
+DCBIOBL  DS      FL1               IOB LENGTH IN DOUBLE WORDS
+DCBSYNA  DS      AL3               ADDRESS OF USER-PROVIDED SYNAD
+*                                  ROUTINE
+         AGO   .CD4
+.CDB     ANOP
+         DS      0A                DCBSYNAD -ADDRESS OF SYNAD ROUTINE
+DCBIOBL  DS      FL1               IOBLENGTH IN DOUBLE WORDS
+DCBSYNA  DS      AL3               ADDRESS OF SYNAD ROUTINE
+.CD4     ANOP
+DCBCIND1 DS      BL1               CONDITION INDICATORS
+DCBCNTOV EQU     X'80'             DIRECT ACCESS - TRACK OVERFLOW IN
+*                                  USES
+*                                  (BSAM, BPAM, QSAM)
+DCBCNSRD EQU     X'40'             SEARCH DIRECT (BSAM, BPAM, QSAM)
+DCBCNEVB EQU     X'20'             END OF VOLUME - USED BY EOB ROUTINES
+*                                  (BSAM, BPAM, QSAM)
+DCBCNEVA EQU     X'10'             END OF VOLUME - USED BY CHANNEL-END
+*                                  APPENDAGE ROUTINES
+*                                  (BSAM, BPAM, QSAM)
+DCBCNBRM EQU     X'04'             BLOCKED RECORD BIT MODIFIED
+*                                  (BSAM, BPAM, QSAM)
+DCBCIND2 DS      BL1               CONDITION INDICATORS
+DCBCNSTO EQU     X'80'             PARTITIONED DATA SET - STOW HAS BEEN
+*                                  PERFORMED (BSAM, BPAM, QSAM)
+*                                  SEQUENTIAL DATA SET - UPDATE
+*                                  (BSAM, BPAM)
+DCBCNWR0 EQU     X'40'             SEQUENTIAL DATA SET - UPDATE EOF IS
+*                                  INDICATED (BSAM, BPAM)
+*                                  DIRECT ORGANIZATION DATA SET - LAST
+*                                  I/O WAS A WRITE RECORD ZERO
+*                                  (BSAM, BPAM, QSAM)
+DCBCNCLO EQU     X'20'             CLOSE IN PROCESS (QSAM)
+DCBCNIOE EQU     X'10'             PERMANENT I/O ERROR
+*                                  (BSAM, BPAM, QSAM)
+DCBCNBFP EQU     X'08'             QPEN ACQUIRED BUFFER POOL
+*                                  (BSAM, BPAM, QSAM)
+DCBCNFEO EQU     X'02'             FEOV BIT (BSAM, BPAM, QSAM)
+DCBCNQSM EQU     X'01'             ALWAYS ZERO (BSAM, BPAM)
+*                                  THIS IS QSAM FCB (QSAM)
+         AIF   (&DSORGIS OR &DSORGDA).CDC
+DCBBLKSI DS      H                 MAXIMUM BLOCK SIZE
+         AGO   .CD7
+.CDC     ANOP
+         DS      H                 DCBBLKSI - MAXIMUM BLOCK SIZE
+.CD7     ANOP
+DCBWCPO  DS      FL1               OFFSET OF WRITE CHANNEL PROGRAM
+*                                  FROM THE START OF IOB
+DCBWCPL  DS      FL1               LENGTH OF WRITE CHANNEL PROGRAM
+DCBOFFSR DS      FL1               OFFSET OF READ CCW FROM QSAM OR
+*                                  BSAM/BPAM PREFIX OF IOB
+DCBOFFSW DS      FL1               OFFSET OF WRITE CCW FROM QSAM OR
+*                                  BSAM/BPAM PREFIX OF IOB
+DCBIOBA  DS      0A                ADDRESS OF QSAM OR BSAM/BPAM PREFIX
+*                                  OF IOB
+DCBIOBBT DS      BL1               FLAG BYTE (QSAM)
+DCBIOBAD DS      AL3               ADDRESS OF QSAM OR BSAM/BPAM PREFIX
+*                                  OF IOB
+*                                  ADDRESS OF QSAM(CHAINED SCHEDULING
+*                                  ) PREFIX OF ICB (QSAM)
+         SPACE 1
+         AIF   (NOT &DSORGBS).CE
+*                        BSAM-BPAM INTERFACE
+         SPACE 1
+         ORG   XBAFCB+72
+DCBEOBR  DS      0A                ADDRESS OF END-OF-BLOCK MODULE FOR
+*                                  READ
+         AIF   (&DSORGIS OR &DSORGDA).CDD
+DCBNCP   DS      FL1               NUMBER OF CHANNEL PROGRAMS
+*                                  ALWAYS EQUAL TO 1
+         AGO   .CD8
+.CDD     ANOP
+         DS      FL1               DCBNCP - NUMBER OF CHANNEL PROGRAMS
+.CD8     ANOP
+DCBEOBRA DS      AL3               ADDRESS OF END-OF-BLOCK MODULE FOR
+*                                  READ
+DCBEOBW  DS      0A                ADDRESS OF END-OF-BLOCK MODULE FOR
+*                                  WRITE
+         DS      XL1               RESERVED
+DCBEOBWA DS      AL3               ADDRESS OF END-OF-BLOCK MODULE FOR
+*                                  WRITE
+DCBDIRDA DS      BL1               DIRECTORY INFORMATION
+DCBDIRIM DS      BL1               DIRECTORY INFORMATION
+DCBENSZ1 EQU     X'80'             ENTRY SIZE EQUAL 40 BYTES
+DCBENSZ2 EQU     X'40'             ENTRY SIZE EQUAL 80 BYTES
+DCBNOSP  EQU     X'20'             ADD SPACE IS NOTHING
+         AIF   (&DSORGIS).CDE
+DCBLRECL DS      H                 LOGICAL RECORD LENGTH
+         AGO   .CD9
+.CDE     ANOP
+         DS      H                 DCBLRECL - LOGICAL RECORD LENGTH
+.CD9     ANOP
+DCBCNTRL DS      0A                ADDRESS OF CNTRL MODULE
+DCBNOTE  DS      0A                ADDRESS OF NOTE/POINT MODULE
+DCBPOINT DS      0A                ADDRESS OF NOTE/POINT MODULE
+         DS      XL1               RESERVED
+DCBCNTRA DS      0AL3              ADDRESS OF CNTRL MODULE
+DCBNOTEA DS      0AL3              ADDRESS OF NOTE/POINT MODULE
+DCBPOINA DS      AL3               ADDRESS OF NOTE/POINT MODULE
+         DS      XL8               RESERVED
+DCBOPTEX DS      BL1               OPTION CODES EXTENSION
+DCBOPTX  EQU     X'80'             DELETE RECORD IS NOT PRESENT USER
+DCBOPTS  EQU     X'40'             SUPPRESSION OF LAST PUT
+*                                  (QSAM LOCATE MODE)
+DCBOPTB  EQU     X'20'             MAGNETIC TAPE DEVICES - REGARD EOF
+*                                  LABEL AS EOV LABEL
+DCBOPTUL EQU     X'10'             MAGNETIC TAPE DEVICES - UNLOAD
+*                                  OPERATION IS REQUESTED (CLOSE,EOV)
+DCBOPTNM EQU     X'08'             SUPPRESSING PROTECT MESSAGE (MT)
+*                                  (INOUT OPEN SUPPRESSES PROTECT MSG)
+DCBOPTH  EQU     X'04'             RELOAD PO FILE
+*                                  (RECREATE PO FILE)
+DCBOPTJ  EQU     X'02'             NIPPONESE LINE PRINTER - SELECT
+*                                  TRANSLATE TABLE IS REQUESTED (EOB)
+DCBOPTSX EQU     X'01'             STOWX
+*
+DCBOPTEY DS      BL1               OPTION CODE EXTENTION - 2
+DCBOPTEB EQU     X'80'             EXTENDED BSAM INTERFACE IS USED
+*                                  (FOR ONLY FBA DASD INTERFACE)
+DCBOPTM  EQU     X'40'             MAGNETIC TAPE DEVICES - STREAMIG
+*                                  MODE IS REQUESTED
+DCBKBSAM EQU     X'20'             FILE WITH KEY IS REQUESTED
+*
+         DS      XL2               RESERVED
+         SPACE 1
+.CE      AIF   (NOT &DSORGQS).CX1
+*                        QSAM INTERFACE
+         SPACE 1
+         AIF   (NOT &DSORGDA).CE1
+         ORG   XBAFCB+52
+DCBGERR  DS      0A                ADDRESS OF SYNCHRONIZING ROUTINE
+*                                  FOR GET
+DCBPERR  DS      0A                ADDRESS OF SYNCHRONIZING ROUTINE
+*                                  FOR PUT
+         DS      BL1               DCBOPTCD - OPTION CODES
+DCBGERRA DS      0AL3              ADDRESS OF SYNCHRONIZING ROUTINE
+*                                  FOR GET
+DCBPERRA DS      AL3               ADDRESS OF SYNCHRONIZING ROUTINE
+*                                  FOR PUT
+         SPACE 1
+.CE1     ANOP
+         ORG   XBAFCB+72
+DCBEOBAD DS      0A                ADDRESS OF LAST BYTE OF CURRENT
+*                                  BUFFER
+         DS      XL1               RESERVED
+DCBEOBA  DS      AL3               ADDRESS OF LAST BYTE OF CURRENT
+*                                  BUFFER
+DCBRECAD DS      0A                ADDRESS OF CURRENT OR NEXT LOGICAL
+*                                  RECORD
+DCBRECBT DS      BL1               FLAG BYTE
+DCBRECA  DS      AL3               ADDRESS OF CURRENT OR NEXT LOGICAL
+*                                  RECORD
+DCBQSWS  DS      XL1               FLAG BYTE
+         AIF   (&DSORGBS).GA1
+DCBDIRIM DS      BL1               DIRECTORY IMFORMATION
+DCBENSZ1 EQU     X'80'             ENTRY SIZE EQUAL 40 BYTES
+DCBENSZ2 EQU     X'40'             ENTRY SIZE EQUAL 80 BYTES
+DCBNOSP  EQU     X'20'             ADD SPACE IS NOTHING
+         AGO   .GA3
+.GA1     ANOP
+         DS      BL1               DCBDIRIM - DIRECTORY INFORMATION
+*                                  ---X'80' - DCBENSZ1 - SAME AS BSAM
+*                                  ---X'40' - DCBENSZ2 - SAME AS BSAM
+*                                  ---X'20' - DCBNOSP  - SAME AS BSAM
+.GA3     ANOP
+         AIF   (&DSORGIS OR &DSORGBS).CEE
+DCBLRECL DS      H                 LOGICAL RECORD LENGTH
+         AGO   .CEEA
+.CEE     ANOP
+         DS      H                 DCBLRECL - LOGICAL RECORD LENGTH
+.CEEA    AIF   (&DSORGBS).CEF
+DCBCNTRL DS      0A                ADDRESS OF CONTROL MODULE
+         AGO   .CEF1
+.CEF     ANOP
+         DS      0A                DCBCNTRL - ADDRESS OF CONTROL MODULE
+.CEF1    ANOP
+DCBEROPT DS      BL1               ERROR OPTION
+DCBEROPS EQU     X'80'+X'40'+X'20' ERROR OPTION
+DCBERACC EQU     B'10000000'       ACCEPT PERMANENT ERROR
+DCBERSKP EQU     B'01000000'       SKIP PERMANENT ERROR
+DCBERABE EQU     B'00100000'       ABNORMAL END OF TASK
+         AIF   (&DSORGBS).CEF2
+DCBCNTRA DS      AL3               ADDRESS OF CNTRL MODULE
+         AGO   .CEF3
+.CEF2    ANOP
+         DS      AL3               DCBCNTRA - ADDRESS OF CONTROL MODULE
+.CEF3    ANOP
+         DS      XL2               RESERVED
+DCBPRECL DS      FL2               BLOCK LENGTH, MAXIMUM BLOCK LENGTH
+*                                  OR DATA LENGTH
+DCBEOB   DS      0A                ADDRESS OF END-OF-BLOCK MODULE
+         DS      XL1               RESERVED
+DCBEOBMA DS      AL3               ADDRESS OF END-OF-BLOCK MODULE
+         AIF   (&DSORGBS).HA1
+DCBOPTEX DS      BL1               OPTION CODES EXTENSION
+DCBOPTX  EQU     X'80'             DELETE RECORD  IS NOT PRESENT USER
+DCBOPTS  EQU     X'40'             SUPPRESSION OF LAST PUT
+*                                  (QSAM LOCATE MODE)
+DCBOPTB  EQU     X'20'             MAGNETIC TAPE DEVICES - REGARD EOF
+*                                  LABEL AS EOV LABEL
+DCBOPTUL EQU     X'10'             MAGNETIC TAPE DEVICES - UNLOAD
+*                                  OPERATION IS REQUESTED (CLOSE,EOV)
+DCBOPTNM EQU     X'08'             SUPPRESSION PROTECT MESSAGE (MT)
+*                                  (INOUT OPEN SUPPRESSES PROTECT MSG)
+DCBOPTH  EQU     X'04'             RELOAD PO FILE
+*                                  (RECREATE PO FILE)
+DCBOPTJ  EQU     X'02'             NIPPONESE LINE PRINTER - SELECT
+*                                  TRANSLATE TABLE IS REQUESTED (EOB)
+DCBOPTSX EQU     X'01'             STOWX
+*
+DCBOPTEY DS      BL1               OPTION CODES EXTENTION - 2
+DCBOPTEB EQU     X'80'             EXTENDED BSAM IS USED
+*                                  (FOR ONLY FBA INTERFACE)
+DCBOPTM  EQU     X'40'             MAGNETIC TAPE DEVICES - STREAMIG
+*                                  MODE IS REQUESTED
+DCBKBSAM EQU     X'20'             FILE WITH KEY IS REQUESTED
+*
+         AGO   .HA3
+.HA1     ANOP
+         DS      BL1               DCBOPTEX - OPTION CODES EXTENSION
+*                                  ---X'80' - DCBOPTX -- SAME AS BSAM
+*                                  ---X'40' - DCBOPTS -- SAME AS BSAM
+*                                  ---X'20' - DCBOPTB -- SAME AS BSAM
+*                                  ---X'10' - DCBOPTUL - SAME AS BSAM
+*                                  ---X'08' - DCBOPTNM - SAME AS BSAM
+*                                  ---X'04' - DCBOPTH -- SAME AS BSAM
+*                                  ---X'02' - DCBOPTJ -- SAME AS BSAM
+*                                  ---X'01' - DCBOPTSX - SAME AS BSAM
+         DS      BL1               DCBOPTEY - OPTION CODES EXTENT - 2
+*                                  ---X'80' - DCBOPTEB - SAME AS BSAM
+*                                  ---X'40' - DCBOPTM -- SAME AS BSAM
+*                                  ---X'20' - DCBKBSAM - SAME AS BSAM
+*
+.HA3     ANOP
+         DS      XL2               RESERVED
+         SPACE 1
+.CF      AIF   (&DSORGIS OR &DSORGQS OR &DSORGBS OR NOT &DSORGLR).FIN
+         ORG   XBAFCB+82
+DCBLRECL DS      H                 LOGICAL RECORD LENGTH
+         SPACE 1
+         AGO   .CX1
+.SLIP    ANOP
+*                        GRAPHIC DEVICE INTERFACE
+*                        ( NOT SUPPORTED --- OS4/X8 )
+         AGO   .CX1
+.CX1     AIF     (NOT &DSORGCA).FIN
+*                CDAM INTERFACE
+         SPACE   1
+         ORG     XBAFCB+52
+         AIF     (&DSORGDA OR &DSORGIS OR &DSORGQS OR &DSORGBS).CX2
+DCBOPTCD DS      BL1
+         AGO     .CX3
+.CX2     ANOP
+         DS      BL1
+.CX3     AIF     (&DSORGDA).CX4
+DCBOPTRB EQU     X'01'             RELATIVE BLOCK ADDRESSING
+.CX4     AIF     (&DSORGDA OR &DSORGIS OR &DSORGQS OR &DSORGBS).CX5
+DCBCHCKA DS      AL3               ADDRESS OF CHECK MODULE
+DCBSYNAD DS      AL4               ADDRESS OF USER-PROVEDED SYNAD
+*                                  ROUTINE
+         DS      BL2               RESERVED
+DCBBLKSI DS      BL2               MAXIMUM BLOCK SIZE
+         AGO     .CX6
+.CX5     ANOP
+         DS      AL3               DCBCHCKA-ADDRESS OF CHECK MODULE
+         DS      AL4               DCBSYNAD-ADDRESS OF USER-PROVIDED
+*                                           SYNAD ROUTINE
+         DS      BL2               RESERVED
+         DS      BL2               MAXIMUM BLOCK SIZE
+.CX6     ANOP
+         DS      BL1               RESERVED
+DCBBLKGR DS      BL1               MAXIMUM NUMBER OF BLOCK-GROUP
+         DS      BL1               RESERVED
+DCBMAXBL DS      BL1               MAXIMUM NUMBER OF BLOCK
+         DS      AL4               RESERVED
+DCBNCPC  DS      BL1               RESERVED
+         DS      BL3               RESERVED
+         DS      BL12              RESERVED
+DCBMVXNO DS      BL1               NUMBER OF EXTENTS IN NULTI VOLUME
+         DS      BL3               RESERVED
+         DS      BL12              RESERVED
+.FIN     ANOP
+         AIF   ('&PRINT' EQ 'YES').FINE
+         POP   PRINT
+.FINE    MEXIT
+         MEND

@@ -1,0 +1,232 @@
+*          DATA SET DFHTDEXT   AT LEVEL 012 AS OF 23/12/80
+         LTORG
+   TITLE 'A C C    T R A N S I E N T   D A T A   E X I T '
+TDX000   CLC   TCATDDI,TDXPVX      HOT RDR  EXTRA PART DEST ?
+         BNER  R14                 NO . RETURN TO CICS PROCESSING
+         L     R1,TCASYAA          GET ADDR OF TCA SYS AREA
+         USING DFHTCADY,R1
+         CLC   TDXTID,TCAKCTTA     THIS ENTRY FOR SAME TASK AS LAST ?
+         BE    TDX001              YES . ENQ ALREADY DONE
+*              ONLY ALLOW ONE TASK AT A TIME TO USE SJS READER.
+*              ENQ TO STOP OTHER TASKS RUNNING
+         DFHKC TYPE=ENQ,QARGADR=TDXENQ,QARGLNG=8
+         MVC   TDXTID,TCAKCTTA     SAVE TASKID
+         B     TDX001
+*
+*              DEQ ON SJS READER TO ALLOW OTHER TASKS TO USE IT
+*
+TDX002   XC    TDXTID,TDXTID       ZERO TASK ID AREA
+         DFHKC TYPE=DEQ,QARGADR=TDXENQ,QARGLNG=8
+         B     TDPNITRC            EXIT TRANS DATA PROGRAM
+TDXPVX   DC    C'HOTR'             HOT READER    XPART DEST ID
+TDXTID   DC    XL3'00000000'       TASKID FOR TASK USING SJS READER
+TDXENQ   DC    CL8'ACCTDP'         ENQ NAME TO SINGLE THREAD SJS RDR
+         SPACE 3
+TDX001   LA    R1,TDX002           SJS RDR DEQ AND EXIT TRANS DATA PROG
+         DROP  1                   END OF CICS ADDRESSABLIITY
+         DROP  2
+         DROP  3
+         DROP  4
+         DROP  8
+         DROP  9
+         DROP  10
+         DROP  11
+         DROP  13
+         STM   R14,R12,12(R13)     SAVE CICS REGS IN CICS CSA
+         BALR  R10,0
+         USING *,R10
+         LA    R15,TDXPSAV
+         ST    R15,8(R13)          CHAIN SAVE AREA TO CICS CSA
+         ST    R13,4(R15)
+         LR    R13,R15
+         TM    TDXRDR,TDXRDRA      READER ACTIVE ?
+         BO    TDX900              YES . PASS RECORD TO READER
+*              SET UP SJS READER
+         XC    TDXVMF,TDXVMF       CLEAR IN CORE RDR PARM LIST
+         XC    TDXDER,TDXDER       CLEAR DER
+         USING IHAICRPM,R9
+         LA    R9,TDXVMF           ESTABLISH ADDR TO IN CORE RDR PARM
+*        TURN ON SUBSYSTEM JOB SUBMISSION
+         MVI   ICRFLG1,ICRSJS
+*        TURN ON SMF EXIT, JOB ENQ AND NORMAL READER MSGS
+         MVI   ICROPTS,ICRSMF+ICRENQ+ICRRDMSG
+         LA    R1,TDXDER           PROVIDE A DER
+         ST    R1,ICRDERP          PROB NOT NECESSARY
+         LA    R1,TDX800           PROVIDE ADDR OF PSEUDO GET ROUT.
+         ST    R1,ICRACCMP         TO BE CALLED BY IEFVMF
+*        TURN ON READER ACTIVE PLUS RECORD AVAIL FLAGS
+         MVI   TDXRDR,TDXRDRA+TDXRDRD
+TDX001A  STM   R1,R15,TDXRSAV      SAVE REGS FOR PSEUDO GET ROUT
+         MODESET MODE=SUP,KEY=ZERO
+         L     R15,16              CVT ADDR
+         USING CVT,R15
+         L     R15,CVTJESCT
+         USING JESCT,R15
+*              OVERRIDE DEFAULT READER PARMS IN IEFVMF WITH READER
+*              PARMS USED FOR FAST START LOCAL READER. THESE ARE
+*              BUILT FROM JESPARMS MEMBER OF PARMLIB.
+         L     R14,JESJPDFP        ADDR OF JES PARAMETERS
+         MVC   ICRPARML,2(R14)     MOVE LENGTH FROM FULL WORD
+         LA    R14,4(R14)          POINT TO CHAR STRING AFTER LENGTH
+         ST    R14,ICRPARMP        PASS ADDR TO IEFVMF
+         L     R15,JESVMF          ENTRY ADDR OF IN CORE RDR
+         LA    R1,TDXVMF           PARM LIST
+         BALR  R14,R15             INVOKE IN CORE READER
+         MODESET MODE=PROB,KEY=NZERO DROP BACK TO PROB PROG STATE
+         MVI   TDXRDR,0            CLEAR FLAGS
+         CLI   ICRERROR,0          READER POST ANY ERROR CONDS ?
+         BE    TDX003              ALL OK
+*              READER DETECTED ERROR
+         OI    TCATDTR,TDIOERR     TELL CICS TASK HAD I/O ERROR
+         UNPK  TDXWK3,ICRERROR(2)  CONVERT ERROR FLAGS TO
+         TR    TDXWK3(2),TDXHEX    PRINTABLE FORMAT FOR WTO
+         MVC   TDXWTO+28(2),TDXWK3    MOVE INTO WTO MSG
+         WTO   MF=(E,TDXWTO)
+TDX003   L     R13,4(R13)          RESTORE CICS CSA ADDR
+         LM    R14,R12,12(R13)
+         BR    R1                  EXIT TO DEQ AND EXIT CODE
+*
+*              TDX800 - PSEUDO GET ROUTINE - CALLED BY IEFVMF
+*
+TDX800   DS    0D
+         STM   R14,R12,12(R13)     SAVE IEFVMFS REGS
+         LR    R0,R13
+         L     R15,20(R15)         GET SAVE AREA ADDR
+         LM    R1,R15,0(R15)       RESTORE REGS
+         B     TDX801
+         DC    H'0'                FORCE ALIGNMENT
+         DC    A(TDXRSAV)          NOTE POSITIONAL ADDR
+TDX801   ST    R0,TDXSR13          SAVE IEFVMF S REG 13
+         TM    TDXRDR,TDXRDRD      RECORD AVAIL ?
+         BO    TDX901              YES . BRANCH TO RETURN ROUT.
+*              MUST RETURN CONTROL TO CICS TO GET A RECORD
+         MODESET MODE=PROB,KEY=NZERO
+         L     R13,4(R13)          RESTORE CICS CSA ADDR
+*        RESET RETURN ADDR TO TRANS DATA EXIT ROUTINE
+         MVC   12(4,R13),=A(TDPNITRC)
+         LM    R14,R12,12(R13)
+         BR    R14
+*
+*              TDX900 - RETURN RECORD TO IEFVMF
+*
+TDX900   MODESET MODE=SUP,KEY=ZERO
+TDX901   NI    TDXRDR,255-TDXRDRD  TURN OFF RECORD AVAIL FLAG
+         L     R13,TDXSR13         GET SAVE AREA  ADDR
+         L     R2,24(R13)          GET RPL ADDR (R1) FROM SAVE AREA
+         USING IFGRPL,R2
+         L     R1,TCATDAA          ADDR OF DATA FROM CICS
+         CLC   TDXEOF,0(R1)        HASP END OF FILE RECORD ?
+         BE    TDX902              YES . PROCESS EOF
+         L     R15,RPLAREA         MOVE RECORD FROM CICS TO ADDR IN
+         MVC   0(80,R15),0(R1)     RPL PROVIDED BY IEFVMF
+         LM    R14,R12,12(R13)     RESTORE IEFVMF S REGS
+         SR    R15,R15             PROB NOT NECESSARY
+         BR    R14
+*              END OF FILE
+TDX902   L     R14,RPLDACB         ADDR OF ACB FROM RPL
+         USING ACBID,R14
+         L     R14,ACBUEL          EXIT LIST FROM ACB
+         USING IFGEXLST,R14
+         L     R13,TDXSR13         RESTORE R13
+         MVC   12(4,R13),EXLEODP   RESET RETURN ADDR TO EOD ADDR
+         LM    R14,R12,12(R13)     RESTORE IEFVMF S REGS
+         SR    R15,R15
+         BR    R14
+*
+*
+*
+         DS    0D
+TDXVMF   DS    CL40                IN CORE RDR PARM LIST
+         DS    0D
+TDXDER   DS    CL176
+TDXPSAV  DS    18F                 SAVE AREA FOR IEFVMF TO USE
+TDXRSAV  DS    18F                 SAVE AREA TO RESTORE REGS IN EXIT
+TDXSR13  DS    F                   IEFVMF REG 13 SAVE AREA
+TDXRDR   DC    XL1'00'             FLAG BYTE
+TDXRDRA  EQU   X'01'               READER ACTIVE
+TDXRDRD  EQU   X'02'               RECORD AVAIL
+TDXWK3   DS    CL3
+TDXHEXTR DC    C'0123456789ABCDEF'
+TDXHEX   EQU   TDXHEXTR-240
+TDXEOF   DC    C'/*EOF'
+TDXWTO   WTO   'ACC800 SJS RDR FAILED - XX',MF=L,                      C
+               ROUTCDE=2,DESC=7
+         LTORG
+*
+*              DSECTS
+*
+         IEFDER
+         CVT   DSECT=YES,SYS=AOS1
+         IEFJESCT
+         IFGRPL
+         IFGEXLST
+         IFGACB
+***********************************************************************
+*                                                                     *
+*MODULE-NAME=IHAICRPM(OS/VS1)MACRO                             @X048E68
+*DESCRIPTIVE-NAME=IN-CORE-READER PARAMETER INTERFACE           @X048E68
+*COPYRIGHT=NONE                                                @X048E68
+*                                                                     *
+*        RELEASE 5   OS/VS1     2/03/75     LEVEL=3            @X50BEB2
+*                                                                     *
+***********************************************************************
+**  THIS MAPPING MACRO DEFINES THE INTERFACE BETWEEN THE IN-CORE
+**  READER INTERFACE MODULE, IEFVMF, AND IT'S INVOKER.
+**
+**  NO CHANGE ACTIVITY FLAGS APPEAR ON THE STATEMENTS AS THE ENTIRE
+**  MACRO IS NEW (CREATED BY REMOVING INFORMATION REQUIRED FOR IN-CORE
+**  READER FROM IHAJPRMS).
+**  A COMMENT CARD IS INSERTED TO REFLECT THE ABOVE FOR MICROFICHE
+**  FLAGGING PURPOSES
+IHAICRPM DSECT
+ICRDERP  DS    F                       PTR TO AREA TO RETURN DER
+ICRJLPAP DS    F                       PTR TO AREA FOR JLPA     XL03120
+ICRACCMP DS    F                       USER ACCESS METHOD PTR  @X50BEB2
+ICRCSCBP DS    F                       POINTER TO CSCB
+ICRJCLSP DS    F                       PTR TO IN-CORE JCL      @X50BEB2
+ICRPARMP DS    F                       PTR TO RDR PARMS        @X50BEB2
+ICRPARML DS    H                       LENGTH OF READER PARMS
+ICRSQID  DS    H                       SOURCE QID              @X50BEB2
+ICREXITP DS    F                       PTR TO IEEPSN OR DUMMY MODULE
+ICRIEEPW DS    F                       IEEPSN WORK AREA (MUST BE ZERO
+*                                      IF  IEEPSN NOT USED)
+*                                      MAPPING OF IEEPSN WORK AREA
+         ORG   ICRIEEPW
+ICRSTAT1 DS    CL1                     STATUS BYTE ONE
+ICRPROC  EQU   X'80'                   PROC NOT FOUND            X02932
+ICRMULTI EQU   X'04'                   MULTI-STEP SYSTEM TASK INDICATOR
+ICRNORM  EQU   X'00'                   NORMAL RETURN CODE
+ICRSTAT2 DS    CL1                     STATUS BYTE TWO
+ICRSYST  EQU   X'80'                   SYSTEM TASK ON PREVIOUS STEP
+ICRNODSI EQU   X'40'                   NO DATA SET INTEGRITY
+ICRXTND  EQU   X'20'                   Q EXTEND PGM STARTED     XL03120
+ICRRDR   EQU   X'08'                   READER STARTED
+ICRWTR   EQU   X'04'                   WRITER STARTED
+ICRSPP   EQU   X'02'                    PROBLEM PROGRAM STARTED
+ICRDSO   EQU   X'01'                   DSO STARTED
+ICRSTAT3 DS    CL1                     STATUS BYTE THREE
+ICRGTF   EQU   X'10'                   GTF STARTED
+ICRRTAM  EQU   X'02'                   RTAM STARTED
+ICRINIT  EQU   X'01'                   INITIATOR STARTED
+ICRSTAT4 DS    CL1                     RESERVED
+         ORG
+ICRFLG1  DS    XL1                     FLAG BITS
+ICRRSTRT EQU   X'80'                   INVOKER IS RESTART READER
+ICRSJS   EQU   X'40'                   SUBSYS. JOB SUBMISSION  @X50BEB2
+ICRINTR  EQU   X'20'                   INITIATOR               @X50BEB2
+ICRERROR DS    XL1                     ERROR PASSBACK FOR SJS  @X50BEB2
+ICROK    EQU   X'00'                   SUCCESSFUL COMPLETION   @X50BEB2
+ICRQUEFL EQU   X'04'                   QUEUE FULL              @X50BEB2
+ICRSPLFL EQU   X'08'                   SPOOL FULL              @X50BEB2
+ICRQUEIO EQU   X'0C'                   QUEUE I/O ERROR         @X50BEB2
+ICRSPLIO EQU   X'10'                   SPOOL I/O ERROR         @X50BEB2
+ICRJLFUL EQU   X'14'                   JOB LIST FULL           @X50BEB2
+ICRLOGIC EQU   X'18'                   LOGIC ERROR             @X50BEB2
+ICRINVPR EQU   X'1C'                   INVALID RDR PARMS       @X50BEB2
+ICRINPIO EQU   X'20'                   INPUT I/O ERROR         @X50BEB2
+ICROPTS  DS    XL1                     IN-CORE RDR OPTIONS     @X50BEB2
+ICRSMF   EQU   X'80'                   TAKE SMF EXIT IF GEND   @X50BEB2
+ICRENQ   EQU   X'20'                   RDR ENQUEUES JOB        @X50BEB2
+ICRRDMSG EQU   X'10'                   NORMAL RDR MESSAGES     @X50BEB2
+ICRCONID DS    XL1                     CONSOLE ID (MCS)        @X50BEB2
+ICRLEN   EQU   *-ICRDERP               LENGTH OF PARM LIST     @X50BEB2

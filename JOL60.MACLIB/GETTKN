@@ -1,0 +1,30 @@
+         MACRO                                                          GETKN010
+&NAME    GETTKN &NOX,&NO=,&REG=,&LOCN=                                  GETKN020
+         LCLA  &REGK                                                    GETKN030
+         LCLC  &WORK                                                    GETKN040
+         AIF   ('&NOX' EQ '').TREST            MUST BE REG,ETC          GETKN050
+         AIF   ('&NOX'(1,1) EQ '(').REG                                 GETKN060
+         AIF   (T'&NOX EQ 'N').ISNO                                     GETKN070
+&NAME    LH    0,&NOX         LOAD FROM LOCATION SPECIFIED              GETKN080
+         AGO   .CONS                                                    GETKN090
+.ISNO    ANOP                                                           GETKN100
+&NAME    LA    0,&NOX         LOAD NUMBER SPECIFIED                     GETKN110
+         AGO   .CONS                                                    GETKN120
+.REG     ANOP                                                           GETKN130
+&REGK    SETA  K'&NOX                                                   GETKN140
+&REGK    SETA  &REGK-2                                                  GETKN150
+&WORK    SETC  '&NOX'(2,&REGK)                                          GETKN160
+&NAME    LR    0,&WORK        LOAD REGISTER                             GETKN170
+         AGO   .CONS                                                    GETKN180
+.TREST   AIF   ('&NO' EQ '').TREG                                       GETKN190
+&NAME    LA    0,&NO          LOAD NUMBER SPECIFIED                     GETKN200
+         AGO   .CONS                                                    GETKN210
+.TREG    AIF   ('&REG' EQ '').TLOCN                                     GETKN220
+&NAME    LR    0,&REG         LOAD REGISTER                             GETKN230
+         AGO   .CONS                                                    GETKN240
+.TLOCN   AIF   ('&LOCN' EQ '').ERR1                                     GETKN250
+&NAME    LH    0,&LOCN        LOAD LOCATION SPECIFIED                   GETKN260
+.CONS    BAL   14,GETATKN     BAL TO JOLCOM TO GET TOKEN                GETKN270
+         MEXIT                                                          GETKN280
+.ERR1    MNOTE 16,'NO TOKEN NUMBER SPECIFIED'                           GETKN290
+         MEND                                                           GETKN300

@@ -1,0 +1,9 @@
+* THIS WILL GENERATE THE JOL INSTRUCTION TABLES.
+* THIS IS VIRTUALLY THE SAME AS CINST, BUT TYPE NEED
+* NOT BE SPECIFIED
+* SOMETHING HAS HAPPENED TO THE ASSEMBLER, TYPE ISN'T PASSED THRU J51
+         GBLC  &TYPE                                              J51
+&TYPE    SETC  'P'                                                J51
+PJOLINST CSECT                                                    J51
+         DEFJOLIN
+         END

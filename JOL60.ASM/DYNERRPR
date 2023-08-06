@@ -1,0 +1,33 @@
+         DROP
+         TITLE '&TITLE DYNAMIC ALLOCATION ERROR MESSAGE ROUTINE'
+S99MSG   ST    R14,S99MRET
+         LA    R01,S99RB
+         ST    R01,DFLIST          STORE S99 REQ BLK ADDR
+         OC    DFLIST+4(4),DFLIST+4 Q... BEEN HERE BEFORE?
+         BNZ   S99010              A... YES
+         ST    R15,S99RC           SAVE RETURN CODE FROM SVC 99
+         LA    R00,S99RC           SET POINTER
+         ST    R00,DFLIST+4
+         LOAD  EP=IKJEFF02
+         ST    R00,DFEFF02         STORE ADDRESS OF MSG ISSUER
+         LA    R00,DFEFF02
+         ST    R00,DFLIST+8
+         LA    R00,DFFLAGS         ADDRESS OF FLAGS
+         ST    R00,DFLIST+12
+         MVI   DFFLAGS+1,X'32'     SET CALLER ID
+         L     R01,4(0,R13)
+         MVC   DFLIST+16(4),24(R01) CPPL ADDRESS
+S99010   DS    0H
+         LINK  EP=IKJEFF18,MF=(E,DFLIST) CALL DAIRFAIL
+         LTR   R15,R15             Q... OK?
+         BZ    S99020               A... YES
+         CVD   R15,DOUBLE          ISSUE ERROR MSG
+         OI    DOUBLE+7,X'0F'
+         MVC   DFMSG,=C'DAIRFAIL RETURN CODE NN'
+         UNPK  DFMSG+21(2),DOUBLE
+         LA    R01,DFMSG
+         LA    R00,L'DFMSG
+         SVC   93
+S99020   DS    0H
+         L     R14,S99MRET
+         BR    R14

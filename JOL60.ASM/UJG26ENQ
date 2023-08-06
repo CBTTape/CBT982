@@ -1,0 +1,35 @@
+****** NEW SEPT 14TH,1975
+* THIS CSECT CALLS US26ENQ TO ENQUE ON AN INTERNAL READER.
+* THERE IS A NEW VERSION OF US26ENQ BUT IT HAS TWO
+* PROBLEMS AS FAR AS JOL IS CONCERNED
+*   1. THE FILE MUST BE CLOSED BEFORE THE ENQ IS PERFORMED.
+*      JOL KEEPS THE JCL FILE OPEN ALL THE TIME,
+*      AND PRESUMABLY THE BUFFER NUMBER IS 1, AND THE FILE
+*      NOT BLOCKED, SO THAT SHOULD BE ALRIGHT, BUT SHELL WILL
+*      HAVE TO CHECK THAT.
+*   2. I HAVEN'T GOT A CLUE WHAT TO DO UNDER TSO WHEN I GET
+*      A RETURN CODE FROM THE ENQUE THAT SAYS THE INTERNAL
+*      READER IS ENQUED FRO A TSO JOL.
+*****
+* SO, THIS LITTLE ROUTINE CAN BE ALTERED LATTER WITHOUT ALTERING
+* THE MAIN JOL COMPILER.
+           PRINT OFF  (JOLCOM COPY - U DON'T WANT THE PRINT)..
+           COPY JOLCOM
+           PRINT ON,DATA
+           JOLSAVE CSECT=UJG26ENQ
+         JOLRETN  RC=0    ********** SHELL MUST ZAP *****
+           LA R1,JCLDDNAM                                         76200
+           LINK EP=US26ENQ
+          LTR R15,R15                                             76200
+          BNZ G26ERR1                                             76200
+           JOLRETN
+G26ERR1   JOLERR  401,'ENQ FOR READER FAILED'                     76200
+         JOLRETN RC=16                                            76200
+           EJECT
+           JOLSAVE CSECT=UJG26DEQ
+         JOLRETN  RC=0    ********** SHELL MUST ZAP *****
+           LA  R1,JCLDDNAM                                        76200
+           LINK EP=US26DEQ
+           JOLRETN
+           LTORG
+           END

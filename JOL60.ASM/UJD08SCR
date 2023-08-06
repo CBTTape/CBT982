@@ -1,0 +1,356 @@
+UJD08SCR TITLE 'SCRATCH DATA SET'
+* JOL COPYRIGHT CCS-JOL PTY LTD 1988
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+         SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+* LAST SOURCE UPDATE
+*   CHANGES:-
+*     1.
+         COPY  JOLGLOBL
+         $UJEPARM
+&TYPE    SETC  'SCHED'                                           88036
+         PRINT ON,DATA
+UJECOMM  DSECT
+         USING UJECOMM,R3,R5
+         COPY  UJECOMM
+D08WORK  DSECT                                                    J40B
+         DS    18F                                                J40B
+D08WORKS EQU   *-D08WORK                                          J40B
+********  VOLINFO DSECT USED TO REFERENCE A CAMLST *************   DASD
+*                                                                J0B
+*VOLINFO DSECT                                                    4DASD
+*NOVOLS  DS     H                                                 4DASD
+*CATDEV  DS     XL4  )                                            4DASD
+*CATVOL  DS     CL6  )   REPEATS NOVOLS TIMES                     4DASD
+*CATLABEL DS    H    )                                           DASD
+         JOLSAVE CSECT=UJD08SCR,                                       .
+               SIZE=D08WORKS,                                     J40B .
+               BASE=R11
+         CALL  UJD24UNP        REMOVE FROM PDQ                   88036
+         L     R6,AJFCB                                          88036
+         USING INFMJFCB,R6                                       88036
+* SCRATCH INSTRUCTION IS TO BE EXECUTED.
+*        AIF   (&X8).X8300
+*    NOW IF IT IS A DISK,WE ISSUE A SCRATCH.
+*          IF THE VOLUME IS NOT MOUNTED,WE MOUNT IT AND SCRATCH IT.
+         SPACE
+*    IF IT IS A TAPE,AND IT CAN BE FREED NOW (NOT RETAINED)
+*          IT MUST BE GIVEN A DISPOSITION OF DELETE
+*
+*    IF IT IS RETAINED,THE PDQ IS MARKED DELETE,UNLESS WE HAVE
+*          TIOT ENTRY,IN WHICH CASE IT IS MARKED DELETE,AND OS WILL
+*          PROBABLY REMOVE THE VOLUME.
+         SPACE 3
+* PUT INTO LOGICAL TERMS,THE CODE COES LIKE THIS:-
+*
+*          IF ALLOCATED
+*          THEN DO;
+*              FREE WITH SCRATCH (DELETE).
+*          END;
+*  /* NOT ALLOCATED */
+*
+*          IF VOL & UNIT ¬=''
+*          THEN DO;
+*              ALLOCATE IT.
+*              FREE WITH SCRATCH (DELETE).
+*          END;
+* NOT_HERE?:
+*
+*
+*          IF IS MAG TAPE THEN GO TO D08MAGTP
+* /* DISC HERE */
+*          SCRATCH;
+*          RETURN;
+* D08MAGTP:
+*          MARK DELETE; /* IF OLD,MARK NEW,DELETE*/
+*          IF VOLUME TO BE RETAINED
+*          THEN RETURN;
+*          GO TO LETOS;        /*UNLESS IN THIS STEP*/
+*
+*
+* THE SITUATION THEN BASICALLY MEANS THAT IF A SCRATCH IS ISSUED
+*    FOR A DISC,AND THE DISC/IS NOT MOUNTED, MOUNT IT.
+*
+* IF A TAPE IS TO BE SCRATCHED,AND IT CAN BE UNLOADED (IE OTHER
+*    DATA SETS ARE STILL BEING USED ON IT) NO REAL ACTION OCCURRS
+*    BUT IF IT CAN BE UNLOADED A NEW OS STEP IS INITIATED.
+           SPACE 3
+* NOW IF THE NAME IS A TEMPORARY DSNAME,WE MUST FIDDLE AROUND UNTIL WE
+*    HAVE THE PART OF THE NAME THAT OS PUT IN FRONT OF OURS,AND PUT
+*    OURS AT THE BACK. THIS THEN GIVES US A REAL DSNAME WHICH SHOULD
+*    BE IN THE PASSED DATA SET QUEUE.
+*                                                        JOL30112 76200
+* IF THE CATLG INDICATOR HAS 104,IT MEANS THAT THE       JOL30112 76200
+* COMPILER FOUND GDGALL.
+*
+*                                                        JOL30112 76200
+         CLI   DDCATLGS,104   GDGALL ?                   JOL30112 76200
+         BNE   D08TTEMP       NO,TEST TEMPORARY THEN     JOL30112 76200
+         JOLERR 112,'DSID ',DDDSID,' DSNAME ',#DSN,                    *
+               ' IS GDGALL, THE OPERATING SYSTEM WILL DELETE IT'
+         JOLRETN RC=4                                    JOL30112 76200
+D08TTEMP DS    0H
+         AGO   .NOTEMP                                            J40B
+         CLI   DDDSNAME,C'&&' TEMPORARY ?                JOL30112 76200
+         FIX   'THERE ARE NO AMPERSANDS IN DSNAMES'               J40B
+         BNE   D08NTEMP        NO,SO FORGET THIS BIT OF PROCESSING
+*                                                        JOL30116 76200
+* NOW READ THE JFCB OF THE $$INST FILE AND               JOL30116 76200
+* FIND OUT WHAT DSN HAS BEEN GIVEN TO                    JOL30116 76200
+* TEMPORARY DATA SETS                                    JOL30116 76200
+*                                                        JOL30116 76200
+         LA    R1,AFTEMP
+         USING IHADCB,R1
+         MVC   DCBDDNAM,=CL8'&DDINST'
+         DROP  R1
+         OI    AFTEMP,X'80'    MARK END OF LIST                  88036
+         RDJFCB MF=(E,AFTEMP)  GET DSNAME                JOL30116 76200
+* NOW FIND LAST DOT,AND SHIFT IN OUR TEMP NAME (&&WORK000I FOR EXAMPLE)
+         L     R15,AJFCB       ADDRESS JFCB                      88036
+         LA    R15,43(,R15)    GET END OF DSNAME         JOL30116 76200
+D08FSTOP CLI   0(R15),C'.'     GOT THE LAST '.' ?
+         BE    D08GOTST        YES
+         BCT   R15,D08FSTOP    FIND STOP LOOP
+         JOLERR 508,'INTERNAL ERROR:NO ''.'' IN TEMP DSN'
+         SPACE
+D08GOTST CLI   DDDSNAME+1,C'&&' DOUBLE & CODED ?         JOL30116 76200
+         BNE   D08ONEA                                   JOL30116 76200
+         MVC   DDDSNAME+1(8),DDDSNAME+2 DROP 2ND         JOL30116 76200
+D08ONEA  MVC   1(8,R15),DDDSNAME+1 SET UP REAL DSNAME    JOL30116 76200
+         MVC   DDDSNAME,JFCBDSNM   SHIFT BACK            JOL30116 76200
+D08NTEMP DS    0H
+.NOTEMP  ANOP                                                     J40B
+         CALL  UJD48TAL      TEST IF THE DATA SET IS ALLOCATED TO US
+         LTR   R15,R15
+         BNZ   D08NOTHR        NOT IN PDQ
+* NOW IT WAS ALLOCATED
+         DBGMSG 215,'DS ',DDDSID,' ',#DSN,' WAS ALLOCATED'
+*    GO TO THE SCRATCH ROUTINES.
+         CALL  UJD49VOL
+         NI    DDUNITYP,B'10011111'
+         B     D08NOSTP        DO THE SCRATCH ETC
+D08NOTHR DS   0H
+         DBGMSG 215,'DS ',DDDSID,' ',#DSN,' NOT WAS ALLOCATED'
+*        DYNPARM DSN=(44,#DSN),ID=SCRT,DISP=(OLD,DELETE),              .
+               DDNAME=$$JOLSCR
+         MVC   DDDDNAME,=CL8'$$JOLSCR'                            J40B
+         MVC   DDDISP+1(2),=C'DD'                                 J40B
+         $CALL UJD03DS1,DDDSNDET                            J60,  J40B
+         LTR   R15,R15
+         BZ    D08FRE          GOT IT, SO GO DO THE DELETE NOW.
+         JOLERR   209,'DSID ''',DDDSID,''' DSNAME ''',#DSN,''' NOT ALLO*
+               CATED, SCRATCH IGNORED'
+         JOLRETN
+D08ERR2  DS    0H              NOT IN PDQ AND NO VOL/UNIT SPECIFIED
+         JOLERR 215,'DSID ''',DDDSID,''' DSNAME ''',#DSN,''' ALREADY   *
+               SCRATCHED'
+         JOLRETN RC=16
+         SPACE 3
+D08NOSTP DS    0H              NOT USED IN THIS STEP
+* NOW THIS SITUATION IS JUST A FRACTION MORE DIFFICULT THAN THE
+*    OTHERS.
+* IF THE DATA SET IS ON DISK,ISSUE A SCRATCH
+         CLI   SCTUTYPE+2,X'80' MAG TAPE ?
+         BE    D08MAGTP
+* DISK,LETS ISSUE THE SCRATCH AFTER SETTING THINGS UP
+         L     R14,=V(E00FXVOL)                                   J40B
+         BALR  R14,R14         SET UP VOLUME LIST IN #VOL         J40B
+         SR    R0,R0
+         MVI   D08SCRA+2,X'40'    RESET SCRATCH (LAST ALWAYS?)
+         IFNULL DDLABTYP,D08NALWA
+* ALWAYS
+         MVI     D08SCRA+2,X'50'  OVER-RIDE PURGE DATE
+D08NALWA DS    0H
+*          SCRATCH D08SCRA
+D08FREE  DS    0H
+         CLI   DDTYPE,DDREALDS                                    J40B
+         BL    D08FRE          IF IT'S TEMP, MUST BE (,DELETE)    J40B
+*        DYNPARM DSN=(44,#DSN),DISP=(OLD,DELETE),                      .
+               DDNAME=$$JOLSCR
+         MVC   DDDDNAME,=CL8'$$JOLSCR'                            J40B
+         MVC   DDDISP+1(2),=C'DD'                                 J40B
+         $CALL UJD03DS1,DDDSNDET                            J60,  J40B
+D08FRE   DS    0H
+         DYNPARM DSN=(44,#DSN),ID=D08SCR, DNAME=$$JOLSCR,              *
+               VRB=UN,UNALLOC=YES DEBUG=YES
+         LTR   R15,R15
+         BNZ   D08WHAT
+D08SUCC  DS    0H
+         JOLERR 101,'DSID ''',DDDSID,''' DSNAME ''',#DSN,              *
+               ''' SCRATCHED FROM ',#VOL                          74365
+*        DYNPARM DSN=(44,#DSN),VRB=UN MSG=NO
+D08MAGTP DS    0H
+         JOLRETN
+         SPACE 3
+D08WHAT  DS    0H
+* SCRATCH FAILED
+* WHY ??
+         AGO .SKIPSCR
+         CH   R15,=H'8'  DID WE BUILD A BAD CAMLIST ENTRY ??       DASD
+         BH   D08BADCM   BETTER TELL SOMEONE ABOUT THIS            DASD
+         SPACE 2
+* IF FAILURE OCCURRED BECAUSE THE VOLUMES WEREN'T MOUNTED,
+*    I KNOW THAT THERE IS A JCL STEP BELOW WHICH WILL MOUNT
+*    THE VOLUMES AND PERFORM THE SCRATCHES,SO LETS GO.
+           LA  R1,D08SEQ+1+(0*(L'D08UNIT+L'D08VOL+L'D08SEQ))
+           BAL R2,D08ERR
+           LA  R1,D08SEQ+1+(1*(L'D08UNIT+L'D08VOL+L'D08SEQ))
+           BAL R2,D08ERR
+           LA  R1,D08SEQ+1+(2*(L'D08UNIT+L'D08VOL+L'D08SEQ))
+           BAL R2,D08ERR
+           LA  R1,D08SEQ+1+(3*(L'D08UNIT+L'D08VOL+L'D08SEQ))
+           BAL R2,D08ERR
+           LA  R1,D08SEQ+1+(4*(L'D08UNIT+L'D08VOL+L'D08SEQ))
+           BAL R2,D08ERR
+           B   D08RETNF
+D08ERR   DS    0H
+* CALLED BECAUSE WE HAVE TO ANALYSE THE REASON WHY A SCRATCH FAILED
+           CLI 0(R1),0         IS THIS ONE A ZERO ?
+           BE  0(R2)           YES,SO JUST RETURN TO CALLER.
+           CLI 0(R1),5         UNABLE TO MOUNT COS NO DEVICE ?
+           BE  D08NPACK        LET OS DO SCRATCH (STEP DOWN TO RIGHDASD
+*                              STEP)
+           CLI 0(R1),6         DIDN'T OPERATOR WANT TO MOUNT VOL ?
+           BE  D08NPACK                                            DASD
+           CLI 0(R1),1         NOT IN VTOC ?
+         BNE   D08TRET2                                     FIX-X 76200
+         JOLERR 204,'DSID ''',DDDSID,''' DSNAME ''',                   *
+               #DSN,''' NOT FOUND IN VOLUME :-SCRATCH IGNORED'
+           BR  R2
+D08TRET2 CLI   0(R1),2                                      FIX-X 76200
+         BNE   D08TRET3                                     FIX-X 76200
+         JOLERR 410,'DSID ''',DDDSID,''' DSNAME ''',#DSN,   FIX-X 76200*
+               ''' IS A VSAM DATA SPACE OR ',               FIX-X 76200*
+               'INCORRECT PASSWORD SUPPLIED'                FIX-X 76200
+         BR    R2                                           FIX-X 76200
+D08TRET3   CLI 0(R1),3         RETENTION PERIOD ?
+           BNE D08TRET4
+         JOLERR 205,'DSID ''',DDDSID,''' DSNAME ''',#DSN,              *
+               ''' NOT SCRATCHED, IS NOT EXPIRED'
+         BR    R2                                           FIX-X 76200
+D08TRET4   CLI 0(R1),4         I/O ERROR ?
+         BNE   D08TRET7                                     FIX-X 76200
+         JOLERR 406,'DSID ''',DDDSID,''' DSNAME ''',#DSN,              *
+               ''' NOT SCRATCHED,I/O ERROR ON VTOC'
+         BR    R2                                           FIX-X 76200
+D08TRET7 CLI   0(R1),7                                      FIX-X 76200
+         BNE   D08ERRXY                                     FIX-X 76200
+         JOLERR 411,'DSID ''',DDDSID,''' DSNAME ''',#DSN,   FIX-X 76200*
+               ''' IS BEING USED BY SOMEONE ELSE:-'         FIX-X 76200*
+               'TRY AGAIN LATER'                            FIX-X 76200
+         BR    R2                                           FIX-X 76200
+D08ERRXY SR    R2,R2                                        FIX-X 76200
+         IC    R2,0(R1)                                     FIX-X 76200
+         JOLERR 407,'SCRATCH RETURNED INVALID CODE;SEE REG 2'   X 76200
+         ABEND 1,DUMP                                             J40B
+D08BADCM DS    0H                                                  DASD
+         JOLERR 213,'DSID ''',DDDSID,'''DSNAME ''',#DSN,               *
+               ''' ON VOLS ',#VOL,' NOT SCRATCHED',                    *
+               ' INVALID DEVICE TYPE=',                                *
+               DDUNIT                                              DASD
+          B   D08LETOS                                             DASD
+D08NPACK  DS    0H                                                 DASD
+         JOLERR 214,'DSID ''',DDDSID,'''DSNAME ''',#DSN,               *
+               ''' ON VOLS ',#VOL,' NOT SCRATCHED',                    *
+               'VOL(S) NOT MOUNTED, UNIT=',                            *
+               DDUNIT                                              DASD
+           SPACE 3
+.SKIPSCR  ANOP
+D08LETOS  DS    0H
+* IT HAS BEEN DECIDED THAT,FOR NO DOUBT AN EXTREMELY GOOD REASON,
+*    WE MUST STEP DOWN TO THE STEP THAT SHOULD BE THERE TO
+*    HAVE THE VOLUME MOUNTED SO THE SCRATCH MAY BE PERFORMED.
+         JOLRETN RC=4
+D08RETNF DS    0H JOLRETN RC=16                                    DASD
+*******************************************************            DASD
+*    PDQ RECORDS NOT DELETED IF SCRATCH FAILS         *            DASD
+*******************************************************            DASD
+* WHEN A PROGRAMMER SAYS TO DELETE A DATASET BEFORE   *            DASD
+* THE FIRST STEP OF THE JOB,  JOL WILL GENERATE A STEP*            DASD
+* WITH A DDCARD REFERENCE TO THE DATASET TO BE DELETED*            DASD
+* IF THE DATASET IS CATALOGED BUT NOT ON THE PACK THE *            DASD
+* THIS SCRATCH ROUTINE WILL RETURN WITHOUT REMOVING   *            DASD
+* THE PDQ RECORD.     ANY REFERENCE TO THIS DATASET   *            DASD
+* LATER ON WILL ADD NEW PDQ RECORDS BUT WILL POINT    *            DASD
+* TO THE FIRST ENTRY RESULTING IN ABEND=213           *            DASD
+*******************************************************            DASD
+D08NFRPQ JOLRETN RC=16                                             DASD
+****************************************************************   DASD
+* IF DOING A DELETE CHECK THE CATALOGE  TO SEE IF THE DATASET  *   DASD
+* IS CATALOGED AND IF SO RETURN TO THE SCRATCH                 *   DASD
+*                                                              *   DASD
+* THE FOLLOWING MESSSAGE IS ONLY ISSUED WHEN THE DATASET       *   DASD
+* IS NOT ON THE PDQ                                            *   DASD
+*                                                              *   DASD
+* HERE AT STANDARD OIL A MODIFICATION EXISTS WHERE IF THE      *   DASD
+* SCRATCH FAILED THE UNCATLG WILL STILL RUNS                   *   DASD
+****************************************************************   DASD
+D08NOPDQ NOP   D08PDQMG    TURN THIS ON TO SHUT OFF THIS CODE      DASD
+         CLI   ICOMMAND,C'D'     DELETE STMT ?                     DASD
+         BNE   D08PDQMG          NO---ISSUE THE MESSAGE            DASD
+         CALL  UJDLOCAT          CALL LOCATE MODULE                DASD
+         LTR   R15,R15           ARE WE IN LUCK ?                  DASD
+         BNZ   D08PDQMG          NOPE NOT TODAY                    DASD
+         MVC   JFCBDSNM,DSNAME  COPY DATA SET NAME TO JFCB         DASD
+         L     R15,AE05VOLS     POINT TO CAMLST                    DASD
+         USING VOLINFO,R15       GET SOME ADDDRESSILITY            DASD
+         MVC   JFCBNVOL,NOVOLS+1 # VOLUMES                         DASD
+         MVC   SCTUTYPE,CATDEV   UNIT TYPE                         DASD
+         LH    R1,NOVOLS         # VOLUMES AGAIN                   DASD
+         CH    R1,=H'5'          MORE THAN WE CAN HANDLE ?         DASD
+         BNH   *+8               NO                                DASD
+         LA    R1,5              ADJUST # VOLUMES FOR US           DASD
+         LA    R14,JFCBVOLS      MOVE TO HERE                      DASD
+         MVI   JFCBVOLS,C' '                                       DASD
+         MVC   JFCBVOLS+1(L'JFCBVOLS-1),JFCBVOLS   CLEAR JFCB      DASD
+D08LPVOL DS    0H                                                  DASD
+         MVC   0(6,R14),CATVOL   MOVE VOL SER                      DASD
+         LA    R15,12(R15)       POINT TO NEW CAMLST ENTRY         DASD
+         LA    R14,6(R14)        UP TO NEXTBUCKET IN JFCB          DASD
+         BCT   R1,D08LPVOL       GET ALL OF THE VOLUMES            DASD
+         B     D08NOSTP          LETS DO THE SCRATCH AGAIN         DASD
+         DROP  R15                                                 DASD
+D08PDQMG JOLERR 203,'DSID ''',DDDSID,''' DSNAME ''',#DSN,              *
+               ''' NOT YET CREATED:-SCRATCH IGNORED'
+         B  D08RETNF
+         SPACE 3
+D08SCREN DS    0H
+D08RETN0 DS    0H
+         B     JRETN0
+D08NOKPT DS    0H   NO ENTRIES MARKED
+         SPACE 3
+* IT SEEMS WE NEED TO ALLOCATE THE DATASET
+         SPACE 1
+         TM    DDUNITYP,X'80'  IF IT'S A TAPE, FORGET IT
+         BZ    JRETN0
+         SPACE 1
+         MVC   DDDDNAME,=C'JOL00000' HOPE NOBODY ELSE USES THIS
+         OI    D21FLAG,D21CONT       TELL ALLOC NOT TO ABEND US
+        $CALL  UJD21ALL,DDDSNDET     ALLOC THE DATASET            J60
+         LTR   R15,R15
+         BZ    D08FREE              IT WENT WELL
+         JOLERR 316,'DATASET ',#DSN,' IS NOT SCRATCHED'
+         B     JRETN0
+         SPACE 3
+         DROP  R6                                                88036
+         DC    20S(*)
+         LTORG
+         EJECT                                                    J40B
+         DCBD  DSORG=PS,DEVD=DA                                   J40B
+         END

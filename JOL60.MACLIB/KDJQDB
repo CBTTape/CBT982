@@ -1,0 +1,44 @@
+* %GOTO QDB1;    /*
+         MACRO
+         KDJQDB
+*  */
+*%QDB1:;
+*/******** SPECIFICATIONS BEGIN **************************************/
+*/*                                                                  */
+*/*  NAME..................KDJQDB                                    */
+*/*                                                                  */
+*/*  CONTROL BLOCK NAME ...DSAB QUEUE DESCRIPTOR BLOCK               */
+*/*                                                                  */
+*/*  FUNCTIONS ...........QUEUE ORIGIN OF DSAB. IT IS CREATED BY     */
+*/*                        DEV ALLOC AND POINTED TO BY JSCB          */
+*/*                                                                  */
+*/*  WRITTEN BY ...........N.GOTOH      78.4.6                       */
+*/*                                                                  */
+*/******** SPECIFICATIONS END ****************************************/
+* %GOTO QDB2;  /*
+QDB      DSECT
+QDBQDB   DS    CL4      ACRONYM OF QDB
+QDBATTR  DS    CL2      QUEUE ATTRIBUTE
+QDBDSLN  DS    FL2     QDB LENGTH
+QDBNELMS DS    F       NUMBER OF ELEMENT OF QUEUE
+QDBFELMP DS    A       PTR TO FIRST DSAB
+QDBLELMP DS    A        PTR TO LAST ELEMENT
+QDBFPTDS DS    H        FORWARD PTR DISPL
+QDBBPTDS DS    H        BACKWARD PTR DISPL
+QDBPRSZ  DS    H        PRTY FIELD SIZE
+QDBPRDS  DS    H        PRTY FIELD DISPL
+QDBRV002 DS    A        RESERVED
+         MEND     */
+*%QDB2:;
+  DCL 1 QDB BASED(QDBPTR) BDY(WORD),  /* QUEUE DESCRIPTOR BLOCK      */
+       2 QDBQDB CHAR(4) BDY(WORD),    /* ACRONYM IN EBCDIC 'QDB'     */
+       2 QDBATTR CHAR(2),             /* QUEUE ATTRIBUTES            */
+       2 QDBDSLN FIXED(15),           /* QDB LENGTH                  */
+       2 QDBNELMS FIXED(31),          /* # OF ELEMENTS ON QUEUE      */
+       2 QDBFELMP PTR(31),            /* PTR TO FIRST ELEMENT        */
+       2 QDBLELMP PTR(31),            /* PTR TO LAST ELEMENT         */
+       2 QDBFPTDS FIXED(15),          /* FORWARD PTR DISPL           */
+       2 QDBBPTDS FIXED(15),          /* BACKWARD PTR DISPL          */
+       2 QDBPRSZ FIXED(15),           /* PRIORITY FIELD SIZE         */
+       2 QDBPRDS FIXED(15),           /* PRIORITY FIELD DISPL        */
+       2 QDBRV002 PTR(31);            /* RESERVED                    */

@@ -1,0 +1,431 @@
+UJEID    DC    CL8'UJECOMM'                                       88036
+STEPLBDD DC    CL8' '          DDNAME FOR STEPLIB: BINARY ZERO IF NONE
+JOBLBDD  DC    CL8' '          DDNAME FOR JOBLIB: BINARY ZERO IF NONE
+JBNAME   DC    CL8' '          NAME OF THIS JOB
+TASKLABL DC    CL8' '          STEP-NAME (LABEL IN JOL TERMINOLOGY)
+TASKNAME DC    CL8' '          NAME OF PROGRAM BEING EXECUTED AS A
+TASKRUN  DC    A(0)            POSTED BY SCH FOR MON TO RUN A PROGRAM
+TASKRAN  DC    A(0)            POSTED BY MON WHEN PROGRAM IS RUN  88036
+ATASKPRM DC    A(0)            ADDRESS OF GOTTEN STORAGE FOR PARAMETERS
+TASKSSI  DC    CL4' '          SSI OF THE SUB-TASK
+TASKRETN DC    F'0'            RETURN CODE FROM TASK
+TASKECB  DC    F'0'            EVENT CONTROL BLOCK FOR TASK
+GOTOLAB  DS    CL8
+LABEL    DS    CL8
+COMMAND  DS    CL8
+CURRTIME DS    CL8
+         SPACE 3
+ATKN     DC    A(#TKN)         ADDRESS OF TOKEN AREA              88036
+ATKNX    DC    A(TKNX)         ADDRESS OF TOKEN AREA              88036
+ATKNSTRG DC    A(#TKNSTRG)     ADDRESS OF TOKEN STORAGE AREA      88036
+AINST    DC    A(0)            ADDRESS OF INSTRUCTION TABLE       88036
+SINST    DC    A(0)            SIZE OF INSTRUCTION TABLE          88036
+AWINST   DC    A(INST)      ADDRESS OF CURRENT (WORK) INSTRUCTION 88036
+ARETN    DC    A(RETNAREA)                                        88036
+APDQ     DC    A(0)            JOL'S PASSED DATASET QUEUE         88036
+AFINSTR  DC    A(INSTRUCT)                                        88036
+AFPRINT  DC    A(PRINT)                                           88036
+AFEXCP   DC    A(EXCPDCB)                                         88036
+AFTEMP   DC    A(TEMPDCB)                                         88036
+AJFCB    DC    A(JFCBDSNM)     THE JFCB                           88036
+AUNITS   DC    A(HEXUNITS)     ADDRESS OF UNIT TABLE              88036
+         AIF   (&X8).X8E020
+         AGO   .X8E020
+AJOBQ    DC    A(JOBQ)
+.X8E020  ANOP
+AS23WORK DC    A(S23WORK)                                         88036
+ADCBS    DC    A(UJEDCBS)      ADDRESS OF DCBS                    88036
+APARM    DC    A(0)
+S23ER    DC    V(UJS23ER)                                         88036
+S23PUT   DC    V(UJS23PUT)                                        88036
+ADAM     DC    V(DAMOPEN)      ADDRESS OF DYNAMIC ACCESS METHOD   88036
+ASAVER   DC    V(JOLSAVER)     ADDRESS OF S/A MANIPULATER         88036
+MONSAVS  DC    A(UJESASSM)     ADDRESS OF SAVE AREAS              88036
+SCHDSAVS DC    A(UJESASSS)     ADDRESS OF SAVE AREAS              88036
+TASKIND  DC    C' '            SET TO 1 AFTER SCHEDULER CALLED
+*                            THE FIRST TIME.
+GOBACK   DC    C' '            NOT BLANK MEANS RETURN TO OS NOW
+*                                                          ***
+         DC      C' '            SET TO 1 ON EOF WHEN READING
+* INSTREOF DC    C' '            SET TO 1 ON EOF WHEN READING
+*                                INSTRUCTIONS.
+CHKFLG   DC    P'0'
+VS       DC    CL1'V'          ¬=' ' IF VS SYSTEM                 75311
+S23SKIPS DC    PL2'1'                                             88036
+RETNBLKS DS    H
+ISRUN    DC    C' '
+DDCTR    DC    PL3'0'          COUNTER FOR JOL-ASSIGNED DDNAMES
+         PUSH  PRINT                                              88036
+         PRINT NODATA SAVE SOME PAPER
+ELOLOCAT CAMLST NAME,DSNAME,,0                                     DASD
+D08SCRA  CAMLST SCRATCH,JFCBDSNM,,D08NOVOL
+D06LOCAT CAMLST NAME,DSNAME,,0                                     DASD
+D05CAT   CAMLST CAT,0,,D05VOLS
+D06REMUV CAMLST UNCAT,0
+AE05VOLS DC    A(D05VOLS)                                        88036
+D06REMDT CAMLST UCATDX,0          UNCATLG,REMOVE INDEXES
+         DC    A(D05VOLS)                                        88036
+D08NOVOL DC    H'0'
+D08UNIT  DC    CL4' '
+D08VOL   DC    CL6' '
+D08SEQ   DC    H'0'
+         DC    ((30/6)*12)C' ' (L'JFCBVOLS/6)*12
+D05START DC    F'0' AREA ADDRESS WORK AREA                         DASD
+*RECAT B'0001'
+*CAT   B'0010'
+*UNACT B'00001000'
+*BLD   B'0100'
+*DELETE INDEXES B'00001100'
+********* ALL THE ABOVE APPLY TO BYTE 0
+*  +2  (3RD) B'00000001'=VSAM
+E22PARM  DS    0C
+E22DSN   DC    CL(&X8*26+(1-&X8)*44)' ' X8 AND F4
+E22VOL   DC    CL256' '
+E22DDN   DC    CL8' '          DDNAME FOR FIXES
+         ORG
+#WHEN    DC    H'0'
+WHEN     DC    XL256'00'
+#TEMPDSN DC    H'0'            LENGTH OF NAME BELOW
+TEMPDSN  DC    CL44' '         JOL-CREATED TEMPORARY DATA SET NAME
+*                              DUE TO SOME FAILURES WITH SVC 99
+#SYSINDS DC    H'0'
+SYSINDSN DC    CL44' '         NAME OF SYSIN DATASET
+SYSINVOL DC    CL8' '          VOLUME CONTAINING SYSIN DATASETS
+SYSINUNI DC    CL3' '          UNIT FROM UCB
+         DS    0H
+SAVEDDET DC    XL256'00' TO SAVE DDET DURING SCHED-GENERATED ALLOCATIONS
+                                                                  88036
+CALLAREA DC    10F'0'          WORK AREA ONLY FOR PARAMETERS BASICALLY
+CALLARE2 DC    10F'0'          WORK AREA ONLY FOR ALLOCATION
+STMT     DC    CL4'0010'       STATEMENT NUMBER FOR ERROR MESSAGES
+DBL      DS    D               WORK AREA ONLY
+SAVEDD   DS    CL8,5C
+D21FLAG  DC    X'00'
+D21CONT  EQU   X'80'           SET ON IF ALLOCATION ERROR IS NOT TO BE
+*                                  FATAL
+ISTSO    DC    C' '
+DEFSYS   DC    CL3'&JOLOS'
+*        AIF   (NOT &X8).NX8C010                                  88036
+SCTUTYPE DC    CL4' '                                             88036
+.NX8C010 ANOP                                                     88036
+         DS    0F                                                 75003
+#VOL     DC    H'0'                                               75311
+VOL      DC    CL120' '        SPACE FOR 20 VOLUMES               87150
+TASK2ECB DC    F'0'                                               74365
+RUNBLDL  DS    0D
+         DC    H'1'
+         DC    H'68'
+RUNNAME  DC    CL8' '
+RUNTTRK  DC    CL4' '
+RUNZ1    DC    CL1' '
+RUNC1    DC    CL1' '
+RUNUSDTA DC    CL68' '
+UJ00ANS  DC    3F'0'
+*JE00DDM DC    CL8'$$PRNT'
+ERRNUM1  DC    CL5' '
+ERRNUM2  DC    CL5' '
+ERRNUM3  DC    CL5' '
+ERRNUM4  DC    CL5' '
+ERRNUM5  DC    CL5' '
+ASHTCB   DC    A(0)            ADDRESS OF SCHEDULER TCB
+         AIF   (&X8).X8E140                                      88036
+ATIOT    DC    A(0)
+AQMRAW   DC    A(0)            ADDRESS OF JOB Q ACCESS RTN
+IBMRTN   DC    CL8' '          NAME OF ROUTINE THAT ACCESSES JOBQ
+JCTTTR   DC    A(0)            ADDRESS Ý TTR OF THE JCT (EACH     *****
+*                              SYSTEM IS A LITTLE DIFFERENT)      *****
+.X8E140  ANOP                                                    88036
+           SPACE 3
+HEX      EQU *-240                                                75311
+         DC  C'0123456789ABCDEF'                                  75311
+         SPACE 3
+DYNCONC  DC    X'80',AL3(CONCRB)
+CONCRB   DC    AL1(20,3)       CONCATENATION
+         DC    H'0'            FLAGS1
+CONCERR  DC    F'0'            ERROR AND INFO CODES
+         DC    A(ATUCPARM)
+         DC    F'0'            RESERVED
+         DC    H'0'            FLAGS2
+         DC    H'0'            END OF REQUEST BLOCK
+ATUCPARM DC    X'80',AL3(TUCONCAT)
+TUCONCAT DC    Y(1,2)          TEXT UNIT 1, 2 DDNAMES TO CONCAT
+#DDNAME  DC    H'8'           USED IN SCRATCH AND CATLG ETC
+DDNAME   DC    CL8' '
+#ERETDDN DC    H'8'          RETURNED DDNAME FROM ALLOCATION
+ERETDDN  DC    CL8' '
+         SPACE 3
+#ERETDSN DC    H'0'         RETURNED DSNAME FROM ALLOCATION
+ERETDSN  DC    CL44' '
+#DSNAME  DC    0H'0'
+#DSN     DC    H'10'         INITED ONLY FOR TESTS
+DSN      DC    0CL44' '
+DSNAME   DC    CL44'NOT INIT'
+#ERETVOL DC    H'0'         RETURNED VOLUME FROM ALLOCATION
+ERETVOL  DC    CL6' '
+           SPACE 3
+JRETN16  LA    R15,16
+         B     JRETN
+JRETN12  LA    R15,12
+         B     JRETN
+JRETN8   LA    R15,8
+         B     JRETN
+JRETN4   LA    R15,4
+         B     JRETN
+JRETN0   SLR   R15,R15
+JRETN    L     R13,4(,R13)
+         RETURN (14,12),T,RC=(15)                                88036
+ZERO     DC    F'0'
+GETATKN  L     R1,ATKNX
+         L     R15,AGETTKN
+         BR    R15                                                75128
+AGETTKN  DC    V(UJCGETKN)                                        88036
+         SPACE 3
+VOLDETS  DS    0D
+#VOLLIST DC    H'0'
+VOLLIST  DC    256CL6' '
+         POP   PRINT    WASTE MORE PAPER FOR CLEM
+         ORG   VOLDETS                                            88036
+U98PARM  DS    0D                                                 88036
+         COPY  UJU98PRM                                           88036
+         ORG
+TIMEWORK DC    CL16' '
+BLANKS   DC    CL80' '
+STOWBLK  DC    CL8'$$RETN'
+STOWTTR  DC    XL3'00'
+STOWC    DC    X'00'
+         DC    CL50' '
+ENDMSSI  DC    CL8' '
+ENDRETB  DC    CL5' '          FOR MINUS RETURN CODES              DASD
+         ORG   ENDRETB         REDEFINE IT                        88036
+ENDRETC  DC    CL8' '
+*NDMRETC DS    CL8             WOZZ OVERLAID ON ENDRETC
+         DC    H'0'
+* THE FOLLOWING LINES ARE USED TO PRINT OUT DE-ALLOCATION MESSAGES
+*     FOR THE DYNAMIC ALLOCATION VERSION OF JOL.
+D98HEAD1 DC    Y(D98END1-*,0)
+         DC    Y(D98END1-*,0),C' '
+D98DETME DC    CL8' '                  TIME GOES HERE
+         DC    C' DEALLOCATION '
+D98END1  DS    0C
+          SPACE
+D98HEAD2 DC    Y(D98END2-*,0)
+         DC    Y(D98END2-*,0),C' '
+D98DETM2 DC    CL8' '                  TIME GOES HERE
+         DC    C' --DSID--  -DDNAME-   -ACTION'
+D98END2  DS    0C
+TABLES   DS    0D
+         COPY  DDDSNDET                                           75128
+         ORG
+DDDETLN  EQU   *-DDDSNDET     LENGTH OF THE AREA
+         ORG   DDDSNDET                                           75128
+         COPY  PGMDETS                                            75128
+         SPACE 3                                                  75128
+         ORG
+INSTR    DS    0D                                                 88036
+         DC    0F'0',C'INST'
+INST     DS    0H           INSTRUCTIONS USE THIS AREA AS WORK AREA AND
+*                           THEY ARE WRITTEN FROM HERE
+ILENGTH  DS    H               LENGTH OF RECORD
+         DC    H'0'            FOR VB RECORD DESCRIPTOR
+II       DC    C'I'            RECORD TYPE
+ILABEL   DS    CL8             STATEMENT LABEL
+ISTMT    DS    CL4             STATEMENT NUMBER
+ILEVEL   DS    CL1
+INEST    DS    CL1
+ICOMMAND DS    CL8             INSTRUCTION EG 'TYPE'
+IBODY    EQU   *-ILENGTH       LENGTH OF FIXED PART OF RECORD
+ITEXT    DS    CL150                                              75128
+         SPACE 3
+MAXIDS   DC    Y((READAREA+L'READAREA-IDSTART)/18)
+         DC    Y(0)
+         AIF   (&X8).X8E150                                      88036
+         AGO   .X8E150                                             40B
+         PUSH  PRINT                                              J40B
+         PRINT NOGEN
+         EYEBALL JCT
+JCT      DS    0D
+         IEFAJCTB
+         EYEBALL SCT
+SCT      DS    0D
+         IEFASCTB
+         EYEBALL SIOT
+SIOT     DS    0D
+         IEFASIOT
+         ORG
+         POP   PRINT
+         EYEBALL QMPA
+QMPA     DS    0D              USED FOR VS CURRENTLY
+QMPAJOB  DS    CL8             JOB NAME OR NO-WORK-CHAIN ELEMENT
+QMPAFUNC DS    CL1             FUNCTION CODE
+QMPAFLTR DS    CL2             NN OF 1ST LOGL TRACK ASSIGNED TO ENTRY
+QMPANOTR DS    CL1             NUMBER OF RECORDS ASSIGNED IN THIS TRACK
+QMPANXTL DS    CL2             NN OF NEXT LOGICAL TRACK
+QMPANOLT DS    CL1             NUMBER OF LOGICAL TRACKS ASSIGNED
+QMPAJBCD DS    CL1             JOB TYPE CODE
+QMPAJBST DS    CL1             JOB STATUS CODE
+QMPAPRTY DS    CL1             JOB PRIORITY
+QMPANXTQ DS    CL2             NN OF NEXT QUEUE ENTRY
+QMPAQID  DS    CL2             QUEUE ENTRY IDENTIFICATION
+QMPAORCL DS    CL1             ORIGIN CLASS ID
+QMPARES1 DS    CL1             RESERVED
+QMPATRKS DS    A               ADDRESS TRACK STACKING PARM LIST
+QMPAIND  DS    CL1
+         ORG   QMPAIND
+QMPAAECB DS    A               ADDRESS OF USERS ECB/IOB
+QMPANORC DS    CL1             1ST 4 BITS=NO OF RECORDS TO ASSIGN
+*                              2ND 4 BITS=NO OF RECORDS TO READ/WRITE
+QMPAAEXT DS    AL3             ADDRESS OF EXTERNAL PARAMETER AREA
+IEFQATCB DS    A               ADDRESS OF TCB
+IEFQAREC DS    A               ADDRESS OF RECORD BUFFER
+IEFQAQMP DC    A(QMPA)         ADDRESS OF QMPA
+IEFQTTR  DS    A               TTR OF REQUESTED RECORD
+IEFQRCLN DC    Y(176)
+IEFQFUNC DC    Y(0)
+IEFQDECB DS    A               WORK AREA(NOT REQUIRED BY IEFQMMAC)
+IEFQRETN DS    A               RETURN ADDRESS
+.X8E150  ANOP
+         PUSH  PRINT                                              88036
+         PRINT NODATA SAVE SOME PAPER
+#WORK    DC    H'0'
+WORK     DS    0XL2046
+         DC    2046X'FF'
+         POP   PRINT                                              J40B
+         SPACE 3
+         DC    0F'0',C'TKNX'
+         COPY  TKNX
+         ORG TKNSTRG-IBODY-2
+INSTRDA  DS    0C
+         ORG
+         SPACE 3
+         DS    0H
+D05VOLS  DS    0D
+D05#VOLS DC    H'0'
+D05UNIT  DC    CL4' '
+D05VOLX  DC    CL6' '
+D05LABEL DC    CL2' '
+         PUSH  PRINT                                              88036
+         PRINT NODATA SAVE SOME PAPER
+         DC     254CL12' '          EXTENDED WORK AREA FOR 255 VOLUDASD
+         POP    PRINT    WASTE MORE PAPER FOR CLEM
+D05ETBL  EQU    D05VOLS+100                                        DASD
+* THE FOLLOWING AREAS USED ON OSIV/X8 TO ESTABLISH THE LM NAME IKJEFF18
+EFF18    L     R15,6(,R15)                                        JCS
+         BR    R15                                                JCS
+AEFF18   DS    AL4                                                JCS
+         SPACE 3
+S23WORK  &SECTTYP                                                 88036
+S23ESA   DS    18F
+S23PSA   DC    18F'-2'
+         WRITE S23DECB,SF,PRINT,MF=L
+S23FLAGS DS    0F
+S23CSECT DS    C               CALLERS NAME
+S23MODNO DS    AL1             HIS MODULE NUMBER
+S23SEV   DS    AL1             THE SEVERITY LEVEL
+S23ERRNO DS    AL1             THE MESSAGE NUMBER
+S23GSTMT DC    X'41F0'
+S23STMTA DS    XL2
+#S23MAX  DC    H'92'               MAX WTO OR LREC SIZE           76200
+#S23LNE2 DS    H                   LINE 2 LENGTH                  76200
+S23LNE2  DS    CL100               LINE 2 WORK AREA               76200
+S23STMT  DC    XL4'00000000'
+#S23BLKS DS    H
+         DS    H
+#S23LREC DS    H
+#S23MSSG DS    H
+S23MSSG  DS    CL150                                              74365
+S23BLNKL DC    Y(9,0,5,0),C' ' A BLANK LINE FOR PRINTING          88036
+         DS    0D                                                 88036
+         PUSH  PRINT                                              88036
+         PRINT NODATA                                             88036
+UJESAS   &SECTTYP              SAVE AREAS FOR MONITOR             88036
+         DC    C'UJESASM '                                        88036
+UJESASSP DC    A(*+8)          ADDRESS OF CURRENT SAVE AREA       88036
+         DC    A(SAVENDM)      ADDRESS OF THE END                 88036
+         DC    A(UJESASSP)     ADDRESS OF SAVE AREA POOL          88036
+         DC    F'72'           SIZE OF THE AREA                   88036
+         DC    A(3)            RETURN ADDRESS NEEDS TO BE SET     88036
+UJESASSM DC    A(*-12)         ADDRESS OF MY PREFIX               88036
+         DC    17F'0'          THE REST OF THE SAVE AREA          88036
+         DC    2048A(0)                                           88036
+SAVENDM  DS    0D                                                 88036
+UJESASS  &SECTTYP              SAVE AREAS FOR SCHEDULER           88036
+         DC    C'UJESASS '                                        88036
+UJESASP  DC    A(*+8)          ADDRESS OF CURRENT SAVE AREA       88036
+         DC    A(SAVENDS)      ADDRESS OF THE END                 88036
+         DC    A(UJESASP)      ADDRESS OF SAVE AREA POOL          88036
+         DC    F'72'           SIZE OF THE AREA                   88036
+         DC    A(3)            RETURN ADDRESS NEEDS TO BE SET     88036
+UJESASSS DC    A(*-12)         ADDRESS OF MY PREFIX               88036
+         DC    17F'0'          THE REST OF THE SAVE AREA          88036
+         DC    2048A(0)                                           88036
+SAVENDS  DS    0D                                                 88036
+RETNAREA &SECTTYP
+READAREA DS    0XL&RETNSIZ                                         DASD
+         DC    &RETNSIZ.X'00'                                      DASD
+         POP   PRINT                                              88036
+         ORG   READAREA
+TTR$RETN DS    F               CONSTRUCTED BY BLDL IN UJESCHED
+TTR$INST DS    F               CONSTRUCTED BY BLDL IN UJESCHED
+NOIDS    DS    H          CURRENT NO OF IDS
+LEVEL    DC    H'0'
+NEST     DC    H'0'
+COND     DC    CL50' '
+ERRORIND DC    X'00'          SET ON IF ABEND            CHG26028 76200
+INERRORL DC    X'00'          ON IF CURRENTLY DOING ERRORCHG26028 76200
+* NOTE:- DO NOT SEPARATE NEXT TWO LOCATIONS              CHG26028 76200
+ERRLEVEL DC    H'0'           SET BY 'UJE04IF' WHEN -    CHG26028 76200
+ERRNEST  DC    H'0'           'IF ERROR' FOUND           CHG26028 76200
+SAVENEST   DC  XL6'00'
+MAXCC      DC  F'0'
+LASTCC     DC  F'0'
+JOLSVC     DC  X'0A00'         SVC FROM 'OPTION' INSTRUCTION      75311
+IDSTART  DS    0X
+         ORG
+           SPACE 3
+* THIS TABLE IS USED BY THE SCRATCH AND CATLG ROUTINES
+*     ALTHOUGH THE JOL PROCESSOR KNOWS WHAT TYPE OF UNIT A 'DD' CARD
+*     IS FOR,TO SAVE SPACE IN THE PROCESSOR IT IS NOT CONVERTED
+*     TO A FULL IBM UNIT (AND OF COURSE THE USER MAY SPECIFY HIS
+*     OWN GENERIC UNIT)
+* THIS TABLE IS USED ONLY WHEN A SCRATCH OR CATALOG WAS GIVEN
+*     AND THE USER DID NOT CREATE THE DATA-SET IN THIS JOB,AND
+*     THERE-FORE OS MAY NOT HAVE CONVERTED IT INTO A NICE LOOKING
+*     UNIT FOR US.
+HEXUNITS &SECTTYP
+         DC    A(*+12)
+         DC    A(5)
+         DC    A(HEXUNITE-5)
+         COPY  UNITABLE                                            DASD
+HEXUNITE DS    0H
+UJEDCBS  &SECTTYP                                                 88036
+INSTRUCT DAMCB MEMBERS=2,BUFSIZE=64000+X'05000000'
+PRINT    DCB   DDNAME=&DDPRT,DSORG=PS,DEVD=DA,RECFM=VAB,LRECL=150,     *
+               BLKSIZE=154,MACRF=W
+         AIF   (&X8).X8E120
+         AGO   .X8E120
+JOBQ     DCB   DDNAME=$$JOBQ,DSORG=PS,MACRF=(WP,RP),DEVD=DA
+         ENTRY JOBQ
+.X8E120  ANOP
+EXCPDCB  DCB   DDNAME=&DDINST,DSORG=PS,MACRF=E,                   J40B .
+               DEVD=TA,EXLST=TEMPEXIT                             J40B
+TEMPDCB  DCB   DDNAME=&DDINST,DSORG=PS,MACRF=(R,W),      JOL30116 76200*
+               DEVD=DA,EXLST=TEMPEXIT                    JOL30116 76200
+TEMPEXIT DC    A(JFCBDSNM+X'87000000')                   JOL30116 76200
+         AIF   (NOT &X8).NX8E200                                 88036
+         TITLE 'JOB FILE CONTROL BLOCK'
+         KDJJFCBN   LIST=NO,DSECT=NO
+         ORG   INFMJFCB                                           J40B
+JFCB     DS    0F                                                 J40B
+         TITLE ' '                                               88036
+         AGO   .X8E210                                           88036
+.NX8E200 ANOP                                                    88036
+         IEFJFCBN   LIST=YES                                     76200
+         ORG   INFMJFCB                                           J40B
+JFCB     DS    0F                                                 J40B
+.X8E210  ANOP                                                    88036
+********  VOLINFO DSECT USED TO REFERENCE A CAMLST *************   DASD
+VOLINFO  DSECT                                                     DASD
+NOVOLS   DS    H                                                   DASD
+CATDEV   DS    XL4  )                                              DASD
+CATVOL   DS    CL6  )   REPEATS NOVOLS TIMES                       DASD
+CATLABEL DS    H    )                                              DASD

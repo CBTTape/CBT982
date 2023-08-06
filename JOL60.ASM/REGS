@@ -1,0 +1,6 @@
+         LCLA  &A                                                88036
+.L       AIF   (&A GT 15).END                                    88036
+R&A      EQU   &A                                                88036
+&A       SETA  &A+1                                              88036
+         AGO   .L                                                88036
+.END     ANOP

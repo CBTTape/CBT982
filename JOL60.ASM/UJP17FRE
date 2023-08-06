@@ -1,0 +1,187 @@
+//CLARKEF JOB (JOL),'C.CLARKE',MSGCLASS=X,NOTIFY=CLARKE
+//ASM1 PROC
+//ASM EXEC PGM=ASMBLR,PARM='TERM,NODECK,OBJ,XREF(SHORT),LIST'
+//SYSLIB   DD  DSN=SYS1.MACLIB,DISP=SHR,DCB=BLKSIZE=19040
+//         DD  DSN=SYS1.FMODGEN,DISP=SHR
+//         DD  DSN=CLARKE.JOL35.MACLIB,DISP=SHR
+//         DD  DSN=CLARKE.JOL35.ASM,DISP=SHR
+//SYSUT1   DD  SPACE=(CYL,(4,2)),VOL=REF=CLARKE.JOL35.ASM
+//SYSUT2   DD  SPACE=(CYL,(4,2)),VOL=REF=CLARKE.JOL36.ASM
+//SYSUT3   DD  SPACE=(CYL,(4,2)),VOL=REF=CLARKE.JOL36.ASM
+//SYSGO DD DSN=CLARKE.JOL.OBJ(&MEM),DISP=OLD
+//SYSTERM  DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+//SYSIN DD DSN=CLARKE.JOL35.ASM(&MEM),DISP=SHR
+//  PEND
+//  EXEC ASM1,MEM=UJP17FRE
+UJP17FRE TITLE 'DYNAMICALLY FREE A FILE'                          86014
+* COPYRIGHT CCS-JOL P/L                   1986.
+*
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         EJECT
+         PRINT  OFF
+         COPY   JOLCOM
+         PRINT  ON
+         PRINT  GEN
+         PRINT DATA                                               75128
+         IEFZB4D2
+         IEFZB4D0
+S99LEN   EQU    S99RBEND-S99RB
+         TITLE 'DYNAMICALLY FREE A FILE'                          86014
+P17SAVE  DSECT
+         DS     18F
+P17DAL   DS     F
+         DS     0D
+S99PRMS  DS     0D
+         ORG    *+S99LEN
+P17ATU1  DS     F
+P17ATU2  DS     F
+P17ATU3  DS     F
+* ***** THE NEXT FIELDS MUST BE SET UP MANUALLY.
+P17DDNMP DC     H'1'           KEY OF 1
+         DC     H'1'           COUNT OF 1
+         DC     H'8'           LENGTH OF 8
+P17DDNM  DC     CL8' '         DDNAME
+P17DSNMP DC     H'2'           KEY OF 1
+         DC     H'1'           COUNT OF 1
+P17DSNM  DC     H'44'          LENGTH OF 8
+         DC     CL44' '        DDNAME
+P17LENS  EQU    *-P17SAVE
+         JOLSAVE CSECT=UJP17FRE,SIZE=P17LENS
+         USING JOLCOM,R2
+         USING P17SAVE,R13
+         LA    R9,S99PRMS
+         USING S99RB,R9
+         XC    S99RB(S99LEN),S99RB  ZERO OUT ALL OF THE CONTROL BLOCK
+         MVI   S99RBLN,S99LEN     SET UP LENGTH
+         MVI   S99VERB,S99VRBUN   UNALLOCATE FUNCTION
+         GETTKN 3                 SEE IF JUST 'FREEFILE X';
+         CLI   TKN,C' '
+         BNE   P17FULL
+         GETTKN 2
+         MVC   P17DDNM,TKN
+         GETTKN 3
+         B     P17TEND
+P17FULL  GETTKN 2                 GET THE 'FILE' OR 'F'
+         CLC   =C'F ',TKN
+         BE    P17FSPEC           FILE SPECIFIED
+         CLC   =C'FILE ',TKN
+         BE    P17FSPEC           FILE SPECIFIED
+P17ERR1  JOLERR 301,'FREEFILE:- INVALID SYNTAX'
+         JOLRETN  RC=16
+P17FSPEC GETTKN  (R1)             GET NEXT ITEM
+         CLI   TKN,C' '
+         BE    P17ERR1
+         CLI   TKN,C'('
+         BNE   P17ERR1
+         GETTKN (R1)
+         CLI   TKN,C' '
+         BE    P17ERR1
+         MVC   P17DDNM,TKN
+         GETTKN (R1)
+P17TEND  CLI   TKN,C' '
+         BE    P17END1
+         CLI   TKN,C')'
+         BE    P17END1
+         JOLERR 302,'EXTRA CHARACTERS ON FREE INSTRUCTION:-IGNORED'
+P17END1  DS    0H
+         MVC   P17DDNMP(6),=AL2(1,1,8)
+         LA    R1,P17DDNMP
+         ST    R1,P17ATU1
+         MVI   P17ATU1,X'80'
+         LA    R1,P17ATU1
+         ST    R1,S99TXTPP
+         MVI   S99TXTPP,X'80'
+         SPACE 2
+* THE PARAMETER LIST HAS BEEN SET-UP, APART FROM THE PARAMETERS
+*  TO SVC 99 PROPER.
+* LEST DO THEM
+         LA    R1,S99RB
+         ST    R1,CALLAREA
+         MVI   CALLAREA,S99RBPND
+         SPACE 2
+         TESTAUTH
+         LTR   R15,R15
+         BNZ   D03NOTAU
+S99AUTH  EQU   S99WTVOL+S99WTDSN+S99WTUNT+S99OFFLN+S99MOUNT
+         MVI   S99FLG21,S99AUTH
+D03NOTAU EQU   *
+         LA    R1,CALLAREA
+         DYNALLOC
+*
+*  CHECK TO SEE IF ERRORS OCCURED.
+*
+         ST    R15,CALLAREA+12          SAVE DYNALLOC RETURN CODE
+         LTR   R15,R15
+         BNZ   D03ERR                RETURN CODE ZERO
+         L     R0,S99ERROR           TEST ERR AND INFO CODE
+         LTR   R0,R0                 ERROR ?
+         BZ    D0399OK
+D03ERR   EQU   *
+         B     NODYNDMP
+         LA    R1,S99RB                 REQUEST BLOCK POINTER
+         LTR   R15,R15
+         BZ    NODYNDMP
+         L     R15,=V(DYNDUMP)          GET DUMP ROUTINE
+         WXTRN  DYNDUMP
+         BALR  R14,R15                  GO TO IT
+         SPACE  3
+NODYNDMP DS    0H
+         L     R1,CALLAREA+12          ADDR OF ERROR AND INFO CODES
+         LR    R15,R1
+         O     R1,=XL4'40F0'        (CONVERT
+         C     R15,=F'12'            CODES
+         BNE   *+8                      TO
+         LH    R1,=X'F1F2'                EBCDIC
+         STH   R1,D03MSGH                   FOR
+         UNPK  D03MSGI(9),S99ERROR            THE
+         NC    D03MSGI(8),=8X'0F'                ERROR
+         TR    D03MSGI(8),=C'0123456789ABCDEF'     MESSAGE)
+         LA    R1,D03MSG
+         SVC   35               WTO, ROUTCDE=11
+         LINK  EP=IKJEFF18,PARAM=(S99RB,CALLAREA+12,TSOADR,    +++++++++
+               TSOADR+4),MF=(E,CALLAREA+16)
+         LA    R0,D03MSGL
+         LA    R1,D03MSG
+         SVC   93               TPUT MESSAGE
+         JOLRETN
+*        L     R1,&CPPL          GET CPPL ADDRESS
+* NOW LINK TO TSO ERROR MESSAGE ROUTINE
+*.RT1    LINK  EP=IKJEFF18,PARAM=(CALLAREA,CALLAREA+12,TSOADR,     **
+*              TSOADR+4,&C)
+D03MSG   EQU   *
+         DC    AL2(D03MSGL),X'8000'    LENGTH AND FLAGS
+         DC    C' DYNALLOC RETURN CODE '
+D03MSGH  DS    H
+         DC    C', ERROR AND INFO CODE '
+D03MSGI  DS    XL8                 SPACE FOR ERROR AND INFO CODES
+D03MSGL  EQU   *-D03MSG            LENGTH OF MESSAGE
+         DC    XL4'20'             ROUTING CODE
+TSOADR   DC    F'0'        DON'T KNOW ADDR OF IKJEFF02
+         DC    X'80'      '80' WANT WTO, '00' WANT PUTLINE
+         DC    X'32'      '32' IF SVC99 USED, '01' IF DAIR USED
+         DC    C'JL'
+D0399OK  L     R15,CALLAREA+12      RESTORE DYNALLOC RETURN CODE
+         JOLRETN
+         DC H'0'    ABEND
+         SPACE 1
+         DC  10S(*)
+         LTORG
+         END

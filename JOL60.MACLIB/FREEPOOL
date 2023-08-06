@@ -1,0 +1,5 @@
+         MACRO
+&L       FREEPOOL
+         AIF   (T'&L EQ 'O').END
+&L       DS    0H
+.END     MEND

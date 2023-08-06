@@ -1,0 +1,289 @@
+$JOLMN60 TITLE 'JOL MONITOR VERSION 6.0 - JCL VERSION'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1976
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1980
+* JOL COPYRIGHT CCS-JOL, 1986.
+* JOL COPYRIGHT CCS-JOL, 1987.
+* JOL COPYRIGHT CCS-JOL, 1990.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+         PUNCH '       PAGE    $JOLMN60'
+         PUNCH '      SETCODE  AC(1)'
+         LCLC  &SCHED
+&SCHED   SETC  '$JOLSH60'
+$JOLMN60 CSECT                                                    86211
+         DS    0H
+*
+*     THIS MONITOR SIMPLY ATTACHES THE JOL SCHEDULER PROGRAM,
+*     AND, IF THE SCHEDULER REQUESTS, THEN THE PROBLEM PROGRAM
+*     IS ALSO ATTACHED.
+*
+* ALTERED, JAN 1990 FOR VERSION  5.1 BY J SUMMERFIELD
+*        VERIFIES THAT IT'S LICENSED FOR THE MACHINE IT'S RUNNING ON
+*
+* ALTERED, JULY 1986 FOR VERSION 4.0 BY C.CLARKE
+*    AND J SUMMERFIELD
+*        NO LONGER COPIES JSCB FOR THE USER TASK:
+*        UJE00MN NOW RUNS IN SUPERVISOR STATE ALL THE TIME
+*        TO RETAIN AUTHORISATION
+*
+*
+* 3.0 CHANGE TO LET JOL RUN UNDER MVS.                            75311
+* APF FACILITIES ARE USED.                                        75311
+* THE JOL SCHEDULER IS ATTACHED, BUT INSTEAD OF XCTLING TO THE    75311
+* PROBLEM PROGRAM, IT RETURNS TO US HERE, THEN WE JUMP INTO SUPER-75311
+* VISOR MODE, AND USE THE SPECIAL ATTACH TO ATTACH THE PROBLEM    75311
+* PROGRAM AS A NEW JOB-STEP, AND ALLOW APF TO WORK AS USUAL.      75311
+*COURTESY MAS, SHELL AUST AND MYSELF                              75311
+R0       EQU   0
+R1       EQU   1
+R2       EQU   2
+R3       EQU   3
+R4       EQU   4
+R5       EQU   5
+R6       EQU   6
+R7       EQU   7
+R8       EQU   8
+R9       EQU   9
+R10      EQU   10
+R11      EQU   11
+R12      EQU   12
+R13      EQU   13
+R14      EQU   14
+R15      EQU   15
+UJE00MN  SAVE  (14,12),,UJEMON.COPYRIGHT.CCS-JOL;COMPILED.ON.&SYSDATE.:+
+               &SYSTIME
+         USING $JOLMN60,R11    ADDRESS OURSELVES
+         LR    R11,R15         AND FIX UP BASE REGISTER
+         LR    R9,R1           SAVE R1 FOR A WHILE
+         LA    R0,(CONEND-CONSTART)    LOAD R0 WITH LENGTH OF CONSTANT
+*                                      AREA + LENGTH SAVE AREA
+         GETMAIN R,LV=(0)    GET THE REQUIRED STORAGE
+         ST    R13,4(R1)
+         ST    R1,8(R13)
+         USING CONSTART,R13
+         LR    R13,R1          LINKAGE SET UP NOW
+         LA    R15,X'208'                                         J50
+         L     R14,X'10'         ADDRESS CVT                      J50
+         CLI   X'74'(R14),X'12'                                   J50
+         BNE   *+8                                                J50
+         LA    R15,X'220'-X'208'(,R15)                            J50
+         MVC   PCCA,0(R15)                                        J50
+         MODESET MODE=SUP      THIS KEEPS ME AUTHORISED           87340
+* THIS MONITOR IS EXECUTED AS PART OF THE JOL SYSTEM.
+*    JCL IS PRODUCED TO EXECUTE '$JOLMNXX',AND $JOLSHXX PERFORMS
+*    SUCH ITEMS AS
+*          1. THE DISPLAY INSTRUCTION
+*          2. ATTACHING THE USERS PROGRAM TO RUN AS A SUBTASK.
+*          3. PERFORMING ALL THE'IF'STATEMENT.
+           SPACE 3
+         MVI   TASKLABL,C' '
+         MVC   TASKLABL+1(GOBACK-TASKLABL+1),TASKLABL             75128
+         MVI   CHKFLG,12                                          J50
+         SPACE 3
+         ST    R9,APARM        STORE ORIGINAL R1 IN GOTTEN CORE
+         LA    R1,PARML
+         ST    R1,ATASKPRM
+         SR    R7,R7           DOUBLE ABEND INDICATOR SO IF THE
+         TIME  DEC                                                J50
+         ST    R1,RUNDATE                                         J50
+         ZAP   DBL,RUNDATE                                        J50
+         CVB   R1,DBL                                             J50
+         ST    R1,RUNDATE                                         J50
+*                              SCHEDULER ABENDS,THEN WE WON'T RELOAD
+*                              THE SCHEDULER AND LOOP FOREVER
+ATTACH   DS    0H
+         XC    TASKECB,TASKECB
+         L     R15,0(,R9)      POINT TO PARAMETER AREA(OS)        75128
+         CLC   =H'0',0(R15)   IS THERE A PARAMETER?               80290
+         BE    ATTACH2        NO,SO ATTACH                        80290
+         CLC   =C'TEST',2(R15)     TEST ON?                       75128
+         BNE   ATTACH2                                            75128
+         LINK  EP=&SCHED,PARAM=(PARMAREA),MF=(E,CALLAREA)
+*        B     ATTACH                                             75128
+         B     ATTACH2                                            87340
+ATTACH2  DS    0H                                                 75128
+         MVC   ATTACHL(ATTACHLN),ATTACHW INITIALISE ATTACH
+*                              BECAUSE 'E' FORM DOESN'T INITIALISE
+*                              ALL THE BITS.
+         ATTACH EP=&SCHED,PARAM=(PARMAREA),MF=(E,CALLAREA),       86211*
+               ECB=TASKECB,SF=(E,ATTACHL),JSCB=,JSTCB=NO          76200.
+
+         LR    R5,R1
+         WAIT  ECB=TASKECB
+         SPACE 3
+* NOW CHECK IF WE ARE RUNNING UNDER A VS SYSTEM                   75311
+ATTACH3  DS    0H                                                 87340
+         CLI   VS,C' '         VS ?                               75311
+         BE    NOTVS           NOPE                               75311
+         ST    R5,CALLAREA     STORE TCB ADDRESS                  75311
+         MVC   TASKRETN(1),X'1D'(R5) SHIFT IN ABEND CODE           DASD
+         MVC   TASKRETN+1(3),TASKECB+1 AND RETURN CODE             DASD
+         TM    X'1D'(R5),X'80' ABEND???
+         BO    VSABEND
+         DETACH  CALLAREA                                         76200
+         B     GOSUP                                              76200
+VSABEND  WTO 'JOL SCHEDULER ABENDED',ROUTCDE=(2,11)               87360
+         DETACH   CALLAREA                                        76200
+         L     R1,TASKRETN
+         B     BADERROR
+GOSUP    DS    0H
+         CLI   GOBACK,C' '                                        76200
+         BNE   RETNOS                                             76200
+         MODESET KEY=ZERO                                         87340
+         SPACE 1
+* FIND MY JSCB                                                    87340
+         L     R1,X'21C'       PSATOLD-PSA (VS2 MACRO 'IHAPSA')   75311
+         L     R6,X'B4'(R1)    POINT TO MASTER JSCB               75311
+         NI    236(R6),254     TURN OFF AUTHORISE BIT             75311
+         AGO   .NOJSCB
+* BUILD DUMMY JSCB FOR PROBLEM PROGRAM                            75311
+         GETMAIN R,LV=400,SP=254 GET A JSCB                       75311
+         LR    R8,R1           SAVE ADDRESS                       75311
+*JSCB IS 380 BYTES LONG ABEND S0C4 WHEN MOVING 400 BYTES           DASD
+* IF RUNNING UNDER MVS ONLY COPY THE LAST 192 BYTES                DASD
+*    ELSE COPY EVERYTHING                                          DASD
+         CLI   VS,C'2'      MVS ??                                 DASD
+         BE    JSCBMVS                                             DASD
+         MVC   0(256,8),0(R6)  COPY OUR JSCB TO PROBLEM PROGRAM    DASD
+         MVC   256(124,8),256(R6)                                  DASD
+         B     JSCBEND                                             DASD
+JSCBMVS  EQU   *                                                   DASD
+         XC    0(188,R8),0(R8) CLEAR UNUSED AREA           77300   DASD
+         MVC   188(192,R8),188(R6) COPY OUR JCSB TO THE PP  77300  DASD
+JSCBEND  EQU  *                                                    DASD
+*        B  *+8    SKIP OFF AUTHORISATION                          DASD
+         XC    216(4,8),216(8)   CLEAR DEB                         DASD
+         NI    236(R8),254     TURN OFF AUTHORISE BIT             75311
+.NOJSCB  ANOP
+* NOW ATTACH PROBLEM PROGRAM.                                     75311
+         OI    ATASKPRM,X'80'                                     75311
+         LA    R1,ATASKPRM                                        75311
+         XC    TASKECB,TASKECB CLEAR ECB                          75311
+         MVC   ATTACHL(ATTACHLN),ATTACHW INITIALISE ATTACH
+*                              BECAUSE 'E' FORM DOESN'T INITIALISE
+*                              ALL THE BITS.
+*        ATTACH EPLOC=TASKNAME,ECB=TASKECB,SF=(E,ATTACHL),        75311*
+               JSCB=(8),JSTCB=YES                                 76200
+         ATTACH EPLOC=TASKNAME,ECB=TASKECB,SF=(E,ATTACHL),        75311*
+               RSAPF=YES,                                         87340.
+               JSTCB=YES,MF=(E,(1))                               76200
+         LR    R5,R1                                              75311
+         WAIT  ECB=TASKECB                                        75311
+         OI    236(R6),1       TURN ON  AUTHORISE BIT             87340
+         MODESET KEY=NZERO                                        87340
+NOTVS    MVC   TASKRETN(1),X'1D'(R5) SHIFT IN ABEND CODE
+         MVC   TASKRETN+1(3),TASKECB+1 AND RETURN CODE
+* NOW I'M BACK IN CONTROL,I.E THE SUBTASK FINISHED.
+*    WHAT AM I TO DO NOW ?
+         ST    R5,CALLAREA
+         DETACH CALLAREA
+         AGO   .NOJSCB1
+         CLI   VS,C' '         VS ?                               75311
+         BE    TABEND          NOPE, TEST ABEND THEN              75311
+* NOW FREE THE JSCB WE MADE                                       75311
+         FREEMAIN R,LV=400,SP=254,A=(8)                           75311
+* NOW MODESET BACK TO PROBLEM PROGRAM STATE                       75311
+*        LA    R1,X'24'                                           75311
+*        SVC   107             SVC BACK TO PROB STATE             75311
+.NOJSCB1 ANOP
+TABEND   TM    TASKRETN,128    NORMAL RETURN FOR TASK?            75003
+         BNO   TESTGOBK   YES,SO TEST GOBACK TO OS INDIC          76200
+         LTR   R7,R7           TEST IF R7 =0,IF NOT,THIS IS A DOUBLE
+*                              ABEND,AND CANNOT BE ALLOWED
+* NOTE,BECAUSE JOL GENERATES A SYSUDUMP CARD,A DUMP WOULD ALREADY
+*    HAVE BEEN TAKEN
+         BNZ   BADERROR        TWO ABENDS,VERY NASTY
+         IC    R7,TASKRETN     SET R7 = ABEND CODE
+         L     R1,TASKRETN     LOAD TASKRETN TO REG 1             CHC
+         N     R1,=X'00FFFFFF' LEAVE RETURN CODE                  CHC
+         BNZ   TESTGOBK        DO THE NORMAL THINGS IF NOT ABEND ZERO
+         SVC   13              KILL JOB WITH AN ABEND ZERO        CHC
+TESTGOBK EQU   *
+         CLI   GOBACK,C' '                      RETURN TO OS YET ?
+         BE    ATTACH                          NO,SO BETTER RE-ATTACH
+*                                              THE OLD SCHEDULER TO SEE
+*                                              WHAT'S GOING ON.
+           SPACE 3
+* WELL I DO HAVE TO RETURN TO O.S
+RETNOS   EQU   *
+         LH    R10,TASKRETN+2  LOAD 2ND 2 BYTES OF RETURN CODE
+BADRETN  EQU   *
+         L     R7,4(R13)       LOAD R7 WITH PREVIOUS SAVEAREA ADDRESS
+         LR    R1,R13          LOAD R1 WITH THE ADDRESS OF GOTTEN
+*                              STORAGE
+         FREEMAIN R,LV=CONEND-CONSTART,A=(1)
+         LR    R13,R7          SET R13=OLD SAVE
+         LR    R15,R10         SET UP RETURN CODE
+         L     R14,12(13)      AND RETURN ADDRESS
+         LM    R0,R12,20(R13)  AND OLD REGISTERS
+         BR    R14             AND BACK WE GO
+BADERROR DS    0H
+         UNPK  HEXCONV,TASKRETN(5)                                87360
+         TR    HEXCONV,HEXTAB                                     87360
+         MVC   MSGAREA(ABNDMSGL),ABNDMSG                          87360
+         MVC   MSGAREA+23(3),HEXCONV+2                            87360
+         MVC   MSGAREA+27(3),HEXCONV+5                            87360
+         WTO   MF=(E,MSGAREA)                                     87360
+         WTO  'CONTACT YOUR SYSTEM PROGRAMMER',ROUTCDE=(2,11)     86211
+SETRET   LA    R10,4000                                            DASD
+         B     BADRETN
+ATTACHW  ATTACH EP=&SCHED,SF=L
+ABNDMSG  WTO  'JOL MONITOR ABEND SXXX-YYY: JOB TERMINATED',       87360.
+               MF=L,ROUTCDE=(1,11)                                87360
+ABNDMSGL EQU   *-ABNDMSG                                          87360
+         DC    28S(*)
+         LTORG
+HEXTAB   EQU   *-240                                              87360
+         DC    C'0123456789ABCDEF'                                87360
+         TITLE 'COMMUNICATION AREA FOR MONITOR AND SCHEDULER'
+CONSTART DSECT
+SAVEAREA DS    18F
+PARMLOLD DS    CL104
+ATTACHL  ATTACH EP=&SCHED,SF=L
+ATTACHLN EQU   *-ATTACHL
+HEXCONV  DS    XL9,0F                                             87360
+MSGAREA  DS    XL256                                              87360
+PARMAREA DS    0D
+TASKLABL DC    CL8' '          STEP-NAME (I.E LABEL IN JOL TERMINOLOGY)
+TASKNAME DC    CL8' '          NAME OF PROGRAM BEING EXECUTED AS A
+*                            SUBTASK
+APARM    DS    A
+ATASKPRM DS    A               ADDRESS OF GOTTEN STORAGE FOR PARAMETERS
+TASKSSI  DC    CL4' '          SSI OF THE SUB-TASK
+TASKRETN DC    F'0'            RETURN CODE FROM TASK
+TASKECB  DC    F'0'            EVENT CONTROL BLOCK FOR TASK
+TASKIND  DC    C' '            SET TO 1 AFTER SCHEDULER CALLED
+*                              THE FIRST TIME.
+GOBACK   DC    C' '            NOT BLANK MEANS RETURN TO OS NOW
+*                                                         ***
+INSTREOF DC    C' '            SET TO 1 ON EOF WHEN READING
+*                              INSTRUCTIONS.
+VS       DC    C' '            SET NON BLANK IF VS SYSTEM         75311
+DBL      DS    D               WORK AREA ONLY
+CALLAREA DS    10F             WORK AREA ONLY FOR PARAMETERS BASICALLY
+PCCA     DS    A
+RUNDATE  DS    F
+CHKFLG   DC    P'0'                                               J50
+         DS    0D
+PARML    DS    CL3000          LONG PARAMETER SUPPORT NOV 26 2010 J60
+CONEND   EQU   *
+         SPACE 3
+         END   UJE00MN

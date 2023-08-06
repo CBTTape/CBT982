@@ -1,0 +1,5 @@
+         MACRO
+         FIX   &A
+         AIF   (K'&A EQ 0).E                                      J50
+         MNOTE 0,&A
+.E       MEND

@@ -1,0 +1,45 @@
+* THE NEXT FIELD IS THE AREA HANDED OVER TO ANY DYNAMIC
+*  ROUTINES, AND CONTAINS THE ADDRESSES OF VARIOUS ROUTINES
+*  AND WORK AREAS THAT THE ROUTINES MAY FEEL LIKE USING.
+*
+DYNPARMS  DC   A(0)     ADDRESS OF #TKNSTRNG
+ATKN1    DC    A(0)           ADDRESS OF 'TKNX' WORK AREA         75128
+          DC   A(CALLAREA) ADDRESS OF 'JOLCOM'
+AUJP90   DC    A(0)
+AUJP85   DS    A              ADDRESS OF UJP85ASN (ASSIGN)
+AUJP02   DS    A              ADDRESS OF UJP02DCL (DECLARE)
+AMACBUF  DC    A(0)           ADDRESS INSTREAM AND INVOKE I/O AREA75128
+AWORK    DC    A(#WORK)       WORK AREA
+         DC    A(DBL)      ADDRESS OF A DOUBLE WORD
+         DC    A(SYMBOLIC) ADDRESS OF SYMBOLIC NAME AREA
+AJOBDETS DC    A(JOBDETS)     ADDRESS JOB DETAILS
+AGENDETS   DS 0A            SAME FIELD AS NEXT ITEM
+AJOLGEN  DC    A(0)     ADDRESS OF JOLGEN DETAILS LOADED
+AUJSPLIT DS    A              TOKEN SPLITER
+AUJP98   DS    A              ADDRESS OF UJP98OP (OP RTN DYNAM RTNS)
+AUJS20   DS    A              ADDRESS OF REPLACE SYMBOLICS
+AUJS21    DC   A(0)    ADDRESS OF FUNCTION RTN                    75128
+APRINTLN DC    A(PRINTBUF)   ADDRESS PRINT BUFFER AREA
+UJSPRINT DC    A(0)           ADDRESS OF UJSPRINT SUB RTN
+ATNUM    DC    A(0)          ADDRESS OF TNUM RTN
+ATNUMV   DC    A(0)          AS ABOVE (VARYING STRINGS)
+         DC    A(0)
+         DC    A(0)
+         DC    A(0)
+         DC    A(0)
+******************************************************************74303
+* THE FOLLOWING 5 ADDRESS CONSTANTS MAY BE USED AS SEEN FIT BY    74303
+*    THE SYSTEM PROGRAMMER                                        74303
+USER1      DC  A(0)                                               74303
+USER2      DC  A(0)                                               74303
+USER3      DC  A(0)                                               74303
+USER4      DC  A(0)                                               75311
+USER5      DC  A(0)                                               75311
+***************************************************************** 74303
+           DC  A(0)
+           DC  A(0)
+           DC  A(0)
+           DC  A(0)
+           DC  A(0)
+           DC  A(0)
+           DC  A(0)

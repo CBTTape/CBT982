@@ -1,0 +1,65 @@
+./ ADD NAME=UJS98QU
+         JOLSAVE CSECT=UJS98QU                                    76200
+* THIS CSECT HAS A PARAMETER -> VARYING CHARACTER STRING.         76200
+* THE IDEA IS TO DROP QUOTES FROM EITHER END, THEN CHECK FOR      76200
+* DOUBLE QUOTES IN THE MIDDLE AND MAKE THEM 1, IF ANY ARE FOUND.  76200
+         SPACE 2                                                  76200
+         L     R5,0(R1)       POINT TO PARM              JOL30027 76200
+         CLC   0(2,R5),ZERO   ZERO LENGTH ?              JOL30027 76200
+         BE    S98RETN                                   JOL30027 76200
+         MVC   DBL(2),0(R5)   SHIFT LENGTH SO NO 0C6     JOL30027 76200
+         LH    R6,DBL         LOAD ITS LENGTH.           JOL30027 76200
+         CLI   2(R5),C''''    QUOTE ON START OF STRING ? JOL30027 76200
+         BNE   S98FDBLQ       NO,SO JUMP INTO DBL QUOTE  JOL30027 76200
+         SPACE 2                                         JOL30027 76200
+         BCTR  R6,0           -1 FROM R6                 JOL30027 76200
+         BCTR  R6,0           -1 FROM R6 =-2             JOL30027 76200
+         LTR   R7,R6          SAVE NEW LENGTH            JOL30027 76200
+         BZ    S98RETZ        IF ZERO NOW, STORE LEN, RET OL30027 82200
+         BCTR  R6,0           -1 FOR MVC EXECUTE         JOL30027 76200
+****************************************************************** DASD
+* ABEND 002 OCCURED BY A MINUS VALUE IN REG-6 WHICH SHIFTED      * DASD
+* THE BUFFER ADDRESS (WHICH IS GETMAINED AFTER THE TKN AREA)       DASD
+* ONE BYTE WHICH LEFT A BIG RDW IN THE VB LENGTH                 * DASD
+* A TEST HERE FOR A MINUS VALUE SHOULD DO IT                     * DASD
+****************************************************************** DASD
+         LTR   R6,R6   DID REGISTER 6 GO NEGATIVE  ??              DASD
+         BM    S98RETN YEP   LETS NOT DO ANY MORE                  DASD
+         EX    R6,S98MVC1     MOVE AND DROP 1ST QUOTE    JOL30027 76200
+         LA    R8,3(R5,R6)    POINT TO LAST QUOTE-1      JOL30027 76200
+         MVC   0(2,R8),BLANKS BLANK THEM OUT             JOL30027 76200
+         STH   R7,DBL         RESET -                    JOL30027 76200
+         MVC   0(2,R5),DBL    -STRING LENGTH NOW         JOL30027 76200
+         SPACE 2                                         JOL30027 76200
+S98FDBLQ EQU   *                                         JOL30027 76200
+         LH    R6,0(R5)    LOAD STRING LENGTH                     76200
+         SPACE 1                                         JOL30027 76200
+         LA    R1,2(R5)       LOAD START ADDRESS OF STR. JOL30027 76200
+         LA    R14,1          SET LOOP INCR=1            JOL30027 76200
+         LA    R15,1(R5,R6)   POINT TO END-1             JOL30027 76200
+S98LUP   CLC   0(2,R1),=C'''''' DOUBLE QUOTE PERHAPS?    JOL30027 76200
+         BE    S98DBL         YES ->                     JOL30027 76200
+         BXLE  R1,R14,S98LUP                             JOL30027 76200
+S98RETZ  STH   R6,DBL         END --- RESET LENGTH       JOL30027 76200
+         MVC   0(2,R5),DBL    DONE                       JOL30027 76200
+S98RETN  JOLRETN RC=0                                    JOL30027 76200
+         SPACE 2                                         JOL30027 76200
+S98DBL   EQU   *                                         JOL30027 76200
+* CALCULATE LENGTH TO SHIFT                              JOL30027 76200
+         LR    R9,R15         LOAD END POINTER           JOL30027 76200
+         SR    R9,R1          -CURRENT BYTE ADDRESS      JOL30027 76200
+         EX    R9,S98MVC2     SHIFT BACK A BYTE          JOL30027 76200
+         LA    R1,1(R1)       SKIP OVER THE SECOND OF THE TWO
+*                             QUOTES WE HAVE JUST CONDENSED TO ONE.
+         S     R6,ONE         -1 FOR LENGTH NOW          JOL30027 76200
+         BP    S98LUP         STILL DATA THERE?->CONTINUEJOL30027 76200
+         B     S98RETN        ELSE RETN                  JOL30027 76200
+         SPACE 3                                         JOL30027 76200
+S98MVC1  MVC   2(*-*,R5),3(R5)                           JOL30027 76200
+S98MVC2  MVC   0(*-*,R1),1(R1)                           JOL30027 76200
+         LTORG                                           JOL30027 76200
+         CNOP  0,8                                       JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200

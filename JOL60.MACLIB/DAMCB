@@ -1,0 +1,78 @@
+         MACRO                                                    88036
+&L       DAMCB &TYPE=,&BUFSIZE=0,&MEMBERS=0,&EODAD=0              88036
+         LCLB  &B                                                 88036
+         LCLC  &C                                                 88036
+&B       SETB  (T'&L EQ 'O')                                      88036
+&C       SETC  (&B)'DAMCB'.(1-&B)'&L'                             88036
+         AIF   (T'&TYPE EQ 'O').GENCB                             88036
+         AIF   ('&TYPE' NE 'DSECT').ERR                           88036
+&C       DSECT                                                    88036
+DAMID    DC    CL4'DAM '                                          88036
+DAMCREC  DC    A(0)            CURRENT (INPUT) RECORD             88036
+DAMLREC  DC    A(0)            LAST RECORD READ/WRITTEN           88036
+DAMFIND  DC    A(0)            FIND ROUTINE                       88036
+DAMCLOSE DC    A(0)            CLOSE ROUTINE                      88036
+DAMSTOW  DC    A(0)            STOW ROUTINE                       88036
+DAMWRITE DC    A(0)            WRITE A RECORD                     88036
+DAMREAD  DC    A(0)            READ ONE                           88036
+DAMEODAD DC    A(0)            USER'S EOF ROUTINE                 88036
+DAMPOINT DC    A(0)            REPOSITION THE FILE                88036
+DAMNOTE  DC    A(0)            FIND WHERE WE ARE NOW              88036
+DAMBLDL  DC    A(0)            GET MEMBER ADDRESSES               88036
+DAMLOAD  DC    A(0)            ADDRESS OF FILE-LOAD ROUTINE       88036
+DAMSAVE  DC    A(0)            ADDRESS OF FILE-STORE ROUTINE      88036
+DAMEXTND DC    A(0)            ADDRESS OF FILE-EXTEND ROUTINE     88036
+DAMUPD   DC    A(0)            ADDRESS OF ROUTINE TO UPDATE ENTIRE MBR
+DAMRSVD1 DC    4A(0)           RESERVED FOR LATER                 88036
+DAMFLG1  DC    X'00'           FIRST FLAG BYTE                    88036
+DAMFLG2  DC    X'00'           SECOND FLAG BYTE                   88036
+DAMF1UPD EQU   X'80'           FILE HAS BEEN UPDATED SINCE LOAD   88036
+DAMFLG3  DC    X'00'           THIRD FLAG BYTE                    88036
+DAMFLG4  DC    X'00'           FOURTH FLAG BYTE                   88036
+DAMBUFFR DC    A(0)            ADDRESS OF THE BUFFER              88036
+DAMBUFSZ DC    A(0)            SIZE OF THE BUFFER                 88036
+DAMMSIZE DC    Y(0)            SIZE OF MEMBER TABLE               88036
+         DC    Y(0)            RESERVED FOR LATER                 88036
+DAMRSVD2 DC    4A(0)           RESERVED FOR LATER                 88036
+DAMCMEM  DC    A(0)            START OF CURRENT MEMBER'S DATA     88036
+DAMHWM   DC    A(0)            HIGH-WATER MARK                    88036
+DAMEOS   DC    A(0)            END OF STORAGE AREA                88036
+DAMMBRS  DC    A(0)            ADDRESS OF MEMBER TABLE            88036
+DAMCMNM  DC    A(0)            CURRENT MEMBER TABLE ENTRY         88036
+         DC    4A(0)           RESERVED FOR LATER                 88036
+         MEXIT                                                    88036
+.GENCB   ANOP                                                     88036
+&C       DC    CL4'DAM'        IDENTIFIER                         88036
+         DC    A(0)            CURRENT (INPUT)RECORD              88036
+         DC    A(0)            CURRENT (OUTPUT) RECORD            88036
+         DC    A(0)            FIND ROUTINE                       88036
+         DC    A(0)            CLOSE ROUTINE                      88036
+         DC    A(0)            STOW ROUTINE                       88036
+         DC    A(0)            WRITE A RECORD                     88036
+         DC    A(0)            READ ONE                           88036
+         DC    A(&EODAD)       USER'S EOF ROUTINE                 88036
+         DC    A(0)            REPOSITION THE FILE                88036
+         DC    A(0)            FIND WHERE WE ARE NOW              88036
+         DC    A(0)            GET MEMBER ADDRESSES               88036
+         DC    A(0)            ADDRESS OF FILE-LOAD ROUTINE       88036
+         DC    A(0)            ADDRESS OF FILE-STORE ROUTINE      88036
+         DC    A(0)            ADDRESS OF FILE-EXTEND ROUTINE     88036
+         DC    A(0)            ADDRESS OF UPDATE ROUTINE          88036
+         DC    4A(0)           RESERVED FOR LATER                 88036
+         DC    X'00'           FIRST FLAG BYTE                    88036
+         DC    X'00'           SECOND FLAG BYTE                   88036
+         DC    X'00'           THIRD FLAG BYTE                    88036
+         DC    X'00'           FOURTH FLAG BYTE                   88036
+         DC    A(0)            ADDRESS OF THE BUFFER              88036
+         DC    A(&BUFSIZE)     SIZE OF THE BUFFER                 88036
+         DC    Y(&MEMBERS)     SIZE OF MEMBER TABLE               88036
+         DC    Y(0)            RESERVED FOR LATER                 88036
+         DC    A(0)            START OF CURRENT MEMBER            88036
+         DC    A(0)            HIGH-WATER MARK                    88036
+         DC    A(0)            END OF STORAGE AREA                88036
+         DC    A(0)            ADDRESS OF MEMBER TABLE            88036
+         DC    A(0)            ADDRESS OF CURRENT MEMBER TABLE ENTRY
+         DC    4A(0)           RESERVED FOR LATER                 88036
+         MEXIT                                                    88036
+.ERR     MNOTE 8,'DAMCB: INVALID TYPE &TYPE'                      88036
+         MEND                                                     88036

@@ -1,0 +1,23 @@
+         MACRO
+         DYNPD &P,&OPT,&CODE
+.*  CALCULATES CODE FOR DCB=RECFM, STORES IN &SUM.  &NUM=0 IF INVALID.
+         GBLA  &SUM
+         GBLB  &NUM
+         LCLC  &C
+         LCLA  &I,&J
+&SUM     SETA  0
+&NUM     SETB  0
+         AIF   ('&P'EQ'').D
+.A       ANOP
+&I       SETA  &I+1
+&C       SETC  '&P'(&I,1)
+.B       ANOP
+&J       SETA  &J+1
+         AIF   ('&C'EQ'&OPT(&J)').C
+         AIF   (&J LT N'&OPT).B
+         AGO   .D
+.C       ANOP
+&SUM     SETA  &SUM+&CODE(&J)
+         AIF   (&I LT K'&P).A
+&NUM     SETB  1
+.D       MEND

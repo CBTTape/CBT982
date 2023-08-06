@@ -1,0 +1,14 @@
+         MACRO                                                    J50
+&L       UJC
+         STM   14,12,12(13)                                       J50
+         LR    12,15                                              J50
+         JOLSAVE CSECT=&L,BASE=12                                 J50
+         LINK  EP=&L                                              J50
+         JOLRETN RC=(R15)                                         J50
+         MEND                                                     J50
+         COPY  JOLCOM                                             J50
+UJC05DBA UJC                                                      J50
+UJC05DBD UJC                                                      J50
+UJC05DBU UJC                                                      J50
+UJC05DBV UJC                                                      J50
+         END

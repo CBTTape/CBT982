@@ -1,0 +1,25 @@
+         MACRO
+         DYNP5 &P,&L,&KEY,&POS
+.*  CODES RETURN TYPE PARAMS
+         GBLA  &K,&T,&S
+         GBLC  &R,&B
+         AIF   ('&P'EQ'').C
+         LCLC  &C
+&T       SETA  &T+1
+         AIF   ('&P'(1,1) NE'(').A
+&C       SETC  '&P'(2,K'&P-2)
+D&R&S    LA    &C,TU&R&T+&POS&B&C LOADED WITH ADR OF RETURN
+         AGO   .B
+.A       ANOP
+D&R&S    LA    1,TU&R&T+&POS
+         ST    1,&P&B&P CONTAINS ADR OF RETURN
+.B       ANOP
+         LA    1,&L                LENGTH OF RETURN
+         STH   1,TU&R&T+4          SET LENGTH FIELD
+&S       SETA  &S+1
+         B     D&R&S
+&C       SETC  'C'' ''       SPACE FOR '.'&KEY'.' RETURN'
+TU&R&T   DC    AL2(&K,1,0),&L&C
+.C       ANOP
+&K       SETA  &K+1
+         MEND

@@ -1,0 +1,21 @@
+/*
+//CLARKEE  JOB A,CLARKE,NOTIFY=CLARKE,MSGLEVEL=1,REGION=4048K,
+// MSGCLASS=X
+//COMP1 EXEC CCALG,CVPARM='-WV '    -I '
+//CV.SRC DD *
+*/
+  /*
+#include "stdio";
+#include "string";
+#include <stdio>;
+#include <string>;
+include  "stdio";
+include  "string";
+include  <stdio>;
+include  <string>;
+include  stdio;
+include  string;
+  */
+ main ()  {
+    printf ("Hello There");
+ }

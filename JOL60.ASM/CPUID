@@ -1,0 +1,43 @@
+         LCLA  &N                                                 J50
+         PUNCH ' PAGE CPU'                                        J50
+CPU      CSECT                                                    J50
+.K       ANOP                                                     J50
+R&N      EQU   &N                                                 J50
+&N       SETA  &N+1                                               J50
+         AIF   (&N LT 16).K                                       J50
+         USING CPU,R12                                            J50
+         LR    R12,R15                                            J50
+         B     THERE                                              J50
+DBL1     DC    D'0'                                               J50
+DBLX     DC    D'0'                                               J50
+CALLAREA DS    10A                                                J50
+FWD      DC    F'00000'                                           J50
+DBL      DC    0D'0'                                              J50
+         DC    X'00'                                              J50
+CPUIDENT DC    0XL5'000000'                                       J50
+CPUID    DC    XL3'000000'                                        J50
+CPUMDL   DC    X'0000'                                            J50
+         DC    X'0000'                                            J50
+ZERO     DC    P'00000'                                           J50
+CKSUM1   DC    A(00000000)                                        J50
+ID       DS    XL4                                                J50
+THERE    DS    0H                                                 J50
+         TIME  DEC                                                J50
+         ST    R1,FWD                                             J50
+         ZAP   DBL,FWD                                            J50
+         CVB   R1,DBL                                             J50
+         ST    R1,FWD                                             J50
+         CPUCHK ERRET=OOPS,NRETURN=DONE,                          J50  .
+               SDATE=FWD,EXPIRED=TOOLATE,                         J50  .
+               NOTABLE=NOTABLE,CKSERR=CK                          J50
+OOPS     DC    X'0700'                                            J50
+DONE     DC    X'0700'                                            J50
+NOTABLE  DC    X'0700'                                            J50
+CK       DC    X'0700'                                            J50
+TOOLATE  DC    X'0700'                                            J50
+         DC    X'0000'                                            J50
+         DC    D'-1'                                              J50
+         COPY  UJEAUTAB                                           J50
+         TITLE 'FLC'                                              J50
+         KAAFLC
+         END   CPU                                                J50

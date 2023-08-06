@@ -1,0 +1,66 @@
+//CLARKES JOB (R777),'LONS 8TH',MSGCLASS=X,NOTIFY=CLARKE
+// EXEC PGM=IEFBR14
+//SYSPRINT DD  DSN=CLARKE.SCHED.LIST,DCB=BLKSIZE=1330,
+// SPACE=(CYL,(10,10)),UNIT=SYSDA,DISP=(MOD,DELETE)
+//ASM EXEC PGM=ASMBLR,PARM='NODECK,OBJ,XREF(SHORT),LIST,TERM'
+//SYSLIB   DD  DSN=SYS1.MACLIB,DISP=SHR,DCB=BLKSIZE=19040,
+//    VOL=SER=MTCSYS,UNIT=SYSDA
+//         DD  DSN=CLARKE.PRIVATE.MACLIB,DISP=SHR
+//         DD  DSN=CLARKE.JOL36.ASM,DISP=SHR
+//         DD  DSN=SYS1.FMODGEN,DISP=SHR
+//         DD  DSN=CLARKE.JOL35.MACLIB,DISP=SHR
+//         DD  DSN=CLARKE.JOL35.ASM,DISP=SHR
+//SYSUT1   DD  DSN=&&SYSUT1,SPACE=(CYL,(5,2)),UNIT=SYSDA
+//SYSUT2   DD  DSN=&&SYSUT2,SPACE=(CYL,(5,2)),UNIT=SYSDA
+//SYSUT3   DD  DSN=&&SYSUT3,SPACE=(CYL,(5,2)),UNIT=SYSDA
+//SYSGO DD DSN=CLARKE.JOL36.OBJ(TEXIST),DISP=OLD
+//SYSTERM  DD  SYSOUT=*
+//SYSPRINT DD  SYSOUT=*
+TEXISDT    TITLE 'TEST IF A DATA SET EXISTS'
+* JOL COPYRIGHT CCS-JOL PTY LTD 1986.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+         SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+* TEST IF A DATA SET EXISTS, RC=0 IF YES, ELSE 4 OR 16 IF ERROR
+*
+* IT RELIES ON THE FACT THAT THE JCFBIND2 FIELD INDICATES IF A MOD
+*    DATA SET IS REALLY MOD, OR WAS ALLOCATED AS NEW.
+*
+*
+         GENSAVE  CSECT=TEXIST
+         RDJFCB TEMPDCB       GET DSNAME
+         LTR   R15,R15
+         BNZ   NOTALLOC       ERROR, FILE NOT ALLOCATED
+         TM    JFCBFLG2,JFCMODNW     TEST IF REALLY NEW, OR TEMP NEW
+         BO    NEWDS          REALLY IS A NEW DS
+         GENRETN  RC=0
+NEWDS    GENRETN  RC=4
+NOTALLOC WTO   'JOL: TEST FILE EXIST PROGRAM: FILE NOT ALLOCATED'
+         GENRETN  RC=16
+         PRINT NOGEN
+TEMPDCB  DCB   DDNAME=$$EXIST,DSORG=PO,MACRF=R,                        *
+               DEVD=DA,EXLST=TEMPEXIT
+TEMPEXIT DC    A(JFCBDSNM+X'87000000')
+         DS    0A
+         DC    8CL4'JFCB'
+         IEFJFCBN   LIST=YES
+         PRINT GEN
+           LTORG
+         DC C'COMPILE DATE=&SYSDATE.,TIME=&SYSTIME.'
+         LTORG

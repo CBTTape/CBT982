@@ -1,0 +1,458 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Samesyms2</title>
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="RIGHT" valign="TOP" width="496">
+      <h3><font size="4"><font size="5"><u>Scheduling Jobs by Date</u></font></font></h3>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Scheduling</h4>
+      </td>
+      <td align="LEFT" valign="TOP">Jol's Scheduling System is
+extremely simple to use and written <i><u>entirely in high level Jol
+Code</u></i>; this allows you to easily make changes to the system to
+suit your installation. Using the Scheduling Facility, it is possible
+to program job schedules for days, months, or even years in advance.
+All your existing jobs can be started without changes. Furthermore, Jol
+can be used to schedule your de-bugged and already tested jobs written
+in <b>JCL</b>. Full Jol symbolic variable processing is allowed, even
+with JCL jobs.
+      <p>The Jol Schedule Data Set contains various members that can be
+used to specify which jobs are to run on <b>WORKDAYS, HOLIDAYS,
+MONDAYS, TUESDAYS</b>, etc., and jobs for particular dates such as <b>JUL12</b>.
+At
+a
+time
+suitable
+to you, Jol examines this data set and prepares all
+the appropriate jobs for execution.</p>
+      <p>Note: So that you can submit jobs on the
+day(s) before or after a Holiday, there is prototype code provided in
+member <b>SPECIAL</b> of the Schedule Data Set.</p>
+      <p>In general, to specify which jobs are to be started, code the
+name of the member containing the job in the <b>JOL.SCHEDULE</b> data
+set using the <b>PREPARE</b> command. For example, to indicate which
+jobs are to be executed daily is done by coding the names of the jobs
+in member <b>WORKDAY</b>, as shown below.</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PREPARE BACKUPS;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PREPARE ACCOUNTS;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PREPARE PAYROLL;</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><b>Figure 4-1:</b> <b>Indicating Which
+Jobs are to Run.</b></p>
+      <p>The jobs named are submitted for
+execution on the appropriate days. Jobs may contain any Jol
+instruction, and include networking instructions. For example, even
+daily jobs can examine the Jol calender or accept information from the
+terminal and dynamically alter themselves before submission.</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Rules</h4>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <ul type="disc">
+        <li>You may code more than one job name per line.
+          <p> </p>
+        </li>
+        <li>The jobs named are compiled by Jol, and then submitted for
+execution. Jobs may contain any Jol instruction, including Jol Job
+Networking instructions. For example, some jobs, even if submitted
+daily, may examine the Jol calender or accept information from the
+terminal using the Jol <b>PANEL </b>instruction and dynamically alter
+themselves before submission.
+          <p> </p>
+        </li>
+        <li>Even if a job is mentioned twice or more frequently, it
+will be submitted once only. For example, if a job is to be submitted
+on the first working day of January, but is also to be submitted on <b>MONDAY</b>,
+and
+the
+two
+coincide,
+only one job will be submitted.
+          <p> </p>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Planning Ahead</h4>
+      </td>
+      <td align="LEFT" valign="TOP">Jobs in member <b>WORKDAY</b> are
+submitted on a daily basis. In addition, other members of the library
+are examined based on dates. The following members of the schedule data
+set are executed on the appropriate days: </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <table style="text-align: left; width: 100%;" border="0"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;"><b>WORKDAY</b></td>
+            <td style="vertical-align: top;">Executed only on normal
+working days.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SPECIAL</b></td>
+            <td style="vertical-align: top;">
+            <p>Executed every day, <i>see later pages for details</i></p>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>HOLIDAY</b></td>
+            <td style="vertical-align: top;">Executed only on
+non-working days.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>WEEKEND</b></td>
+            <td style="vertical-align: top;">Executed only on Weekends.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SUN</b></td>
+            <td style="vertical-align: top;">Executed on <b>SUNDAY</b>s.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>MON</b></td>
+            <td style="vertical-align: top;">Executed on <b>MONDAY</b>s.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>TUE</b></td>
+            <td style="vertical-align: top;">Executed on <b>TUESDAY</b>s.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>WED</b></td>
+            <td style="vertical-align: top;">Executed on <b>WEDNESDAY</b>s.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>THU</b></td>
+            <td style="vertical-align: top;">Executed on <b>THURSDAY</b>s.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>FRI</b></td>
+            <td style="vertical-align: top;">Executed on <b>FRIDAY</b>s.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SAT</b></td>
+            <td style="vertical-align: top;">Executed on <b>SATURDAY</b>s.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p><b>&nbsp;</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><b>Figure 4-2:</b> <b>Daily Members Examined by the Schedule
+Facility.</b></p>
+      <p>In addition, the following members of the schedule data set
+are executed <i>(if present) </i>on the specified days:</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <table style="text-align: left; width: 100%;" border="0"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;"><b>JAN01</b></td>
+            <td style="vertical-align: top;">Executed on January 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>JAN02</b></td>
+            <td style="vertical-align: top;">Executed on January 2nd.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">...</td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>FEB01</b></td>
+            <td style="vertical-align: top;">Executed on February 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>MAR01</b></td>
+            <td style="vertical-align: top;">Executed on March 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>APR01</b></td>
+            <td style="vertical-align: top;">Executed on April 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>MAY01</b></td>
+            <td style="vertical-align: top;">Executed on May 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>JUN01</b> </td>
+            <td style="vertical-align: top;">Executed on June 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>JUL01</b></td>
+            <td style="vertical-align: top;">Executed on July 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>AUG01</b></td>
+            <td style="vertical-align: top;">Executed on August 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SEP01</b></td>
+            <td style="vertical-align: top;">Executed on September 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>OCT01</b></td>
+            <td style="vertical-align: top;">Executed on October 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>NOV01</b></td>
+            <td style="vertical-align: top;">Executed on November 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>DEC01</b></td>
+            <td style="vertical-align: top;"> Executed on December 1st.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Other jobs can be submitted on the last working day, the last
+day, the last working day -1 and so on. A member called <b>SPECIAL</b>
+has prototype code for these types of jobs.</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><b><br>
+Figure 4-3:</b> <b>Month and Day Members Containing Scheduling
+Information.</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><font size="3"> </font><br>
+      </td>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <table style="text-align: left; width: 100%;" border="0"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;"><b>MONWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first </i>Monday
+of
+the
+year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>MONWK02</b></td>
+            <td style="vertical-align: top;">Executed on the <i>second
+            </i>Monday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>MONWK<i>nn</i></b></td>
+            <td style="vertical-align: top;">Executed on the <i>nth </i>Monday
+of
+the
+year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">...</td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>TUEWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first</i>
+Tuesday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>TUEWK<i>nn</i></b></td>
+            <td style="vertical-align: top;">Executed on the <i>nth</i>
+Tuesday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">...</td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>WEDWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first</i>
+Wedsnesday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>THUWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first</i>
+Thursday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>FRIWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first</i>
+Friday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SATWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first</i>
+Saturday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SUNWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first</i>
+Sunday of the year.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Using <b>MONWK01</b> etc allows you to submit jobs every
+second week, should you so desire.</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><b>Figure 4-4:</b> <b>Week Number and Day Members to be
+Examined</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>How the Schedule Facility Starts the Required Jobs</h4>
+      </td>
+      <td align="LEFT" valign="TOP">Once a day, Jol examines the
+Schedule data set. If it is not a holiday, it examines the <b>WORKDAY</b>
+member; if it is Saturday or Sunday, the data in these members is used
+instead, otherwise member <b>HOLIDAY</b> is used. Additionally, any
+other member such as <b>JUL14</b> is also examined, if appropriate.
+      <p> </p>
+      <ul type="disc">
+        <li>The names of the jobs found are
+converted to Jol <b>INCLUDE</b> statements and copied to a working
+file, each separated by an <b>* JOL;</b> separator card.
+          <p> </p>
+        </li>
+        <li>Jol then reads the file, and executes any instructions
+found therein as usual.
+          <p> </p>
+        </li>
+        <li>The jobs are then submitted.
+          <p>Below is a sample of the <b>WORDAY </b>member of the
+Schedule Data Set.</p>
+          <p> </p>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <pre> /* This is the normal WORKDAY member of the JOL.SCHEDULE<br>Data Set.</pre>
+      <font size="2" face="Courier New"> It is examined on WORKING DAYS
+ONLY. </font><br>
+      <font size="2" face="Courier New"> You may put in other Jol
+commands before you use the </font><br>
+      <font size="2" face="Courier New"> PREPARE verb to prepare your
+work for submission. </font><br>
+      <font size="2" face="Courier New"> See the example below for
+'SPEC'. </font><br>
+      <font size="2" face="Courier New">*/ </font><br>
+      <font size="2" face="Courier New"> </font><br>
+      <font size="2" face="Courier New"> Prepare DAILYBU; /* Prepare
+Daily Backup Job */</font><br>
+      <font size="2" face="Courier New"> PREPARE INVOICES; /* Prepare
+Daily INVOICE Job */</font><br>
+      <font size="2" face="Courier New"> <br>
+if %day='TUESDAY' /* If today is TUESDAY */</font><br>
+      <font size="2" face="Courier New"> then prepare SPEC; /* then
+prepare a SPEC job */<br>
+      <br>
+      </font> </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><b>Figure 4-5:</b> <b>Sample WEEKDAY Jobs</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Catering for Special Requirements not Handled by Schedule</h4>
+      </td>
+      <td align="LEFT" valign="TOP">The ability to automatically submit
+jobs on every <b>WORKDAY</b>, <b>MONDAY</b> or even on <b>ODD </b>or
+
+
+
+
+      <b>EVEN</b> weeks etc is highly flexible. However, sometimes you
+also need to be able to submit work on the day before a <b>HOLIDAY</b>,
+the
+day
+after
+a
+      <b>WORKDAY</b> and so on. One way to do this is to
+place your <b>PREPARE</b> commands in the appropriate position in the <b>SPECIAL</b>
+member of the Jol Schedule file.
+      <p>Before the <b>SPECIAL </b>file is examined, an array is set
+up so that you can easily determine if today, tomorrow, or today plus
+three days is a Holiday, or a Work Day. In addition to all the usual
+Jol Calendar Variables such as <b>%DAY, %DAYNO, %MONTH </b>etc,
+another variable called <b>%LASTDAY</b> contains the number of days in
+the current month. <b>%LASTDAY </b>is correct for Leap Years.</p>
+      <p>Using Jol programming language and the variables above makes
+special coding requirements easy to cater for.</p>
+      <p>The following page shows some of the coding that you may do in
+the <b>SPECIAL</b> file.</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

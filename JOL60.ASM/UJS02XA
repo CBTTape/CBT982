@@ -1,0 +1,314 @@
+UJS02XA TITLE 'SEARCH FOR UNITS AND SET DDUNITYP AND DDUNIT'
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+*
+* COPYRIGHT:- CLEM CLARKE 1983.
+*
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           EJECT
+* FIXES APPLIED JULY,1976
+*
+*
+******************************************************************
+*
+*
+* NEW MODULE BY C. V. CLARKE TO INCLUDE XA SUPPORT DEC, 1983.
+*
+*    THESE MODULES REPLACE CODE THAT CHECKED THE DEVNAMET IN:-
+*
+*     .  UJC03DS  (DS STATEMENT DECODER)
+*     .  UJS01CAT (CATALOG LOOK UP ROUTINE)
+*
+*    THESE MODULES ALSO REPLACE CODE THAT CHECKED THE UCB IN:-
+*
+*     .  UJG03DS  (GENERATE DD STATEMENT)
+*
+*
+******************************************************************
+           EJECT
+         PRINT OFF
+         COPY JOLCOM
+         PRINT ON
+         SPACE 3
+S01SAVE  DSECT
+         DS    18F
+* THE FOLLOWING AREAS ARE USED AS PARAMETERS TO IEFAB4UV
+S014UVP  DS    A               MUST POINT TO UNIT PARAMETER BLOCK
+AS01FLG  DS    A               MUST POINT TO FLAGS HALFWORD
+         SPACE 3
+S01UNIT  DS    CL8             UNIT NAME MOVED HERE BY IEFEB4UV
+S01DEVT  DS    CL4             DEVTYPE COPIED HERE FROM CATLG
+AS01WORK DS    A               ADDRESS OF RETURN AREA (SET TO 0)
+S01SAVEL EQU   *-S01SAVE
+         JOLSAVE CSECT=UJS01DEV,SIZE=S01SAVEL
+*
+         LM    R6,R7,0(R1)    LOAD THE PARAMETERS
+         USING S01SAVE,R13    SET UP ADDRESSABILITY FOR WORK AREA
+         USING CATDEV,R6
+         USING DDDSNDET,R7
+         SPACE 3
+*
+* TEST IF XA. IF NOT, USE THE DEVNAMET AND SEARCH FOR UNITS.
+*
+         L     R1,16          GET CVT ADDRESS
+*        L     R1,0(R1)       ADDRESS CVT
+         TM    116(R1),X'80'  IS IT XA?
+         BO    S01XA
+* OK, MVS, VS1 OR SOMESUCH. SEE IF THE DEVNAMET IS LOADED
+         L     R1,AJOLGEN
+         USING GENDETS,R1
+         L     R1,ADEVNAME    LOAD ADDRESS OF THE TABLE
+         DROP  R1
+         LTR   R1,R1          IS IT LOADED? ?
+         BNZ   S01TDEV        YES, SO LOOK IN DEVNAMET
+* NO TABLE, AND NOT XA, ERROR.
+         JOLRETN RC=4
+*
+* NOW SEARCH 'DEVNAMET' TABLE FOR THE UNIT.
+* IF ITS NOT THERE, MERELY RETURN A 4.
+*
+S01TDEV  L     R15,0(R1)      LOAD NUMBER OF ENTRIES IN TABLE
+         MH    R15,=H'12'     MULT BY TABLE ENTRY SIZE
+         LA    R1,4(R1)       ADD 4 TO START ADDRESS OF TABLE
+         AR    R15,R1         CALC END OF TABLE
+         LA    R14,12         INCREMENT
+         CLC   CATDEV,8(R1)   FIND CATLG UNIT IN 'DEVNAMET'
+         BE    S01DEVUN
+         BXLE  R1,R14,*-10    ROUND ROBIN
+         JOLRETN RC=4
+         SPACE 3
+S01DEVUN EQU   *              WE HAVE FOUND THE DEVICE IN 'DEVNAMET'
+         MVC   DDUNIT,0(R1)   SHIFT IN UNIT NAME
+         MVI   DDUNITYP,X'80' SET UP 'DISK' INDICATOR
+         CLI   CATDEV+2,X'80' TAPE??
+         BNE   S01RETN0
+         MVI   DDUNITYP,4     SET UP TAPE IN 'DDUNITYP'
+*                             (NOT REALLY CHECKED ANYWHERE)
+S01RETN0 JOLRETN
+         SPACE 3
+**********************************************************
+*                                                        *
+*                                                        *
+*         X A   SUPPORT                                  *
+*                                                        *
+*                                                        *
+**********************************************************
+S01XA    EQU   *
+         MVC   S01DEVT,CATDEV   COPY INTO GOTTEN STORAGE
+         MVC   AS01WORK,=A(0)   WE DON'T WANT ATTRIBUTES
+* PREPARE TO SET UP MAIN PARAMETER ADDRESSES
+         LA    R14,S01UNIT
+         LA    R15,S01FLAGS
+         STM   R14,R15,S014UVP  STORE ADDRESSES FOR IEFAB4UV
+         LA    R1,S014UVP       GET ADDRESS OF PARAMETERS
+         LINK  EP=IEFEB4UV      LINK TO THE ROUTINE
+*       $LINK  IEFEB4UV         LINK TO THE ROUTINE
+         LTR   R15,R15          IS IT A UNIT NAME?
+         BZ    S01RETN0         YES, RETURN A ZERO TO CALLER
+         JOLRETN RC=4           NO, RETURN AN ERROR CODE
+S01FLAGS DC    B'0010000000000000' FLAGS FOR IEFAB4UV (CONVERT
+*                               DEVTYPE TO UNIT, FUNCTION 2)
+         LTORG
+CAT      DSECT
+CATDEV   DS    XL4
+         EJECT
+C03SAVE  DSECT
+         DS    18F
+* THE FOLLOWING AREAS ARE USED AS PARAMETERS TO IEFAB4UV
+C034UVP  DS    A               MUST POINT TO UNIT PARAMETER BLOCK
+AC03FLG  DS    A               MUST POINT TO FLAGS HALFWORD
+         SPACE 3
+C03UNIT  DS    CL8             UNIT NAME MOVED HERE
+C03LOOKU DS    F               SET TO LOOKUP VALUE BY IEFEB4UV
+AC03ATTR DS    A               ADDRESS OF ATTRIB AREA (SET TO 0)
+C03SAVEL EQU   *-C03SAVE
+         JOLSAVE CSECT=UJC03DEV,SIZE=C03SAVEL
+*
+         LM    R6,R7,0(R1)    LOAD THE PARAMETERS
+         USING C03SAVE,R13    SET UP ADDRESSABILITY FOR WORK AREA
+         USING UNITNAME,R6
+         USING DDDSNDET,R7
+         SPACE 3
+*
+* TEST IF XA. IF NOT, USE THE DEVNAMET AND SEARCH FOR UNITS.
+*
+         L     R1,16          GET CVT ADDRESS
+*        L     R1,0(R1)       ADDRESS CVT
+         TM    116(R1),X'80'  IS IT XA?
+         BO    C03XA
+* OK, MVS, VS1 OR SOMESUCH. SEE IF THE DEVNAMET IS LOADED
+         L     R1,AJOLGEN
+         USING GENDETS,R1
+         L     R1,ADEVNAME    LOAD ADDRESS OF THE TABLE
+         DROP  R1
+         LTR   R1,R1          IS IT LOADED? ?
+         BNZ   C03TDEV        YES, SO LOOK IN DEVNAMET
+* NO TABLE, AND NOT XA, ERROR.
+         JOLRETN RC=4
+*
+* NOW SEARCH 'DEVNAMET' TABLE FOR THE UNIT.
+* IF ITS NOT THERE, MERELY RETURN A 4.
+*
+C03TDEV  L     R15,0(R1)      LOAD NUMBER OF ENTRIES IN TABLE
+         MH    R15,=H'12'     MULT BY L'TABLE
+         LA    R1,4(R1)       SKIP TABLE START
+         AR    R15,R1         AND SET TABLE END
+         LA    R14,12         L'TABLE
+         CLC   UNITNAME,0(R1) IS IT A UNIT NAME??
+         BE    C03DEVUN       YES
+         BXLE  R1,R14,*-10 CHECK FURTHER
+*
+         JOLRETN RC=4         **** RETURN AN ERROR
+         SPACE 3
+C03DEVUN EQU   *              UNIT FOUND IN DEVNAMET
+         MVI   DDUNITYP,X'80' PREPARE FOR DISK
+         CLI   8+2(R1),X'80'  TAPE UNIT IN DEVNAMET?
+         BNE   C03RETN0
+         MVI   DDUNITYP,4     SET TO ANY TAPE UNIT
+C03RETN0 JOLRETN
+         SPACE 3
+**********************************************************
+*                                                        *
+*                                                        *
+*         X A   SUPPORT                                  *
+*                                                        *
+*                                                        *
+**********************************************************
+         SPACE 3
+C03XA    EQU   *
+         MVC   C03UNIT,UNITNAME COPY INTO GOTTEN STORAGE
+         MVC   AC03ATTR,=A(0)   SET UP NO RETURN OF ATTRIBUTES
+* PREPARE TO SET UP MAIN PARAMETER ADDRESSES
+         LA    R14,C03UNIT
+         LA    R15,C03FLAGS
+         STM   R14,R15,C034UVP  STORE ADDRESSES FOR IEFAB4UV
+         LA    R1,C034UVP       GET ADDRESS OF PARAMETERS
+         LINK  EP=IEFEB4UV      LINK TO THE ROUTINE
+*       $LINK  IEFEB4UV         LINK TO THE ROUTINE
+         LTR   R15,R15          IS IT A UNIT NAME?
+         BZ    C03RETN0         YES, RETURN A ZERO TO CALLER
+         JOLRETN RC=4           NO, RETURN AN ERROR CODE
+C03FLAGS DC    B'0000001000000000' FLAGS FOR IEFAB4UV (FUNCTION 6)
+         LTORG
+UNIT     DSECT
+UNITNAME DS    CL8
+         EJECT
+G00SAVE  DSECT
+         DS    18F
+PARMLIST DS    3F
+         ORG   PARMLIST
+PARMWA   DS    A                   ADDRESS OF 100 BYTE WORK AREA
+PARMDEVT DS    A                   ADDRESS OF SEARCH SCAN
+PARMUCB  DS    A                   ADDRESS FOR RETURNED UCB
+DEVCLASS DS    CL1
+ADDRUCB  DS    F                   UCB RETURNED ADDRESS
+         DS    0D
+WORKAREA DS    CL100
+G00SAVEL EQU   *-G00SAVE
+         JOLSAVE CSECT=UJG00UCB,SIZE=G00SAVEL
+*
+         L     R7,0(R1)            LOAD THE PARAMETER (DDDSNDET)
+         USING G00SAVE,R13         SET UP ADDRESSABILITY FOR WORK AREA
+         USING DDDSNDET,R7
+         SPACE 3
+*
+* TEST IF XA. IF NOT, USE THE OLD UCB LOOKUP ROUTINE.
+*
+         L     R1,16               GET CVT ADDRESS
+         TM    116(R1),X'80'       IS IT XA?
+         BO    G00XA
+* OK, MVS, VS1 OR SOMESUCH. USE THE OLD METHOD.
+         L     R15,16              GET CVT ADDRESS
+         USING CVT,R15
+         L     R14,CVTILK2         GET UCB LOOPUP TABLE ADDR
+         L     R14,40(R15)         GET UCB LOOPUP TABLE ADDR
+         CLC   0(2,R14),ZERO       SHOULD WE SKIP THIS ENTRY?
+         BE    G00BUMPU            YES.
+G00TUCB  CLC   0(2,R14),=X'FFFF'   LAST ENTRY?
+         BE    G00RETN4            TELL CALLER NOT PERM MOUNTED.
+* NOW LOOK TO SEE IF THIS IS A DIRECT ACCESS DEVICE
+         LH    R1,0(R14)           GET UCB ADDRESS ACTUAL
+         N     R1,=A(X'FFFF')      FOR 16 BIT UCB ADDRESSES ON MVS
+         USING UCBOB,R1            SET UP ADDRESSABILITY FOR UCB
+         CLI   UCBTBYT3,UCB3DACC   DIRECT ACCESS?
+         BNE   G00BUMPU            BUMP TO NEXT ADDRESS
+         TM    UCBSTAT,UCBPRES     PERMANENTLY MOUNTED?
+         BNO   G00BUMPU            NO,SKIP TO NEXT ENTRY
+         CLC   UCBVOLI,DDVOLUME    VOLS EQUAL??
+         BNE   G00BUMPU
+* HERE WE HAVE A PERMANENTLY MOUNTED VOLUME
+         JOLRETN RC=0              PERMANENTLY MOUNTED VOLUME.
+G00BUMPU LA    R14,2(R14)
+         B     G00TUCB
+         DROP  R1                  DROP UCB ADDRESSABILITY
+         DROP  R15                 DROP CVT ADDRESSABILITY
+*
+G00RETN4 JOLRETN RC=4
+*
+G00XA    DS    0H       XA UCB SCSN ROUTINE
+         EJECT
+XASCAN   TITLE 'TEST IOSVSUCB LOOKUP ROUTINE ON MVS/XA'
+******************************************************************
+*
+*
+* MODIFIED BY C. V. CLARKE TO INCLUDE XA SUPPORT DEC, 1983
+*    THIS SUPPORT USES UCB LOOKUP SERVICES IF
+*    WE ARE RUNNING ON AN XA SYSTEM.
+*
+* CODE FROM IBM MANUAL SYSTEM MACROS VOL 1
+*
+******************************************************************
+         SPACE 3
+         L     R3,CVTPTR           GET CVT ADDRESS
+         USING CVTMAP,R3           SET UP ADDRESSABILITY TO CVT
+         XC    WORKAREA,WORKAREA   CLEAR THE WORK AREA
+         LA    R1,WORKAREA         GET ADDRESS OF WORKAREA
+         ST    R1,PARMWA           STORE IT IN PARMLIST
+         LA    R1,DEVCLASS         GET ADDRESS OF SEARCH PARMS
+         ST    R1,PARMDEVT         STORE IT IN PARMLIST
+         MVI   DEVCLASS,UCB3DACC   SEARCH FOR DA DEVICES ONLY
+         LA    R1,ADDRUCB          ADDRESS OF RETURN FROM SCAN
+         ST    R1,PARMUCB          STORE ADDRESS
+         OI    PARMUCB,X'80'       INDICATE END OF PARMLIST
+         LA    R1,PARMLIST
+         USING UCBOB,R9            SET UP ADDRESSABILITY FOR UCB
+G00SRCH  L     R15,CVTUCBSC        GET SCAN SERVICE ADDRESS
+         BALR  R14,R15             GO TO SCAN ROUTINE
+         LTR   R15,R15             WAS A UCB RETURNED?
+         BNZ   G00NMAT             NO, END OF SCAN
+* HERE A UCB ADDRESS WAS RETURNED TO US.
+         L     R9,ADDRUCB          GET UCB ADDR RETURNED
+         CLC   UCBVOLI,DDVOLUME    VOLS EQUAL??
+         BNE   G00SRCH             CONTINUE
+* THE VOLUME HAS BEEN FOUND, TEST IF PERM MOUNTED NOW
+         TM    UCBSTAT,UCBPRES     PERMANENTLY MOUNTED?
+         BNO   G00NMAT             RETURN A 4, NOT PERM MOUNTED
+         JOLRETN RC=0              IS PERM MOUNTED, RETURN
+G00NMAT  JOLRETN RC=4
+         LTORG
+         PRINT  OFF
+         DSECT
+         IEFUCBOB
+         CVT   DSECT=YES
+         END
+         DROP R15,R1
+         LTORG
+CVT      CVT   DSECT=YES,PREFIX=YES
+UCBS    DSECT
+         IEFUCBOB    LIST=YES
+         END

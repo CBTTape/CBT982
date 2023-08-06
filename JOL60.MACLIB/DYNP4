@@ -1,0 +1,84 @@
+         MACRO
+         DYNP4 &P,&L,&KEY,&IN,&OPT,&ALT=,&TYP=A
+.*  CODES NUMBER TYPE PARAMS  (AND OPTION/NUMBER)
+.*  CHANGED OCT 77 TO CHECK EXECUTION SUPPLIED NUM FOR ZERO.
+.*          IF ZERO THEN TU POINTER IS REMOVED.
+         GBLA  &K,&T,&S
+         GBLC  &R,&B,&ADR
+         GBLB  &NUM
+         AIF   ('&P'EQ'').D
+         LCLC  &C,&D,&E,&F
+&D       SETC  '&KEY'(2,K'&KEY-2)
+&F       SETC  'STORE'.'&D'.' IN TU'
+&ADR     SETC  '&P'
+         DYNPA
+         AIF   (&NUM).C
+         AIF   ('&OPT'EQ'').A
+         LCLA  &I
+.A0      ANOP
+&I       SETA  &I+1
+         AIF   ('&ALT(&I)'EQ'&P').D
+         AIF   (&I LT N'&ALT).A0
+D&R&S    SR    1,1                     POINTER ZERO IF NOT REQD
+&C       SETC  ' IS CODE CHAR FOR '
+         CLI   &ADR,C'&OPT'&B&OPT&C&D
+&S       SETA  &S+1
+         BNE   D&R&S
+&T       SETA  &T+1
+&C       SETC  ''
+         AIF   ('&L'EQ'1' OR '&L'EQ'3').A01
+&C       SETC  '1+'
+.A01     AIF   (&L GE 3).A02
+&E       SETC  'H'
+.A02     L&E   0,&C&ADR            GET VALUE
+&C       SETC  ''
+         AIF   ('&L'NE'3').A03
+&C       SETC  ',7'
+.A03     ST&IN 0&C,TU&R&T+6&B&F
+         AGO   .B
+.A       ANOP
+&T       SETA  &T+1
+         AIF   ('&L'NE'3').A1
+&C       SETC  ',7'
+.A1      AIF   ('&P'(1,1) NE'(').A2
+&E       SETC  '&P'(2,K'&P-2)
+D&R&S    ST&IN &E&C,TU&R&T+6&B&F
+         AGO   .A4
+.A2      ANOP
+&E       SETC  'L'
+         AIF   ('&L'EQ'2' OR '&L'EQ'4').A3
+&E       SETC  'I'
+.A3      ANOP
+D&R&S    &E&IN 1&C,&ADR            GET VALUE
+         ST&IN 1&C,TU&R&T+6&B&F
+.A4      SR    1,1
+         AIF   ('&L' NE '1').A5
+         CLI   TU&R&T+6,X'00'             CHECK FOR ZERO
+         AGO   .A7
+.A5      ANOP
+&E       SETC  '&IN'
+         AIF   ('&E' NE 'CM').A6
+&E       SETC  'LM'
+.A6      C&E   1&C,TU&R&T+6               CHECK FOR ZERO
+.A7      ANOP
+&S       SETA  &S+1
+         BE    D&R&S
+.B       ANOP
+         LA    1,TU&R&T                TU ADDRESS
+&I       SETA  4*(&T-1)
+D&R&S    ST    1,TUPL&R+&I             STORE TU POINTER
+&S       SETA  &S+1
+         B     D&R&S
+&C       SETC  '&L'.'X'
+TU&R&T   DC    AL2(&K,1,&L),&C'00'&B&P&D
+         AGO   .D
+.C       ANOP
+&T       SETA  &T+1
+&C       SETC  '&TYP'.'L'.'&L'.'('.'&P'.')'
+         AIF   ('&TYP' NE'X').C1
+&C       SETC  '&C'(1,2).''''.'&P'.''''
+.C1      ANOP
+TU&R&T   DC    AL2(&K,1,&L),&C&B&P&D
+.D       ANOP
+&K       SETA  &K+1
+         MEND

@@ -1,0 +1,12 @@
+         MACRO
+         DYNP1A &P,&Q,&COM
+.*  CALLS DYNP1 WITH CORRECT SYNTAX
+         GBLA  &K
+         AIF   ('&P'NE'').A
+&K       SETA  &K+1
+         AGO   .C
+.A       AIF   ('&Q'EQ'').B
+         DYNP1 (&P,&Q),&COM
+         AGO   .C
+.B       DYNP1 &P,&COM
+.C       MEND

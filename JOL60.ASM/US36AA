@@ -1,0 +1,38 @@
+* THIS SUBROUTINE CAN BE CALLED FROM A PLI PROGRAM
+* AND WILL RETURN INFORMATION FROM THE CATALOG.
+       GENSAVE CSECT=US36AA
+           LR  R2,R1
+           USING PARAM,R2
+           L   R3,P1           DSN POINTER
+           L   R4,P2           RETN POINTER
+           L   R5,P3           VOL LIST POINTER
+           L   R3,0(,R3)
+           L   R4,0(,R4)
+           MVC DSN,0(R3)       MOVE DSNAME TO WORK AREA
+           LA R7,DSN
+           LA R8,DSN+43
+COMP       CLI 0(R7),C'+'
+           BE BAD
+           LA R7,1(,R7)
+           CR R7,R8
+           BNE    COMP
+           B LOOK
+BAD        LA  R15,32
+           B RETN
+LOOK   EQU  *
+           LOCATE INDAB
+RETN   EQU  *
+           STH R15,0(,R4)
+           LA  R15,LOCAREA
+           ST  R15,0(,R5)      STORE ADDRESS
+           MVC 0(44,R3),DSN    MOVE DSN BACK
+           GENRETN  RC=0
+INDAB      CAMLST  NAME,DSN,,LOCAREA
+DSN        DS  CL44
+LOCAREA    DS  0D
+           DS  265C
+PARAM     DSECT
+P1         DS 1F
+P2         DS 1F
+P3         DS 1F
+           END
