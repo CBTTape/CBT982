@@ -1,0 +1,151 @@
+//CLARKE3 JOB (0000,0000),NAME,NOTIFY=CLARKE,REGION=1024K,
+// MSGCLASS=X TYPRUN=SCAN <<<=================
+//JOLASM  PROC SOUT='*',
+//             INDEX='CLARKE.'
+//*
+//**     N O T E
+//*
+//*    YOU MUST ALTER THE INDEX PARAMETER ABOVE TO BE THE HIGH LEVEL
+//*      INDEX YOU REQUIRE.
+//*
+//********************************************
+//* JOL GENERATION ASSEMBLY
+//********************************************
+//ASM  EXEC PGM=ASMBLR,PARM='LIST,NODECK,OBJ'
+//SYSPRINT DD SYSOUT=&SOUT
+//SYSLIB   DD  DSN=SYS1.MACLIB,DISP=SHR,DCB=BLKSIZE=19040
+//         DD  DSN=CLARKE.JOL40.MACLIB,DISP=SHR
+//         DD  DSN=CLARKE.JOL40.ASM,DISP=SHR
+//SYSUT1 DD UNIT=SYSDA,SPACE=(CYL,(1,1))
+//SYSUT2 DD UNIT=SYSDA,SPACE=(CYL,(1,1))
+//SYSUT3 DD UNIT=SYSDA,SPACE=(CYL,(1,1))
+//SYSGO  DD DSN=&&OBJ,DISP=(,PASS),SPACE=(TRK,(5,5)),
+//       UNIT=SYSDA,DCB=BLKSIZE=400
+//************************************************
+//* LINK JOLGEN DETAILS
+//************************************************
+//LKED EXEC PGM=IEWL,PARM='LIST,MAP'
+//SYSPRINT DD SYSOUT=&SOUT
+//SYSLMOD  DD DSN=&INDEX.JOL40.LOAD(ASMSAMP),DISP=SHR =============<
+//SYSUT1 DD UNIT=SYSDA,SPACE=(CYL,1)
+//SYSLIN DD  DSN=&&OBJ,DISP=(OLD,DELETE)
+// PEND
+// EXEC JOLASM
+//SYSIN DD  *
+        TITLE 'sample  assembler invoked routine'
+*
+*   Invoked routines are a feature of JOL that allows new JOL Commands
+* to be written in Assembler, COBOL or PL/1. The sample COBOL routine
+* is in member COBSAMP and the sample PL/1 sample is in member PLISAMP.
+*
+*   This is member ASMSAMP.
+*
+*   An INVOKED routine may:-
+*
+*     1. Generate any JOL Instruction or Macro Instruction (including
+*        another INVOKE - explicitly or Implicitly).
+*
+*     2. Act as a JOL Instruction itself and alter various Symbolic
+*        Variables and output instructions to the Compiler Phase
+*        through the use of JOL Compiler subroutines.
+*
+*     3. Combinations of the above.
+*
+*  Invoked Routines gain control either:-
+*
+*     1. Through the use of the JOL INVOKE Instruction.
+*
+*     2. Implicitly when a non-JOL instruction is found, and that
+*        instruction is not in the Macro Library, but a Load Module
+*        of that name is found in the data sets referred to by the
+*        Compiler DD card 'JOLLOAD' or '$$JLOAD'.
+*
+*  Register Contents on entry are:-
+*
+*        R0      Undefined
+*        R1      Points to the Parameter List (see below).
+*        R2      Points to JOLCOM.
+*        R3      Points to TKNX.
+*        R4-R12  Undefined.
+*        R13     Points to a Save Area.
+*        R14     Contains the Return Address.
+*        R15     Points to the start of the Invoked Module.
+*
+*  Register 1 points to the following:-
+*
+*    1.  | X'80',AL3(PARM)        |   see note 1 below.
+*    2.  | Address of TKNX        |   same as r3
+*    3.  | Address of JOLCOM      |   same as r2, points to the
+*                                     JOL common communication area.
+*    4.  | Address of UJP90OP     |   routine to output information
+*                                     to the Compiler Phase.
+*    5.  | Address of UJP85ASN    |   routine to store a value directly
+*                                     into a named symbolic variable.
+*    6.  | Address of UJP02DCL    |   routine to declare a symbolic
+*                                     variable and enter data supplied
+*                                     if the variable is not already
+*                                     defined.
+*    7.  | Address of AMACBUF     |   a special area into which the
+*                                     returned instructions from this
+*                                     invoked routines are moved.
+*    8.  | Address of #WORK       |   a 1000 byte area work area which
+*                                     may be used for any purpose. It is
+*                                     required for any Assigns or
+*                                     Declares that use the routines
+*                                     UJP85ASN or UJP02DCL to store data
+*                                     in Symbolic Variables.
+*    9.  | Address of DCBL        |   DCB is a Double Word work area.
+*   10.  | Address of SYMBOLIC    |   Symbolic Names to be Declared
+*                                     or Assigned must have their names
+*                                     placed in SYMBOLIC before calling
+*                                     UJP85ASN or UJP02DCL.
+*   11.  | Address of JOBDETS     |   FOR FUTURE USE.
+*   12.  | Address of GENDETS     |   GENDETS contains all the
+*                                     information from the JOLGEN.
+*   13.  | Address of the TOKEN   |   A call to this routine will
+*        | Spliiting Routine      |   split the statement in #TKNSTRG
+*                                     into TOKENS.
+*   14.  | Address of UJP98OP     |   UJP98OP transfers JOL instructions
+*                                     to the WORKFILE for later
+*                                     interpretation/execution.
+*   15.  | Address of UJS20REP    |   Replace Symbolic Parameter
+*                                     Routine.
+*   16.  | Reserved for future use|   Address of the Function Subroutine
+*                                     (SUBSTR,TYPE etc)
+*   17.  | Address of PRINT BUFFER|   Information may be moved here
+*                                     before printing. See 18 below.
+*   18.  | Address of UJSPRINT    |   The general PRINT subroutine.
+*                                     Called by the JOLPRINT Assembler
+*                                     macro.
+*   19.  | 5 Spare Address        |
+*        | Constants.             |
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+*
+         COPY  JOLCOM
+         JOLSAVE CSECT=UJP99TST
+         $CALL UJP98OP,AREA
+         JOLRETN
+AREA     DC    AL2(L'STOPMS)
+STOPMS   DC    C'STOP ''INVALID NAME SPECIFIED;'
+         END
+*

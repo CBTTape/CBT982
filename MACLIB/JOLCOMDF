@@ -1,0 +1,84 @@
+***************************************************************** 74303
+P27GBL   DC    A(PANELWRK)    WORK AREA FOR PANEL
+P27GBL   DC    A(0)           WORK AREA FOR PANEL
+*****
+***** JOLCOM.CPY
+THISSYS  DC    X'0'
+*
+* PANEL WRK
+*
+PANELWRK CSECT
+*
+* This are is used by PANEL and POPUP for work areas.
+*
+* It also contains information about the terminal in use.
+*
+DWORD    DS    D                                                  J50
+SIZE1    DS    H                                                  J50
+SIZE2    DS    H                                                  J50
+*
+* Terminal type information.
+*
+SCRNROWS DC    F'24'             Default 24 lines
+SCRNCOLS DC    F'80'             Default 80 lines
+SCRNTYPE DC    X'0'              Not Used Yet
+SCRNCOLR DC    X'0'              0 = no, 1 = yes, 2 = SFE supported
+SCRNSFE  DC    X'0'              1 = SFE supported
+*
+*
+CURRROW  DS    H
+@@       ENTRY CURRROW
+CURRCOL  DS    H
+@@       ENTRY CURRCOL
+SPCRROW  DS    H                 Specific Reply Row
+@@       ENTRY SPCRROW
+SPCRCOL  DS    H                 Specific Reply Column
+@@       ENTRY SPCRCOL
+SPCPROW  DS    H                 Specific Prompt Row
+@@       ENTRY SPCPROW
+SPCPCOL  DS    H                 Specific Prompt Column
+@@       ENTRY SPCPCOL
+P27FLAGS DS    X                                                  J40B
+P27F1BOX EQU   X'80'                                              J40B
+P27F1CTR EQU   X'40'                                              J40B
+P27HI    DS    X                 HIGHLIGHTING OPTIONS             J40B
+P27COLOR DS    X                 COLOUR OF FIELD                  J40B
+P27ATTR  DS    X                 ATTRIBUTE of Field               J40B
+P27MENUB DS    X                 Set if MENUBAR specified         J50B
+P27HELPL DS    X                 Set if MENUBAR specified         J50B
+P27SHOFL DS    X                 Set if SHOWFIELD specified       J50B
+P27AUTOS  DS    X                 Set if SHOWFIELD specified       J50B
+P27CAPS   DS    X                 Set if CAPS specified
+LHSMARG   DC  H'0'
+@@       ENTRY LHSMARG
+RHSMARG   DC  H'0'
+#DEFTXT   DC  H'0'       ***  GETTXT move the data it finds here
+@@       ENTRY #DEFTXT
+DEFTXT    DS  CL250
+#DEFTXTA  DC  H'0'               and here
+DEFTXTA   DS  CL250
+*
+* Often the above are is move to OUTTXT below when it must be saved.
+*
+#OUTTXT   DC  H'0'
+@@       ENTRY #OUTTXT
+OUTTXT    DS  CL250
+#OUTTXTA  DC  H'0'
+OUTTXTA   DS  CL250
+#MENTXT  DC          H'0'
+@@       ENTRY #MENTXT
+MENTXT   DC          CL250' '          Copy of menu bar
+#HOTKEYS DC          H'0'
+HOTKEYS  DC          CL40' '           Max of 40 Hot Keys
+THISHOT  DC          C' '
+LENTXT   DC          H'0'
+ITEMCNTL DC          H'0'              Number of items so far
+ITEMPOSN DC          40H'0'            Offset into MENU String
+ITEMLEN  DC          40H'0'            Offset into MENU String
+@@       DS    0F                                                 J40B
+PANSTRM   DS  10000C              Work area for PANEL - its
+*                                 saved here for PANEL REREAD and to
+*                                 redisplay the screen after a POPUP.
+@@       ENTRY PANSTRM
+*
+P27SVSIZ EQU   *-PANELWRK

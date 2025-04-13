@@ -1,0 +1,545 @@
+         GBLC  &JOLOS
+         LCLB  &X8
+         LCLC  &C
+         $UJEPARM
+&X8      SETB  ('&JOLOS' EQ 'X8')
+         AIF   (&X8).X8020
+         GENSAVE CSECT=UJEJOBQ
+         SLL   R13,8           DROP COND CODE FROM SAVE (FUJITSU)
+         SRL   R13,8           DROP COND CODE FROM SAVE (FUJITSU)
+* THIS CSECT IS PART OF THE JOL (JOB ORGANISATION LANGUAGE) SYSTEM.
+* THIS CSECT WRITTEN ON THE 6TH MAY,1975 TO REPLACE
+*  THE PREVIOUS METHOD OF ACCESSING THE JOBQ.
+*
+        SPACE 1
+***********************************************************************
+*                                                                     *
+* FOR VS SYSTEMS, MODESET MUST BE USED TO POP US IN KEY 1 TO ENABLE   *
+*    IEFQMRAW TO WRITE INTO JOBQ (VIRTUAL).                           *
+*                                                                     *
+* IT WAS THOUGHT BY MYSELF THAT AUTHORISATION MAY BE LOST WHEN A      *
+*    PROBLEM PROGRAM WAS ATTACHED. HOWEVER MIKE STRAHAN AT SHELL      *
+*    (AUSTRALIA) TRIED THE ATTACH WITH THE JSCB OPTIONS AND FOUND     *
+*    THAT YOU CAN STOP AUTHORISATION THROUGH ITS USE.                 *
+*                                                                     *
+***********************************************************************
+           SPACE 3
+***********************************************************************
+*
+* FEW CHANGES TO GET THIS TO RUN ON VS1 IN A HURRY (SEE **** AND E70OPN
+*
+***********************************************************************
+           SPACE 1
+*
+* ON ENTRY,R1 POINTS TO :-
+*     1.  A(AREA TO READ/WRITE DATA TOO)
+*     2.  A(TTR OF RECORD REQUIRED)
+*     3.  INDIC TO SAY READ/WRITE ETC (SEE QMPA INDICATORS)
+*     4.  ADDRESS OF IEFQMRAW
+*
+* CODE TO USE JES JOBQ ROUTINES ON VS1 AND MVS INCLUDED SEPT 21, 1976.
+*
+* WHILE IEFQMRAW IS AVAILABLE ON THE VS SYSTEMS, WE SHALL USE THE
+* MACROS SUPPLIED BY IBM TO DO THE FUNCTIONS THAT IEFQMRAW DOES
+* ON MFT AND MVT SYSTEMS.
+*
+*******
+*
+* MUCH CODE HERE IS NO LONGER REQUIRED, BUT WILL BE LEFT
+* FOR THE TIME BEING...
+*
+*******
+*
+           SR  R7,R7           SET=1 LATER IF WE USED MODESET     75311
+*                              ON A VS1 SYSTEM                    75311
+         LR    R8,R1         LOAD R8 WITH PARAMETER AREA
+         L     R9,=A(IOPARAMS) GET ADDR QMPA
+         USING IOPARAMS,R9
+         USING OURPARMS,R8
+           L   R3,=A(JOBQCOM)                                     *****
+           USING JOBQCOM,R3                                       *****
+           L   R15,AJSCB                                          *****
+*                                                                 *****
+           B   MVC1QMPA                                           *****
+           B   *+4                                                *****
+           B   *+4                                                *****
+MVC1QMPA   EQU *                                                  *****
+         L     R15,X'F4'(R15) POINT TO INPUT QMPA
+         MVC   IOPARAMS(QMPALEN),0(R15) OVERWRITE OUR QMPA WITH SYSTEMS
+*        SO THAT WE GET WHATEVER SYSTEMS QMPA WE NEED
+      SPACE 3
+         MVC   QMPOP,FUNC+3   SHIFT FUNCTION CODE TO QMPA
+         LA  R15,JOBQAREA
+         ST  R15,QMPCL
+         MVI   QMPCM,1        READ 1 RECORD
+         MVC JOBQAREA,AREAADDR  SHIFT IN AREA TO READ INTO
+         MVC   JOBQTTR,TTRREQD SHIFT REQUIRED TTR TO PARAMETER AREA
+         B     CHECK$JO
+         ORG   *-4
+         B     *+4
+*        XC    QMWTQ,QMWTQ
+         L   R1,=A(IOB)
+         ST    R1,QMEIA       STORE IN QMPA
+CHECK$JO   EQU  *
+           SPACE 3
+* NOW CHECK IF THE 'JOBQ' DCB IS OPEN, AND IF SO PERFORM THE JOBQ IO
+*    OURSELVES.
+           EXTRN JOBQ                                             *****
+           L   R10,=A(JOBQ)                                       *****
+           TM  48(R10),X'10'   OPEN                               *****
+           BZ  TESTSWA         NO, TEST 'SWA' THEN                *****
+* OK, WE HAVE TO DO THE I/0 OURSELVES.                            *****
+           SPACE 1
+           CLI QMPOP,3         WRITE FUNCTION ?                   *****
+           BE  JOBQWRIT        YES.                               *****
+* HERE WE HAVE A SIMPLE READ FUNCTION; POINT, READ, CHECK.        *****
+           POINT (R10),JOBQTTR                                    *****
+           L   R2,AREAADDR     GET AREA TO WHICH IT IS GOING      *****
+           READ JOBQDECB,SF,,(R2),MF=E                            *****
+           MVC LASTTTR,JOBQTTR SAVE THIS FOR WRITE FUNCTION.      *****
+WRITCHK    CHECK JOBQDECB                                         *****
+           GENRETN RC=0                                           *****
+           SPACE 3                                                *****
+JOBQWRIT   EQU *                                                  *****
+* RECORD TO GO OUT.
+*
+* CHECK THAT THE LAST RECORD READ HAS THE SAME TTR AS THE ONE TO
+*    GO OUT, IF SO POP IT OUT BECAUSE THE DECB IS OK, BUT OTHERWISE
+*    WE WILL HAVE TO READ THE TTR REQUESTED AND THEN WRITE BECAUSE
+*    THE DECB WILL HAVE THE WRONG MMCCHHR THINGS SET UP, AND WHO
+*    KNOWS WHAT WE WOULD BE WRITING ON ?
+           CLC JOBQTTR,LASTTTR LAST READ=THIS ?
+           BE  WRITQNOW        YES, JUST POP IT OUT.
+* OK, MUST READ, THEN WRITE
+           POINT (R10),JOBQTTR
+           READ JOBQDECB,SF,,DUMMYJOB,MF=E
+           CHECK JOBQDECB
+           MVC LASTTTR,JOBQTTR
+WRITQNOW   L   R2,AREAADDR
+           WRITE JOBQDECB,SF,,(2),MF=E
+           B   WRITCHK         CHECK, RETN
+           SPACE 3
+TESTSWA    EQU *
+* CHECK IF MFT,MFT -> GO TO UJEBALR
+           CLI SYSTYPE,C' '    MFT, MVT ?
+           BE  UJEBALR         LET 'QMRAW' DO ITS THING THEN.
+     B    TSYST    ********                                       76200
+           SPACE 3
+* A VS SYSTEM, AND WE DONT HAVE A $$JOBQ DCB OPEN. SO WE'LL HAVE
+*    TO DO THE TRANSFER OURSELVES. (TILL WE GET IEFQMRAW TO WORK!)
+         SPACE 3
+* LET S SET R2 = TO THE CORE ADDRESS WE ARE GOING TO (SWA ADDRESS)
+         L     R2,JOBQTTR
+* NOTE ******* JOBTTR CONTAINS AN ADDRESS, AND IT IS LEFT ADJUSTED ***
+         SRL   R2,8           MAKE IT A REAL ADDRESS NOW
+         LA    R2,0(R2)       DROP HIGH ORDER BYTES (CAN BE X'F00000?)
+         SPACE 3
+           CLI SYSTYPE,C'1'    VS1 SYSTEM ?
+           BNE MVSSYS          NOPE, GO FIX MVS TYPE SYSTEM THEN.
+           SPACE 3
+* AS I UNDERSTAND THINGS, THE VS SWA DOESN'T CONTAIN THE PREFIX BYTES
+*  THAT MVS DOES.
+* SO :-
+           CLI QMPOP,3         WRITE ?
+           BNE VS1READS
+* NOW VALIDATE THAT THE AREA THAT THE RECORD IS GOING TO IS IN SWA
+           L   R1,AJSCB
+           L   R4,X'E0'(R1)    POINT TO SWADS CONTROL BLOCK.
+           TM  68(R4),X'80'    ARE WE USING SWA | SWADS ?
+           BO  VS1SWA          ALL WE, USING SWA
+           WTO 'VS1 NOT USING SWA',ROUTCDE=(2,11)
+VS1SHFTS   MVC DUMMYJOB(176),0(R4) SHIFT SWA CONTROL BLOCK ?
+           ABEND 15,DUMP,STEP
+           SPACE 2
+VS1SWA     EQU *
+           LH  R15,74(R4)      LOAD LENGTH OF SWA
+           L   R14,68(R4)      LOAD SWA ADDRESS
+           LA  R14,0(R14)      DROP HIGH ORDER BYTES.
+           CR  R14,R2          CHECK IN RANGE
+           BL  VS1SWAER        ERROR
+           AR  R14,R15         END OF SWA
+           SH  R14,=H'176'     LENGTH OF JOBQ RECORDS
+           CR  R14,R2         R2 CONTAINS SWA ADDRESS
+           BL  VS1SWAER        STILL AN ERROR
+* OK, POP INTO SUP MODE, SHIFT RECORD, RETURN
+           LA  R1,X'3C'
+           SVC 107
+           L   R15,AREAADDR    FROM ADDRESS
+           MVC 0(176,R2),0(R15) SHIFT RECORD TO SWA
+           LA  R1,X'24'        MODESET
+           SVC 107
+           B   RETN0
+VS1SWAER   WTO 'ADDRESS ERROR MOVING TO SWA',ROUTCDE=(2,11)
+           B   VS1SHFTS       ABEND
+           SPACE 3
+VS1READS   EQU *
+* COPY FROM SWA TO AREA REQUESTED.
+           L   R1,AREAADDR
+           MVC 0(176,R1),0(R2) SHIFT FROM R2 (SWA ADDRESS)
+           GENRETN RC=0
+           SPACE 3
+MVSSYS     EQU *
+* HERE WE HAVE AN MVS SYSTEM.
+*
+* NOW MVS ALWAYS HAS SWA. BUT THE POINTERS TO SWA RECORDS ARE A
+*    BIT FUNNY. THEY POINT TO THE RECORD WE WANT -16 BYTES.
+*
+* WE CHECKED IN THE VS1 CODE THAT WHERE WE ARE GOING TO MOVE THE
+*    RECORD TO WAS IN SWA.
+* FOR MVS, THERE APPEARS TO BE NO EASILY OBTAINED INFORMATION ABOUT
+*    THE LENGTH OF SWA. SO ALL WE CAN DO IS CHECKED THAT THE ADDRESS
+*    WE HAVE BEEN ASKED TO WRITE INTO IS GREATER OR EQUAL TO THE
+*    START OF SWA.
+* SORRY ABOUT THAT.
+           SPACE 2
+           CLI QMPOP,3         READ | WRITE
+           BNE MVSREAD         READ
+* OK, MVS WRITE HERE
+           L   R4,ATCB
+           L   R4,X'F8'(R4)    SWA ADDRESS
+           LA  R4,0(R4)        DROP HIGH ORDER BYTES IF ANY.
+           CR  R4,R2          COMPARE SWA ADDRESS WITH OUT 'TO' ADDRESS
+           B   MVSWROK1        ********* MVS SWA ADDRESS WRONG *****
+           BL  MVSWROK1        OK TO WRITE INTO SWA (CHECK MORE THO)
+           WTO 'MVS JOBQ ADDR WRONG-1',ROUTCDE=(2,11)
+MVSERR1    MVC DUMMYJOB(176),0(R4)
+           ABEND 14,DUMP,STEP
+           SPACE 3
+MVSWROK1   EQU *
+           L   R1,AREAADDR     SEND ADDRESS
+           LR  R15,R2          RECEIVE ADDRESS
+* CHECK THAT THE RECIEVE AREA LOOKS SOMETHING LIKE IT SHOULD.
+           CLC 1(3,R15),1+4(R15) PREFIX BYTES EQUAL ?
+           B   MVSWROK2        ********* TEST FAILS ****************
+           BE  MVSWROK2       OK, SHIFT IT
+           MVC DUMMYJOB(176),0(R15)
+           WTO 'PREFIX WRONG-MVS',ROUTCDE=(2,11)
+           ABEND 13,DUMP,STEP
+           SPACE 2
+MVSWROK2   EQU *
+           LA  R1,X'3C'
+           SVC 107
+           L   R1,AREAADDR     RELOAD
+           MVC 16(176,R2),0(R1)
+           LA  R1,X'24'
+           SVC 107
+RETN0      GENRETN RC=0
+           SPACE 3
+MVSREAD    L   R1,AREAADDR
+           MVC 0(176,R1),16(R2)
+           B   RETN0
+   SPACE  3
+TSYST    EQU   *
+         SPACE 3
+*
+* BEFORE BALR TO THIS ROUTINE, WE MAY HAVE TO ISSUE
+* A MODESET TO POP US INTO SUPERVISOR MODE SO THAT WE CAN USE
+* THE MVS JOBQ RTNS.                                              76200
+*                                                                 75311
+           L   R6,16           LOAD ADDRESS OF THE CVT
+           TM  116(R6),X'02'   WE USE THE DAT FEATURE ?
+           BZ  UJEBALR         NOPE, NOT VS, SO JUST BALR
+* SO I GUESS WE ARE RUNNING UNDER A VS SYSTEM OF SOME DESCRIPTION
+           SPACE
+* THE NEXT BIT OF CODE MAY *** BE USLESS, WE SHALL SEE ....
+           TM  116(R6),X'10'   VS2 (DOES THAT MEAN MVS TOO?)
+           BO  VS2
+* MUST BE VS1  NOW.
+           B   VS1
+           B   *+4
+           B   *+4
+           B   *+4
+           B   *+4
+VS1        EQU *
+VS2        EQU *
+* SO...
+* WE HAVE TO POP INTO SUPERVISOR MODE BEFORE WE CAN THE MVS JOBQ RTN
+           LA  R1,X'3C'        CANT USE MODESET, COS ASSEMBLING   75311
+*                              ON AN MVT SYSTEM                   75311
+           SVC 107             MODESET NOW                        75311
+* NOW WHAT WE HAVE TO DO IS SET UP OUR PARAMETER AREA IN NON-FETCH
+* PROTECTED STORAGE SO THAT THE JES ROUTINES CAN READ THE PARAMETER
+* AREA.
+*   THE ONLY AREA THAT SEEMS TO BE RECOMMENDED FOR THIS IS
+*     SUBPOOL 230 , SO WE SHALL ALLOACTE AN AREA
+*     AN AREA AND COPY THE QMPA TO IT, PLUS THE RECORD (IF MOVING)
+*      AND HAND CONTROL TO JES I/O RTNS .
+*
+*
+* THE AREA CHOSEN IS SUBPOOL 230 (NO FETCH PROTECT...)
+*
+         GETMAIN R,LV=QMPALEN+L'JOBQAREA+L'JOBQTTR+176,SP=230
+     MVC  0(QMPALEN+8,R1),QMNAM  SHIFT QMPA TO OBTAINED STORAGE
+     LR  R9,R1 USE NEW QMPA NOW
+         LA    R15,JOBQAREA
+         ST    R15,QMPCL RESET EXTNL PARM LIST ADDR
+          MVI   QMPCL,1     READ OR WRITE 1 RECORD
+         CLI   QMPOP,3        WRITE FUNCTION?
+         BNE   GOTOJES        NO,SO SKIP NEXT CODE
+* HERE WE ARE ATTEMPTING TO STORE INFO INTO SWA
+* THE JES ROUTINES VERY NICELY GO INTO THE USERS KEY BEFORE
+*   SHIFTING INFO BACK TO US IF READING, BUT THE OTHER WAY
+*   IT MUST STAY IN KEY 1. THEREFORE, WE HAVE TO SHIFT THE DATA WE WANT
+* WRITTEN INTO SP 230 (NOT FETCH PROTECTED) AND THEN GIVE CONTROL.
+*
+* SO THIS MEANS MOVING THE RECORD, THEN RESETING THE 'FROM' ADDRESS
+*   PARAMETER.
+         L     R15,JOBQAREA
+         MVC   JOBQTTR+4(176),0(R15)
+         LA    R15,JOBQTTR+4     LOAD NEW ADDRESS
+         ST    R15,JOBQAREA   SET ....
+         SPACE 3
+* NOW OFF TO JES WE GO..
+         SPACE 1
+* R1 STILL POINTS TO GOTTEN STORAGE..
+GOTOJES  IEFQMREQ
+* NOW SAVE RETURN CODE AND FREE STORAGE
+         LR    R2,R15
+         FREEMAIN R,LV=QMPALEN+L'JOBQAREA+L'JOBQTTR+176,SP=230,A=(9)
+* NOW BACK TO PROBLEM PROGRAM KEY
+         LA    R1,X'24'       PROBLEM STATE
+         SVC   107
+      LR  R15,R2
+         GENRETN RC=(15)
+           SPACE 3
+UJEBALR    EQU *
+           LA  R1,IOPARAMS
+         L     R15,AIEFQMRA
+         BALR  R14,R15        AND BRANCH
+           LR  R2,R15          SAVE RETURN CODE WHILE WE THINK    75311
+*                              ABOUT ANOTHER MODESET TO GET US    75311
+*                              BACK TO PROBLEM STATE              75311
+           LTR R7,R7           ARE WE IN SUP MODE ?               75311
+           BZ  UJERETN         NOPE                               75311
+           LA  R1,X'24'        BACK TO PROB STATE, KEY AS WAS     75311
+           SVC 107             ISSUE SVC                          75311
+           LR  R15,R2          RESET QMRAW RETURN CODE            75311
+UJERETN    GENRETN
+         LTORG
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+.X8020   ANOP
+         GENSAVE CSECT=UJE70OPN
+         LR  R3,R1           SAVE PARAMETER AREA ADDRESS INTO R3
+         USING E70PARMS,R3
+* FUNCTION : OPEN REQUIRED FILES, SET INDICATORS, LOAD IBM JOBQ RTN
+*  IF NECESSARY.
+         SPACE 3
+         L   R4,AATCB        LOAD TCB PARM ADDRESS
+         AIF   (NOT &X8).NX8010
+         EXTRACT (R4),FIELDS=TCB
+         ST    R0,0(,R4)
+         ST    R0,AATCB
+         AGO   .X8040
+.NX8010  ANOP
+         L   R15,16          CVT ADDRESS
+         L   R15,0(R15)      TCB
+         L   R10,4(R15)      OUR TCB
+         ST  R10,0(R4)       ST ADDRESS OF TCB INTO CORRECT HOLE
+         L   R2,=A(JOBQCOM)
+         USING JOBQCOM,R2
+         ST  R10,ATCB        SAVE FOR LATER USE
+         USING TCB,R10
+* NOW SET TTR ADDRESS OF JCT. FOR VS1 SYSTEMS WE WILL ALTER LATER,
+*  BUT THIS IS OK FOR OTHER SYSTEMS.
+         L   R14,TCBJSCB     R14-> JSCB NOW
+         ST  R14,AJSCB       SAVED
+         L   R4,AJCTTTR      LOAD ADDRESS OF LOCN TO RECIEVE TTR OF
+*                              JCT
+           MVC 0(3,R4),261(R14) THERE, JCT ADDRESS SET UP
+* NOTE : MVS MAY BE A REAL CORE ADDRESS, THEREFORE DIFFERENT.
+* EXPERIENCE WILL TELL.
+           SPACE 3
+* NOW LETS SEE WHAT SORT OF SYSTEM ETC.
+* START BY PREPARING TO OPEN THE INSTRUCT AND RETN FILES
+           MVC DCBSOPEN(4),AINSTRUC INSTRUCTION FILE
+           MVI DCBSOPEN,X'0'   INPUT
+           MVC DCBSOPEN+4(4),ARETN  RETURNCODE MEMBER.
+           MVI DCBSOPEN+4,X'0F' OUTPUT
+* NOW CHECK IF $$PRNT PRESENT OR NOT
+           LA  R5,DCBSOPEN+4   NEXT HOLE IN DCB LIST
+           DEVTYPE =CL8'$$PRNT',WORK
+           LTR R15,R15         IS IT PRESENT ?
+           BNZ E70CHKSY        NOW CHECK SYSTEM TYPE.
+* THERE IS A $$PRNT DD CARD
+           MVC 4(4,R5),APRINT    SHIFT DCB ADDRESS INTO LIST
+           MVI 4(R5),X'0F'     OUTPUT DATA SET, SET OPEN OPTION
+           LA  R5,4(R5)        BUMP LIST
+           SPACE 3
+E70CHKSY DS    0H
+           SPACE 2
+* NOW WE HAVE TO WORK OUT WHAT TYPE OF SYSTEM WE ARE ON SO THAT WE
+*  CAN DETERMINE IF WE HAVE TO OPEN THE JOBQ DATA SET OR NOT.
+           SPACE 2
+           LM  R6,R7,AAQMRAW   (A(QMRAW ADDRESS),A(NAME OF RTN LOADED)
+           L   R8,AVS          A(VS IND)
+         MVI   0(R8),C' '     SET TO BLANK INITIALLY
+         MVI   SYSTYPE,C' ' AS ABOVE
+           L   R15,16          CVT POINTER
+           TM  116(R15),X'02'  USING DAT FEATURE (VS?) ?
+           BZ  E70NVS          NOT VS
+* OK, IS A VS SYSTEM OF SOME DESRIPTION
+           TM  116(R15),X'10'  MVS (VS2)
+           BO  E70MVS
+* HERE A VS1 SYSTEM.
+           MVI 0(R8),C'1'      INDICATE VS1 SYSTEM
+           MVI SYSTYPE,C'1'    INDICATE VS1 SYSTEM
+         SPACE 1
+* NOW FIND OUT IF WE ARE USING SWA OR SWADS
+         L     R1,AJSCB       ADDRESS OF THE JOB STEP CONTROL BLOCK
+         L     R1,X'E0'(R1)   POINT TO SWA CONTROL BLOCK
+         TM    68(R1),X'80'   USING SWA?
+         BO    E70SWA1        YES, GO ELSEWHERE
+* HERE WE ARE USING SWADS.
+*        WTO 'VS1 USING SWADS DATA SET',ROUTCDE=11
+         MVC   0(4,R4),=X'00000100'   FIRST RECORD IN SWADS IS JCT
+         B     E70OPNJB
+         B     LOADRAW
+E70SWA1  EQU   *              SWA ON VS1 SYSTEM HERE.
+*THE ADDRESS OF THE JCT IN A VS1 SYSTEM IS THE FIRST RECORD IN SWA.
+         MVC   0(3,R4),69  SHIFT CORE ADDRESS (WE KNOW TO SHIFT RIGHT)
+         MVI   3(R4),0        ZERO RIGHT BYTE
+         WTO 'VS1 USING SWA',ROUTCDE=11
+         B     E70OPEN
+         B     LOADRAW
+* NOW WE WILL PUT IN CODE TO SUPPORT 'SWADS' AND OUR '$$JOBQ'
+*    DCB. THIS HOPEFULLY WILL NEVER BE REQUIRED, BUT...
+E70OPNJB   MVC 4(4,R5),AJOBQ   SHIFT IN JOBQ DCB
+           MVI 4(R5),X'04'     OPEN FOR UPDATE
+           LA  R5,4(R5)        BUMP UP OPEN'S PARAMETER LIST.
+           B   E70OPEN
+           B   *+4
+           B   *+4
+           B   *+4
+           B   *+4
+           B   *+4
+           B   *+4
+           SPACE 3
+E70MVS     MVI 0(R8),C'2'      MVS (VS2)
+           MVI SYSTYPE,C'2'    MVS (VS2) AGAIN
+           B   E70OPEN         BYPASS LOAD IEFQMRAW.....
+LOADRAW  EQU   *
+E70NVS     MVC 0(8,R7),=CL8'IEFQMRAW'
+           SPACE 3
+E70OPEN    OI  0(R5),X'80'     TURN OFF LIST FOR OPEN
+           LA  R1,DCBSOPEN
+           SVC 19              OPEN THE DATA SETS.
+* NOW LOAD ROUTINE IF NECESSARY.
+           CLI 0(R7),C' '
+           BE  E70NLOAD
+* IF THE SYSTEM IS A VS SYSTEM, WE WILL POP INTO SUPERVISOR
+* BEFORE LOADING THE QMRAW ROUTINE.
+         CLI   0(R8),C' '     VS?
+         BE    JUSTLOAD
+*        LA    R1,X'3C'       INTO SUPERVISOR STATE
+*        SVC   107            MODESET
+JUSTLOAD EQU   *
+         LOAD EPLOC=0(R7)    LOAD RTN
+         ST  R0,0(R6)
+* NOW CHECK IF WE HAD TO GO INTO SUPERVISOR MODE
+         CLI   0(R8),C' '     DID WE?
+         BE    LOADOK
+*        LA    R1,X'24'       PROBLEM STATE NOW
+*        SVC   107
+LOADOK   DS    0H
+         AGO   .NX8040
+.X8040   ANOP
+         SPACE 2
+*  CHECK THAT THIS REALLY IS AN X8 SYSTEM
+         SPACE
+         L     R15,X'010'    ADDRESS THE CVT
+         USING CVT,R15
+         CLI   CVTDCB,X'83'  THIS IS THE VALUE FOR X8
+         BE    E70TISX8      AND THAT'S WHAT'S THERE!!
+         WTO   'THIS VERSION OF JOL ONLY SUPPORTS OSIV/8X, AND THIS SYS.
+               TEM ISN''T',ROUTCDE=(11,14)
+         ABEND 3,DUMP,STEP
+         SPACE 3
+E70TISX8 DS    0H
+         L     R14,AVS        ADDRESS FLAG
+         MVI   0(R14),C'X'      AND SAY "IT IS OSIV/X8"
+         DEVTYPE =CL8'JOLPRINT',WORK
+         LTR   R15,R15         IS IT PRESENT ?
+         BNZ   E70OPEN         GO AND OPEN THE OTHER FILES
+         JOLOPEN (,AD),MF=(E,APRINT)   EXTEND THE PRINT FILE
+E70OPEN  DS    0H
+         JOLOPEN (,INPUT),MF=(E,AINSTRUC)
+         JOLOPEN (,AD),MF=(E,ARETN)
+.NX8040  ANOP
+E70NLOAD GENRETN RC=0
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           LTORG
+E70PARMS   DSECT
+AAQMRAW    DS  A
+AIBMRTN    DS  A
+AINSTRUC   DS  A
+APRINT     DS  A
+ARETN      DS  A
+AJOBQ      DS  A
+AJCTTTR    DS  A
+AVS        DS  A
+AATCB      DS  A
+WORK       DS   XL2048      THERE IS AT LEAST THIS MUCH
+           AIF   (&X8).X8100
+JOBQCOM    CSECT
+ATCB       DS  A
+DCBSOPEN   DC  A(0,0,0,0,0)
+AJSCB      DC  A(0)
+SYSTYPE    DC  C' '
+LASTTTR    DC  A(0)
+           DS  0D
+DUMMYJOB   DS  CL176
+           DS  CL20
+           READ JOBQDECB,SF,JOBQ,0,176,MF=L
+         IEFQMNGR
+     ORG
+QMPALEN    EQU  *-IOPARAMS
+JOBQAREA DS    A
+JOBQTTR  DS    A
+         XDAP   IOB,RI,0,,176,,,4,MF=L
+         DS CL(100)
+         SPACE 3
+OURPARMS DSECT
+AREAADDR DS    A
+TTRREQD  DS    A              TTR WE WANT TO READ OR WRITE
+FUNC     DS    A              LAST BYTE =3/4
+AIEFQMRA DS    A              IEFQMRAW IS LOADED BY THE MONITOR
+*                             TO SAVE IT BEING LOADED EVERY TIME
+*                             THIS ROUTINE IS CALLED.
+SPECSVC    DC  H'0'            SVC IS HERE
+         IEFJESCT
+         CVT DSECT=YES,LIST=YES
+        IKJTCB
+        AGO   .END
+.X8100  ANOP
+UJEJOBQ  CSECT
+         DC    D'0'    ANYBODY CALLING THIS IS IN FOR A SHOCK
+        TITLE 'COMMUNICATIONS VECTOR TABLE'
+        XAMCVT DSECT=YES
+.END    ANOP
+         END

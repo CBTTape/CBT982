@@ -1,0 +1,106 @@
+         PUNCH '         ALIAS     JF '
+         GBLC  &TITLE
+         LCLA  &A
+         LCLB  &B
+         LCLC  &C
+JOLFREE  CSECT
+         SPACE 2
+*        GENERATE SYMBOLIC REGISTER NAMES
+         SPACE
+.L       ANOP
+&B       SETB  (&A LT 10)
+&C       SETC  'R'.(&B)'0'.'&A'
+&C       EQU   &A
+&A       SETA  &A+1
+         AIF   (&A LT 16).L
+         B     XX-*(,R15)
+         DC    AL1(11),C'JOLFREE COPYRIGHT 1981'
+         DC    C' CLARKE COMPUTER SOFTWARE'
+XX       STM   R14,R12,12(R13)     SAVE REGISTERS ETC
+         LR    R12,R15
+         USING JOLFREE,R12
+         GETMAIN R,LV=WKLEN,SP=3
+         ST    R01,8(,R13)
+         ST    R13,4(,R01)
+         LR    R13,R01
+         USING WKAREA,R13
+         LA    R02,ANS
+         EXTRACT (R02),FIELDS=TIOT      FIND THE TIOT
+         L     R07,ANS          LOAD TIOT ADDRESS
+         LA    R07,24(R07)      LOAD ADDRESS OF FIRST DD ENTRY
+         SR    R06,R06      CLEAR REGISTER SIX TO LOAD 1-BYTE NUMBERS
+NEXT     CLI   0(R07),X'00'     Q... ENT OF TIOT?
+         BE    END              A... YES:  EXIT LOOP
+         CLI   4(R07),C'$'      Q... JOL DDNAME?
+         BNE   NOFREE           A... NO
+         MVC   DDNAME,4(R07)    MOVE DDNAME TO TEXT UNIT
+         LA    R01,S99RBPTR     LOAD PARAMETER FOR SVC 99
+         SVC   99                  DYNALLOC SVC
+         LTR   R15,R15         Q... OK?
+         BZ    NOFREE          A... YES
+         MVC   MSG1(MSG1LN),MSG1DATA
+         STCM  R15,15,TEMP     STORE RETURN CODE FOR MSG
+         UNPK  HEXCONV,TEMP(5) CONVERT TO HEX
+         TR    HEXCONV,HEXTAB
+         MVC   MS1RC,HEXCONV+6 MOVE TO MESSAGE
+         UNPK  HEXCONV,S99ERR(3) CONVERT ERROR INDICATIONS TO HEX
+         TR    HEXCONV,HEXTAB
+         MVC   MS1ERR,HEXCONV+4 MOVE TO MESSAGE
+         UNPK  HEXCONV,S99INFO(3) CONVERT INFO INDICATORS TO HEX
+         TR    HEXCONV,HEXTAB
+         MVC   MS1INFO,HEXCONV+4 MOVE TO MESSAGE
+         MVC   MS1DDN,DDNAME    MOVE DDNAME TO MESSAGE
+         LH    R00,MSG1        LOAD MESSAGE ADDRESS
+         LA    R01,MSG1+2      LOAD ITS ADDRESS
+         SVC   93              ISSUE TPUT SVC
+NOFREE   IC    R06,0(R07)      LOAD LENGTH OF THIS ENTRY
+         AR    R07,R06         POINT TO NEXT ENTRY
+         B     NEXT            GO TEST FOR MORE
+END      DS    0H
+         L     R13,4(,R13)
+         LM    R14,R12,12(R13)
+         BR    R14
+         SLR   R15,R15         RETURN TO CALLER
+         ORG   JOLFREE+256    ENSURE AT LEAST 256 BYTES OF PGM B 4 HERE
+         ORG
+         ORG   *-240
+HEXTAB   DS    0CL256,240C              TABLE TO CONVERT DATA TO HEX
+         DC    C'0123456789ABCDEF'
+MSG1DATA DC    Y(MSG1LN)                START OF INFORMATION MESSAGE
+         DC    C'SVC 99 RETURN CODE '
+         DC    C'XX',C' HEX'            RETURN CODE GOES HERE
+         DC    C' S99ERR='
+         DC    C'XXXX'                  ERROR IDICATORS HERE
+         DC    C' S99INFO='
+         DC    C'XXXX'                  INFO HERE
+         DC    C' DDNAME='
+         DC    CL8'XXXXXXXX'            DDNAME
+S99RBPTR DC    A(S99RB+X'80000000')     SVC 99 RB POINTER
+S99RB    DC    AL1(20,2)                20 BYTES, UNALLOCATE REQUEST
+S99FLG1  DC    AL1(0,0)                 FLAG BYTES BOTH ZERO
+S99ERR   DC    XL2'0000'                ERROR FLAGS: SET BY SVC 99
+S99INFO  DC    X'0000'                  INFO CODE- SET BY SVC 99
+S99TUPTR DC    A(TULIST)                ADDRESS OF TEXT UNIT LIST
+         DC    F'0'                     RESERVED
+S99FLG2  DC    X'00000000'              SECOND SET OF FLSGS
+TULIST   DC    A(TUFREE)                LIST OF TEXT UNITS
+         DC    A(TUDDN+X'80000000')     LAST ENTRY IN LIST
+TUDDN    DC    Y(1,1,8)                 DDNAME ENTRY, ONE, LENGTH IS 8
+DDNAME   DC    CL8' '                   DDNAME
+TUFREE   DC    Y(7,0)                   FREE EVEN IF PERMANENTLY ALLOCA
+WKAREA   DSECT                          WORK AREA
+ANS      DS    F                        EXTRACT ANSWER AREA
+TEMP     DS    CL5                      USED IN HEX CONVERSIONS
+HEXCONV  DS    CL9                      DITTO
+MSG1     DC    Y(MSG1LN)                START OF INFORMATION MESSAGE
+         DC    C'SVC 99 RETURN CODE '
+MS1RC    DC    C'XX',C' HEX'            RETURN CODE GOES HERE
+         DC    C' S99ERR='
+MS1ERR   DC    C'XXXX'                  ERROR IDICATORS HERE
+         DC    C' S99INFO='
+MS1INFO  DC    C'XXXX'                  INFO HERE
+         DC    C' DDNAME='
+MS1DDN   DC    CL8'XXXXXXXX'            DDNAME
+MSG1LN   EQU   *-(MSG1+2)               MESSAGE LENGTH
+WKLEN    EQU   *-WKAREA                 LENGTH OF AREA
+         END   JOLFREE

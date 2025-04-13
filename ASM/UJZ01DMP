@@ -1,0 +1,42 @@
+*UJZ01DMP PRINTS OFF SYMBOLIC VARIABLES AND THEIR LEVEL,LENGTH & VALUE
+         COPY  JOLCOM
+         JOLSAVE CSECT=UJZ01DMP
+         L     R4,ASYMTBL              R4 POINTS TO SYMBOLIC TABLE
+         USING SYMOVLY,R4
+         LR    R5,R4
+         LA    R6,12                   INCREMENT FOR LOOP
+         AR    R4,R6                   POINT TO FIRST SYMBOLIC
+         LH    R7,NOSYMS               NO. OF SYMBOLICS
+         MH    R7,=H'12'               TOTAL LENGTH OF SYMBOLICS
+         AR    R7,R4                   LOOPS STOP ADDRESS + 12
+         SR    R7,R6                   SUBTRACT 12 FROM R7
+         L     R8,APRINTLN             ADDRESS OF PRINT BUFFER
+LOOP     MVC   5(8,R8),SYMNAME         MOVE IN SYMBOLIC NAME
+         MVC   14(1,R8),SYMLEVEL       MOVE IN LEVEL OF SYMBOLIC
+         OI    14(R8),C'0'             SET SIGN TO X'F' FOR PRINTING
+         L     R15,SYMADDR
+         MVC   DBL(2),0(R15)           MOVE LENGTH OF SYMBOLIC
+         LH    R1,DBL                  PUT IT IN R1
+         CVD   R1,DBL                  CONVERT IT TO DECIMAL
+         UNPK  17(3,R8),DBL            UNPACK 3 BYTES
+         OI    19(R8),C'0'             SET SIGN TO X'F' FOR PRINTING
+         S     R1,=F'1'
+         BM    NOVALUE                 -> IF A NULL VALUE
+         CH    R1,=H'120'              MAX LENGTC FOR PRINTING
+         BL    *+8                     -> IF LESS THEN MAX LENGTH
+         LA    R1,120                  SET IT TO 120
+         EX    R1,MVC                  MOVE VALUE INTO PRINT LINE
+NOVALUE  LA    R1,1+21+5(R1)           LENGTH OF OUTPUT LINE
+         STH   R1,0(R8)                PUT IT IN PRINT BUFFER
+         JOLPRINT
+         BXLE  R4,R6,LOOP              -> THROUGH THE LOOP
+         JOLRETN
+MVC      MVC   21(*-*,R8),2(R15)       SUBJECT OF EXECUTE
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         END

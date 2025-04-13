@@ -1,0 +1,73 @@
+********************************************************************
+*
+*            JOL EXECUTE 'INITIATOR/SCHEDULER'
+*
+*
+*
+*
+*
+*
+* NOTE: MANY MACRO NAMES ARE THE SAME AS THOSE USED IN THE JOL
+*     COMPILER,BUT THEIR GENERATED CODE DIFFERS VERY SLIGHTLY
+*     FROM THE OTHER MODULES,EVEN THOUGH THE FUNCTION IS THE SAME
+********************************************************************
+           SPACE 1
+***********************************************************************
+*
+*
+* DUE TO THE FAILURE OF IBM JOBQ MANAGEMENT ROUTINES (EITHER TO MY
+*    UNDERSTANGING OR IBM'S DOCUMENTATION) SOME 'EMERGENCY' TYPE
+*    CODE ALTERATION IS GOING ON TO GET JOL TO FUNCTION UNDER
+*    VS1. NOTE THAT MVS USES THE STANDARD IBM CODE.
+*
+* CODE MARCH 7,1976: ALL MARKED '*****' IN COLS 67-71
+*    SEE ALSO  'UJEJOB' CSECT FOR CHANGES
+*
+***********************************************************************
+         SPACE 3
+         MACRO
+         EYEBALL &A
+         DC    0D'0',4CL8'&A'
+         MEND
+         SPACE 6
+         MACRO
+&L       CONCAT  &A
+         AIF   (T'&A EQ 'O').L                                   88036
+         AIF   ('&A'(1,1) EQ '''').QM                            88036
+         FIX   'REVIEW THIS CONCAT MACRO FOR &A'                 88036
+         AGO   .L                                                88036
+.QM      FIX   'REVIEW THIS CONCAT MACRO FOR '&A''               88036
+.L       AIF   (T'&L EQ 'O').END
+&L       DS    0H                                                88036
+.END     MEND
+         SPACE 6
+* THESE NEXT TWO MACROS ARE USED FOR READING AND WRITING JOBQ.
+*    IF THE SYSTEM IS VS,THE VS JOBQ ROUTINES ARE CALLED,OTHERWISE
+*    A STRAIGHT READ OR WRITE OPERATION IS PERFORMED.
+         MACRO
+&NAME    GETJOBQ &DECB,&TTR
+         GBLC  &JOLOS
+         AIF   ('&JOLOS' NE 'X8').OK
+         MNOTE 12,'GETJOBQ IS NOT SUPPORTED ON OSIV/X8'
+         MEXIT
+.OK      ANOP
+&NAME    LA  R0,&DECB        LOAD 0 WITH DECB ADDRESS
+         L   R1,&TTR         LOAD ADDRESS OF AREA WITH TTR FOR POINT
+         BAL R14,GETJOBQ     BRANCH AND LINK TO POINT,READ,CHECK RTN
+         MEND
+         SPACE
+         MACRO
+&NAME    PUTJOBQ &DECB,&TTR
+         GBLC  &JOLOS
+         AIF   ('&JOLOS' NE 'X8').OK
+         MNOTE 12,'PUTJOBQ IS NOT SUPPORTED ON OSIV/X8'
+         MEXIT
+.OK      ANOP
+&NAME    LA  R0,&DECB        LOAD 0 WITH DECB ADDRESS
+         AIF   ('&TTR' EQ '').NOTTR
+         L   R1,&TTR         LOAD R1 WITH TTR REQUIRED
+         AGO   .BAL
+.NOTTR   SLR   R1,R1           NO TTR,CLEAR REGISTER 1
+.BAL     BAL   R14,PUTJOBQ     BRANCH AND LINK TO POINT,WRITE CHECK RTN
+         MEND
+         SPACE 3

@@ -1,0 +1,712 @@
+UJP27PNX TITLE 'JOL PANEL INSTRUCTION'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1980.
+* JOL COPYRIGHT CCS-JOL 1988      1990
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0  ^     ^   0        L
+*                   J         0  O     O   0        L
+*                   J         0            0        L
+*                   J         0     V      0        L
+*                   J         0            0        L
+*                   J         0   <____>   0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+         PRINT OFF                                                J50
+         COPY  JOLCOM
+*      COPY CPY/JOLCOMD.CPY
+         PRINT ON                                                 J50
+         COPY  P28PARMS                                           J50
+         TITLE 'JOL PANEL INSTRUCTION'
+XX3           DSECT
+UJP27PNL JOLSAVE  CSECT=UJP27PNL ,SIZE=P27SVSIZ
+* THIS COMMAND PUTS INFORMATION ON A SCREEN IN A MANNER SUCH THAT
+*  FILL IN THE BLANKS CAN BE DONE.
+*       WTO     'UJP27PAN Called'
+         L    R10,P27GBL
+         USING PANELWRK,R10
+*       L       R6,=V(P29POPWK)
+*cvc    USING   P29POPWK,R6
+         ICM   R4,15,SCRNROWS Terminal Area been initialised ?    J50
+         BNZ   P29NOGTM                                           J50
+         CALL$ P27INIT        Find terminal type etc.             J50
+P29NOGTM DS    0H                                                 J50
+         MVC   PANFROMF,BLANKS   Clear FROM Name                  J52
+         MVC   #PANERR,ZERO      and Panel Err                    J52
+         MVC   PANERR,BLANKS                                      J52
+         MVI   NOCLS,X'00'                                        J52
+         MVC   SETCURSR(2),ZERO                                   J52
+         LA    R4,PANSTRM     Point to work area
+         USING #PARM,R4
+         MVC   #COLUMNS,SCRNCOLS
+         MVC   #LINES,SCRNROWS
+*cvc     L     R10,=V(P27DSAVE)
+         MVI   P27FLAGS,0                                         J40B
+         MVI   P27COLOR,4                                         J40B
+         MVI   P27MENUB,0                                         J50
+         MVI   P27HELPL,0                                         J50
+         MVC   LHSMARG,=H'0'                                      cvc
+         MVC   TKNCURR,=H'2'
+         GETTKN TKNCURR
+*        WTO   'TKN:'
+*        WTO   TKN
+         CLC   =C'OPTION ',TKN                                    J50
+         BNE   P27NOPT                                            J50
+         STH   R1,TKNCURR                                         J50B
+         GETTKN TKNCURR                                           J50B
+         CLC   =C'SHOWFIELD ',TKN                                 J50B
+         BNE   P27NOSHO                                           J50B
+         MVI   P27SHOFL,1        Turn on Panel Option             J50B
+         B     P27RET0           Return Now                       J50B
+P27NOSHO CLC   =C'NOSHOWFIELD ',TKN                               J50B
+         BNE   P27NOSH2                                           J50B
+         MVI   P27SHOFL,0        Turn off Panel Option            J50B
+         B     P27RET0           Return Now                       J50B
+P27NOSH2 CLC   =C'AUTOSKIP ',TKN                                  J50B
+         BNE   P27NOAUT                                           J50B
+         MVI   P27AUTOS,1       Turn on Auto Skip Option         J50B
+         B     P27RET0           Return Now                       J50B
+P27NOAUT CLC   =C'NOAUTOSKIP ',TKN                                J50B
+         BNE   P27NOAU2                                           J50B
+         MVI   P27AUTOS,0       Turn off Auto Skip Option        J50B
+         B     P27RET0           Return Now                       J50B
+P27NOAU2 CLC   =C'CAPS ',TKN                                      J50B
+         BNE   P27NOCAP                                           J50B
+         MVI   P27CAPS,1         Turn on Caps                     J50B
+         B     P27RET0           Return Now                       J50B
+P27NOCAP CLC   =C'NOCAPS ',TKN                                    J50B
+         BNE   P27NOCA2                                           J50B
+         MVI   P27CAPS,0         Turn off Caps                    J50B
+         B     P27RET0           Return Now                       J50B
+P27NOCA2 CLC   =C'ASIS ',TKN                                      J50B
+         BNE   P27NOCA3                                           J50B
+         MVI   P27CAPS,0         Turn off Caps                    J50B
+         B     P27RET0           Return Now                       J50B
+P27NOCA3 DS    0H
+         JOLERR 324,'Invalid Panel Option ''',#TKN,''''           J50
+         JOLRETN RC=4                                             J50
+P27RET0  JOLRETN RC=0                                             J50
+P27NOPT  MVC   ICOMMAND,=CL8'MACRO' MAKE ASSIGN BETTER.
+         MVC   #WORK,=H'0'
+         MVC   SYMBOLIC,=CL8'SYSPFK'
+         CALL$ UJP85ASN
+         MVC   SYMBOLIC,=CL8'SYSMENU'
+         CALL$ UJP85ASN
+         MVC   SYMBOLIC,=CL8'SYSPOP'
+         CALL$ UJP85ASN
+*        MVC   CURRROW,=H'2'  SET THE CURRENT ROW NUMBER COUNTER
+         MVC   CURRROW,=H'1'  SET THE CURRENT ROW NUMBER COUNTER 88036
+         MVC   CURRCOL,=H'1'  SET THE CURRENT COLUMN NUMBER COUNTER
+         MVC   #MENTXT,ZERO   Clear MENUTEXT                      J52
+         LA    R5,#ITEMDSC
+         USING DITEM,R5
+         XC    #SCITEMS(LFIXED+3),#SCITEMS
+         LA    R7,4000(R4)    POINT TO END OF WORK AREA
+         MVI   P27COLOR,4        DEFAULT COLOUR IS GREEN          J40B
+*   nowait = false;
+*   clscr = true;
+*   txt_mode = false;
+*   re_read_addr = NULL;
+         CLC   =C'REREAD ',TKN                                    J50
+         BNE   P27NRERE                NOT Re-read                J50
+         MVC   TKNCURR,=H'3'
+         GETTKN TKNCURR
+         STH   R1,TKNCURR
+         GETTKN TKNCURR                Get FROM name
+         STH   R1,TKNCURR
+         CLC   =C'FROM ',TKN
+         BNE   P27FROME
+         B     P27FROME
+*cvc     LA    R1,SYMPAN             /* Initialize name */        J50
+*cvc     LA    R14,L'SYMPAN+L'SYMROW+L'SYSCOL                     J50
+*cvc     LA    R15,SYMPAN+end                                     J50
+P27NEXTF CLC   0(8,R1),TKN                                        J50
+         BE    P27GOTFR                Got the FROM name          J50
+         BXLE  R1,R15,P27NEXTF
+P27FROME DS    0H
+         MVC   PANFROMF,TKN      Save FROM Name                   J52
+* moved  JOLERR 322,'Cannot Find FROM name ''',#TKN,''''
+         LA    R1,1                    /* Can't find name */
+P27GOTFR DS    0H
+*cvc    re_read_addr = symvalue_pan[i];
+*cvc    GotoField(re_read_addr);
+*
+         GETTKN TKNCURR                Get MSG Text (If any)      J50
+         STH   R1,TKNCURR                                         J50
+         DROPQUSR #TKN                 Drop Quote                 J50
+         LA    R1,#TKN
+*        MALL$ PANELMSG                Put Message at top of screen,
+*                                      on the right hand side     J50
+*cvc     CALL$ PANREADX
+         MVC   #PANERR(L'PANERR),#TKN                             J52
+*        JOLRETN RC=0                                             J52
+* Copy from saved area to the current panel, and retokenise       J52
+         LA    R0,#PANLTKN       R0=Source                        J52
+         LA    R1,#TKNSTRG       R1=Dest                          J52
+         BAL   R14,MOVEDATA      Shift last panel                 J52
+* NOW CALL THE TOKEN SPLITTER AGAIN AFTER MOVING BACK TO #TKNSTRG J52
+          $CALL UJSPLIT                                           J52
+         LTR   R15,R15                                            J52
+           BZ  P27RSTOK                                           J52
+         JOLERR 444,'Tokenise Error Panel REDO'                   J52
+           JOLRETN RC=16                                          J52
+P27RSTOK DS    0H                                                 J52
+         SPACE 3
+         GETTKN 1                Check if PANEL                   J52
+         CLC   =C'PANEL ',TKN                                     J52
+         BE    P27PAN1                                            J52
+         JOLERR 445,'No Panel to REDO'                            J52
+         JOLRETN RC=16                                            J52
+P27PAN1  DS    0H                                                 J52
+         SPACE 3
+* Here is the normal Jol panel as it was in 1980, with a few enhance-
+*        ments, of course!!!
+*
+*cvcclear(outtext);
+*   clear(outtext_with_attrs);
+*   clear(default_txt);
+*   clear(default_with_attrs);
+*
+*   initializecvc(symname_pan);
+*   initializecvc(symvalue_pan);
+*
+*
+*   replycontrol = 0;
+*
+*
+*   for (/* Check initial keywords */
+*       Tkncurr = 2; Tkncurr <= 5; Tkncurr++) {
+*       cpystr(Tkn , x[Tkncurr]);
+*       if (Tkn[0] == '(') goto test1_done;
+*       if (Tkn[0] == '/') goto test1_done;
+*       if (Tkn[0] == '\'') goto /* char1=' */ test1_done;
+*       else if (!t_attrib()) goto test1_done;
+*       else if (draw_box) goto test1_done; */
+*   }
+*
+P27NRERE DS    0H                                                 J50
+* Save the Panel in case we need it for a READ FROM Panel         J52
+         LA    R0,#TKNSTRG       R1=Dest                          J52
+         LA    R1,#PANLTKN       R0=Source                        J52
+         BAL   R14,MOVEDATA      Shift last panel                 J52
+P27NGT   DS    0H                                                 J50
+         MVI   P27ATTR,0         TURN OFF HIGHLIGHTS              J50
+         MVI   P27COLOR,4        SET DEFAULT COLOUR               J50
+* OK, JUST CHECK IF WE HAVE ANY PARAMETERS
+         MVC   TKNCURR,=H'2'
+         GETTKN TKNCURR
+         CLC   =C'BOX ',TKN                                       J40B
+         BNE   P27NTBOX          WE IGNORE BOXES                  J40B
+         OI    P27FLAGS,P27F1BOX BUT SAY WE WANT ONE ANYWAY       J40B
+         LA    R1,3
+         STH   R1,TKNCURR     UP IT BY 1
+         GETTKN TKNCURR                                           J40B
+*        BAL   R9,P27GETTK     gets attr, puts txt in DEFTXT, and A
+P27NTBOX DS    0H                                                 J40B
+         CLI   TKN,C'('
+         BE    P27NOHED       NO HEADING
+         CLI   TKN,C''''                       P FOLEY,DJD & CVC 84029
+         BNE   P27NOHED       NO HEADING       P FOLEY,DJD & CVC 84029
+* OK, HERE WE HAVE A HEADING
+         SPACE 2
+*cvcchg  BAL   R14,DROPQUOT               FIX HEADER  DJD 22/08/83
+         OI    P27FLAGS,P27F1CTR          Set Centre Flag
+         MVC   TKNCURR,=H'2'              Get this token again
+         CALL$ UJP27PRM
+         CALL$ UJP27DIS
+*       XC    TXTROWNO(LFIXED),TXTROWNO next item row and col numbers
+         MVC   #OUTTXT,ZERO
+         MVC   #OUTTXTA,ZERO
+         MVC   #DEFTXT,ZERO
+         MVC   #DEFTXTA,ZERO
+         L     R5,SAVER4R5            P27DISPL alters R5 & R7
+         L     R7,SAVER4R5+4          P27DISPL alters R5 & R7
+         B     P27MAIN                    Go to normal routines
+*        MVC   #TKN(L'TKN),#DEFTXTA       shift fixed string back
+ZZZZ     XC    REPROWNO(TESTR-REPROWNO),REPROWNO CLEAR REPLY INFO
+         LH    R15,#TKN       GET THE LENGTH OF THE MESSAGE TEXT
+         STH   R15,TXTLEN     SET UP MSG LENGTH
+         MVC   TXTROWNO,=H'1' SET ROW=1
+         MVC   TXTCOLNO,=H'2' SET COL=2
+         MVC   CURRROW,TXTROWNO SAVE CURRENT ROW NUMBER
+         BCTR  R15,0          -1 FOR R15
+*        EX    R15,*+4        MOVE LITERAL TO CORRECT SPOT
+*        MVC   LITERAL(0),TKN    MOVE TOKEN TO 'LITERAL'
+         MVC    LITERAL(250),TKN   MOVE TOKEN TO 'LITERAL'
+         MVC   TXTATTR(2),P27ATTR COPY ATTRIBUTE, COLOUR          J50
+         MVI   P27ATTR,0         TURN OFF HIGHLIGHTS              J50
+         MVI   P27COLOR,4        SET DEFAULT COLOUR               J50
+* PUT IT IN THE CENTRE OF THE SCREEN
+         LA    R14,80
+         SH    R14,TXTLEN     GIVES AMOUNT LEFT
+         BNP   P27LONGH       LONG HEADING, JUST PUT IT OUT.
+         SRL   R14,1          DIVIDE BY TWO. GIVES A START COLUMN
+         STH   R14,TXTCOLNO
+P27LONGH DS    0H
+P27STRT2 MVC   TKNCURR,=H'3'
+*cvc fix B     P27ENDIT
+         TITLE 'HANDLE SUB-PARAMETERS OF PANEL INSTRUCTION'
+P27NOHED DS   0H
+         MVC   TKNCURR,=H'2'  GET TKN NUMBER 2 IF NO HEADING
+* NOW, THE SUBPARAMETERS ARE LIKE THIS:-
+*        (>:- START
+*        'LITERAL TO BE DISPLAYED'.
+*        SYMBOLIC NAME TO RECEIVE DATA,
+*        MAX LENGTH TO RECEIVE,
+*         OPTIONAL DEFAULT REPLY , (IN QUOTES)
+*         OPTIONAL ROW AND COLUMN NUMBERS OF MESSAGES
+*         OPTIONAL ROW AND COLUMN NUMBERS OF REPLY ,
+*        )     END OF SUBPARAMETER
+         SPACE 2
+* OK, LET'S GO
+         MVI   P27ATTR,0         TURN OFF HIGHLIGHTS              J50
+         MVI   P27COLOR,4        SET DEFAULT COLOUR               J50
+*27STAR  XC    DITEM(LFIXED),DITEM
+P27STAR  DS    0H
+*        XC    TXTROWNO(LFIXED),TXTROWNO
+*        BAL   R9,P27GETTK     gets attr, puts txt in DEFTXT, and A
+         GETTKN TKNCURR
+         STH   R1,TKNCURR
+*        CLC   #TKN(3),=X'000161' IS IT A '/' (SKIP CONTROL CHARACTER?)
+         CLI   TKN,C'/'           IS IT A '/' (SKIP CONTROL CHARACTER?)
+         BNE   P27MAIN        NO, SO DEAL WITH LITERAL
+         LH    R15,CURRROW        LOAD CURRENT ROW COUNTER
+         LA    R15,1(R15)     ADD ONE TO IT
+         STH   R15,CURRROW        SAVE IT BACK AGAIN
+         B     P27STAR        ROUND TO LOOP AGAIN
+         SPACE 2
+*test1_done:
+*
+*    if (draw_box)
+*    {
+*        currrow = 0;
+*        lhs_margin = 2;
+*        rhs_margin = 2;
+*        screen_width = 78 - (lhs_margin + rhs_margin);
+*    }
+*    else
+*    {
+*        currrow = -1;
+*        lhs_margin = 0;
+*        rhs_margin = 0;
+*        screen_width = 80 - (lhs_margin + rhs_margin);
+*    }
+*   currcol = 0;
+*
+* /* MOD CVC FEB 11, 1987  : If NOWAIT, then don't put ***  */
+*   if (nowait) goto noaster;
+*   if (!clscr) goto noaster;
+*/* END MOD */
+*
+*   /* Someone wrote ordinary data
+*                                        to the screen */
+*   if (!fsmode)
+*VTAM DOES THIS *********************************************
+*   {
+*       find_cursor();
+*       if (current_row < 1) goto noaster;
+*       gotorc(24, 1);
+*       strcpy (text , "\033[0;");
+*       strcat (text ,  videobackground);
+*       strcat (text , ";");
+*       strcat (text , videolowlight);
+*       strcat (text , "m*** "); /* Set up end of screen */
+*
+*       display_str(text);
+*       GetKbd();
+* /*    thischar:=conin();  */
+*   }
+*
+*noaster:
+*    fsmode = true;
+*
+*  /* MOD CVC FEB 11, 1987  : If NOCLS, then don't clear screen  */
+*
+*
+*cvcif (clscr) {
+*       display_str(cls);
+*   }
+*
+* /* END MOD */
+*
+*
+*   /* Panels on ? */
+*     if (print_to_screen && panel_on) linecnt = 1; /* Reset so no new
+*
+*   display_str(default_with_attrs);
+*
+*   /* Draw a box around */
+*   /* Allow for Japanese Machines */
+*#if 0
+* static char         box_cons[6] = {
+*                                '\311', /* 201 - */
+*                                '\273', /* 187 - */
+*                                '\310', /* 200 - */
+*                                '\274', /* 188 - */
+*                                '\272', /* 186 - */
+*                                '\315'}; /* 205 - */
+*#endif
+*
+*
+*   if ((draw_box) && (ibm_direct_write))
+*   {   int  temp_box_row;
+*       int  temp_no_rows;
+*       char temp_line[82];
+*  Try and speed up box drawing a bit  jan 1990 */
+*
+*       if (menubar)
+*       {   temp_box_row=1;
+*           temp_no_rows=23;
+*       }
+*       else
+*       {   temp_box_row=0;
+*           temp_no_rows=23;
+*       }
+*cvc     MVC   TEMPROWS,=H'23'
+*        MVC   TEMPBOXR,=H'1'
+*        CLI   MENUBAR,0               Check if MENUBAR coded
+*        BNE   P29NMEN1
+*cvcend  MVC   TEMPBOXR,=H'1'
+P29NMEN1 DS    0H
+*
+*  bottom line */
+*       memset(temp_line, '\xcd' ,sizeof(temp_line) -1);  /* -  */
+*cvc     MVI   TEMPLINE,C'_'
+*cvc     MVC   TEMPLINE+1(L'TEMPLINE-1),TEMPLINE
+*       temp_line[80] = '\0';
+*       temp_line[0]  = '\xc9';
+*       temp_line[79] = '\xbb';
+*cvc     MVI   TEMPLINE,C'?'
+*cvc     MVI   TEMPLINE+79,C'?'
+*
+*       gotorc(temp_box_row ,0);
+*cvc    GOTORC(TEMP_BOX_ROW,0);
+*       display_str(temp_line);
+*
+*  top line */
+*       temp_line[0]  = '\xc8';
+*       temp_line[79] = '\xbc';
+*       gotorc(23 ,0);
+*       display_str(temp_line);
+*
+*       for (dr = temp_box_row+1; dr <= temp_no_rows-1; dr++)
+*       {
+*          gotorc(dr, 0);
+*          display_char("\xba");           /* -                   */
+*          gotorc(dr, 79);
+*          display_char("\xba");
+*       }
+*
+*
+*       /* Overriding attribute */
+*
+*       p27reset_attr();
+*
+*       /* Reset Attributes for TEXT */
+*   }
+*
+*   clear(outtext);
+*   clear(outtext_with_attrs);
+*   clear(default_txt);
+*   clear(default_with_attrs);
+*
+* p27main:
+*  Now the parameters are like this:-
+*       1. (
+*       2. color 'Literal to be displayed'.
+*       3. Symbolic name to receive the data.
+*       4. Maximum length to receive (ie unprotected screen).
+*       5. Optional default reply.
+*       6. Optional row and column numbers of messages.
+*       7. Optional row and column numbers of reply.
+*       8. ) end of sub-parameters.
+*
+* Each is seperated by a comma.
+*
+* However, if we find a 'string' by itself, we shall output it.
+*
+*/
+*   abs_tab = 0;
+*   i = gettkn(Tkncurr); /* gettkn;        (* get current token number
+         GETTKN TKNCURR
+         STH    R1,TKNCURR
+*
+*
+*   if (Tkn[0] == '\'')
+         CLI    TKN,C''''
+         BNE    P29NQU1
+*   {
+*       currrow = currrow + 1;
+         LH     R1,CURRROW
+         LA     R1,1(R1)
+         STH    R1,CURRROW
+*
+*       colno = lhs_margin;
+         LH     R1,LHSMARG
+         STH    R1,TXTCOLNO
+*
+*       curs_at(currrow, colno);
+*cvc    GOTORC(CURRROW,TXTCOLNO);
+*       display_str(default_with_attrs);
+*                                       /* Sets latest attributes */
+*
+*       dropquotes(Tkn);
+        DROPQUSR  #TKN
+*
+*       if (centre)                             /* Centre Text ? */
+*       {
+            TM   P27FLAGS,P27F1CTR
+            BZ   P29NCTR1
+*           char   temp_ctr[100];
+*
+*           dc = 80 - length(Tkn);
+*           dc = dc / 2;
+*           if (draw_box) dc = dc - 2;
+*#if 0
+*           strcpy(Tkn, concat(copy(blanks, 1, dc), Tkn));
+*           display_str(Tkn); /* Output Text  */
+*#endif
+*           memset(temp_ctr,' ',dc);
+*           temp_ctr[dc]='\0';
+*           strcat(temp_ctr,Tkn);
+*           display_str(temp_ctr);
+*
+*           centre = false;
+*
+*           if (menubar) {
+*              menubar = false;
+*              Menu_Bar(Tkn);
+*           }
+*           goto p27main;
+*       }
+*
+*
+P29NCTR1   DS   0H
+*       if (!txt_mode)
+*       {                                   /* Overriding attribute */
+*               p27reset_attr();          /* Reset attributes for TEXT
+*           display_str(Tkn);             /* Output Text  */
+*           goto p27main;
+*       }
+*
+*cvc
+P29NQU1 DS    0H
+*
+* /* Here is txt_mode */
+*
+*       cpy(default_with_attrs , Tkn);
+*       cpy(default_txt , Tkn);
+*
+*txt_loop:
+*       i = gettkn(Tkncurr); /* get next Tkn */
+*
+*       if (Tkn[0] == '\'')
+*       {
+*            dropquotes(Tkn);
+*            cat    (default_with_attrs , Tkn);
+*            cat    (default_txt  , Tkn);
+*            output_text();
+*            goto txt_loop;
+*       }
+*
+*       else
+*       if (t_attrib())
+*       {
+*            if (!txt_mode)                /* Did it get turned off?
+*            {
+*                 output_text();
+*                 currrow = currrow - 1;
+*                 goto p27main;
+*            }
+*            goto txt_loop;
+*       }
+*
+*       else
+*       if (Tkn[0] == '/')
+*       {
+*            if (txt_mode)
+*            {
+*                 txt_mode = false; /* Force output */
+*                 output_text();
+*                 txt_mode = true; /* Set back on */
+*            }
+*            else
+*            {
+*                 txt_mode = false; /* Force output */
+*                 output_text();
+*            }
+*            abs_tab = 0;
+*            currrow = currrow - 1;
+*            goto p27main;
+*       }
+*
+*       else txt_mode = false; /* Don't know what we got - out
+*                                     of text mode we go ! */
+*
+*
+*       if (Tkncurr > stackno)
+*       {
+*            txt_mode = false; /* Turned off by T_ATTRIB ? */
+*            output_text();
+*            goto p27wrap; /* end of parameters */
+*       }
+*   }
+*t_bracket:
+*
+*   if (Tkn[0] == '(') {
+*        clear(outtext);
+*        clear(outtext_with_attrs);
+*        clear(default_txt);
+*        clear(default_with_attrs);
+*        centre = false;
+*        txt_mode = false;
+*        bold_specified = false;
+*
+*text_in:
+*        p27_parameters();
+*        p27display();
+*        goto p27main;
+*   }
+*
+*   if (Tkn[0] == ')') goto p27main;
+*   if (Tkncurr > stackno) goto p27wrap; /* end of parameters */
+*
+*
+*   if (Tkn[0] == '/') {
+*line_feed:
+*       currrow = currrow + 1;
+*       goto p27main;
+*   }
+*
+*
+*   if (!t_attrib()) {
+*        cpylit(errtext,"Symbol ");
+*        cat   (errtext, Tkn);
+*        catlit(errtext, " invalid in PANEL");
+*        jolerr("P27412");
+*   }
+*   goto p27main;
+*
+*p27wrap:
+*  ******************************* */
+*  panel_read();
+*  return 0;
+*}
+P27MAIN  DS    0H
+         CLI   TKN,C')'
+         BNE   TMENBR
+P27MAING DS    0H                Have to get the token again      J51
+         GETTKN TKNCURR
+         STH   R1,TKNCURR
+TMENBR   DS    0H
+         ENTRY P27MAIN
+         CLC   =C'MENUBAR ',TKN                                   PC
+         BE    P27GOMEN                                           PC
+         CLC   =C'HELPLINE ',TKN                                  PC
+         BNE   P27GOORD                                           PC
+P27GOMEN DS    0H                                                 PC
+         ENTRY P27GOMEN                                           PC
+* MenuBar or HelpLine found.                                      PC
+         MVC   #DEFTXT,ZERO
+         MVC   #DEFTXTA,ZERO
+         CALL$ UJP27ATR                Set Attributes             PC
+         LTR   R15,R15                                            PC
+         BNZ   P27ERRM                                            PC
+         GETTKN TKNCURR                Get the (                  PC
+         STH   R1,TKNCURR                                         PC
+         CLI   TKN,C'('                                           PC
+         BNE   P27ERRM                                            PC
+         CALL$ UJP27TXT          Get the attributes and text
+         MVC   #OUTTXT(L'OUTTXT),#DEFTXT  shift to prompt area
+         MVC   #OUTTXTA(L'OUTTXT),#DEFTXTA  and the copy with ATTRS
+         CALL$ UJP27DIS
+         L     R5,SAVER4R5            P27DISPL alters R5 & R7
+         L     R7,SAVER4R5+4          P27DISPL alters R5 & R7
+         GETTKN TKNCURR                Get the (                  J51
+*        CLC   #TKN(3),=X'000161' IS IT A '/' (SKIP Cntl CHAR?)   J51
+         CLI   TKN,C'/'           IS IT A '/' (SKIP CONTROL CHARACTER?)
+         BNE   P27MAING       NO, SO DEAL WITH LITERAL            J51
+         STH   R1,TKNCURR                                         J51
+         LH    R15,CURRROW        LOAD CURRENT ROW COUNTER        J51
+         LA    R15,1(R15)     ADD ONE TO IT                       J51
+         STH   R15,CURRROW        SAVE IT BACK AGAIN              J51
+         B     P27STAR        ROUND TO LOOP AGAIN                 J51
+         B     P27MAIN
+P27GOORD DS    0H                                                 PC
+         ENTRY P27GOORD                                           PC
+         CLC   =C'LM ',TKN                                        J52
+         BNE   P27NOTLM                                           J52
+         CALL  UJP27ATR                                           J52
+         GETTKN TKNCURR       c                                   J52
+*        STH   R1,TKNCURR                                         J52
+         B     P27TSLAS                                           J52
+P27NOTLM DS    0H                                                 J52
+         GETTKN TKNCURR       c
+         STH   R1,TKNCURR
+*        WTO   'TKN:'
+*        WTO   TKN
+         CLI   TKN,C' '
+         BE    P27WRAP
+*        CLI   TKN,C'('
+*        BNE   TCLOSBR
+         MVC   #OUTTXT,ZERO
+         MVC   #OUTTXTA,ZERO
+         MVC   #DEFTXT,ZERO
+         MVC   #DEFTXTA,ZERO
+         MVI   P27FLAGS,0     c off with bold, center
+         CALL$ UJP27PRM
+         CALL$ UJP27DIS
+*       XC    TXTROWNO(LFIXED),TXTROWNO next item row and col numbers
+         MVC   #OUTTXT,ZERO
+         MVC   #OUTTXTA,ZERO
+         MVC   #DEFTXT,ZERO
+         MVC   #DEFTXTA,ZERO
+         L     R5,SAVER4R5            P27DISPL alters R5 & R7
+         L     R7,SAVER4R5+4          P27DISPL alters R5 & R7
+         GETTKN TKNCURR                Get the )                  J51
+*        CLC   #TKN(3),=X'000161' IS IT A '/' (SKIP Cntl CHAR?)   J51
+P27TSLAS DS    0H                                                 J52
+         CLI   TKN,C'/'           IS IT A '/' (SKIP CONTROL CHARACTER?)
+         BNE   P27MAING       NO, SO DEAL WITH LITERAL            J51
+         STH   R1,TKNCURR                                         J51
+         LH    R15,CURRROW        LOAD CURRENT ROW COUNTER        J51
+         LA    R15,1(R15)     ADD ONE TO IT                       J51
+         STH   R15,CURRROW        SAVE IT BACK AGAIN              J51
+         B     P27STAR        ROUND TO LOOP AGAIN                 J51
+         B     P27MAIN
+TCLOSBR  DS    0H
+         CLI   TKN,C')'
+         BE    P27MAIN
+         CLC   TKNCURR,TKNNO
+         BH    P27WRAP
+         CALL$ UJP27ATR
+         LTR   R15,R15
+         BZ    P27MAIN
+P27ERRM  DS    0H                                                 PC
+         CLI   TKN,C')'
+         BE    P27MAIN
+         JOLERR 412,'Symbol ''',#TKN,''' Invalid in Panel'
+*        WTO   'TKN:'
+*        WTO   TKN
+         JOLRETN  RC=16
+P27WRAP  DS    0H
+         CALL$ UJP27SCR
+         JOLRETN
+         LTORG
+         DC   140S(*)
+*
+* New 370 code.
+*
+UJP27CLS JOLSAVE  CSECT=UJP27CLS                                  J52
+         STFSMODE ON                                              J52
+         STFSMODE OFF                                             J52
+         JOLRETN RC=0                                             J52
+         END

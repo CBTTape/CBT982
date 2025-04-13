@@ -1,0 +1,647 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Jol - Dependent Jobs</title>
+  <meta content="Clement Clarke" name="author">
+  <meta content="Jol Scheduling Manual" name="description">
+</head>
+<body bgcolor="#ffffff">
+<table style="font-family: Helvetica,Arial,sans-serif;" cellpadding="5"
+ cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="LEFT" valign="TOP" width="496">
+      <h3 align="RIGHT"><a class="mozTocH3" name="mozTocId504725"></a><font
+ size="5">Dependent Jobs</font></h3>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4><a class="mozTocH4" name="mozTocId935727"></a> </h4>
+      <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <ol id="mozToc">
+<!--mozToc h1 1 h2 2 h3 3 h4 4 h5 5 h6 6-->
+        <li><a href="#mozTocId504725">Dependent Jobs</a>
+          <ol>
+            <li>
+              <ol>
+                <li>
+                  <ol>
+                    <li><a href="#mozTocId935727"> </a></li>
+                  </ol>
+                </li>
+              </ol>
+            </li>
+            <li><a href="#mozTocId868896">Dependent Job Networks</a></li>
+            <li><a href="#mozTocId612134"> Dependent Job Processing</a>
+              <ol>
+                <li>
+                  <ol>
+                    <li><a href="#mozTocId269599">Figure 3-1: Dependent
+Job Processing Example (1)</a></li>
+                  </ol>
+                </li>
+              </ol>
+            </li>
+            <li><a href="#mozTocId162587">Passing Symbolic Variables
+and Submitting Other Jobs</a>
+              <ol>
+                <li><a href="#mozTocId677476">Sample Dependency Form</a></li>
+              </ol>
+            </li>
+            <li><a href="#mozTocId369755">Steps Required to Create the
+Jobstream</a>
+              <ol>
+                <li><a href="#mozTocId195542">Step 1</a>
+                  <ol>
+                    <li><a href="#mozTocId489042">Figure 3-3: Example
+of the Creation of a
+PANEL.</a></li>
+                  </ol>
+                </li>
+                <li><a href="#mozTocId118922">Step 2</a></li>
+                <li><a href="#mozTocId631409">Step 3</a>
+                  <ol>
+                    <li><a href="#mozTocId611712">Figure 3-4: Dependent
+job Processing Example (2)</a></li>
+                  </ol>
+                </li>
+                <li><a href="#mozTocId185946">Step 4</a></li>
+                <li><a href="#mozTocId332786">Step 5</a></li>
+              </ol>
+            </li>
+          </ol>
+        </li>
+      </ol>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h2><a class="mozTocH2" name="mozTocId868896"></a>Dependent Job
+Networks</h2>
+      </td>
+      <td align="LEFT" valign="TOP">This section of the manual<i> </i>discusses
+another
+method
+you can use to chain together many jobs to run in a
+particular sequence. The examples shown here demonstrate how you can <b>SUBMIT</b>
+a job from a currently executing job. The previous chapter showed how
+you can have Jol manage a network and <b>SUBMIT</b> a job or jobs
+after a particular job or group of parallel running jobs has ended.
+      <p></p>
+      <p>The major differences between the two methods are:</p>
+      <p></p>
+      <ol>
+        <li><i>Dependent job processing </i>allows you to <b>SUBMIT</b>
+a job at any time from the current job. You code the <b>SUBMIT</b>
+instructions at appropriate points in your Jol program. The <b>SUBMIT</b>
+commands can be coded before the job ends, and allows for parallel
+processing, but you cannot wait for two jobs to terminate before
+submitting another.</li>
+      </ol>
+      <ol start="2">
+        <li>With <i>Job Networking</i>, Jol manages the submission of
+jobs and controls <i>parallel </i>execution of jobs and the waiting
+for the termination of jobs before submitting other jobs in the
+network. Basically, you code your Jol programs as though they are
+independent jobs, and then code a special set of Jol network
+instructions that then submit the jobs in the desired sequence for you.</li>
+      </ol>
+      <p></p>
+      <ul>
+        <li>Note: With <i>Job Networking&nbsp; </i>jobs are usually
+submitted only when the current job ends, although you can force Jol to
+examine the status of the network at any time, and depending on the
+status, submit other jobs.</li>
+      </ul>
+      <p></p>
+      <p>It is recommended that you be familiar with, or review, the <b>SUBMIT</b>
+and <b>SAVESYMS</b> commands. These commands, with their protocols,
+are explained in the <i>Jol Reference Manual </i>and<i> Jol Reference
+Guide</i>, and in the Appendices of this book.</p>
+      <p></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p style="font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136">
+      <h2><a class="mozTocH2" name="mozTocId612134"></a> <small>Dependent
+Job Processing</small></h2>
+      </td>
+      <td style="width: 495px; vertical-align: top; text-align: left;">Jol
+provides
+facilities
+to effectively schedule dependent jobstreams. That
+is, the dependent job is not compiled or placed on the system job queue
+until the current job has reached a point where it is desirable or safe
+to run the dependent job. By using this technique, a linkage can be
+created which controls the sequence of running a number of jobs.
+      <p></p>
+      <p>Figures 3-1 and 3-2 on the following pages illustrate the use
+of these commands.</p>
+      <p></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="CENTER"
+ valign="TOP">
+      <p><b>An Example of Dependent Job Processing.</b></p>
+      <p align="LEFT"><b></b></p>
+      <p align="LEFT"></p>
+      <p align="LEFT"></p>
+      <p align="LEFT"><b><i> </i></b>Statement <b> </b> Jol Code</p>
+      <p align="LEFT"> Number</p>
+      <p align="LEFT"></p>
+      <p align="LEFT"></p>
+      <p align="LEFT"><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; JOB1:</b>
+      <i>etc</i>.</p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p align="LEFT">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Jol code</p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p align="LEFT"><b> &nbsp;&nbsp;&nbsp; 1 &nbsp;&nbsp;&nbsp;
+STEP1: &nbsp; RUN PROGRAM1 ;</b></p>
+      <p align="LEFT"><b> &nbsp;&nbsp;&nbsp; 2 &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp; IF STEP1=0 THEN</b></p>
+      <p align="LEFT"><b> &nbsp;&nbsp;&nbsp; 3 &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp; SUBMIT JOB2 ;</b></p>
+      <p align="LEFT"><b> &nbsp;&nbsp;&nbsp; 4&nbsp;&nbsp;&nbsp;&nbsp;
+STEP2:&nbsp; RUN PROGRAM2</b> <b>;</b></p>
+      <p align="LEFT">&nbsp;&nbsp;&nbsp;<big> <span
+ style="font-weight: bold;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .</span></big></p>
+      <p align="LEFT">&nbsp;&nbsp;&nbsp; <big><span
+ style="font-weight: bold;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .</span></big></p>
+      <p align="LEFT">&nbsp;&nbsp;&nbsp; <big><span
+ style="font-weight: bold;">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; .</span></big></p>
+      <p align="LEFT"></p>
+      <p align="LEFT"></p>
+      <p align="LEFT">Explanation:</p>
+      <p align="LEFT"></p>
+      <p align="LEFT">Statement 1 Instructs Jol to execute <b>PROGRAM1</b>.</p>
+      <p align="LEFT">Statement 2 Checks the completion code of <b>PROGRAM1</b>.</p>
+      <p align="LEFT">Statement 3 Instructs Jol to <b>SUBMIT JOB2 </b>to
+the
+system
+job queue if the conditions are satisfied.</p>
+      <p align="LEFT">Statement 4 Continues the processing of <b>JOB1</b>.</p>
+      <p align="LEFT"></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="CENTER" valign="TOP">
+      <h4><a class="mozTocH4" name="mozTocId269599"></a><b>Figure 3-1:
+Dependent Job Processing Example (1)</b></h4>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><small> </small>
+      <h2><a class="mozTocH2" name="mozTocId162587"></a><small>Passing
+Symbolic Variables and Submitting Other Jobs</small></h2>
+      <small> </small></td>
+      <td align="LEFT" valign="TOP">Creating a more complex Dependent
+Jobstream for a particular application, which may consist of 2 or more
+jobs, requires certain considerations. You need to determine:
+      <p> </p>
+      <ul type="disc">
+        <li>The sequence of the run i.e., <b>JOB1</b>, <b>JOB2</b>
+etc. </li>
+        <li>All of the variable symbolic names across the jobstream. </li>
+        <li>The JOB to program dependencies.
+          <p></p>
+          <p>Table 3-2 shows a simple example of a Payroll Application
+system.</p>
+          <p></p>
+          <p></p>
+          <p><b><i>Note:</i></b><i> </i> The following example shows
+one method that can be used to pass symbolic data from one job to
+another. Another method to pass symbolic variables from Job to Job is
+to use the SYMS Parameter with the SUBMIT Command. See the SUBMIT
+Command details for further information. </p>
+        </li>
+      </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</p>
+<p style="font-family: Helvetica,Arial,sans-serif;"></p>
+<p style="font-family: Helvetica,Arial,sans-serif;"></p>
+<p style="font-family: Helvetica,Arial,sans-serif;"></p>
+<p style="font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="LEFT" valign="TOP" width="487"> <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId677476"></a>Sample
+Dependency Form</h3>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <p><b><font size="5">MIS System Dependency Chart</font> Form
+Number MIS-DP1</b></p>
+      <p><xmp>&amp;lt;br&amp;gt;&lt;br&gt;<br>
+      </xmp></p>
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;"><b>System ID</b></td>
+            <td style="vertical-align: top;">PAYROLL</td>
+            <td style="vertical-align: top;"> <b>Prepared by</b>:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+            <b>Date:</b></td>
+          </tr>
+        </tbody>
+      </table>
+      <p></p>
+      <p><xmp></xmp></p>
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-weight: bold;">Job# JOBNAME</span> </td>
+            <td style="vertical-align: top; font-weight: bold;">DEPENDENCIES</td>
+            <td style="vertical-align: top; font-weight: bold;">Required
+Symbolic<br>
+Values from <br>
+System Scheduler</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">1&nbsp;&nbsp; PAYJOB1</td>
+            <td style="vertical-align: top;">-----<br>
+            </td>
+            <td style="vertical-align: top;">%Cycle, %State, %Div</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">2&nbsp;&nbsp; PAYJOB2<br>
+            </td>
+            <td style="vertical-align: top;">JOB1 After STEP20</td>
+            <td style="vertical-align: top;">%State, %Div</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">3&nbsp;&nbsp; PAYJOB3</td>
+            <td style="vertical-align: top;">JOB1 After STEP25</td>
+            <td style="vertical-align: top;">-----<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">4&nbsp;&nbsp; PAYJOB4</td>
+            <td style="vertical-align: top;">JOB3</td>
+            <td style="vertical-align: top;">%Cycle</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">5<br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">6<br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">7<br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">8<br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">9<br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p><xmp></xmp><xmp></xmp><xmp></xmp><xmp></xmp><xmp></xmp><xmp></xmp><xmp></xmp><xmp></xmp><xmp></xmp></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p>Figure 3-2: Example of a Payroll Jobstream</p>
+      <p>Note the following concerning the example above:</p>
+      <p> </p>
+      <ol>
+        <li>There are four jobs in the Payroll system.
+          <p> </p>
+        </li>
+        <li>Job <b>PAYJOB2 </b>can be run after job <b>PAYJOB1 </b>has
+completed
+
+          <b>STEP20</b> successfully.
+          <p> </p>
+        </li>
+        <li>Job <b>PAYJOB3 </b>can be run after job <b>PAYJOB1 </b>has
+completed
+
+          <b>STEP25</b> successfully.
+          <p> </p>
+        </li>
+        <li>Job <b>PAYJOB4 </b>can be run after job <b>PAYJOB3 </b>has
+completed
+successfully.
+
+          <p> </p>
+        </li>
+        <li>The symbolic variables <b>CYCLE</b>, <b>STATE</b>, <b>DIV
+
+
+          </b>are used by the Payroll system.
+          <p> </p>
+        </li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><small> </small>
+      <h2><a class="mozTocH2" name="mozTocId369755"></a><small>Steps
+Required to Create the Jobstream</small></h2>
+      <small> </small></td>
+      <td align="LEFT" valign="TOP">To create a sequence of jobs as
+described above, and to pass the required symbolic variable data
+through to each job automatically may be done in a manner similiar to
+that described below. </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId195542"></a><b><i>Step 1</i></b></h3>
+      </td>
+      <td align="LEFT" valign="TOP">Create a '<span
+ style="font-weight: bold;">PANEL</span>' in <b>PAYJOB1</b>
+to request the values for the variables (see table 3-2). Figure 3-3
+below shows an example of a 3270 PANEL for the job.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td
+ style="vertical-align: top; text-align: left; background-color: rgb(204, 204, 204);">
+      <pre><b>PAYROLL SYSTEM ENTRY PANEL FOR JUNE</b></pre>
+      <pre>PLEASE ENTER THE CYCLE NUMBER 	===&gt;<b> _</b></pre>
+      <pre>PLEASE ENTER THE STATE CODE   	===&gt;</pre>
+      <pre>PLEASE ENTER THE DIVISON CODE 	===&gt;</pre>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <h4><a class="mozTocH5" name="mozTocId489042"></a>Figure 3-3:
+Example of the Creation of a
+PANEL.</h4>
+      <p></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId118922"></a><b><i>Step 2</i></b></h3>
+      </td>
+      <td align="LEFT" valign="TOP">Once the content of the supplied
+data has been verified, store the values of the variables in a member
+of a PDS for use by the other jobs, or in case of a rerun or restart.
+This process will eliminate the need to re-input the values. To store
+the data, use the <b>SAVESYMS</b> command. For example:
+      <p></p>
+      <p></p>
+      <p><b>&nbsp;&nbsp;&nbsp; SAVESYMS CYCLE,STATE,DIV </b></p>
+      <p style="margin-left: 40px;"><b> &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; IN</b>
+'dataset-name(member)';</p>
+      <p></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId631409"></a><b><i>Step 3</i></b></h3>
+      </td>
+      <td align="LEFT" valign="TOP">In order for <b>PAYJOB1 </b>to <b>SUBMIT
+PAYJOB2
+
+      </b>and <b>PAYJOB3 </b>at the desired points, code the
+command for Jol to<b> SUBMIT PAYJOB2 </b>and <b>PAYJOB3 </b>(see
+example below).
+      <p></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="RIGHT"
+ valign="TOP">
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p align="LEFT">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Jol code</p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p align="LEFT"> <b>STEP20: &nbsp;&nbsp;&nbsp; RUN PROG20 </b>;
+/* <i>Jol Instruction to Execute</i> PROG20*/</p>
+      <p align="LEFT"><b> &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; IF STEP20=0
+THEN </b>/* <i>Check the Condition </i>Code*/</p>
+      <p align="LEFT"><b> &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; SUBMIT PAYJOB2;</b> /*
+      <i>If satisfied, </i>SUBMIT PAYJOB2*/</p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p align="LEFT">&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Further Run
+Instructions</p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p style="font-weight: bold;" align="LEFT"><big>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; .</big></p>
+      <p align="LEFT"><b> STEP25:&nbsp;&nbsp; RUN PROG25 ;</b></p>
+      <p align="LEFT"><b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+IF
+STEP25=0
+THEN </b></p>
+      <p align="LEFT"><b> &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SUBMIT
+PAYJOB3
+;</b></p>
+      <p align="LEFT"><b></b></p>
+      <p align="LEFT"></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <h4><a class="mozTocH4" name="mozTocId611712"></a><b>Figure 3-4:
+Dependent job Processing Example (2)</b></h4>
+      <p></p>
+      <p></p>
+      <p>When Jol activates the <b>SUBMIT</b> command, the job is
+placed on the system job queue and runs as an independent job.</p>
+      <p></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId185946"></a><b><i>Step 4</i></b></h3>
+      </td>
+      <td align="LEFT" valign="TOP">When creating the Jol code for <b>PAYJOB2
+
+
+      </b>and <b>PAYJOB4</b> - both require symbolic substitution -
+issue, as part of the code, an instruction for Jol to <b>INCLUDE </b>the
+stored
+symbolic
+values from <b>PAYJOB1</b>. The format of the
+instruction is:
+      <p></p>
+      <p style="margin-left: 40px;"><b>INCLUDE</b> member-name ;</p>
+      <p></p>
+      <p>Now the need for entering data values again is eliminated,
+which reduces the incidence of error.</p>
+      <p></p>
+      <p></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId332786"></a><b><i>Step 5</i></b></h3>
+      </td>
+      <td align="LEFT" valign="TOP">For <b>PAYJOB3 </b>to <b>SUBMIT
+PAYJOB4</b>, use the method outlined in Step 3.
+      <p></p>
+      <p>Note the following concerning this example:</p>
+      <p></p>
+      <p>The system outlined in the example is very simple, however, if
+required, far more complex schedules can be handled with ease. Using
+Jol's <b>CALENDAR</b>, dependencies based on the day of the week (e.g.
+Friday), month, year, and so on, can be incorporated into the code so
+that correct schedules are run automatically without constant
+supervision or manual decision.</p>
+      <p></p>
+      <p>Jobs are not placed on the system jobqueue, to be released in
+error, unless they are able to run. This removes the need for Operator
+decision because <b>"IF ITS ON THE QUEUE RUN IT"</b> becomes a true
+statement.</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</p>
+<p style="font-family: Helvetica,Arial,sans-serif;"></p>
+<p style="font-family: Helvetica,Arial,sans-serif;"></p>
+<p style="font-family: Helvetica,Arial,sans-serif;"></p>
+<p style="font-family: Helvetica,Arial,sans-serif;"></p>
+</body>
+</html>

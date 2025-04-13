@@ -1,0 +1,45 @@
+* NAME      : SWA2ADDR                                                *
+* FUNCTION  : THIS SUBROUTINE CONVERTS SWA TOKENS TO REAL ADDRESSES.  *
+* FEATURES  : THIS PROGRAM WILL WORK ON ALL MVS/XA SYSTEMS, RELEASE   *
+*             2.2 OR LATER. IT DOES NOT MATTER WHETHER OR NOT THE SWA *
+*             CONTROL BLOCKS RESIDE ABOVE OR BELOW THE 16 MEG LINE.   *
+*             IN EITHER CASE IT WILL STILL RETURN A VALID ADDRESS.    *
+* CALL FMT  : CALL SWA2ADDR(TOKEN,ADDRESS)                            *
+* PARAMETERS: THE TWO PARAMETERS PASSED TO THIS SUBROUTINE ARE DEFINED*
+*             AS FOLLOWS.                                             *
+* TOKEN      DS   XL3      THE TOKEN FOR A SWA CONTROL BLOCK SUPPLIED *
+*                          BY THE CALLER.                             *
+* ADDRESS    DS   A        A 31 BIT ADDRESS TO BE RETURNED TO THE     *
+*                          CALLER.                                    *
+* REG-15 WILL CONTAIN THE RETURN CODE FROM THE SWAREQ MACRO.          *
+SWA2ADDR CSECT                         MY NAME IS ...
+SWA2ADDR AMODE 31                      I CAN LIVE IN HEAVEN..
+SWA2ADDR RMODE ANY                     ..OR THAT OTHER PLACE
+         BAKR  R14,0                   ESA STYLE SAVE
+         BASR  R12,0                   ADDRESS THIS CSECT
+         USING *,R12                   AH .. ADDRESSABILITY
+         LM    R3,R4,0(R1)             R3->TOKEN, R4->ADDRESS
+         USING SWAEPA,R10              MAP SWA EPA
+         LA    R10,SWA_EPA             ADDRESS THE ENTRY PARM
+         XC    SWAEPA,SWAEPA           CLEAR THE AREA
+         MVC   SWVA(3),0(R3)           PLACE SWA TOKEN IN PLIST
+         SWAREQ FCODE=RL,              READ/LOCATE REQUEST             -
+               EPA=SWEPAPTR,           ENTRY PAREMETER LIST            -
+               MF=(E,SWAPARMS),        LIST FORM ENTRY                 -
+               UNAUTH=YES              PROGRAM EXECUTES UNAUTHORIZED
+         L     R1,SWBLKPTR             GET ADDRESS OF SCHED CB
+         ST    R1,0(R4)                STORE SWA CONTROL BLOCK ADDRESS
+         DROP  R10                     DROP ADDRESSABILITY
+         PR                            EXIT
+         LTORG
+SWEPAPTR DC    A(SWA_EPA)              ADDRESS OF ENTRY PARM LIST
+SWA_EPA  DS    XL28                    PARM LIST MAPED BY IEFZB505
+SWAPARMS SWAREQ MF=L,                  LIST FORM OF THE REQUEST        -
+               UNAUTH=YES
+         IEFZB505                      MAP THE PARM LIST
+         IEFJESCT                      JES CONTROL TABLE
+         CVT   DSECT=YES               GOOD OLD CVT
+         END
+Paul Lemmons
+Systems Programmer
+Tucson Medical Center (USA)                        c Xephon 1991

@@ -1,0 +1,192 @@
+         MACRO
+&NAME    VSOPEN &VSFILE,&MF=I,&EPLOC=VSAMOPN,                          .
+               &ERRET=,&NRETURN=,&ZOPT=
+         LCLA  &ACOUNT,&ASUM,&COUNT,&COUNT1,&LGTH,&NUMBER
+         LCLB  &MFESW,&MFISW,&MFI2SW,&B(4),&NULLSW
+         LCLC  &PARA
+         LCLC  &C
+&NUMBER  SETA  N'&VSFILE
+.*
+&COUNT   SETA  1
+&COUNT1  SETA  2
+.*
+         AIF   (N'&SYSLIST LE 1).TYPE   IF ONLY 1 (PARMLIST)
+         IHBERMAC 238                   EXCESSIVE POS. PARMS
+.TYPE    ANOP
+         AIF   ('&MF' EQ 'L').RTEL
+         AIF   ('&MF' EQ 'I').TESTI
+         AIF   (N'&MF LE 1).ERROR3
+         AIF   ('&MF(1)' NE 'E').ERROR3
+&NAME    IHBINNRA &MF(2)                    LOAD REG 1 WITH LIST ADDR
+         AGO   .ISSCAL
+.*
+.*
+.RTEL    ANOP
+&NAME    DC    0F'0'                    TO ALIGN WORD BOUNDARY
+         AIF   ('&VSFILE' EQ '').ERROR5
+.CLRSW   ANOP
+&ASUM    SETA  0
+         AIF   (&COUNT1 GT &NUMBER).J
+         AIF   ('&VSFILE(&COUNT1)' EQ '').DC1
+         AIF   ('&VSFILE(&COUNT1)'(1,1) NE '(').NOPAREN
+&B(1)    SETB  ('&VSFILE(&COUNT1)'(2,5) EQ 'INPUT')
+&B(2)    SETB  ('&VSFILE(&COUNT1)'(2,5) EQ 'UPDAT')
+&B(3)    SETB  ('&VSFILE(&COUNT1)'(2,6) EQ 'CREATE')
+&B(4)    SETB  ('&VSFILE(&COUNT1)'(2,6) EQ 'EXTEND')
+         AGO   .NTEST                                             J40C
+.NOPAREN ANOP
+&B(1)    SETB  ('&VSFILE(&COUNT1)' EQ 'INPUT')
+&B(2)    SETB  ('&VSFILE(&COUNT1)' EQ 'UPDAT')
+&B(3)    SETB  ('&VSFILE(&COUNT1)' EQ 'CREATE')
+&B(4)    SETB  ('&VSFILE(&COUNT1)' EQ 'EXTEND')
+.NTEST   ANOP                                                     J40C
+         AIF   (&B(1)+&B(2)+&B(3)+&B(4) NE 1).ERROR1
+&ASUM    SETA  &B(4)*08+&B(3)*4+&B(2)*2+&B(1)                     J40C
+.DC1     AIF   (&MFESW).ERTRTRN
+         AIF   (&COUNT1 LT &NUMBER).K
+.J       ANOP
+.K       AIF   (&MFI2SW).I2ROUT
+         AIF   (&MFISW).IROUTRN
+         DC    AL1(&ASUM)               DEFINE OPTION BYTE
+         AIF   ('&VSFILE(&COUNT)' NE '').NOBLANK
+         DC    AL3(0)                   DEFINE ADDRESS OF VSFILE
+         AGO   .NOTLST
+.NOBLANK AIF   ('&VSFILE(&COUNT)'(1,1) EQ '(').ERROR6
+         DC    AL3(&VSFILE(&COUNT))     DEFINE ADDRESS OF VSFILE
+.NOTLST  AIF   (&COUNT1 GE &NUMBER).FINI
+.*
+&COUNT   SETA  &COUNT+2
+&COUNT1  SETA  &COUNT1+2
+.*
+         AGO   .CLRSW
+.*
+.TESTI   CNOP  0,4                      TO ALIGN WORD BOUNDARY
+&LGTH    SETA  ((&NUMBER+1)/2)*4+4
+&NAME    BAL   1,*+&LGTH                REG(1) ADDRESS OF PARM LIST
+&MFISW   SETB  1
+.*
+.RTEYE   AIF   ('&VSFILE(&COUNT)' EQ '').ERROR5
+         AIF   ('&VSFILE(&COUNT)'(1,1) NE '(').CLRSW
+         DC    A(0)                     OPTION BYTE / VSFILE ADDRESS
+         AGO   .CNTUP11
+.IROUTRN DC    AL1(&ASUM)               DEFINE OPTION BYTE
+         DC    AL3(&VSFILE(&COUNT))     DEFINE ADDRESS OF VSFILE
+.CNTUP11 AIF   (&COUNT1 GE &NUMBER).QUITS
+&COUNT   SETA  &COUNT+2
+&COUNT1  SETA  &COUNT1+2
+         AGO   .RTEYE
+.*
+.QUITS   ANOP
+.*
+&COUNT   SETA  1
+&COUNT1  SETA  2
+.*
+.ILOOP2  AIF   ('&VSFILE(&COUNT)'(1,1) NE '(').CNTUP22
+&LGTH    SETA  K'&VSFILE(&COUNT)-2
+&PARA    SETC  '&VSFILE(&COUNT)'(2,&LGTH)
+         ST    &PARA,&ACOUNT.(1,0)      DEFINE ADDRESS OF VSFILE
+         MVI   &ACOUNT.(1),&ASUM 1      SET OPTION-1 BIT(S)
+&MFI2SW  SETB  1
+         AGO   .CLRSW
+.I2ROUT  AIF   (&ASUM EQ 0).CNTUP22
+.CNTUP22 AIF   (&COUNT1 GE &NUMBER).CAL1922
+.*
+&COUNT   SETA  &COUNT+2
+&COUNT1  SETA  &COUNT1+2
+&ACOUNT  SETA  &ACOUNT+4
+.*
+         AGO   .ILOOP2
+.*
+.*--* FOR EXECUTE TYPE (MF=E) WITH UPDATED PARAMETER LIST
+.*
+.ISSCAL  AIF   ('&VSFILE' EQ '').CAL1922
+.LOOPA   AIF   ('&VSFILE(&NUMBER)' NE '').LOOPB
+&NUMBER  SETA  &NUMBER-1
+         AIF   (&NUMBER EQ 0).CAL1922
+         AGO   .LOOPA
+.LOOPB   ANOP
+&NULLSW  SETB  ('&VSFILE(&COUNT)' EQ '')
+         AIF   (&COUNT EQ &NUMBER).QUITNOW
+         AIF   ('&VSFILE(&COUNT1)' EQ '').NULLTWO
+&MFESW   SETB  1
+         AGO   .CLRSW
+.ERTRTRN AIF   (&COUNT1 EQ &NUMBER).THRUNOW
+         AIF   (&NULLSW).NOFIRST
+         AIF   ('&VSFILE(&COUNT)'(1,1) EQ '(').REGISTR
+         LA    0,&VSFILE(&COUNT)        DEFINE ADDRESS OF VSFILE
+         ST    0,&ACOUNT.(1,0)          RESET  ADDRESS OF VSFILE
+         AGO   .INCRMT
+.REGISTR ANOP
+&LGTH    SETA  K'&VSFILE(&COUNT)-2
+&PARA    SETC  '&VSFILE(&COUNT)'(2,&LGTH)
+         ST    &PARA,&ACOUNT.(1,0)      RESET ADDRESS OF VSFILE
+.NOFIRST ANOP
+         AGO   .INCRMT
+.NULLTWO AIF   (&NULLSW).INCRMT
+         AIF   ('&VSFILE(&COUNT)'(1,1) EQ '(').REGSTER
+         LA    0,&VSFILE(&COUNT)        DEFINE ADDRESS OF VSFILE
+         ST    0,&ACOUNT.(1,0)          RESET  ADDRESS OF VSFILE
+         AGO   .INCRMT
+.REGSTER ANOP
+&LGTH    SETA  K'&VSFILE(&COUNT)-2
+&PARA    SETC  '&VSFILE(&COUNT)'(2,&LGTH)
+         ST    &PARA,&ACOUNT.(1,0)      RESET  ADDRESS OF VSFILE
+         AGO   .INCRMT
+.THRUNOW ANOP
+         AIF   (&NULLSW).CAL1922
+.QUITNOW ANOP
+         AIF   ('&VSFILE(&COUNT)'(1,1) EQ '(').REGST
+         LA    0,&VSFILE(&COUNT)        DEFINE ADDRESS OF VSFILE
+         ST    0,&ACOUNT.(1,0)          RESET  ADDRESS OF VSFILE
+         AGO   .CAL1922
+.REGST   ANOP
+&LGTH    SETA  K'&VSFILE(&COUNT)-2
+&PARA    SETC  '&VSFILE(&COUNT)'(2,&LGTH)
+         ST    &PARA,&ACOUNT.(1,0)      RESET  ADDRESS OF VSFILE
+         AGO   .CAL1922
+.INCRMT  ANOP
+         AIF   (&NULLSW).NOSTO
+         MVI   &ACOUNT.(1),&ASUM 8      RESET  OPTION BYTE
+.NOSTO   ANOP
+.*
+&COUNT   SETA  &COUNT+2
+&COUNT1  SETA  &COUNT1+2
+&ACOUNT  SETA  &ACOUNT+4
+.*
+&NULLSW  SETB  0
+.*
+         AGO   .LOOPB
+.*
+.CAL1922 ANOP
+&ASUM    SETA  &ASUM+X'80'                                        J40C
+         MVI   &ACOUNT.(1),&ASUM 6      SET OPTION-1 BIT(S)
+.*       OI    &ACOUNT.(1),X'80' MARK END OF TABLE
+         AIF   (T'&EPLOC EQ 'O').VCON                             88036
+         L     15,&EPLOC       LOAD SUPPLIED ENTRY ADDRESS
+         AGO   .BALR                                              88036
+.VCON    ANOP                                                     88036
+         AIF   ('&ZOPT' EQ 'CLOSE').CLS                           J40C
+         L     15,=V(UJA01OPN) LOAD ACCESS ROUTINE ADDRESS
+         AGO   .BALR                                              J40C
+.CLS     ANOP                                                     J40C
+         L     15,=V(UJA03CLS) LOAD ACCESS ROUTINE ADDRESS
+.BALR    ANOP                                                     88036
+         BALR  14,15           OPEN JOL DS DB FILE
+         AIF   (T'&ERRET EQ 'O' AND T'&NRETURN EQ 'O').NERRET
+         LTR   R15,R15
+         AIF   (T'&NRETURN EQ 'O').NRET
+         BZ    &NRETURN
+.NRET    ANOP
+         AIF   (T'&ERRET EQ 'O').NERRET
+         BNZ   &ERRET
+.NERRET  ANOP
+         MEXIT
+.ERROR1  IHBERMAC 49,,&VSFILE(&COUNT1)    INVALID OPTION OPERAND
+         MEXIT
+.ERROR3  IHBERMAC 35,,&MF               INVALID MF OPERAND SPECIFIED
+         MEXIT
+.ERROR5  IHBERMAC 6                     VSFILE MISSING
+         MEXIT
+.ERROR6  IHBERMAC 69                    INVALID REG NOTATION W/MF=L
+.FINI    ANOP
+         MEND

@@ -1,0 +1,207 @@
+UJD21DMP TITLE 'DUMP DYNAMIC ALLOCATION BLOCKS'
+* JOL COPYRIGHT CCS-JOL PTY LTD 1988
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+         SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+* LAST SOURCE UPDATE
+*   CHANGES:-
+*        NONE
+         COPY  JOLGLOBL
+         LCLC  &C,&C1,&C2,&C3,&C4,&C5,&C6
+         $UJEPARM
+         PRINT ON,DATA
+UJECOMM  DSECT
+         USING UJECOMM,R3,R5
+         COPY  UJECOMM
+         TITLE 'DYNAMIC ALLOCATION BLOCK FORMAT AND PRINT'
+D21WRK   DSECT                                                   88036
+         DS    18F                                               88036
+PDATE    DC    CL8' '
+PTIME    DC    CL8' '
+DMPRB    DS    A                                                 88036
+DMPRC    DS    CL4                                               88036
+         DS    0F                                                88036
+DMPLINE  DS    0CL241                                            88036
+DMPLINH  DS    XL8                                               88036
+DMPLNCC  DS    C
+DMPLN    DS    CL132                                             88036
+DMPLNSIZ EQU   *-DMPLINE                                         88036
+DMPTMP   DS    CL250
+         DS    0D                                                88036
+D21WRKSZ EQU   *-D21WRK                                          88036
+         JOLSAVE CSECT=UJD21DMP,SIZE=D21WRKSZ,BASE=R12
+         USING D21WRK,R13                                        88036
+         ST    R1,DMPRB                                          88036
+         CVD   R0,DBL                                            88036
+         MVC   DMPRC,=X'40202120'                                88036
+         ED    DMPRC,DBL+6                                       88036
+         PRPUT DMPHDR
+         MVC   DMPLINE,DMPMSG
+         L     R10,DMPRB        ADDR OF REQUEST BLOCK
+         LR    R1,R10                                            88036
+         LA    R0,8                                              88036
+         BAL   R14,DMPHEX
+         MVC   DMPLN+62(2),DMPTMP+2   VERB                       88036
+         MVC   DMPLN+72(4),DMPTMP+4   FLAGS1                     88036
+         MVC   DMPLN+48(4),DMPTMP+8   ERROR CODE                 88036
+         MVC   DMPLN+52(4),DMPTMP+12  INFO CODE                  88036
+         MVC   DMPLN+24(2),DMPRC+2    RETURN CODE                88036
+         LA    R1,16(R10)      ADDR OF FLAGS2
+         LA    R0,4
+         BAL   R14,DMPHEX
+         MVC   DMPLN+84(8),DMPTMP            ??                  88036
+         TIME  DEC             GET TIMESTAMP
+         ST    R1,DBL
+         UNPK  PDATE,DBL(4)
+         ST    R0,DBL
+         OI    DBL+3,X'0F'         ZONE MARKER
+         UNPK  PTIME,DBL(4)
+         MVI   PTIME,X'4B'         ADD DECIMAL POINT
+         MVC   DMPLN+DMPMSGSZ+8(12),PDATE+3  PUT TIMESTAMP IN
+         PRPUT DMPLINE
+         MVC   DMPLN,DMPLNCC
+         PRPUT DMPTITLE
+         MVC   DMPLINH,=Y(DMPLNSIZ,0,DMPLNSIZ-4,0)               88036
+         L     R10,8(,R10)     ADDRESS TEXT UNITS
+DMP10    SR    R11,R11
+         ICM   R11,7,1(R10)        TU ADDR IN 3
+         BZ    DMP100              ZERO ADDR,NOT TU POINTER
+         LR    R1,R11          AREA TO DUMP                      88036
+         LA    R0,4
+         BAL   R14,DMPHEX          CONVERT 4 BYTES TO HEX
+         MVC   DMPLN+4(4),DMPTMP                                 88036
+         MVC   DMPLN+12(4),DMPTMP+4                              88036
+         LH    R2,2(,R11)      NUMBER OF TEXT UNITS
+         LTR   R2,R2           Q... ARE THERE ANY?
+         BZ    DMP50           A... NO
+         BM    DMP49           SOMETHING IS WRONG
+         LA    R11,4(,R11)         START OF LENGTH
+DMP15    LH    R9,0(,R11)      TEXT UNIT LENGTH
+         LA    R0,2
+         LTR   R9,R9
+         BP    DMP16
+         MVI   DMPLN+18,C'*'            ERROR MARK
+         B     DMP30               LENGTH NOT POSITIVE, PRINT ANYWAY
+DMP16    C     R9,DMPF44
+         BNH   DMP20
+         L     R9,DMPF44
+         MVI   DMPLN+18,C'*'               ERROR MARK
+DMP20    AR    R0,R9
+DMP30    DS    0H
+         LR    R1,R11                                            88036
+         BAL   R14,DMPHEX          CONVERT LENGTH AND UP TO 44 BYTES
+         MVC   DMPLN+20(4),DMPTMP                                88036
+         LTR   R9,R9
+         BNP   DMP50               THIS TU FINISHED
+         LA    R14,0(R9,R9)
+         BCTR  R14,0              SUB 1 FOR MVC INSTR
+         EX    R14,DMPMVCH        MOVE HEX OF PARM
+         LA    R15,DMPLN+33(R14)    ADDRESS FOR PARM IN CHARACTERS
+         C     R9,DMPF32          IS ROOM
+         BNH   DMP40              YES
+A        PRPUT DMPLINE
+         MVC   DMPLN,DMPLNCC
+         LA    R15,DMPLN+28
+DMP40    BCTR  R9,0
+         EX    R9,DMPMVCC         STORE PARM BYTES
+         EX    R9,DMPTRSP         CONVERT UNPRINTABLE TO SPACE
+         AH    R11,0(,R11)        ADD LENGTH TO ADDRESS
+         LA    R11,2(,R11)        START ADDR OF NEXT LENGTH
+B        PRPUT DMPLINE
+         MVC   DMPLN,DMPLNCC
+         BCT   R2,DMP15           GO BACK FOR NEXT LENGTH
+         B     DMP100
+DMPMVCH  MVC   DMPLN+28(1),DMPTMP+4
+DMPMVCC  MVC   0(0,R15),2(R11)
+DMPTRSP  TR    0(0,R15),DMPTBL       TRANSLATE UNPRINTABLE TO SP
+         SPACE 2
+DMP49    MVI   DMPLN+10,C'*'
+C        DS    0H                                                88036
+DMP50    PRPUT DMPLINE
+         MVC   DMPLN,DMPLNCC
+DMP100   TM    0(R10),X'80'
+         LA    R10,4(,R10)        POINT TO NEXT TU ADDRESS       88036
+         BZ    DMP10
+         SPACE 2
+         JOLRETN RC=0
+         SPACE 2
+DMPHEX   DS    0H                 5 = NUM OF BYTES TO CONVERT TO HEX
+         XC    DMPTMP,DMPTMP                                     88036
+         SR    R15,R15
+DMPHEX1  EX    0,DMPUNPK(R15)
+         SH    R0,DMPH7
+         BNP   DMPHEX2
+         LA    R15,6(,R15)
+         B     DMPHEX1
+DMPHEX2  DS    0H
+         TR    DMPTMP,DMPEBCD  CONVERT TO HEX
+DMPA     BR    R14             RETURN
+DMPUNPK  UNPK  DMPTMP+00(15),00(8,R1)   UNPACK INTO DMPTMP
+         UNPK  DMPTMP+14(15),07(8,R1)
+         UNPK  DMPTMP+28(15),14(8,R1)
+         UNPK  DMPTMP+42(15),21(8,R1)
+         UNPK  DMPTMP+56(15),28(8,R1)
+         UNPK  DMPTMP+70(15),35(8,R1)
+         UNPK  DMPTMP+84(15),42(8,R1)
+DMPH7    DC    H'7'
+         SPACE 2
+DMPHDR   DC    2Y(DMPHDRE-*,0),C' '
+         DC    C'DYNAMIC ALLOCATION CONTROL BLOCKS'              88036
+DMPHDRE  DS    0C
+DMPF44   DC    F'44'
+DMPF32   DC    F'32'
+DMPF12   DC    F'12'
+DMPRTC   DC    XL4'20'
+DMPC12   DC    C'12'
+         DS    0F
+DMPMSG   DC    2Y(DMPMSGE-*,0)
+         DC    C'    DYNALLOC RETURN CODE   ,ERROR AND INFO CODES '
+         DC    C'        , VRB=   FLAGS1=     FLAGS2=     '
+DMPMSGE  DS    0C                                                88036
+DMPMSGSZ EQU   *-DMPMSG
+DMPTITLE DC    2Y(DMPTITE-*,0)
+DMPTITL  DC    C'     KEY     NUM     LENGTH   PARM'
+DMPTITE  DS    0C                                                88036
+         SPACE 2
+*  TABLE TO CONVERT UNPRINTABLE HEX TO SP
+DMPTBL   DC    75C' '
+         DC    (79-75)AL1(*-DMPTBL)    . <  ( +
+         DC    (80-79)C' '
+         DC    (81-80)AL1(*-DMPTBL)    &
+         DC    (91-81)C' '
+         DC    (94-91)AL1(*-DMPTBL)    $ * )
+         DC    (96-94)C' '
+         DC    (98-96)AL1(*-DMPTBL)    - /
+         DC    (107-98)C' '
+         DC    (109-107)AL1(*-DMPTBL)  , %
+         DC    (123-109)C' '
+         DC    (127-123)AL1(*-DMPTBL)  # @ ' =
+         DC    (193-127)C' '
+         DC    (202-193)AL1(*-DMPTBL)  A THRU I
+         DC    (209-202)C' '
+         DC    (218-209)AL1(*-DMPTBL)  J THRU R
+         DC    (226-218)C' '
+         DC    (234-226)AL1(*-DMPTBL)  S THRU Z
+         DC    (240-234)C' '
+         DC    (250-240)AL1(*-DMPTBL)  0 THRU 9
+         DC    (256-250)C' '
+*  END OF TABLE
+DMPEBCD  EQU   *-240
+         DC    C'0123456789ABCDEF'
+         END

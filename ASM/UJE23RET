@@ -1,0 +1,15 @@
+         TITLE 'UJE23RET: HANDLE RETURN INSTRUCTION'
+           JOLSAVE CSECT=UJE23RET                                 74365
+           L   R7,=A(#TKN)
+           USING #TKN,R7
+         JOLERR 101,'RETURN ',#TKN,' EXECUTED'              FIX-X 76200
+           L R14,=A(RETURN)                                       74365
+           JOLRETN (15,12),RC=0                                   74365
+         DC  10S(*)
+           SPACE 3                                                75311
+           JOLSAVE CSECT=UJE31OPT                                 75311
+           MVI JOLSVC,X'0A'    SVC INSTRUCTION CODE               75311
+           MVC JOLSVC+1(1),ITEXT+2 SVC NUMBER                     75311
+           JOLRETN  RC=0                                          75311
+         DC  10S(*)
+           LTORG

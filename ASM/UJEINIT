@@ -1,0 +1,24 @@
+         GENSAVE CSECT=UJEINIT
+         LR    R8,R1           SAVE INPUT PARM ADDRESS            75311
+         CALL UJE99DTA       CREATE THE SYSIN PDS
+         LTR   R15,R15                                           88036
+         BNZ   RETN                                              88036
+         B     NCALL
+         CALL UJEMNT         TYPE ALL REQUITED VOLS               74303
+         LTR   R15,R15                                           88036
+         BNZ   RETN                                              88036
+NCALL    DS     0H
+*        AGO   .IGNORE                                            J40B
+         L     R9,0(R8)        LOOK AT PARM                       75311
+         CLC   =H'0',0(R9)     IS THERE ONE?                      80290
+         BE     RETN           NO                                 80290
+         CLC   =H'4',0(R9)     IS 'JOL' ONLY ?                    J40B
+         BNE    RETN           NO                                 J40B
+         CLC   =C'JOL',2(R9)   GOT 'JOL' ON PARM?                 75311
+         BNE    RETN                                              75311
+         CALL  UJE60CAT RESOLVE   CATALOG SEARCHES NOW            82300
+.IGNORE  ANOP                                                     J40B
+RETN     DS    0H                                                 75311
+         GENRETN RC=(15)
+         DC    10S(*)
+         END

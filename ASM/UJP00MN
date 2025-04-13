@@ -1,0 +1,969 @@
+         TITLE 'JOL PREPROCESSOR MAIN LINE'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1976
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1980
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1981
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1982
+* JOL COPYRIGHT CCS-JOL, 1986
+* JOL COPYRIGHT CCS-JOL, 1988
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+* NEW CODE IS INTRODUCED FOR VERSION 3.2. BASICALLY, THE CODE     76200
+*  MERELY COPIES ANY JCL STRAIGHT THROUGH TO THE JCL FILE         76200
+*  IF THE CLASS ON THE JOB CARD IS NOT THE SAME AS THAT           76200
+*  SPECIFIED IN THE JOLGEN.                                       76200
+*                                                                 76200
+* THIS MEANS THAT JOL CAN BE USED :-                              76200
+*  1. AS A HASP/JES2 EXECUTOR                                     76200
+*  2. AS A STARTED TASK READING DIRECTLY FROM A CARD READER       76200
+*  3. AS A STARTED TASK READING AS AN INITIATOR                   76200
+*CHANGES AFFECT UJP52CHR AND ARE CALLED CHNG30200 FOR CLARITY     76200
+* OTHER CHANGES HAVE ALSO BEEN MADE IN THE MAIN JOL ROUTINE.      76200
+* IT WILL:-                                                       76200
+*  1. ATTEMPT TO READ PAST EOF ON SYSIN IF REQUESTED              76200
+*  2. CLOSE THE PRINTER (CLOSE=FREE ON JCL) SO THAT THE           76200
+*     PRINTS OF ANY JOL JOB WILL BE DONE EVEN IF JOL              76200
+*     NEVER ENDS                                                  76200
+         EJECT                                                    76200
+         SPACE 3
+         PRINT DATA                                               75128
+         JOLSAVE CSECT=UJP00MN         MAIN CONTROLLER
+*        MVC   AUJP52,=V(UJP52CHR)     SET UP ADDRESSES FOR READ  86210
+*        MVC   AUJP53,=V(UJP53MAC)       - ROUTINES (SEMI INDEPENDENT
+*        MVC   AUJP54,=V(UJP54INC)       - MODULES
+         $CALL PSYMINIT                INITIALISE BINARY SEARCH TBL7150
+         $CALL UJP00MN2                CALL THE REAL PREPROCESSOR
+         LR    R5,R15                  SAVE IT'S RETURN CODE
+         $CALL PSYMFREE                FREE BINARY SEARCH TABLE   87150
+         $CALL UJP15DAL                CALL DEALLOCATE, CLOSE MODULE
+         LR    R15,R5                  RELOAD RETURN CODE
+         JOLRETN RC=(15)               RETURN TO MAIN-LINE
+         LTORG
+         JOLSAVE CSECT=UJP00MN2
+* THIS IS THE MAIN CONTROLLING MODULE OF THE PREPROCESSOR STAGE OF JOL
+         USING JOLCOM,R2
+* NOW WE MUST INITIALISE THE ODD VARIABLE OR TWO
+         MVC   LINECNT,=X'7FFF' SET LINE-COUNT HIGH FOR PRINT RTN 75128
+         L     R5,AP52DCBS
+         USING P52DCBS,R5
+         L     R14,ASYSIN     LOAD ADDRESS OF SYSIN DCB           75128
+         ST    R14,CURRDCB
+         CLEAR SAVECARD,FILENO,CURRBLKS,ACURREC                   74303
+         DROP  R5
+         SPACE 3
+         L     R3,ATKN1                        ADDRESS TOKEN1
+         USING TKNX,R3
+         L     R5,AJOLGEN                                         75128
+         USING GENDETS,R5                                         75128
+         CLEAR LEVEL,NEST,RORGSYMT,TOTSYMS,PARMSRCH,COND,         87150*
+               MACACCES,TOTCRDS,SYSINMDE,P50SAVEF,STMT,LABEL,     75128*
+               INCHAR,INLINENO,PRINTIND,ISMACRO,#STRING,STRING,   75128*
+               PRNTSTMT                                           87150
+         ZAP   PCKDSTMT,=P'0'  CLEAR STATEMENT                    87150
+         MVI   COND,C'T'
+         MVC   DEFAULTS(255),DEFCOPY SHIFT COPY OF DEFAULTS       75311
+         MVC  DEFAULTS+255(LDEFAULT-255),DEFCOPY+255              75311
+*                             BACK TO MAIN DEFAULT AREA AS THEY   75128
+*                             MAY HAVE BEEN CHANGED BY * JOL      75128
+         DROP  R5
+         SPACE 1
+* NOW WE SHALL SOME ADDRESS CONSTANTS SO THAT DYNAMICALLY         75128
+*  LOADED ROUTINES CAN GET A VARIOUS MODULES WITHOUT THEM HAVING  75128
+*  TO BE LINKED IN                                                75128
+         SPACE 1                                                  75128
+         MVC   AUJP02,=V(UJP02DCL)                                75128
+         MVC   AUJP85,=V(UJP85ASN)                                75128
+         MVC   AUJP98,=V(UJP98OP)                                 75128
+         MVC   AUJS21,=V(UJS21FNC)                                75128
+         WXTRN UJS21FNC                                           76200
+         MVC   AUJP90,=V(UJP90OP)                                 75128
+         MVC   AUJS20,=V(UJS20REP)                                75128
+*        MVC   AUJP50,=V(UJP50RD)                                 84100
+         $LINK UJP93DTE      SET UP %DATE ETC                     75128
+         SPACE 1                                                  75128
+         L     R1,APARM       LOAD POINTER TO JOL'S PARM          80290
+         L     R1,0(R1)       LOAD THE ADDRESS OF JOL'S PARM      80290
+         LA    R1,0(R1)       DROP HIGH ORDER BITS                80290
+         LR    R0,R1          PUT IT IN R0                        80290
+         LA    R1,#TKNSTRG    ADDRESS TO MOVE IT TOO              80290
+         BAL   R14,MOVEDATA     SHIFT IT TO TKNSTRG               80290
+         $LINK UJP95INI       SET UP OPTIONS FROM PARM FIELD      75128
+*                             AND FIX UP SYMBOLIC PARAMETERS
+         $LINK UJP94INI       SET UP %SYSTEM ETC
+         B     P00DCDPM
+P00EOF   JOLERR 401,'NO STATEMENTS FOUND TO EXECUTE'
+P00RETNF EQU   *
+*
+* CRITICAL ERROR HAS OCCURRED SOMEWHERE :- SKIP TILL EOF | * JOL;
+*
+*
+         L     R1,AP52DCBS                                  FIX-X-76200
+         USING P52DCBS,R1                                   FIX-X-76200
+         L     R14,ASYSIN     LOAD SYSIN DCB                FIX-X-76200
+         ST    R14,CURRDCB    STORE IN CURRENT DCB          FIX-X-76200
+         MVI   CP,X'7F'       SET CURRENT CHAR POINTER      FIX-X-76200
+*                             VERY HIGH (GET NEW CARD)      FIX-X-76200
+         SPACE 2                                            FIX-X-76200
+         SR    R4,R4          FLAG FOR EXIT COMMAND               87080
+         CLI   ICOMMAND,C'\'  SET HERE BY EXIT COMMAND?           87080
+         BNE   P00SKIPZ       NO, SO CARRY ON                     87080
+         LA    R4,1           SIGNAL FOR US LATER                 87080
+* NOW ENTER SKIP LOOP.                                      FIX-X-76200
+         DROP  R1                                           FIX-X-76200
+P00SKIPZ $CALL UJP50RD                                      FIX-X-76200
+         B     *+4(R15)                                     FIX-X-76200
+         B     P00SKIPZ       ORDINARY STMT READ            FIX-X-76200
+         B     P00SKIPZ       SYSIN                         FIX-X-76200
+         B     P00GOBAK      * JOL                          FIX-X-76200
+         B     P00GOBAK       EOF;                          FIX-X-76200
+         B     P00SKIPZ       ANOTHER ERROR                 FIX-X-76200
+         SPACE 2                                            FIX-X-76200
+P00GOBAK EQU   *                                            FIX-X-76200
+         LTR   R4,R4          WERE WE SENT HERE BY EXIT?          87080
+         BNZ   P0020          YES, SO RETURN A 20 INSTEAD OF 16   87080
+*                             TO STOP MESSAGE 'JOB WILL NOT EXECUTE'
+         SPACE 3                                            FIX-X-76200
+         JOLRETN RC=16
+P0020    JOLRETN RC=20
+         SPACE 3
+P00DCDPM EQU   *
+* NOW WITH GREAT FORTITUDE AND AN EQUAL AMOUNT OF GUSTO GET THE VERY
+*    FIRST STATEMENT OF THE POOR GUYS JOB (WHY POOR? ANYONE SO LUCKY
+*    TO BE USING JOL IS INDEED LUCKY)
+*
+* NOTE: TO IMPLEMENT THE AUTOMATIC INSTRUCTION $JOLPROF REQUIRES  87080
+*    REQUIRES SOME TRICKY CODING BECAUSE OF THE FOLLOWING:        87080
+*    1. FIRST TIME WE COME HERE, CARD IS DEFINITELY BLANK         87080
+*       THE FIRST READ MAY GIVE US AN * JOL, OR IT MAY NOT.       87080
+*    2. SECOND TIME THROUGH HERE WE DEFINITELY HAVE AN * JOL CARD.87080
+*
+         IFVALUE CARD,P002    FIRST TIME IN HERE? NO, MUST HAVE *JOL
+         MVI   CP,X'7F'
+         $CALL UJP52CHR       READ ONE CHARACTER ONLY, PRIME BUFFERS
+P002     MVC   CP,=H'0'     ****************
+         MVC   TKNNO,=H'1'    TELL MACRO PROCESSOR ONE TOKEN     87080
+         MVC   TKNCURR,=H'1'  TELL MACRO PROCESSOR ONE TOKEN     87080
+         MVC   TKNSTRG(9),=CL9'$JOLPROF' FIRST MACRO OF A JOL JOB87080
+         MVC   ICOMMAND,=CL9'$JOLPROF'   FIRST MACRO OF A JOL JOB87080
+         MVC   #TKNSTRG(2),=H'8'                                 87080
+         MVC   TKNDESC(4),=X'08010000'                           87080
+         CH    R15,=H'8'      DID WE GET AN * JOL?                75311
+         BNE   P00GOTIN       NO, MUST BE FIRST STATEMENT         75311
+         SR    R15,R15        ZERO RETURN CODE
+         B     P00GOTIN     **NO, MUST BE FIRST STATEMENT         75311
+         FIX   'THIS CODE CAN  BE REMOVED SOON'
+*P002     EQU   *
+* HERE WE HAVE DATA IN 'CARD', AND IT MUST BE * JOL;
+         L     R1,APRINTLN
+         MVC   5(80,R1),CARD  * OPTIONS CARD                      75128
+         MVC   0(4,R1),=AL2(84,0)                                 75128
+         MVI   4(R1),C'0'     SKIP LINE BEFORE PRINTING           75128
+         JOLPRINT                                                 75128
+         L     R1,APRINTLN    RELOAD ADDRESS OF PRINT BUFFER      75128
+         MVI   1(R1),9        SET RECORD LENGTH TO 9              75128
+         JOLPRINT             OUTPUT BLANK LINE                   75128
+         MVC   TITLE1,CARD
+         $CALL UJP50RD        SET UP *JOL STMT
+         LR    R0,R2     TELLS UJP95INI NOT TO CLEAR WORK LOCNS   75128
+         $LINK UJP95INI       SET UP OPTIONS FROM * JOL CARD      75128
+         $LINK UJP94INI      RESET %SYSTEM ETC AGAIN IF NEC       75128
+         B     P00MAIN                                            75311
+         FIX   'END REMOVABLE  CODE'
+* THIS IS THE MAIN LINE FOR THE PRE-PROCESSOR OF JOL
+P00SPLIT  $CALL UJSPLIT        SPLIT INTO TOKENS                  74303
+         B     P00DECOD
+           SPACE 3
+***********************************************************************
+*
+* A DESCRIPTION OF THE IF,ELSE ETC FOLLOWS:-
+*
+*P00CLRC:                     /*AFTER ANY INSRUCTION              76200
+*                               OTHER THAN DO,END,MACRO */        76200
+*                                                                 76200
+*          READ NEXT INSTRUCTION;                                 76200
+*          IF  RC(15)>=0, GO TO NON-ZERO PROCESSING;              76200
+*          IF  ELSE, DO;                                          76200
+********                                                          76200
+*      *                                                          76200
+* ELSE *                                                          76200
+*  (1) *                                                          76200
+********                                                          76200
+*              IF ? LOOP, OP ELSE, GO TO CLEAR-COND;              76200
+*              ELSE GO TO CLEAR COND                              76200
+*                                                                 76200
+*         END;                                                    76200
+**************                                                    76200
+*             *                                                   76200
+* CLEAR COND *                                                    76200
+*            *                                                    76200
+**************                                                    76200
+*          CLEAR 0(R4) (COND)                                     76200
+*          GO TO P00GOTIN;                                        76200
+*                              /* 'COND' CONTAINS A SERIES OF
+*                              ENTRIES INDICATING THE STATUS OF
+*                              THE INSTRUCTIONS.
+*                              0(R4)='T' IF LAST IF WAS TRUE
+*                              0(R4)='?' IF LAST INSTRUCTION (AND IF)
+*                               WAS AN EXECUTE TIME IF
+*
+*P00MAIN:
+*P00READ:  READ NEXT INSTRUCTION.
+*P00GOTIN:                                                        76200
+*          SET R4=((LEVEL*8)+NEST) CALC LAST COND ENTRY ADDRESS.
+*******                            SO WE CAN MARK 'T' | 'Q'
+*  IF *    IF PROCESSING ....
+*******
+*          IF FOUND.
+*
+*          CALL IF_PROCESSOR
+*              IF TRUE ? YES, 0(R4)='T', GO TO P00READ;
+*
+*              IF FALSE ? YES,IF 0(R4)='?', OUTPUT 'END' TO COMPILER.
+*                  CLEAR 0(R4)
+*                  GO TO P00READ
+*
+*              IF'?' ?, YES, SET 0(R4)='?', GO TO P00READ.
+*
+***********
+*         *
+* NOT IF  *
+*         *
+***********
+*
+*          ARE THERE ANY '?' IN THIS LEVEL OF 'COND' ?
+*              YES -> P00THISQ  /* IF A=0 THEN RUN TYPE STATEMENT */
+*
+*          IS IT AN 'ELSE' , NO -> P00TDO  /* TEST IF 'DO' */
+*
+********
+*      *
+* ELSE *
+*      *
+********
+*
+*          IF COND (0(R4))='T', CLEAR IT
+*          IF  0(R4)='T' |' ' THEN CLEAR 0(R4), GO TO SKIP_TILL_'END'
+*          SIGNAL ERROR, -> P00MAIN
+*
+************
+*          *
+* NOT ELSE *   GO TO P00TDO    /* TEST IF 'D0', ETC */
+*          *
+************
+*
+*P00THISQ:     /* THIS IS IN A '?' LOOP, IE AFTER EXECUTION 'IF' */
+*
+*          IS THIS A JOL INSTRUCTION ?
+*          NO: FIND MACRO, -> P00MAIN
+*          YES:
+*
+*P00ISJOL: OUTPUT TO NEXT PHASE;
+*
+*P00TDO:   IS THIS A 'D0' ? YES, ADD 1 TO NEST,-> P00READ
+* (2)  *                                                          76200
+*          NO,-> P00TFALS
+*
+*          YES, END...
+*******
+*     *
+* END *
+*     *
+*******
+*
+*          SET NEST=NEST-1;
+*          IF NEST>0, CLEAR -1(R4), GO TO P00READ
+*    /* END MACRO */
+*          RESET NEST
+*          CLEAR -1(R4)
+*          REORG SYMBOLIC NAME TABLE
+*          OUTPUT END STATEMENT TO COMPILER
+*          GO TO P00READ (MAIN-LINE)
+*
+***********
+*         *
+* NOT END *
+*         *
+***********
+*
+*          ANY IN THIS LEVEL=?, YES GO TO P00CLRC (INSTRUCTION ALREADY
+*                                              OUTPUT TO NEXT PHASE)
+*
+*          PERFORM INSTRUCTION
+*          GO TO P00CLRC
+*
+*
+***********************************************************************
+P00CLRC  EQU   *                                                  75128
+         SPACE 2                                         JOL30021 76200
+         $CALL UJP50RD        GET NEXT STATEMENT         JOL30021 76200
+         LTR   R15,R15        GET IT OK ?                JOL30021 76200
+         BNZ   P00R1(R15)     IF NOT, BRANCH TO RTN      JOL30021 76200
+P00DOPSH DS    0H                DO 'PUSHED' INSTRUCTION (POPUP)  J51
+         CLC   =C'ELSE ',TKN  ELSE ?                     JOL30021 76200
+         BNE   P00CLRCD       NOPE, CLEAR CODE           JOL30021 76200
+* CHECK IF WE ARE IN A 'Q' LOOP THEN                     JOL30021 76200
+         LR    R15,R4         SET R15 TO STOP ADDRESS    JOL30021 76200
+         LA    R14,1          SET R14 TO 1               JOL30021 76200
+         LH    R7,LEVEL       R7=LEVEL                   JOL30021 76200
+         SLL   R7,3           MULT BY 8                  JOL30021 76200
+         LA    R7,COND(R7)                               JOL30021 76200
+         CLI   0(R7),C'?'     ?                          JOL30021 76200
+         BE    P00QELSO       YES                        JOL30021 76200
+         BXLE  R7,R14,*-8     ROUND LOOP                 JOL30021 76200
+         B     P00CLRCD       NO '?'-> CLEAR COND        JOL30021 76200
+         SPACE 1                                         JOL30021 76200
+* OUTPUT 'ELSE' TO NEXT PHASE THEN                       JOL30021 76200
+P00QELSO     EQU  *
+         $CALL UJP90OP        0P                         JOL30021 76200
+         B     P00MAIN        GO TO GET NEXT INSTRUCTION JOL30021 76200
+         SPACE 2                                         JOL30021 76200
+P00CLRCD MVI   0(R4),C' '     CLEAR COND                 JOL30021 76200
+         B     P00DECOD       DECODE STATEMENT AS USUAL  JOL30021 76200
+         SPACE 2                                         JOL30021 76200
+P00MAIN  EQU   *                                                  75128
+P00READ  EQU   *
+        $CALL  UJP50RD        READ NEXT STATEMENT                 75128
+P00GOTIN EQU   *                                                  75128
+         B     P00R1(R15)
+P00R1    B     P00DECOD        ORDINARY RETURN,GO PROCESS IT MAN
+         B     P00SYSDT        SYSIN DATA FOUNDGO PROCESS IT MAN
+         B     P00RETN0        NEW JOB
+         B     P00RETN0        EOF
+         B     P00READ     ********* SKIP IT ERROR ****           76200
+         B     P00RETNF        ERROR SOMEWHERE LOWER DOWN,SO I'LL SEND
+*                              THE 16 BACK ON UP THE LINE AND THIS
+*                              GUYS JOB WILL BE TERMINATED RATHER
+*                              ABRUPTLY,I THINK
+P00RETN0   EQU *
+         IFNULL LEVEL,NEST,P00RETNX                               75128
+         JOLERR 409,'INSUFFICENT END STATEMENTS FOUND'            75128
+         SPACE 3                                                  75128
+P00RETNX MVC   #TKN,=H'-1'    MUST WRITE OUT LAST BUFFER,SET REC-V75128
+         L     R0,APRCNTL     ** SO, GET ADDRESS CONTROL AREA     75128
+         LA    R1,#TKN        ** AND THE RECORD WITH -VE LENGTH   75128
+        $CALL  UJS30OP        ** CALL OP ROUTINE                  75128
+         SPACE 3                                                  75128
+         JOLRETN
+         SPACE 3
+P00SYSDT EQU   *
+* THE DECLARE STATEMENT PROCESS SHOULD HAVE DEALT WITH THIS AND SO
+*    I GUESS THIS DATA IS INVALID (IN FACT I'M SURE IT IS)
+         JOLERR 302,'INVALID SYSIN FOUND'
+* NOTE: THIS CODE WILL NOT BE ENTERED IF THE OPTION TO USE BLANKS 74303
+*          IN COLUMNS 1 & 2 IS USED. IF AN INVALID DATA SET (SYSIN74303
+*          ) IS FOUND,IT WILL COME UP AS A NUMBER OF ERRORS       74303
+*          BECAUSE JOL WILL NOT RECOGNISE THE STATEMENT,OR IT WILL74303
+*          BE TOO LONG ETC                                        74303
+P00SKIPL XC    CP,CP
+         $CALL UJP52CRD
+         CH    R15,=H'4'       SYSIN DATA STILL ?
+         BE    P00SKIPL
+         B     P00R1(R15)
+P00DECOD EQU *
+* WELL EVERYBODY FINALLY THERE IS A STATEMENT HERE FOR EVERYONE ELSE
+*  TO HAVE A LOOK AT.
+         LH    R4,LEVEL        LEVEL INDICATOR
+         SLL   R4,3              *8 (WE ALLOW 8 NESTS PER LEVEL)
+         AH    R4,NEST
+         LA    R4,COND(R4)
+         CLC   =C'IF ',TKN       IS IT AN 'IF'?
+         BNE   P00TOTHR       NO,SEE WHAT IT IS                   75128
+        $CALL UJP04IF
+         B    P00IFRT(R15)
+P00IFRT  B     P00IFTRU
+         B     P00IFALS
+         B     P00IFQU
+         B     P00IFERR
+         B     P00IFERR
+         B     P00IFERR
+P00IFTRU EQU  *
+         MVI   0(R4),C'T'      SET TRUE                          75128
+* IF 'THISPRNT' OR 'TRACE' ON, THEN TELL USER "IF STATUS"         J51
+         CLI   THISPRNT,C' '     PRINTING STATEMENT ANYWAY ?      J51
+         BNE   P00STATT          YES, SO SAY STATUS               J51
+         CLI   TRACEIND,X'00'    TRACE IND ON?                    J51
+         BNE   P00STATT          YES, SO SAY STATUS               J51
+         B     P00READ          GO READ NEW STATEMENT
+IFTRUCON DC    AL2(LTRUM,0),C'  TRACE: ''IF'' IS TRUE'            J51
+LTRUM    EQU   *-IFTRUCON                                         J51
+P00STATT DS    0H                                                 J51
+         L     R1,APRINTLN      ALL BLANK SO TREAT SKIP 1         J51
+         MVC   0(LTRUM,R1),IFTRUCON   COPY MESSAGE TO PRINTLINE   J51
+         JOLPRINT ,             OUTPUT THE LINE                   J51
+         B     P00READ          GO READ NEW STATEMENT             J51
+           SPACE
+*                                                                 75128
+* THIS NEXT PIECE OF CODE HANDLES IF STATEMENTS, AND TRUE ELSES.  75128
+*   NOTE:- WHEN THE READ MODULE FINDS AN 'ELSE', IT ONLY TRANFERS 75128
+*        THE ELSE, AND LEAVES THE REST OF THE STATEMENT           75128
+*        TO BE READ THE NEXT TIME THE READ MODULE IS CALLED.      75128
+*                                                                 75128
+* NOW THE CODE BASICALLY GOES LIKE THIS:-                         75128
+* P00FALS:     HAVE WE BEEN OUTPUTTING A '?' IF ?                 75128
+*              YES, OP DUMMY ';' FOR NEXT PHASE                   75128
+*                                                                 75128
+* P00IFRD1:    READ NEXT INSTRUCTION                              75128
+*              IS IT ANOTHER 'IF' ? YES -> P00IFRD1 (READ NEXT)   75128
+*              IS IT A 'D0' ?                                     75128
+*                   YES, GO INTO SKIP PHASE TILL MATCHING 'END'   75128
+*  /* NOW AT THIS STAGE WE HAVE THE NEXT INSTRUCTION, AND         75128
+*        REMEMBER THAT THIS IS A FALSE IF. SO, WE MUST SKIP
+*        THIS INSTRUCTION, BUT WE WANT TO SEE IF THE NEXT         75128
+*        ONE IS AN ELSE */                                        75128
+*                                                                 75128
+* P00IFRD3:    READ NEXT;                                         75128
+*                                                                 75128
+*              IS IT 'ELSE' ?  YES, MUST BE TRUE, GO TO P00MAIN,  75128
+*                   WHICH WILL GET THE FOLLOWING INSTRUCTION, AND 75128
+*                   ACT ON IT                                     75128
+*              NOT ELSE, GO TO P00DECOD (DECODE, ACT ON STATEMENT)75128
+*                                                                 75128
+*                                                                 75128
+* SO WE HAVE DONE A BIT OF THE IF. BUT WHAT IF THE  INSTRUCTION   75128
+*        IS NOT AN 'IF'                                           75128
+* OK....                                                          75128
+*                                                                 75128
+*                                                                 75128
+* P00TOTHR:    ARE WE IN A '?' LOOP (IE IF EXECUTION LOGIC?)
+*                   NO ->  IS IT ELSE ?
+*                             YES, MUST BE FALSE, GO TO P00IFRD1,
+*                                  WHICH SKIPS NEXT INSTRUCTION
+*                                  OR GROUP OF INSTRUCTIONS
+*                   YES, CHECK IF %X =, AND GIVE ERROR
+*                   CHECK IF MACRO, AND GIVE CONTROL,
+*                        OTHERWISE, IF PREPROCESSOR STATEMENT,
+*                             DO IT NOW,
+*                        OTHERWISE, MUST BE COMPILER STATEMENT,
+*                             SO KICK IT OUT FOR NEXT PHASE.
+*
+* SO...
+*  ON WITH IT
+*
+*
+P00IFALS EQU *
+P00IFERR EQU *
+* IF 'THISPRNT' OR 'TRACE' ON, THEN TELL USER "IF STATUS"         J51
+         CLI   THISPRNT,C' '     PRINTING STATEMENT ANYWAY ?      J51
+         BNE   P00STATF          YES, SO SAY STATUS               J51
+         CLI   TRACEIND,X'00'    TRACE IND ON?                    J51
+         BNE   P00STATF          YES, SO SAY STATUS               J51
+         B     P00TQ44          TEST STATUS OF ?                  J51
+IFFALCON DC    AL2(LFALM,0),C'  TRACE: ''IF'' IS FALSE'           J51
+LFALM    EQU   *-IFFALCON                                         J51
+P00STATF DS    0H                                                 J51
+         L     R1,APRINTLN      ALL BLANK SO TREAT SKIP 1         J51
+         MVC   0(LFALM,R1),IFFALCON   COPY MESSAGE TO PRINTLINE   J51
+         JOLPRINT ,             OUTPUT THE LINE                   J51
+P00TQ44  DS    0H               TEST OTHER STATUS IN 'IF'         J51
+         CLI   0(R4),C'?'    HAVE WE BEEN OUTPUTTING SO FAR AND NOW
+*                            HIT A FALSE ? IF SO OUTPUT A NULL
+         BNE   P00IFRD1                                           75128
+         MVC   #TKNSTRG,=H'1'
+         MVI   TKNSTRG,C';'
+         $CALL UJP90OP
+P00IFRD1 $CALL UJP50RD
+         LTR   R15,R15
+         BNZ   P00R1(R15)      FIX EOF ETC
+* TEST IF THIS IS AN IF THEN,IF THEN SITUATION
+         CLC   =C'IF ',ICOMMAND
+         BE    P00IFRD1
+         BAL   R10,P00TSYS    TEST IF DCL SYSIN
+         LTR   R15,R15
+         BZ    P00TDO01
+*OK WE HAVE SYSIN HERE.
+         XC    CP,CP
+P00CSKC1 $CALL UJP52CRD       READ A SYSIN CARD
+         CH    R15,=H'4'      CARD STILL?
+         BE    P00CSKC1
+*SKIPPED ALL THE CARDS THEN
+         B     P00TELSE
+P00TDO01 CLC =C'DO ',ICOMMAND
+         BNE   P00TELSE                                           75128
+         BAL   R10,P00TKN2    TEST IF NEXT TOKEN ' ' / ISSUE ERR  75128
+* HERE IT IS A DO,AND WE MUST SKIP UNTIL A MATCHING END HAS BEEN
+*     FOUND
+P00SKIPF EQU   *                                                  75128
+         LA    R4,1            NUMBER OF OUTSTANDING ENDS
+P00IFRD2 $CALL UJP50RD         READ NEXT STATEMENT
+         LTR   R15,R15                                            75311
+         BNZ   P00R1(R15)                                         75311
+         BAL   R10,P00TSYS    TEST IF SYSIN DCL
+         LTR   R15,R15
+         BNZ   P00CSKC2
+         CH    R15,=H'4'       SYSIN ?
+         BNE   P00IFT15
+P00CSKC2 XC    CP,CP
+P00IFSKP $CALL UJP52CRD        READ THE CARD
+         CH    R15,=H'4'       STILL SYSIN ?
+         BE    P00IFSKP
+P00IFT15 LTR   R15,R15
+         BNZ   P00R1(R15)
+* NORMAL INSTRUCTION HERE
+         CLC   =C'END ',ICOMMAND
+         BNE   P00TDO2
+         BAL   R10,P00TKN2    TEST IF NEXT TOKEN ' ' / ISSUE ERR  75128
+         SH    R4,=H'1'        MATCHED ALL THE 'ENDS' ?
+         BZ    P00TELSE                                           75128
+P00TDO2  EQU   *
+         CLC   =C'DO ',ICOMMAND
+         BNE   P00IFRD2
+         LA    R4,1(R4)
+         B     P00IFRD2
+         SPACE 3
+P00TELSE EQU   *
+        $CALL  UJP50RD        READ NEXT INSTRUCTION               75128
+         LTR   R15,R15        GET IT OK ?                         75128
+         BNZ   P00R1(R15)     NOPE,BRANCH ON R15                  75128
+         CLC   =C'ELSE ',TKN
+         BNE   P00DECOD       NO,GO DECODE IT                     75128
+* HERE THE ELSE HAS JUST GO TO BE TRUE, SO GO READ NEXT           75128
+*  STATEMENT AND ACT ON IT.                                       75128
+         B     P00MAIN                                            75128
+         SPACE 3                                                  75128
+P00IFQU  MVI   0(R4),C'?'     SET UP '?' INDICATOR                75128
+         $CALL UJP90OP        OUTPUT 'IF' FOR COMPILER PHASE      75128
+*        B     P00MAIN        GO READ NEXT INSTRUCTION            75128
+* IF 'THISPRNT' OR 'TRACE' ON, THEN TELL USER "IF STATUS"         J51
+         CLI   THISPRNT,C' '     PRINTING STATEMENT ANYWAY ?      J51
+         BNE   P00STATE          YES, SO SAY STATUS               J51
+         CLI   TRACEIND,X'00'    TRACE IND ON?                    J51
+         BNE   P00STATE          YES, SO SAY STATUS               J51
+         B     P00MAIN          GO READ NEW STATEMENT
+IFEXECON DC    AL2(LEXEM,0)                                       J51
+         DC    C'  TRACE: ''IF'' IS TO BE TESTED AT EXECUTION'    J51
+LEXEM    EQU   *-IFEXECON                                         J51
+P00STATE DS    0H                                                 J51
+         L     R1,APRINTLN      ALL BLANK SO TREAT SKIP 1         J51
+         MVC   0(LEXEM,R1),IFEXECON   COPY MESSAGE TO PRINTLINE   J51
+         JOLPRINT ,             OUTPUT THE LINE                   J51
+         B     P00MAIN        GO READ NEXT INSTRUCTION            75128
+           SPACE
+         SPACE 3                                                  75128
+P00TOTHR   EQU  *              NOT IF OR ELSE,UNLESS IT WAS IN A '?'
+*                              LOOP
+* NOW SEE IF THE '?' CONDITION EXISTS
+*** NOTE ***                                                      75128
+* WE ONLY WANT TO CHECK FROM THIS LEVEL UP,COS OTHERWISE WE WILL  75128
+*  RUN INTO TROUBLE IF USER SAYS;-                                75128
+*        IF A=0 THEN SORT X TO Y;                                 75128
+         LR    R15,R4
+         LA    R14,1
+         LH    R7,LEVEL
+         SLL   R7,3     * 8
+         LA    R7,COND(R7)
+P00TQU2  CLI   0(R7),C'?'        ANY PREVIOUS '?'
+         BE    P00THISQ
+         BXLE  R7,R14,P00TQU2
+* NOW IF THE THING HERE IS AN ELSE, IT JUST HAS TO BE             75128
+*  FALSE, SO WE WILL BRANCH BACK TO THE 'IF' SKIP ROUTINE         75128
+         CLC   =C'ELSE ',TKN    'ELSE'                            75128
+         BE    P00CHKC9       OK,CHECK IF AFTER IF STATEMENT      75128
+         B     P00TDO
+P00CHKC9 CLI   0(R4),C'T'     AFTER 'IF' ?                        75128
+         BE    P00CLREL
+         CLI   0(R4),C' '
+         BNE   P00ELSER       YES, GO TO ERRORROUTINE             75128
+P00CLREL EQU *
+         MVI  0(R4),C' '       CLEAR COND
+         B    P00IFRD1         GO TO SKIP ROUTINE
+P00ELSER  EQU *
+         JOLERR 303,'ELSE IGNORED, AND NEXT INSTRUCTION(S)'       75128
+         B     P00IFRD1                                           75128
+  SPACE 3
+P00THISQ EQU   *
+* JUST BEFORE OUTPUTTING TO THE NEXT PHASE CHECK IF THIS CONTRAPTION
+*   IS AN ASSIGNMENT TO A SYMBOLIC PARAMETER AND IF SO GIVE THE POOR
+*   OLD CHAP AN ERROR MESSAGE OF SOME DESCRIPTION
+         CLI   TKN,C'%'          SYMBOLIC REFERENCE ?
+         BNE   P00QOP            OUTPUT IT TO NEXT PHASE
+         GETTKN NO=2
+         CLI   TKN,C'='          ASSIGNMENT ?
+         BNE   P00QOP            OUTPUT IT TO NEXT PHASE
+         JOLERR 305,'SYMBOLIC ASSIGNMENT IN EXECUTION ''IF'' LOGIC'
+         B     P00MAIN
+P00QOP   EQU   *
+* NOW BEFORE OUTPUTTING THIS INSTRUCTION TO THE NEXT PHASE
+*     WE MUST SEE IF IT IS A MACRO,AND IF SO GIVE CONTROL TO
+*     THE MACRO PROCESSOR
+         L     R7,=V(PJOLINST) LOAD ADDRESS OF INSTRUCTION TABLE  75128
+         LM    R7,R9,0(R7)
+P00TJOLI CLC   ICOMMAND,0(R7)    IS IT A JOL INSTRUCTION ?
+         BE    P00ISJOL
+         BXLE  R7,R8,P00TJOLI
+* NOT A JOL INSTRUCTION
+         B     P00FINDM          GO FIND THE MACRO
+         SPACE
+P00ISJOL EQU   *
+         $CALL UJP90OP
+P00TDO   CLC   =C'DO ',TKN     OS IT A DO ?
+         BNE   P00TEND         TEST IF IT IS AN END
+         BAL   R10,P00TKN2    TEST IF NEXT TOKEN ' ' / ISSUE ERR  75128
+         LH    R1,NEST
+         LA    R1,1(R1)
+         CH    R1,=H'8'        TOO MANY NESTS
+         BH    P00DOERR
+         STH   R1,NEST
+         B     P00READ
+P00DOERR JOLERR 404,'TOO MANY DO''S'
+         B     P00READ
+P00TEND  EQU   *
+         CLC   =C'END ',TKN      IS IT END ?
+         BNE   P00TFALS
+         BAL   R10,P00TKN2    TEST IF NEXT TOKEN ' ' / ISSUE ERR  75128
+         LH    R1,NEST
+         SH    R1,=H'1'
+         BM    P00DROPL           REDUCE LEVEL BY 1
+         STH   R1,NEST
+P00DROP4 BCTR  R4,0            -1 FROM R4 TO CLEAR 0(R4)-1        75311
+         B     P00CLRC         CLEAR 0(R4) NOW                    75311
+P00DROPL LH    R1,LEVEL
+         SH    R1,=H'1'
+         BM    P00LEVER
+         STH   R1,LEVEL
+         LA    R15,SAVENEST(R1) RESET THE ORIGINAL
+         MVC   NEST+1(1),0(R15) NEST
+           SPACE 2
+          $CALL UJS19RSM       RE-ORG SYMBOLIC PARAMETER TABLE    74303
+*                                               AND DROP HIGH LEVEL
+*                                               NAMES AND VALUES
+          $CALL UJP19RSM       RE-ORG THE BINARY LOOKUP PART OF   87150
+*                                     THE SYMBOLIC VARAIBLE TABLE.
+         CLI   ICOMMAND,C'\'   DID AN EXIT INSTRUCTION GET US HERE?
+         BNE   P00RESTN        YES, SO SIMPLY RESET THE NEST
+* SPECIAL CODE FOR THE EXIT INSTRUCTION.
+* WE HAVE TO CALL UJP52CHR TO FINISH WITH THIS MEMBER
+         LH    R7,CP           SAVE THE CHARACTER POINTER         87150
+         MVI   CP,X'7F'       SET CP VERY HIGH                    87080
+         $CALL UJP52CHR       IT LOOK AT ICOMMND AND EXITS THE MACRO.80
+         LTR   R15,R15         CHECK RETURN CODE                  87150
+         BNZ   P00GOTIN        FIX IT UP                          87150
+*        STH   R7,CP           RESET THE CHARACTER POINTER        87150
+         CLEAR THISPRNT        TELL US WE HAVEN'T PRINTED THE STMT 7080
+         B     P00REST2
+P00RESTN EQU   *
+          $CALL UJP90OP
+P00REST2 EQU   *
+*
+* THE FOLLOWING CODE CORRECTS ERROR JOL30130. THIS ERROR (TOO     76200
+*  MANY ENDS) IS DUE TO NOT RESETTING R4 AT MACRO END    J0L30130 76200
+*  AND HENCE THE LAST 'Q' INDICATOR WAS NEVER GETTING    J0L30130 76200
+*  CLEARED, IE IF THE NEXT INSTRUCTION AFTER A MACRO     J0L30130 76200
+*  END IS ANOTHER END, IT WOULD INCORRECTLY  GET PASSED  J0L30130 76200
+*  OUT TO THE COMPILER PHASE.                            J0L30130 76200
+* WE WILL SIMPLY RESET R4 TO CORRECT THIS PROBLEM.       J0L30130 76200
+*                                                        J0L30130 76200
+         LH    R15,LEVEL      SET LEVEL                  J0L30130 76200
+         SLL   R15,3          MULTIPLY BY 8              J0L30130 76200
+         LA    R4,COND(R15)                              J0L30130 76200
+         AH    R4,NEST                                   J0L30130 76200
+         B     P00CLRC        GO TO MAIN-LINE            J0L30130 76200
+P00LEVER JOLERR 306,'TOO MANY ENDS'
+         B     P00MAIN           GO BACK TO MAIN LINE
+P00TFALS EQU   *
+* NOW SEE IF THE '?' CONDITION EXISTS
+*** NOTE ***                                                      75128
+* WE ONLY WANT TO CHECK FROM THIS LEVEL UP,COS OTHERWISE WE WILL  75128
+*  RUN INTO TROUBLE IF USER SAYS;-                                75128
+*        IF A=0 THEN SORT X TO Y;                                 75128
+         LR    R15,R4
+         LA    R14,1
+         LH    R7,LEVEL
+         SLL   R7,3     * 8
+         LA    R7,COND(R7)
+P00TQU5  CLI   0(R7),C'?'        ANY PREVIOUS '?'
+         BE    P00CLRC
+         BXLE  R7,R14,P00TQU5
+  SPACE 3
+* WELL THAT WAS TRUE  SO CALL THE APPROPRIATE SKIP ROUTINES
+* OK,NOW SEE IF THE 2ND TOKEN IS AN'=' SIGN
+* NOTE ***                                                        75128
+*                                                                 75128
+*  DECLARE AND ASSIGNMENTS ARE SPECIAL BECAUSE WE DON'T WANT      75128
+*  SYMBOLICS REPLACED BEFORE THEY ARE ACTIONED                    75128
+*                                                                 75128
+*                                                                 75128
+         GETTKN NO=2
+         CLI   TKN,C'='
+         BE    P00ASSIN
+         GETTKN NO=1
+         MVC   ICOMMAND,TKN
+         CLC   =C'DCL ',TKN
+         BE    P00DECLR
+         CLC   =C'DECLARE ',TKN
+         BE    P00DECLR
+         CLC   =C'DEFINE ',TKN
+         BE    P00DECLR
+***************************************************************    DASD
+*  THIS CHECK FOR A DISPLAY STATEMENT SHOULD STOP DOUBLE      *    DASD
+*  REPLACEMENT OF SYMBOLICS                                   *    DASD
+***************************************************************    DASD
+         CLC   =C'DISPLAY ',TKN                                    DASD
+         BE    P00OP5                                              DASD
+         CLC   =C'TYPE ',TKN                                       DASD
+         BE    P00OP5                                              DASD
+         B     P00NODCL
+P00DECLR EQU    *
+        $CALL  UJP02DCL
+         B     P00CLRC             CLEAR COND AND GO TO READ
+P00NODCL EQU   *
+         SPACE
+P00FINDM EQU   *
+         $CALL UJS20REP,#TKNSTRG    *********
+         B     XXXXXX               *********
+         $CALL UJS21FNC       PERFORM FUNCTIONS & REPLACE SYMS    75128
+XXXXXX   EQU   *
+         LA    R14,#TKNSTRG
+         LH    R1,#WORK
+         LA    R1,2(,R1)   ADJUST FOR PREFIX
+         LR    R15,R1
+         LA    R0,#WORK
+         MVCL  R14,R0       MOVE THE DATA
+         MVI   0(R14),C' '  ONE BLANK AFTER THE AREA
+*          MVC #TKNSTRG(256),#WORK
+*          MVC #TKNSTRG+256(256),#WORK+256
+*          MVC #TKNSTRG+512(256),#WORK+512
+*          MVC #TKNSTRG+768(234),#WORK+768
+*          MVC #TKNSTRG+768+234(234),#WORK+768+234
+*          MVC #TKNSTRG+768+234+234(234),#WORK+768+234+234
+        $CALL  UJSPLIT        SPLIT INTO TOKENS,PRINT ERRORS     74303
+         GETTKN 1
+         MVC   ICOMMAND,TKN
+* THERE IS NO REAL OPTION NOW BUT TO CALL THE APPROPRIATE ROUTINES
+         L     R7,=V(PJOLINST) LOAD ADDRESS OF INSTRUCTION TABLE  75128
+         LM    R7,R9,0(R7)
+P00CALLL CLC   ICOMMAND,0(R7)
+         BE    GOT00RTN
+         BXLE  R7,R8,P00CALLL
+* DON'T KNOW WHAT THE INSTRUCTION WAS,BUT I DON'T LIKE IT.
+         SPACE
+         IFNULL ICOMMAND,P00CLRC    NULL INSTRUCTIONS ARE OK,NO ERROR
+        $CALL  UJP53MAC
+         LTR   R15,R15       MACRO PROCESSOR DEAL WITH IT ?
+         BZ    P00MAIN         YES-CLEAR COND & -> READ           75311
+         SPACE 3
+         JOLERR 407,'''',ICOMMAND,''' IS AN INVALID INSTRUCTION'
+         B     P00CLRC             CLEAR COND AND GO TO READ
+         SPACE 3
+GOT00RTN EQU *
+* WELL I DID FIND SOME-ONE TO HANDLE THIS ROUTINE,SO I'LL GIVE HIM
+*  CONTROL
+         L     R15,12(R7)
+         L     R15,0(R15)      LOAD PROCESSING ROUTINE ADDRESS    75128
+P00RCALL LTR   R15,R15                        WATCH FOR WXTRNS
+         BZ    P00OP5
+         CLC   =C'POPUP ',ICOMMAND   IS IT 'POPUP'                J51
+         BNE   DOITNOW           NO, SO JUST ORDINARY CALL        J51
+         CALL$ UJP27POP          DO THE POPUP INSTRUCTION         J51
+         CLI   TKN,C' '          DID POPUP SELECT AN OPTIONAL     J51
+*                                COMMAND? (POPUP('DIR',DIR)       J51
+         BE    P00CLRC        CLEAR COND AND GO TO READ           J51
+         MVC   ICOMMAND,TKN      COPY TO COMMAND                  J51
+         MVC   #TKNSTRG(100),#TKN AND COPY TO TKNSTRG             J51
+         $CALL UJSPLIT                                            J51
+         B     P00DOPSH          DO THE 'PUSHED' COMMAND          J51
+DOITNOW  DS    0H                                                 J51
+         BALR  R14,R15        BRANCH AND LINK TO PROCESSING RTN   75128
+         CLI   ICOMMAND,C'\'  BACKSLASH '\' SET BY EXIT           87080
+*                             MUST (EG, EXIT QUIT OR EXIT LEVEL 0 87080
+*J40     BNE   P00CLRC        CLEAR COND AND GO TO READ
+         BNE   P00TGOTO       TEST GOTO,CLEAR COND AND GO TO READ J51
+         CLI   ICOMMAND+1,C'\' '\\' SET BY EXIT IF WE REALLY HAVE 87080
+         BE    P00QUIT
+         CLI   ICOMMAND+1,C'/' '\/' SET BY EXIT TO EXIT JOB ONLY  87080
+         BE    P00RETNF       JUST SKIP TILL EOF OR * JOL         87080
+         CLC   LEVEL,ZERO     ARE WE AT LEVEL ZERO (OPEN CODE)    87080
+         BE    P00QUIT
+         B     P00DROPL       DROP THE LEVEL NUMBER, AND CONTINUE 87080
+P00QUIT  MVI   EOFSYSIN,C'1'  MUST REALLY QUIT, TURN ON EOF ON SYSIN080
+         B     P00RETNF       GET RIGHT OUT OF PREPROCESSOR       87080
+         SPACE 3
+P00TGOTO DS    0H                                                 J51
+         CH    R15,=H'4'                                          J51
+         BNE   P00CLRC        CLEAR COND AND GO TO READ           J51
+         CLC   =C'GOTO ',ICOMMAND                                 J51
+         BNE   P00CLRC        CLEAR COND AND GO TO READ           J51
+* HERE WE MUST SKIP UNTIL THE LABEL IS FOUND                      J51
+* WE MUST COUNT THE DO, END STATEMENTS AS WELL, SO THAT THE       J51
+* LABELS GETS STORED WITH THE CORRECT LEVEL OF NESTING.           J51
+*                                                                 J51
+* THIS SOLVES THE PROBLEMS OF :                                   J51
+*                                                                 J51
+*        IF X                                                     J51
+*        THEN  DO                                                 J51
+*              GOTO FORWARD LABE L;                               J51
+*        END                                                      J51
+P46IFRD2 DS    0H                                                 J51
+         CALL$ UJP50RD           GET NEXT STATEMENT               J51
+         CLI   GOTO,C' '         IF BLANK, WE FOUND THE LABEL.    J51
+         BE    P00DECOD          GOT IT.                          J51
+         LTR   R15,R15           A SIGNAL FROM P50RD?             J51
+         BNE   P00R1             YES, LET IT HANDLE IT            J51
+* CHECK IF SYSIN CARDS                                            J51
+         FIX   'SYSIN CARDS'                                      J51
+* NORMAL INSTRUCTION HERE                                         J51
+         CLC   =C'END ',ICOMMAND                                  J51
+         BNE   P46TDO                                             J51
+         LH    R14,NEST                                           J51
+         S     R14,ONE                                            J51
+         STH   R14,NEST                                           J51
+         BNM   P46IFRD2                                           J52
+         JOLERR 310,'TOO MANY END''S WHILE SKIPPING GOTO''S'      J51
+         B     P00DROPL                                           J52
+P46TDO   CLC   =C'DO ',ICOMMAND                                   J51
+         BNE   P46IFRD2                                           J51
+         LH    R14,NEST                                           J51
+         A     R14,ONE                                            J51
+         STH   R14,NEST                                           J51
+         B     P46IFRD2                                           J51
+         SPACE 3                                                  J51
+P00ASSIN EQU   *
+* BEFORE HANDING CONTROL TO THE ASSIGNMENT ROUTINE,WE HAD BETTER MAKE
+*    DEAD SURE THAT THIS IS A SYMBOLIC ASSIGNMENT,OLD FRUIT
+         CLI   ICOMMAND,C'%'     SYMBOLIC ASSIGNMENT ?
+*        BNE   P00OP5            NO,HEAVE OUT TO NEXT PHASE
+         NOP   P00OP5            NO,HEAVE OUT TO NEXT PHASE
+         L     R15,=V(UJP85ASN)
+         B     P00RCALL        REAL CALL THAT LABEL SAYS
+P00OP5   $CALL UJP90OP
+         B     P00CLRC
+         SPACE 3
+P00TKN2  EQU   *                                                  75128
+* THIS SMALL ROUTINE CHECKS THAT AFTER A 'D0' | 'END' THAT THERE  75128
+*  IS NO MORE DATA, THAT IS, THAT THERE WAS A SEMI-COLON FOLLOWING75128
+         GETTKN 2                                                 75128
+         CLI   TKN,C' '                                           75128
+         BE    0(R10)         BACK TO CALLER                      75128
+P00ERR81 GETTKN 2                                                 75128
+P00ERR8  JOLERR 308,'EXCESS INFORMATION STARTING ''',#TKN,''' IGNORED'
+         BR    R10
+         SPACE   3
+P00TSYS  EQU   *
+         CLC   =C'DCL ',ICOMMAND
+         BE    P00TSYSI
+         CLC   =C'DEFINE ',ICOMMAND
+         BE    P00TSYSI
+         CLC   =C'DECLARE ',ICOMMAND
+         BE    P00TSYSI
+         B     P00R0
+P00TSYSI GETTKN               3
+         CLI   TKN,C'*'
+         BE    P00R4
+P00R0    SR    R15,R15
+         BR    R10
+P00R4    LA    R15,4
+         BR    R10
+         SPACE 3
+         LTORG
+         DC   140S(*)
+         TITLE 'HANDLE EOF,'                                FIX-X 76200
+UJP37EOF SR    R15,R15                                      FIX-X 76200
+         ENTRY UJP37EOF                                           76200
+         BR    R14                                          FIX-X 76200
+         TITLE 'READ SYSIN CARD FILE'                       FIX-X 76200
+         SPACE 3
+UJP52CRD CSECT                                                    74303
+         MVI   SYSINMDE,C'1'   TURN ON SYSIN MODE PROCESSING      74303
+         USING UJP52CRD,R15                                       74303
+         L     R15,=V(UJP52CHR)                                   86210
+         BR    R15                                                74303
+         LTORG                                                    74303
+         DROP  R15                                                74303
+         SPACE 3
+         JOLSAVE CSECT=UJP98OP                                    75128
+* CSECT IS CALLED BY THE 'INVOKED' MODULE, AND IS RESPONSIBLE     75128
+*  FOR STORING THE INVOKED MODULES OUTPUT IN 'WORKFILE' DATA SET  75128
+         SPACE 2                                                  75128
+* ON ENTRY R1 POINTS TO THE RECORD THAT THE USER HAS CREATED      75128
+*  FOR US TO EXECUTE.                                             75128
+***************************************************************    DASD
+* MOD HERE TO ALLOW 80 BYTES RECORDS TO PASS FROM A INVOKE RTN*    DASD
+* ALSO A ATTEMPT TO ALLOW A RECORD AS BIG AS THE INSTREAM     *    DASD
+* BUFFER WAS TAKEN OUT---THE READ ROUTINE CHOPS IT OFF AT 72  *    DASD
+***************************************************************    DASD
+         L     R8,0(R1)       GET ADDRESS OF THE RECORD           75128
+P98TRY2  L     R4,AMACBUF                                         75128
+         LH    R5,0(R4)       LOAD CURRENT BLOCK LENGTH           75128
+         LH   R9,0(R8)         LOAD LENGTH OF RECORD              75128
+         LR    R6,R5          LOAD CURRENT BLOCK LENGTH TO R6,TOO 75128
+         AR    R6,R9          ADD NEW BLOCK LENGTH                75128
+         LH    R15,LMACBUF    GET LENGTH OF THE WORK BUFFER       75128
+         SH    R15,=H'16'      -16,COS INEED SOME ROOM AT THE END 75128
+*                             OF THE LAST BLOCK                   75128
+*        CH    R15,0(R8)  WILL RECORD FIT ALL BY IT SELF  ??       DASD
+*        BNH   P98BIG     WOW  LETS SPLIT                          DASD
+         CR    R6,R15         WILL RECORD FIT ?                   75128
+         BNH   P98MUV         NO                                  75128
+* HERE WE MUST OUTPUT THE BLOCK                                   75128
+         LR    R1,R4          TELL 'OPBLOCK' WHERE THE BLOCK IS   75128
+*                             THAT HAS TO BE OUTPUT               75128
+         BAL   R14,OPBLOCK                                        75128
+         MVC   0(4,R4),=AL2(4,0)                                  75128
+         CLC   P98TTR1,ZERO   HAS THE FIRST BLOCK BEEN OUTPUT ?   75128
+         BNE   P98TRY2        YES, GO O/P RECORD AGAIN            75128
+         ST    R1,P98TTR1     NO,SET UP FIRST BLOCK INDICATOR     75128
+* WE ALSO HAVE TO UPDATE THE TTR POINTER IN THE OPBLOCK            DASD
+* ROUTINE SO WE CAN WRITE OUT MULTIPLE BLOCKS                      DASD
+*        ST    R1,SYS1NEXT     UP THE BLOCK ADDRESS                DASD
+         B     P98TRY2                                            75128
+P98MUV   L     R4,AMACBUF                                         75128
+*                             AS AN OUTPUT AREA
+         LR    R5,R4          AND SAVE IT IN R5
+         LR    R6,R9          SAVE RECORD LENGTH TO GO
+         LR    R7,R6          SAVE IT IN R7 TOO
+         CH    R6,=H'80'      > 80 BYTES ?                        DASD
+         BNH   P98SMALL       NO,SO JUST OUTPUT IT                DASD
+         LA    R6,80                                              DASD
+P98SMALL LA    R6,3(R6)                                           75128
+         AH    R5,0(R4)       CALC ADDRESS OF RECORD AREA         75128
+         EX    R6,P98MVC                                          75128
+*        LR   R0,R8      MOVE THIS GUY TO THE BUFFER               DASD
+*        LR   R1,R5                                                DASD
+*        LA   R1,2(R1)   TO HERE                                   DASD
+*        BAL  R14,MOVEDATA                                         DASD
+         LA    R6,1(R6)    +1 EX MVC ANDFOR RECORD DESC
+         SLL   R6,16      ZERO BOTTOM BYTES
+         ST    R6,AVTBLE   SAVE IT A SECOND IN UNUSED AREA
+         MVC   0(4,R5),AVTBLE  SHIFT TO RECORD DESCRIPTOR
+         LH    R1,0(R4)       LOAD BLOCK LENGTH                   75128
+         AH    R1,AVTBLE      ADD RECSIZE                         75128
+         STH   R1,0(R4)       RESET BLOCK LENGTH                  75128
+         JOLRETN
+P98MVC   MVC   2(*-*,R5),0(R8)                                75128DASD
+*P98BIG  CVD  R15,DBL                                              DASD
+*       UNPK OP(5),DBL                                             DASD
+*       OI   OP+4,C'0'                                             DASD
+*       MVC  #OP,=H'5'                                             DASD
+*       JOLERR 401,'INVOKE ROUTINE RETURNED A RECORD LARGER THAN THE IN*
+               STREAM BUFFER SIZE OF-->',#OP                       DASD
+*         MVC #OP,=H'50'                                           DASD
+*         MVC OP(50),2(R8) MOVE IN PART OF RECORD                  DASD
+*         JOLERR 402,'RECORD ''',#OP,'''...ECT    DROPPED'         DASD
+*       JOLRETN                                                    DASD
+         LTORG
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         PRINT OFF
+         DCBD  DSORG=PS,DEVD=DA                                   75128
+         PRINT ON,DATA
+         LTORG

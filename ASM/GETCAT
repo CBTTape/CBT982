@@ -1,0 +1,219 @@
+**********************************************************************
+*
+*         GETCAT  - PROGRAM TO GET DATASET NAMES FROM CATALOG
+*
+*                   GETCAT IS INVOKED BY JOL AND SETS %SYSDSNNO AND
+*                           %SYSDSN1 TO %SYSDSNN
+*
+*                    WRITTEN P.FOLEY MARCH 87
+*
+*                    ASSEMBLE USING SYS1.MACLIB,SYS3.JOL.V03L05.MACLIB
+*                                   AND C6S.MACLIB
+*
+*                    LINK USING SYS3.JOL.LOAD
+*
+**********************************************************************
+*
+         PRINT NOGEN
+         COPY  JOLCOM
+         PRINT   GEN
+         EJECT
+         JOLSAVE CSECT=UJX01GTC                  SAVE REGISTERS
+         ST    R2,SAVER2
+         ST    R13,SAVER13
+         MVC   ICOMMAND,=CL8'MACRO'
+         LTR   R1,R1                             TEST FOR PARAMETERS
+         BZ    NOLEVERR
+         L     R4,0(R1)
+         LTR   R4,R4
+         BZ    NOLEVERR
+         LH    R5,0(R4)
+         LTR   R5,R5
+         BZ    NOLEVERR
+*
+         GETTKN 1
+         CLC   TKN(8),=C'INVOKE  '
+         BNE   NINVOKE
+         GETTKN (R1)
+*
+NINVOKE  CLC   TKN(8),=C'GETCAT  '
+         BNE   START
+         GETTKN (R1)
+*
+START    LH    R6,#TKN
+         LTR   R6,R6
+         BZ    NOLEVERR
+         BCTR  R6,0
+         EX    R6,MVTKN
+         MVC   #WORK(2),#TKN
+*
+LEVLOOP  GETTKN (R1)
+         CLI   TKN,C' '
+         BE    STORE
+         CLI   TKN,C'.'
+         BNE   LEVEROR
+         BAL   R14,CONCAT
+         GETTKN (R1)
+         CLI   TKN,C' '
+         BE    LEVEROR
+         CLI   TKN,C'.'
+         BE    LEVEROR
+         BAL   R14,CONCAT
+         B     LEVLOOP
+*
+STORE    LH    R6,#WORK
+         BCTR  R6,0
+         EX    R6,MVLEV
+         LA    R6,14(R6)
+         LA    R7,RECAREA(R6)
+         MVC   0(0,R7),=C')'
+*
+DSNEND   MVC   SYMBOLIC,=CL8'SYSDSNNO'
+         MVC   WORK(3),=C'000'
+         MVC   #WORK(2),=H'3'
+         $CALL UJP85ASN
+         LA    R13,SAVE1
+         LA    R1,KQPARMS                  SET UP PARMS FOR LISTC
+         LINK  EP=KQCAMS
+         L     R13,SAVER13
+         CLI   ERR1000,X'1'
+         BE    ERRMSG
+*
+RETURN   JOLRETN RC=0                      RETURN TO JOL
+*
+NOLEVERR DS    0H                          DSN NOT FOUND ETC
+         JOLERR 402,'LEVEL NAME NOT SPECIFIED'
+         JOLRETN RC=0
+*
+ERRMSG   JOLERR 101,'TOO MANY DATASET NAMES.FIRST 1000 USED'
+         JOLRETN RC=0
+*
+LEVEROR  JOLERR 403,'LEVEL NAME NOT CORRECT'
+         JOLRETN RC=0
+*
+MVLEV    MVC   LEVAREA(0),WORK
+MVTKN    MVC   WORK(0),TKN
+*
+         USING DATAREA,R8
+UJX01GTR CSECT
+         SAVE  (14,12)
+         USING UJX01GTR,R11
+         LR    R11,15
+         L     R8,0(R1)
+         L     R2,SAVER2
+         ST    R13,R13RD
+         L     R13,SAVER13
+         CNOP  0,4  ALIGN ON FULLWORD
+         BAL   15,JOLSAVER   BRANCH TO JOL SAVE ROUTINE
+         DC    A(72)
+         L     R5,4(R1)
+         L     R6,8(R1)
+         CLI   0(R5),X'8'
+         BNE   RETIN
+         CLI   DONE,X'1'
+         BE    RETFIN
+         LA    R4,RECAREA
+         L     R7,RECLEN
+         ST    R4,0(R6)
+         ST    R7,4(R6)
+         MVI   DONE,X'1'
+RETIN    DS    0H
+         LA    R15,0
+         L     R13,R13RD
+         B     JRETN+4
+*
+RETFIN   DS    0H
+         LA    R15,12
+         L     R13,R13RD
+         B     JRETN+4
+*
+         DROP  R8
+         DROP  R11
+*
+         USING DATAREA,R8
+UJX01GTW CSECT
+         SAVE  (14,12)
+         USING UJX01GTW,R11
+         LR    R11,15
+         L     R8,0(R1)
+         L     R2,SAVER2
+         ST    R13,R13WRT
+         L     R13,SAVER13
+         CNOP  0,4  ALIGN ON FULLWORD
+         BAL   15,JOLSAVER   BRANCH TO JOL SAVE ROUTINE
+         DC    A(72)
+         L     R5,4(R1)
+         L     R6,8(R1)
+         CLI   0(R5),X'0C'
+         BNE   RETOUT
+         L     R7,4(R6)
+         L     R6,0(R6)
+         CLC   1(7,R6),=C'NONVSAM'
+         BNE   RETOUT
+         LA    R5,17
+         SR    R7,R5
+         STH   R7,#WORK
+         BCTR  R7,0
+         EX    R7,MVDSN
+SETDSN   MVC   SYMBOLIC,=CL8'SYSDS000'
+         LH    R9,DSNNO
+         LH    R7,=H'1000'
+         CR    R7,R9
+         BE    TOOMANY
+         LA    R9,1(R9)
+         STH   R9,DSNNO
+         CVD   R9,DBL
+         UNPK  WORK1(3),DBL+6(2)
+         OI    WORK1+2,X'F0'
+         MVC   SYMBOLIC+5(3),WORK1
+         $CALL UJP85ASN
+SETNO    MVC   SYMBOLIC,=CL8'SYSDSNNO'
+         MVC   WORK(3),WORK1
+         MVC   #WORK(2),=H'3'
+         $CALL UJP85ASN
+RETOUT   LA    R15,0
+         L     R13,R13WRT
+         B     JRETN+4
+TOOMANY  MVI   ERR1000,X'1'
+         B     RETOUT
+*
+MVDSN    MVC   WORK(0),17(R6)
+*
+         DROP  R8
+         DROP  R11
+*
+UJX01GTC CSECT
+*
+*        DATA DEFINITION AREA
+*
+DATAREA  DS    0F
+RECAREA  DC    CL13' LISTC LEVEL('
+LEVAREA  DC    CL59' '
+RECLEN   DC    F'72'
+DSNNO    DC    H'0'
+KQPARMS  DS    0F
+         DC    A(OPTLIST)
+         DC    F'0'
+         DC    F'0'
+         DC    A(IOLIST)
+OPTLIST  DS    0F
+         DC    H'0'
+IOLIST   DS    0F
+         DC    F'2'
+         DC    A(DDIN)
+         DC    A(UJX01GTR)
+         DC    A(DATAREA)
+         DC    A(DDOUT)
+         DC    A(UJX01GTW)
+         DC    A(DATAREA)
+DDIN     DC    CL10'DDSYSIN   '
+DDOUT    DC    CL10'DDSYSPRINT'
+SAVE1    DS  18F
+WORK1    DS    F
+SAVER2   DS    F
+SAVER13  DS    F
+R13RD    DS    F
+R13WRT   DS    F
+DONE     DC    X'0'
+ERR1000  DC    X'0'
+         END

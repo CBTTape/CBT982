@@ -1,0 +1,7 @@
+* THIS Exit gets control just before the JCL is submitted.
+LASTEXIT   TITLE 'USER EXITS'
+         TITLE 'DEFINE ADDRESSES FOR DYNAMIC LOADING'
+***********************************************************************
+UJM90EXT CSECT                                                    75128
+         SR    15,15
+         BR    14

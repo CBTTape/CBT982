@@ -1,0 +1,80 @@
+         AIF   (&X8).X8400
+           TITLE 'UJE81PDQ:READ PASSED DATA SET QUEUE'
+           JOLSAVE CSECT=UJE81PDQ
+* THIS CSECT MUST FIND THE PDQ ENTRY THAT REFERS TO THE DSNAME
+*    IN THE DSNAME FIELD. A 4 IS RETURNED IF IT CAN'T
+*
+******
+* CHECK IF JCTPDIP = 0 (MAY BE IF RUNNING UNDER
+*                       TSO).
+******
+           MVI ISINPDQ,C' '                                        DASD
+         SPACE 1                                                  76200
+         CLC   JCTPDIP,=F'0'                                      76200
+         BNE   E81GO                                              76200
+         JOLRETN RC=4                                             76200
+E81GO    DS    0H                                                 76200
+           GETJOBQ PDQDECB2,JCTPDIP
+           B  E81GOTRD
+E81READ1 GETJOBQ PDQDECB2,CALLAREA
+E81GOTRD DS   0H
+         CLI  VS,C'2'   MVS?
+         BNE   E81NMVS1
+E81MVDS1 CLC   DDDSNAME,PDIDSN1
+         BE    E81PASS1
+         CLC   DDDSNAME,PDIDSN2
+         BE    E81PASS2
+         CLC  DDDSNAME,PDIDSN3
+         BE    E81PASS3
+* NOT IN PDI, GET NEXT
+         CLC  =AL3(0),PDINPDIP  IS THIS THE LAST BLOCK?
+         BE   E81RETN4    YES, NOT FOUND THEN
+         GETJOBQ  PDQDECB2,PDINPDIP
+         B    E81MVDS1
+E81NMVS1 DS    0H
+         CLC DDDSNAME,PDQDSN1
+         BE  E81PASS1
+         CLC DDDSNAME,PDQDSN2
+         BE  E81PASS2
+         CLC DDDSNAME,PDQDSN3
+         BE  E81PASS3
+* NOT IN THAT BLOCK,GET THE NEXT
+         CLC =AL3(0),PDQNPDQ LAST BLOCK IN PDQ ?
+         BE  E81RETN4        YES,THERE-FORE COULDN'T FIND DSET
+         MVC CALLAREA,PDQNPDQ
+         MVI CALLAREA+3,0
+*
+         B   E81READ1
+E81PASS1 MVC PDQDSNNO,=H'0'
+         B   E81PDQB
+E81PASS2 MVC PDQDSNNO,=H'1'
+         B   E81PDQB
+E81PASS3 MVC PDQDSNNO,=H'2'
+E81PDQB  DS   0H
+* THERE USED TO BE A NOTE FOR JOBQ HERE, NOT NEC NOW              75128
+         ST R1,APDQDIR       AND SAVE IT
+         CLI  VS,C'2'     MVS
+         BNE   E81NMVS2
+* GET SIOT FOR MVS SYSTEMS
+         LH  R1,PDQDSNNO
+         MH  R1,=AL2(PDILEN)
+         LA  R14,PDISIOT1(R1)   GET SIOT ADDRESS LOCN
+         MVC  CALLAREA,0(R14)
+         B   E81GETSI         GO GET THE SIOT
+E81NMVS2 DS   0H
+         MVC CALLAREA,PDQABLK
+         MVI CALLAREA+3,0
+         GETJOBQ PDQDECB,CALLAREA
+* NOW GET THE SIOT AS WELL
+         LH  R1,PDQDSNNO     DATA SET NUMBER
+         MH  R1,=AL2(PDQBLKLN) LENGTH OF BLOCK
+         LA  R1,PDQASIOT(R1)   ABSOLUTE ADDRESS
+         MVC CALLAREA(3),0(R1) SIOT TTR
+         MVI CALLAREA+3,0
+E81GETSI DS    0H
+         GETJOBQ SIOTDECB,CALLAREA
+         MVI ISINPDQ,C'1'
+         JOLRETN
+E81RETN4 DS    0H
+         JOLRETN RC=4
+         DC   80S(*)

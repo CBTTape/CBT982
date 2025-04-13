@@ -1,0 +1,287 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Mozilla SeaMonkey">
+  <title>Pli</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="RIGHT" valign="TOP" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="RIGHT"><font
+ size="5"><u>PLI</u></font><font size="5"><u><span
+ style="font-weight: normal;"> </span></u></font><u>- </u><font
+ size="5"><i><u><span style="font-weight: normal;">Execute Command</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Purpose</h4>
+      </td>
+      <td align="LEFT" valign="TOP">The <span
+ style="font-weight: bold;">PLI</span> command is used to invoke the <span
+ style="font-weight: bold;">PL/1</span> Compiler to convert <span
+ style="font-weight: bold;">PL/1</span> source to object code.&nbsp;
+The object code may be input to the <span style="font-weight: bold;">LINK</span>
+or <span style="font-weight: bold;">LOADGO</span> command and executed.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP"> &nbsp;&nbsp;&nbsp; <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">PLI
+{
+
+      <span style="font-style: italic;">dsid</span> | <span
+ style="font-style: italic;">data-set-name</span> } <span
+ style="font-style: italic;">[ options ]</span> ; </span><br
+ style="font-weight: bold;">
+      </div>
+      <br style="font-weight: bold;">
+where<span style="font-weight: bold;"> <span
+ style="font-style: italic;">options</span> </span>are:<span
+ style="font-weight: bold;"> </span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">PRINT
+&nbsp;&nbsp;&nbsp;
+{
+      <span style="font-style: italic;">data-set-name |
+dsid</span> } | NOPRINT </span><br style="font-weight: bold;">
+      </div>
+      <span style="font-weight: bold;">&nbsp;&nbsp;&nbsp; </span><span
+ style="font-style: italic;">or</span><br style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;"><span
+ style="text-decoration: underline;">SYSOUT &nbsp;&nbsp;&nbsp; *</span>
+| <span style="font-style: italic;">class</span></span><br
+ style="font-weight: bold;">
+      </div>
+      <br style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;DECK
+&nbsp;&nbsp;&nbsp;
+{
+      <span style="font-style: italic;">dsid |
+data-set-name</span> } | NODECK </span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">&nbsp;LIB &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; { <span style="font-style: italic;">dsid |
+data-set-name</span> [ || ... ] } | NOLIB </span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">&nbsp;MDECK | MD { <span
+ style="font-style: italic;">dsid | data-set-nam</span>e } | NOMDECK |
+NMD </span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">&nbsp;OBJ &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; { <span style="font-style: italic;">dsid |
+data-set-name</span> } | NOOBJ </span><br style="font-weight: bold;">
+      </div>
+      <span style="font-weight: bold;">&nbsp;<br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">ASTER
+|
+
+      <span style="text-decoration: underline;">NOASTER </span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">ATTR | A ( <span
+ style="text-decoration: underline;">SHORT</span> | FULL | S | F ) |
+NOATTR | NOA </span><br>
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">{ CHARSET | CS } (48 | 60 |
+EBCDIC | E | BCD | B) </span><br style="font-weight: bold;">
+or<span style="font-weight: bold;">&nbsp;&nbsp;&nbsp; &nbsp;CHAR48 | <span
+ style="text-decoration: underline;">CHAR60 </span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;"><br>
+      <span style="text-decoration: underline;">NOCOMPILE</span> | NOC
+( W | E | S ) </span><br style="font-weight: bold;">
+or<span style="font-weight: bold;">&nbsp;&nbsp;&nbsp; &nbsp;COMPILE | C
+      </span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">CONTROL (<span
+ style="font-style: italic;">password</span>)</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">COUNT | <span
+ style="text-decoration: underline;">NOCOUNT</span> | NCT | CT</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">DUMP | <span
+ style="text-decoration: underline;">NODUMP</span> | DU | NDU </span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">ESD | <span
+ style="text-decoration: underline;">NOESD</span> </span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;"><span
+ style="text-decoration: underline;">EBCDIC</span> | BCD </span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">FLAG (I | W | E | S) | F( I | W
+| E | S) </span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">FLOW (<span
+ style="font-style: italic;">number1, number2</span>) | <span
+ style="text-decoration: underline;">NOFLOW </span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">GONUMBER |<span
+ style="text-decoration: underline;"> NOGONUM</span> | GN | NGN </span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">GOSTMT | <span
+ style="text-decoration: underline;">NOGOSTMT</span> | GS | NGS </span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;"><span
+ style="text-decoration: underline;">INCLUDE</span> | NOINCLUD | INC |
+NINC </span><br style="font-weight: bold;">
+      <span style="font-weight: bold;"><span
+ style="text-decoration: underline;">INSOURCE</span> | NOINSOUR | IS |
+NIS </span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">INTERRUPT | <span
+ style="text-decoration: underline;">NOINTER</span> | INT | NINT </span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">LINECNT (<span
+ style="font-style: italic;">number</span>) | LC(<span
+ style="font-style: italic;">number</span>) </span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">LIST | <span
+ style="text-decoration: underline;">NOLIST </span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">LISTSTMT (<span
+ style="font-style: italic;">number1, number2</span>)</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;"><span
+ style="text-decoration: underline;">LMESSAGE</span> | SMESSAGE | LMSG
+| SMSG</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">MACRO | <span
+ style="text-decoration: underline;">NOMACRO</span> | M | MN</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">MAP | <span
+ style="text-decoration: underline;">NOMAP</span></span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">MARGINI | MI ('<span
+ style="text-decoration: underline;">character</span>')</span><br
+ style="font-weight: bold;">
+or<span style="font-weight: bold;">&nbsp; &nbsp;&nbsp;&nbsp; NOMARGINI
+| NMI</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;"></span><br>
+      <span style="font-weight: bold;">{MARGINS | MAR} ( <span
+ style="font-style: italic;">number1,number2,number3</span> )</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">NEST | <span
+ style="text-decoration: underline;">NONEST</span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">NUMBER | <span
+ style="text-decoration: underline;">NONUMBER</span> | NUM | NONUM</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">OFFSET | <span
+ style="text-decoration: underline;">NOOFFSET</span> | OF | NOF</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">OPT | OPTIMIZE ( 0 | 2 | 3 |
+TIME | <span style="text-decoration: underline;">NOOPT</span> )</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;"><span
+ style="text-decoration: underline;">OPTIONS</span> | NOOPTINS | OP |
+NOP</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;"><span
+ style="text-decoration: underline;">PANEL</span> | NOPANEL</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">REENTRANT | <span
+ style="text-decoration: underline;">NORENT</span> | RENT | NRENT</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">SEQ (<span
+ style="font-style: italic;">number1, number2</span>)</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">SIZE (<span
+ style="font-style: italic;">number | number</span> K)</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;"><span
+ style="text-decoration: underline;">SOURCE</span> | S | NOSOURCE | NS</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">SPACE | NOSPACE | SP | NSP</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;"><span
+ style="text-decoration: underline;">STMT</span> | NOSTMT</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;"><span
+ style="text-decoration: underline;">STORAGE</span> | NOSTORAGE | STG |
+NSTG</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">SYNTAX | NOSYNTAX (W | E | S)</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">TERM | <span
+ style="text-decoration: underline;">NOTERM</span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">XREF (<span
+ style="text-decoration: underline;">SHORT</span> | FULL | S | F)</span><br
+ style="font-weight: bold;">
+      </div>
+      <br style="font-weight: bold;">
+&nbsp;</td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP">
+      <ol>
+        <li><span style="font-weight: normal;">Under <span
+ style="font-weight: bold;">TSO</span>, <span
+ style="font-weight: bold;">SYSOUT</span> defaults to <span
+ style="font-weight: bold;">SYSOUT = %TSOCLASS</span> so that you can
+view the data at the terminal.&nbsp; Otherwise, <span
+ style="font-weight: bold;">SYSOUT</span> defaults to the installation
+defined <span style="font-weight: bold;">SYSOUT</span> class.</span></li>
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">OBJ</span> defaults to a temporary data set
+          <span style="font-weight: bold;">&amp;OBJ</span>.&nbsp; It
+may be referenced by the <span style="font-weight: bold;">DSID OBJ</span>
+for the <span style="font-weight: bold;">LINK</span> command.</span></li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP">
+      <ol>
+      </ol>
+1 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PLI SOURCE (VALIDATE)
+INCLUDE('INSTLN.INCLUDE');<br>
+      <br>
+      <div style="margin-left: 40px;">LINK OBJ LOAD = TEST.LOAD
+(VALIDATE)<br>
+      </div>
+      <div style="margin-left: 120px;">PLILIB;<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;">RUN VALIDATE;<br>
+      </div>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr align="center">
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;">---000---</span><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

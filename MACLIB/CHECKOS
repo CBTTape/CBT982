@@ -1,0 +1,9 @@
+         MACRO
+&L       CHECKOS
+         AIF  (T'AGENDETS EQ 'U').NTCOMP
+&L       L     R14,AGENDETS
+         MVC   DEFSYS-GENDETS(L'DEFSYS,R14),=C'X8 '  INDICATE OSIV/X8
+         MEXIT
+.NTCOMP  ANOP
+&L       MVC   DEFSYS,=CL3'X8'
+         MEND

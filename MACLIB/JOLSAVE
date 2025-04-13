@@ -1,0 +1,85 @@
+         MACRO                                                          JSAVE010
+&NAME    JOLSAVE &CSECT=,&BASE=R11,&SIZE=72,&LTORG=YES,           76200.JSAVE020
+               &PARMS=                                            88036
+         GBLA &REGEQU                                                   JSAVE030
+         LCLA  &A,&A1                                             88036
+         LCLC  &CNAME,&C                                          75128 JSAVE040
+&CNAME   SETC  '&NAME'                                            75128 JSAVE050
+         AIF   ('&NAME' NE '').GOTCNM                             75128 JSAVE060
+&CNAME   SETC  '&CSECT'                                           75128 JSAVE070
+.GOTCNM  ANOP                                                           JSAVE080
+.* SEE IF EQUATES SET UP FOR THIS RUN YET OR NOT                        JSAVE090
+         AIF (&REGEQU NE 0).NOEQU                                       JSAVE100
+R0       EQU   0                                                        JSAVE110
+R1       EQU   1                                                        JSAVE120
+R2       EQU   2                                                        JSAVE130
+R3       EQU   3                                                        JSAVE140
+R4       EQU   4                                                        JSAVE150
+R5       EQU   5                                                        JSAVE160
+R6       EQU   6                                                        JSAVE170
+R7       EQU   7                                                        JSAVE180
+R8       EQU   8                                                        JSAVE190
+R9       EQU   9                                                        JSAVE200
+R10      EQU   10                                                       JSAVE210
+R11      EQU   11                                                       JSAVE220
+R12      EQU   12                                                       JSAVE230
+R13      EQU   13                                                       JSAVE240
+R14      EQU   14                                                       JSAVE250
+R15      EQU   15                                                       JSAVE260
+&REGEQU  SETA  1                                                        JSAVE270
+         AGO   .GENCS                                                   JSAVE280
+.NOEQU   ANOP                                                           JSAVE290
+         LTORG                                                          JSAVE300
+.GENCS   ANOP                                                           JSAVE310
+&CNAME   CSECT                                                          JSAVE320
+&C       SETC  '&CNAME &SYSDATE &SYSTIME'                         88036
+&A       SETA  K'&C                                               88036
+&A1      SETA  ((&A+2)/2)*2+4                                     88036
+         B     &A1.(,R15)      BRANCH AROUND IDENTIFIER           88036
+         DC    AL1(&A),CL&A.'&C' THE IDENTIFIER                   88036
+         STM   R14,R12,12(R13)                                    88036
+         AIF   (N'&BASE EQ 1).ONEBASE                                   JSAVE340
+         AIF   (N'&BASE EQ 2).TWOBASE                                   JSAVE341
+         AIF   (N'&BASE EQ 3).THRBASE                                   JSAVE342
+         MNOTE 16,'*** TOO MANY BASEREGS ***'                           JSAVE343
+         MEXIT                                                          JSAVE344
+.THRBASE ANOP                                                           JSAVE345
+         USING    &CNAME,&BASE(1),&BASE(2),&BASE(3)                     JSAVE346
+         LR    &BASE(1),R15                                             JSAVE347
+         LA    &BASE(2),2048(15)                                        JSAVE348
+         LA    &BASE(2),2048(&BASE(2))                                  JSAVE349
+         LA    &BASE(3),2048(&BASE(2))                                  JSAVE34A
+         LA    &BASE(3),2048(&BASE(3))                                  JSAVE34B
+         AGO   .HOUSE                                                   JSAVE34C
+.TWOBASE ANOP                                                           JSAVE34D
+         USING &CNAME,&BASE(1),&BASE(2)                                 JSAVE350
+         LR    &BASE(1),R15                                             JSAVE360
+         LA    &BASE(2),2048(15)                                        JSAVE370
+         LA    &BASE(2),2048(&BASE(2))                                  JSAVE380
+         AGO   .HOUSE                                                   JSAVE390
+.ONEBASE ANOP                                                           JSAVE400
+         USING &CNAME,&BASE                                             JSAVE410
+         LR    &BASE,R15                                                JSAVE420
+.HOUSE   ANOP
+         AIF   (T'&PARMS EQ 'O').NPARMS                           88036
+&A       SETA  1                                                  88036
+.NXTPRM  ANOP                                                     88036
+&A1      SETA  (&A-1)*4                                           88036
+         L     &PARMS(&A),&A1.(,R1) LOAD PARAMETER                88036
+         AIF   (K'&PARMS(&A+1) EQ 0).NP2                          88036
+         USING &PARMS(&A+1),&PARMS(&A)                            88036
+.NP2     ANOP                                                     88036
+&A       SETA  &A+2                                               88036
+         AIF   (&A LE N'&PARMS).NXTPRM                            88036
+.NPARMS  ANOP                                                     88036
+         AIF   (T'JOLCOM EQ 'U').SCHED                            88036
+         CNOP  0,4  ALIGN ON FULLWORD                                   JSAVE430
+         BAL   R15,JOLSAVER   BRANCH TO JOL SAVE ROUTINE                JSAVE440
+         DC    A(((&SIZE+3)/4)*4)   SAVE SIZE ROUNDED UP                JSAVE450
+         MEXIT                                                    88036
+.SCHED   ANOP                                                     88036
+         CNOP  2,4  ALIGN ON HALFWORD                             88036 JSAVE430
+         L     R1,ASAVER                                          88036
+         BALR  R15,R1         BRANCH TO JOL SAVE ROUTINE                JSAVE440
+         DC    A(((&SIZE+3)/4)*4)   SAVE SIZE ROUNDED UP                JSAVE450
+         MEND                                                           JSAVE460

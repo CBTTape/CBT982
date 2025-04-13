@@ -1,0 +1,4809 @@
+*             REGS
+         AGO   .INCOM                                             J52
+OPERWORK      DATASECT
+#OPR          DC     H'0'
+OPR           DC     CL8' '
+*
+OP1TYPE       DC     C'0'
+*                    /* 0 = Numeric            */
+*                    /* 1 = Special Character      */
+*                    /* 2 = Identifier         */
+*                    /* 3 = Quoted String          */
+*                    /* 16= Error              */
+*                    /* 20= Matrix Entry Number    */
+*                    /* 21= Parameter          */
+*                    /* 23= Token Number of 'lit'  */
+*                    /* 33= X(array) for temp 'lit'*/
+#OP1          DC     H'0'
+OP1           DC     CL253' '          /* For Character Opns */
+         ENTRY #OP1
+OP1BIT        DC     F'0'                  /* For Logical Opns   */
+         ENTRY OP1BIT
+OP1BIN        DC     F'0'                  /* For Logical Opns   */
+OP1DEC        DC     PL8'0'            /* For Arithmetic Ops */
+*
+OP2TYPE       DC     C'0'
+#OP2          DC     H'0'
+OP2           DC     CL253' '          /* For Character Opns */
+         ENTRY #OP2
+OP2BIT        DC     F'0'                  /* For Logical Opns   */
+         ENTRY OP2BIT
+OP2BIN        DC     F'0'                  /* For Logical Opns   */
+OP2DEC        DC     PL8'0'            /* For Arithmetic Ops */
+*
+QUOTEFND      DC     X'0'
+P18LEVEL      DC     H'0'
+         ENTRY P18LEVEL
+P18NEST       DC     X'0'
+         ENTRY P18NEST
+DUMDUM        DC     X'0'
+THISISIF      DC     X'0'
+*TOOHIIND      DC     X'0'
+CONVTNUM      DC     F'0'
+PARSEDEP      DC     H'10'
+OPRL2         DC     CL2' '
+P85WASFN DS      H        SET TO 0 IF FOUND, ELSE 4               87150
+P85TBLPS DS      H        TABLE POSITION TO INSERT AT OR OVERRIDE 87150
+*
+*FUNCSECT      DATASECT         /* Used to detect Function end */
+*      2 Function_last_name  char(8), /* Should save nests of names*/
+FUNCLAST      DC    CL8' '   /* Should save nests of names*/
+FUNCLEVS      DC (10)H'0'           bin fixed,
+FUNCCNTL      DC   H'0'        bin fixed;
+FNRTNADR      DC   A(0)
+FNPARMS       DC   H'0'
+*
+SETDONE       DC   X'0'
+BITANS        DC   F'0'
+DEBUG         DC   H'1'
+*
+*X1           DSECT
+*PARSWORK      DATASECT
+*     2 Parameter_Fields,
+PARMCNTL      DC    H'0'  bin fixed(15),
+         ENTRY PARMCNTL
+*       3 Parm_Str(3)         char(253) var,
+#PARMST1      DC    H'0'
+PARMST1       DC    CL254' '          /* For Character Opns */
+         ENTRY #PARMST1
+#PARMST2      DC    H'0'
+PARMST2       DC    CL254' '          /* For Character Opns */
+         ENTRY #PARMST2
+#PARMST3      DC    H'0'
+PARMST3       DC    CL254' '          /* For Character Opns */
+         ENTRY #PARMST3
+*       3 Parm_Bin(3)         bin fixed,
+PARMBIN1      DC    F'0'
+         ENTRY PARMBIN1
+PARMBIN2      DC    F'0'
+PARMBIN3      DC    F'0'
+*       3 Parm_type(3)        bin fixed(7); /* 0=num, else char string
+PARMTYP1      DC    X'0'
+*        ENTRY PARMTYP1
+PARMTYP2      DC    X'0'
+PARMTYP3      DC    X'0'
+*
+TKNPRTY       DC    X'0'
+*        ENTRY TKNPRTY
+TNUMBER       DC    H'0'
+TEMP1         DC    F'0'
+TEMP2         DC    F'0'
+TEMPBIN       DC    F'0'
+* cvcvcvcvcvc IN JOLCOM
+*#TKN          DC    H'0'
+*TKN           DC    CL254' '
+*TKNTYPE       DC    X'0'
+*TKNCURR       DC    H'0'
+*ICOMMAND      DC    CL8'  '
+*ZERO          DC    F'0'
+*SYMBOLIC      DC    CL8'  '
+*#OP           DC     H'0'
+*OP            DC     CL253' '          /* For Character Opns */
+I             DC     H'0'
+J             DC     H'0'
+K             DC     X'0'
+*BLANKS        DC    CL250' '
+*#WORK         DC     H'0'
+*WORK          DC     CL253' '          /* For Character Opns */
+*DBL           DC     D'0'
+*PSTMT         DC     CL4' '
+*SYSUID        DC     CL8' '
+*P85NO1        DC     PL8'0'
+*P85NO2        DC     PL8'0'
+*
+*
+*
+*    2 Rators,
+RATORCNT      DC    H'0'
+         ENTRY RATORCNT
+*      3 Rator(parse_depth)   char(10) var,
+#RATOR        DC    H'0'
+RATOR         DC    CL14' '          /* For Character Opns */
+         ENTRY #RATOR
+RATOR1        EQU   RATOR
+#RATOR2       DC    H'0'
+RATOR2        DC    CL14' '          /* For Character Opns */
+         ENTRY #RATOR2
+              DC    25CL16' '      SPACE FOR 25 MORE
+RATORPRT      DC    27X'0'
+         ENTRY RATORPRT
+*    2 Rands,
+RANDCNTL      DC    H'0'
+*      3 Rand_Type(parse_depth) bin fixed(7),  /* See TKNTYPE */
+RANDTYPE      DC    27H'0'
+         ENTRY RANDTYPE
+*
+*      3 Rand(parse_depth)    char(253) var,
+#RAND         DC    H'0'
+RAND          DC    CL253' '         /* For Character Opns */
+         ENTRY #RAND
+#RAND2        DC    H'0'
+RAND2         DC    CL253' '         /* For Character Opns */
+         ENTRY #RAND2
+              DC    25CL255' '      SPACE FOR 25 MORE
+.INCOM   ANOP                                                     J52
+         PRINT OFF                                                J50
+       COPY     JOLCOM
+         PRINT ON                                                 J50
+*
+*
+*
+*X2           DSECT
+*       genfunc (ABS,1)
+*       genfunc (BITAND,2)
+*       genfunc (BITOR,2)
+*       genfunc (BITXOR,2)
+*
+*
+*X3           DSECT
+UJP18PAR JOLSAVE CSECT=UJP18PAR
+*
+*
+*       WTO     'PARSE Entered'
+         B     P85NOER           ************* remove next *****  J52
+          $CALL UJS20REP,#TKNSTRG                 REPLACE SYMBOLICJ52
+*                                                 PARAMETERS      J52
+           MVC #TKNSTRG(256),#WORK                                J52
+           MVC #TKNSTRG+256(256),#WORK+256                        J52
+           MVC #TKNSTRG+512(256),#WORK+512                        J52
+           MVC #TKNSTRG+768(232),#WORK+768                        J52
+           SPACE 2
+          $CALL UJSPLIT        SPLIT INTO TOKENS                  J52
+         LTR   R15,R15        DID STMT SPLIT UP OK INTO TOKENS ?  J52
+         BZ    P85NOER                                            J52
+         JOLERR 477,'ERROR AFTER SYMBOLICS REPLACED ''',#TKNSTRG, J52  *
+               ''''                                               J52
+*85NOER L       R7,=V(OPERWORK)      CSECT
+*85NOER L       R7,=V(OPERWORK)      CSECT
+P85NOER L       R7,AP18WRK           Address OPERWORK in Jolcom
+        USING   OPERWORK,R7
+*       L       R7,=V(FUNCSECT)      CSECT
+*       USING   FUNCSECT,R7
+*       L       R6,=V(PARSWORK)      CSECT
+*       USING   PARSWORK,R6
+        MVI     QUOTEFND,0
+*
+*
+        MVC     P18LEVEL,=H'0'
+        MVC     RATORCNT,=H'1'
+        MVC     RANDCNTL,=H'1'
+        MVI     RATOR1,C' '
+        MVC     RATOR1(L'RATOR1-1),RATOR
+*       CLEAR   RATOR1
+        MVI     RATORPRT,0
+*
+*       CLEAR   RND1
+        MVC     #RAND,=H'0'
+        MVI     RAND,C' '
+        MVC     RAND(L'RAND-1),RAND
+*       };
+*
+*       FUNCCNTL = 1;
+*
+        MVC     FUNCCNTL,=H'1'
+*
+*       Function_Levels[Function_Cntl] = -1;
+*
+        LH      R1,FUNCCNTL
+        SLL     R1,1
+        LH      R0,=H'-1'
+        STH     R0,FUNCLEVS(R1)
+*       MVC     FUNCLEVS+2,=H'-1'
+*
+*
+*       Tnumber = 0;
+*
+*       MVI     Tnumber,0
+*
+        MVC     TKNCURR,=H'1'
+*
+*       i = gettkn(TKNcurr);
+*
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+*       WTO     'GOT TOKEN'
+*       WTO     TKN,20
+*
+*
+*       CLEAR    ICOMMAND
+        MVC      ICOMMAND,BLANKS
+*
+*
+        MVC     ICOMMAND,TKN
+*
+        MVI     SETDONE,0
+*
+*   if (this_is_an_if) {
+*
+        CLI     THISIF,0
+        BE      P18T#SET
+*
+        MVI     SETDONE,1
+        B       P18SKP01               Skip IF or SET
+*    else
+*    if (icommand[0] == "SET     "
+*
+P18T#SET CLC     =C'SET ',ICOMMAND
+        BNE     P18NOSKP
+*       i = gettkn(TKNcurr);
+*
+P18SKP01 DS     0H
+*       GETTKN  TKNCURR                Skip IF or SET
+         B     *+4                                                J51
+         B     *+4                                                J51
+        STH     R1,TKNCURR
+*       WTO     'GOT TOKEN'
+*       WTO     TKN,20
+P18NOSKP DS     0H
+*
+*       while (*TKN != '\0')
+*       {
+        B       GOTNEXT                go to dowhile start
+STARTWHL  DS     0H                    if do is true, we come here
+*
+*       if (TKN[0] == '(') goto  topr;
+*
+        CLI     TKN,C'('               A=(8+7) type
+        BE      TOPR
+*
+*       if ((TKN[0] == '+')
+*       ||      (TKN[0] == '-')
+*       ||      (TKN[0] == '^'))
+*
+        CLI     TKN,C'+'
+        BE      ISINFIX
+        CLI     TKN,C'-'
+        BE      ISINFIX
+        CLI     TKN,C'¬'
+        BNE     NOTINFIX
+ISINFIX DS     0H
+*
+*       B       #15#1274
+*       MVC     #OP(3),=H'1',C'0'
+        MVC     #OP,=H'1'                370 Sim Bug
+        MVC     OP(2),=C'0 '
+*
+#15#1274  DS     0H
+*
+*       WTO     'Pushing Infix Rand'
+*       WTO     OP,5
+        LA      R0,0
+        LA      R1,#OP
+        L       R15,=V(PUSHRAND)
+        BALR    R14,R15
+*       goto topr;
+*
+        B       TOPR
+NOTINFIX  DS     0H
+*
+*       }
+*
+*       if ((TKNtype == 0)                Number ?
+*       || (TKNtype == 2)                 Name   ?
+*       || (TKNtype == 3))                Literal?
+*
+        CLI     TKNTYPE,0
+        BE      P18OK1
+        CLI     TKNTYPE,2
+        BE      P18OK1
+        CLI     TKNTYPE,3
+        BE      P18OK1
+        B       P18NUMEX
+P18OK1  DS     0H
+*
+*       {
+*       if (TKNtype == 3)                 Literal ?
+*
+*cvc    CLI     TKNTYPE,3
+*cvc    BNE     #15#1418
+*fix - where is it going to?
+#15#1418  DS     0H
+*
+*       {
+         MVC    #OP(L'OP),#TKN
+*       PUSHRAND(op, dv_op.curr_len, TKNtype);
+*       WTO     'Pushing Rand'
+*       WTO     OP,79
+        IC      R0,TKNTYPE
+        LA      R1,#OP
+        L       R15,=V(PUSHRAND)
+        BALR    R14,R15
+*
+*
+*       if (TKNtype == 2) {               /* Identifier ? */
+*
+        CLI     TKNTYPE,2
+        BNE     #15#1706
+*
+*       {
+         MVC    #OP(L'OP),#TKN
+*        };
+*       i = gettkn(TKNcurr);
+*
+        GETTKN  TKNCURR                   Yes, get next token
+        STH     R1,TKNCURR
+        STH     R1,I
+         CLI   TKN,C'%'                                           J52
+         BNE   NOPC1                                              J52
+         MVC   TKN,TKN+1                                          J52
+         LH    R15,#TKN                                           J52
+         BCTR  R15,0                                              J52
+         STH   R15,#TKN                                           J52
+NOPC1    DS    0H                                                 J52
+*       WTO     'GOT TOKEN'
+*       WTO     TKN,20
+*
+*
+*       if (TKN[0] == '(') {
+*
+        CLI     TKN,C'('                  Function or array start ?
+        BNE     #15#1682
+*
+         MVC    FUNCLAST,OP               Save name for errors
+*        WTO    'FUNCTION Found'
+*
+*       Function_Cntl = Function_Cntl + 1;
+*
+        LH      R15,FUNCCNTL
+        LA      R15,1(R15)
+        STH     R15,FUNCCNTL
+*
+*       Function_Levels[Function_Cntl] = p18level;
+*
+        SLL     R15,1
+        LH      R1,P18LEVEL
+        STH     R1,FUNCLEVS(R15)
+*
+*       p18level = p18level + 1;
+*
+        LA      R1,1(R1)
+        STH     R1,P18LEVEL
+*       WTO 'Incrementing P18LEVEL'
+*
+*       i = PUSHRATR(TKN, dv_TKN.curr_len);
+*
+*       WTO     'Pushing Rator'
+*       WTO     TKN,79
+        LA      R1,#TKN
+        CALL    PUSHRATR
+*
+*       TKNPRTY = p18level * 10 + 1;
+*
+        LH      R1,P18LEVEL
+        MH      R1,=H'10'
+        LA      R1,1(R1)
+        STC     R1,TKNPRTY
+*       WTO     'TKNPRTY  level*10+1'
+*
+*       i = PUSHRATR(",",1);
+*
+*       WTO     'Pushing Rator'
+*       WTO     'COMMA'
+*       LA      R1,=H'1',C','                 370 simulator bug
+        LA      R1,=X'00026B40'
+        CALL    PUSHRATR
+*
+*       i = gettkn(TKNcurr);
+*
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+        STH     R1,I
+         CLI   TKN,C'%'                                           J52
+         BNE   NOPC2                                              J52
+         MVC   TKN,TKN+1                                          J52
+         LH    R15,#TKN                                           J52
+         BCTR  R15,0                                              J52
+         STH   R15,#TKN                                           J52
+NOPC2    DS    0H                                                 J52
+*       WTO     'GOT TOKEN'
+*       WTO     TKN,20
+*
+*       if (TKN[0] == ')')
+*
+        CLI     TKN,C')'
+        BNE     P18NCLS1
+*
+*       {
+*       PushRand("", 0, 0);
+*
+*       WTO     'Pushing Rand'
+*       WTO     'Pushing BLANK'
+        LA      R1,=X'000040'
+        LA      R0,0
+        CALL    PUSHRAND
+*
+*       goto no_parms;
+*
+        B       NOPARMS
+P18NCLS1  DS     0H
+*
+*       }
+*       goto Got_next;
+*
+        B       GOTNEXT
+#15#1682  DS     0H
+*
+*       }
+*
+*       goto topr;
+*
+        B       TOPR
+#15#1706  DS     0H
+*
+*       }
+*       i = gettkn(TKNcurr);
+*
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+        STH     R1,I
+         CLI   TKN,C'%'                                           J52
+         BNE   NOPC3                                              J52
+         MVC   TKN,TKN+1                                          J52
+         LH    R15,#TKN                                           J52
+         BCTR  R15,0                                              J52
+         STH   R15,#TKN                                           J52
+NOPC3    DS    0H                                                 J52
+*       WTO     'GOT TOKEN'
+*       WTO     TKN,20
+*
+*       }
+*
+        B       TOPR
+P18NUMEX  DS     0H
+*
+*
+        JOLERR  300,'*** Expected Name or Number not:- ''',#TKN,''''
+*       WTO     TKN,50
+        JOLRETN RC=4
+TOPR      DS     0H
+*
+*       }
+*       topr:
+*
+*       if ((TKNtype != 1)
+*       &&  (*TKN != '\0'))
+*
+        CLI     TKNTYPE,1
+        BE      #15#2090
+        CLI     TKN,C' '
+        BE      #15#2090
+*
+        JOLERR  301,'*** Expected Operator not:-''',#TKN,''''
+*       WTO     TKN,80
+        JOLRETN RC=4
+*#15#2090  DS     0H
+        B GOTNEXT
+*
+*
+*       else {
+*loop1:
+LOOP1   DS    0H
+#15#2090  DS     0H
+*
+*       p18nest = 0;
+*
+        MVI     P18NEST,0
+*
+*       if (TKN[0] == '=')
+*
+        CLI     TKN,C'='
+        BNE     #15#2258
+*
+*       {
+*       if (SETDONE) p18nest = 5;
+*
+        CLI     SETDONE,0
+        BE      #15#2162
+        MVI     P18NEST,5
+        B       #15#2234
+#15#2162  DS     0H
+*
+*
+*       else
+*          MVC   #TKN(4),=H'2',C':='     370 Sim Bug
+           MVC   #TKN(2),=H'2'
+           MVC    TKN(2),=C':='
+*       p18nest = 1;
+*
+        MVI     P18NEST,1
+*
+*       SETDONE = 1;
+*
+        MVI      SETDONE,1
+#15#2234  DS     0H
+*
+*       }
+*       goto Got_Prioritity;
+*
+        B       GOTPRTY1
+#15#2258  DS     0H
+*
+*       }
+*
+*       if (TKN[0] == ',')
+*
+        CLI     TKN,C','
+        BNE     FINDPREC
+*
+*       {
+*
+*       if ((*Rator[Rator_Cntl] == ',')
+*       || (*Rator[Rator_Cntl] == '('))
+*
+        LH      R1,RATORCNT
+        MH      R1,=AL2(L'RATOR+L'#RATOR)
+        LA      R15,RATOR(R1)
+        CLI     0(R15),C','
+        BE      PUSHCOM1
+        CLI     0(R15),C'('
+        BNE     #15#2354
+PUSHCOM1  DS     0H
+*
+*       {
+*Push_Comma:
+*       i = PUSHRATR(",",1);
+*
+*       WTO     'Pushing Rator'
+*       WTO     'COMMA'
+        LA      R1,=X'00016B40'         a ','
+        CALL    PUSHRATR
+*
+*       goto Get_next;
+*
+        B       GETNEXT1
+#15#2354  DS     0H
+*
+*       }
+*
+*       TKN_prty = p18level * 10 + 1;
+*
+        LH      R1,P18LEVEL
+        MH      R1,=H'10'
+        LA      R1,1(R1)
+        STC     R1,TKNPRTY
+*
+        CALL    TUNSTACK
+*
+*       goto Push_Comma;
+*
+        B       PUSHCOM1
+*
+*       else {
+*
+         PRINT DATA                                               J51
+XPRTY    DC C'**/ * - + ||&& ->. : , : = >=<=> < | && ¬<¬>¬=¬ '
+         DS    0H                                                 J51
+NUM#PRTY DC C' 9 8 8 7 7 6 4 9 8 8 1 1 5 5 5 5 5 3 4 5 5 5 2 '
+         FIX ' ABOVE TABLE'                                       J50
+*
+*
+*       static char  *temp_posn;
+*       static char   temp_TKN[3];
+*
+FINDPREC  DS     0H
+        MVI     P18NEST,0
+*
+*       if (TKN[0]!=0)
+*
+        CLI     TKN,C' '
+        BE      #15#2522
+        LH      R1,TKN
+        LA      R14,XPRTY
+FINDOP  CH      R1,0(R14)
+        BE      GOTPRTY
+        LA      R14,2(R14)
+        C       R14,=A(NUM#PRTY)
+        BH      #15#2522                ; Hmm, didn't find Operator
+        B       FINDOP
+*
+*       {   p18nest=temp_posn-Prty;
+*
+GOTPRTY S       R14,=A(XPRTY)
+        STC     R14,P18NEST
+*
+*       temp_posn=&num_Prty[p18nest];
+*
+        LH      R1,NUM#PRTY(R14)
+*
+*       p18nest=*temp_posn -'0';
+*
+        SH      R1,=C' 0'               Convert to Number
+        STC     R1,P18NEST
+#15#2522  DS     0H
+*
+*       }
+*
+*       if (p18nest != 0) goto Got_Prioritity;
+*
+        CLI     P18NEST,0
+        BNE     GOTPRTY1
+*
+*       if (TKN[0] == '(') {
+*
+        CLI     TKN,C'('
+        BNE     #15#2618
+*
+*       p18level = p18level + 1;
+*
+        LH      R1,P18LEVEL
+        LA      R1,1(R1)
+        STH     R1,P18LEVEL
+*       WTO 'Incrementing P18LEVEL'
+*
+*       goto Get_next;
+*
+        B       GETNEXT1
+#15#2618  DS     0H
+*
+*       }
+*
+*       if (TKN[0] == ')')
+*
+        CLI     TKN,C')'
+        BNE     #15#2930
+*       WTO    'FOUND BRACKET'
+        LH      R1,FUNCCNTL
+        LH      R0,P18LEVEL
+        LH      R14,FUNCLEVS(R1)
+*       HALT
+NOPARMS   DS     0H
+*
+*       {
+*no_parms:
+*
+*       p18level = p18level - 1;
+*
+        LH      R1,P18LEVEL
+        SH      R1,=H'1'
+        STH     R1,P18LEVEL
+*
+*       if (p18level < 0) {
+*
+        LTR     R1,R1
+        BNM     #15#2714                                          J52
+*
+        JOLERR  332,'Too Many '')'''
+        JOLRETN RC=4
+#15#2714  DS     0H
+*
+*       }
+*
+*       if (Function_Levels[Function_Cntl] == p18level) {
+*
+        LH      R1,FUNCCNTL
+        SLL     R1,1
+        LH      R14,FUNCLEVS(R1)
+        CH      R14,P18LEVEL
+        BNE     #15#2906
+*
+*       Function_Cntl = Function_Cntl - 1;
+*
+        LH      R1,FUNCCNTL
+        SH      R1,=H'1'
+        STH     R1,FUNCCNTL
+*
+*       TKN_prty = 0;
+*
+        MVI     TKNPRTY,0
+*
+*       Parm_Cntl = 0;
+*
+        MVC     PARMCNTL,ZERO
+*
+*       TUNSTACK();
+*
+        CALL    TUNSTACK
+*
+*Unstack_Parms:
+*
+P18UNSTK  DS     0H
+*       i = PopRator();
+*
+        CALL    POPRATOR
+        LTR     R15,R15
+        BNZ     P18RET4
+*
+*       i = PopRand1();
+*
+        CALL    POPRAND1
+        LTR     R15,R15
+        BNZ     P18RET4
+*
+*       op2=',';
+*
+*       MVC     #OP2(3),=H'1',C','        370 Sim Bug
+        MVC     #OP2(2),=H'1'
+        MVC      OP2,=C', '
+*
+*       op2type = 21;
+*
+        MVI     OP2TYPE,21
+*
+*
+*       Add_triple();
+*
+        CALL    ADDTRIPL
+        LTR     R15,R15
+        BNZ     P18RET4
+*
+*
+*       if (*opr != '(') goto Unstack_Parms;
+*
+        CLI     OPR,C'('
+        BNE     P18UNSTK
+#15#2906  DS     0H
+*
+*       }
+*       i = gettkn(TKNcurr);
+*
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+        STH     R15,I
+         CLI   TKN,C'%'                                           J52
+         BNE   NOPC4                                              J52
+         MVC   TKN,TKN+1                                          J52
+         LH    R15,#TKN                                           J52
+         BCTR  R15,0                                              J52
+         STH   R15,#TKN                                           J52
+NOPC4    DS    0H                                                 J52
+*       WTO     'GOT TOKEN'
+*       WTO     TKN,20
+*
+*       goto topr;
+*
+        B       TOPR
+#15#2930  DS     0H
+*
+*       if (*TKN != '\0')
+*
+        CLI     TKN,C' '
+        BE      GOTPRTY1
+*
+        JOLERR  334,'Invalid Operator:- ''',#TKN,''''
+*       HALT
+        JOLRETN RC=4
+*       }
+*
+* Got_Prioritity:
+GOTPRTY1  DS     0H
+*       TKN_prty = p18level * 10 + p18nest;
+*
+*       WTO     'TKNPRTY  level*10+1'
+        LH      R1,P18LEVEL
+        MH      R1,=H'10'
+        SR      R15,R15
+        IC      R15,P18NEST
+        AR      R1,R15
+        STC     R1,TKNPRTY
+*
+* Unstack:
+*       TUNSTACK();
+*
+        CALL    TUNSTACK
+        LTR     R15,R15
+        BNZ     P18RET4
+*
+*       if (*TKN != '\0')
+*
+        CLI     TKN,C' '
+        BE      GOTNEXT
+*
+*       {
+*       i = PUSHRATR(TKN, dv_TKN.curr_len);
+*
+*       WTO     'Pushing Rator'
+*       WTO     TKN,70
+        LA      R1,#TKN
+        CALL    PUSHRATR
+        LTR     R15,R15
+        BNZ     P18RET4
+GETNEXT1  DS     0H
+*
+*       Get_next:
+*       i = gettkn(TKNcurr);
+*
+        GETTKN  TKNCURR
+        STH     R1,TKNCURR
+        STH     R1,I
+         CLI   TKN,C'%'                                           J52
+         BNE   NOPC5                                              J52
+         MVC   TKN,TKN+1                                          J52
+         LH    R15,#TKN                                           J52
+         BCTR  R15,0                                              J52
+         STH   R15,#TKN                                           J52
+NOPC5    DS    0H                                                 J52
+*       WTO     'GOT TOKEN'
+*       WTO     TKN,20
+GOTNEXT   DS     0H
+TESTWHL   DS     0H
+        CLI     TKN,C' '
+        BE      ##18
+        B       STARTWHL
+##18  DS     0H
+*
+*       Got_next:*
+*       }
+*
+*       if (p18level > 0) {
+*
+        CLC     P18LEVEL,=H'0'
+        BNH     #15#3266
+*
+        JOLERR  305,'Too Many ''('''
+        JOLRETN RC=4
+#15#3266  DS     0H
+*
+*       }
+*
+*       if ((Rator_Cntl != 1)
+*       || (RANDCNTL != 2)) {
+*
+        CLC     RATORCNT,=H'1'
+        BE      P18TCNTL
+        JOLERR  307,'Too Many Operators'
+P18TCNTL CLC     RANDCNTL,=H'2'
+        BE      #15#3386
+        JOLERR  306,'Too Many Operands'
+*       HALT
+*
+*       }
+*bad_return:;
+*       return 4;
+*
+P18RET4   DS     0H
+#15#3362  DS     0H
+        JOLRETN  RC=4
+#15#3386  DS     0H
+*
+        JOLRETN  RC=0
+        LTORG
+*
+*
+*
+*
+XX4           DSECT
+         JOLSAVE    CSECT=UJP18GP1
+         ORG   UJP18GP1                                           J50
+GETPARM1 EQU        *
+         ENTRY GETPARM1                                           J50
+         ORG
+*
+* NOTE: On entry, R1 = 1 if a NUMBER needed
+*
+        LR      R9,R1              Save the number required indictor
+*
+*       if (*Parm_Str[1] == '\'')
+*
+        CLI     PARMST1,C''''
+        BNE     NQU1
+*
+        DROPQUSR  #PARMST1
+        JOLRETN   RC=0
+NQU1    DS      0H
+*
+*  Try for a number.
+*
+*  We might be trying to get a number for this type of statement:
+*
+*       no=1;
+*       a=substr(day,no,4);
+*
+*  So, if the parameter 'num' is set, it means that we really
+*   need a number.                                                J50
+*  In this case, if is is numberic, we convert and return.
+*
+*  If the parameter is a symbolic, we try to find it, and then convert
+*  to a number.
+*
+*  Clear.  I hope so - to me too!
+*
+*
+*
+*  if (isdigit(Parm_Str[1][0])  || Parm_Str[1][0] == '-')
+*
+        TNUM    #PARMST1
+        LTR     R15,R15
+        BZ      ISNUM1
+*
+*       getsym(Parm_Str[1]);
+*
+        LA      R1,#PARMST1
+        CALL    GETSYM
+        FIX     '#PARMST1'
+        MVC     #PARMST1(L'PARMST1),#OP
+*  if (isdigit(Parm_Str[1][0])  || Parm_Str[1][0] == '-')
+        TNUM    #PARMST1
+        LTR     R15,R15
+        BZ      ISNUM1
+        LTR     R9,R9        Is a NUMBER PARAMETER NEEDED ?
+        BZ      ISNUM1
+   JOLERR  337,'Characters Found Instead of NUMBERs in Expression'
+        JOLRETN RC=0
+*
+ISNUM1  DS      0H
+*
+        ST      R1,CONVTNUM
+        ST      R1,PARMBIN1
+        JOLRETN RC=0
+        LTORG
+*
+*       void         get_parm2(int num)
+*
+*
+XX5           DSECT
+         JOLSAVE    CSECT=UJP18GP2
+         ORG   UJP18GP2                                           J50
+GETPARM2 EQU        *
+         ENTRY GETPARM2                                           J50
+         ORG
+*
+* NOTE: On entry, R1 = 1 if a NUMBER needed
+*
+        LR      R9,R1              Save the number required indictor
+*
+*void         get_parm2(int num)   /* Function Get Function Parameter 2
+*{  char *conv_code;
+*  long      converted_num;
+*  char     *errpos;
+*  int       i;
+*
+*   if (*Parm_Str[2] == '\'')
+*   {
+*       dropquotes(Parm_Str[2]);
+*       return ;
+*   }
+*
+*  Try for a number.
+*
+*  We might be trying to get a number for this type of statement:
+*
+*       no=2;
+*       a=substr(day,no,4);
+*
+*  So, if the parameter "num" is set, it means that we really need a no
+*  In this case, if is is numberic, we convert and return.
+*
+*  If the parameter is a symbolic, we try to find ir, and then convert
+*  to a number.
+*
+*  Clear.  I hope so - to me too!
+*
+*/
+*
+*  if (isdigit(Parm_Str[2][0])  || Parm_Str[2][0] == '-')
+*      goto isnum;
+*
+** Not a number, so get the symbolic. */
+*
+*  getsym(Parm_Str[2]);
+*  cpy(Parm_Str[2] , op);
+*
+*  if (isdigit(Parm_Str[2][0])  || Parm_Str[2][0] == '-')
+*      goto isnum;
+*
+*  if (num !=0)
+*  {   conv_err();
+*      return;
+*  }
+*
+*isnum:
+*  converted_num=strtol(Parm_Str[2], &errpos,10);
+*  if (*errpos == NULL)                              /*  numeric  */
+*  {
+*     Parm_Bin[2]=converted_num;
+*     return;
+*  }
+*
+** Not numeric, and maybe it should be.  */
+*
+*  if (num!=0)
+*  {
+*      conv_err();
+*      Parm_Bin[2]=0;
+*  }
+*
+* /* not lit, or number, so get the value of the symbolic */
+*}
+*
+        CLI     PARMST2,C''''
+        BNE     NQU2
+        DROPQUSR #PARMST2
+        JOLRETN  RC=0
+NQU2    DS     0H
+        TNUM    #PARMST2
+        LTR     R15,R15
+        BZ      ISNUM2
+        LA      R1,#PARMST2
+        CALL    GETSYM
+        FIX 'GETSYM   #PARMST2'
+MAXL@OP DS   0H
+        MVC     #PARMST2(L'PARMST2),#OP
+        TNUM    #PARMST2
+        LTR     R15,R15
+        BZ      ISNUM2
+#5#266  DS      0H
+        LTR     R9,R9        Is a NUMBER PARAMETER NEEDED ?
+        BZ      ISNUM2
+NOTNUM2 DS      0H
+   JOLERR  318,'Characters Found Instead of NUMBERs in Expression'
+        SR      R1,R1
+        ST      R1,PARMBIN2
+        JOLRETN RC=4
+ISNUM2  DS      0H
+        ST      R1,PARMBIN2
+        JOLRETN  RC=0
+#5#362  DS      0H
+*
+*       }
+*       if (num!=0)
+*
+        LTR     R9,R9        Is a NUMBER PARAMETER NEEDED ?
+        BNZ     NOTNUM2
+        SR      R1,R1
+        ST      R1,PARMBIN2
+        JOLRETN RC=0
+        LTORG
+*
+*
+*       void         get_parm3(int num)
+*
+* new, done on mainframe, oct 29, 1991                            J51
+* copy of getparm2                                              J51
+*
+         JOLSAVE    CSECT=UJP18GP3
+         ORG   UJP18GP3                                           J50
+GETPARM3 EQU        *
+         ENTRY GETPARM3                                           J50
+         ORG
+*
+* NOTE: On entry, R1 = 1 if a NUMBER needed
+*
+        LR      R9,R1              Save the number required indictor
+*
+*void         get_parm3(int num)   /* Function Get Function Parameter 3
+*{  char *conv_code;
+*  long      converted_num;
+*  char     *errpos;
+*  int       i;
+*
+*   if (*Parm_Str[3] == '\'')
+*   {
+*       dropquotes(Parm_Str[3]);
+*       return ;
+*   }
+*
+*  Try for a number.
+*
+*  We might be trying to get a number for this type of statement:
+*
+*       no=2;
+*       a=substr(day,no,4);
+*
+*  So, if the parameter "num" is set, it means that we really need a no
+*  In this case, if is is numberic, we convert and return.
+*
+*  If the parameter is a symbolic, we try to find ir, and then convert
+*  to a number.
+*
+*  Clear.  I hope so - to me too!
+*
+*/
+*
+*  if (isdigit(Parm_Str[3][0])  || Parm_Str[3][0] == '-')
+*      goto isnum;
+*
+** Not a number, so get the symbolic. */
+*
+*  getsym(Parm_Str[3]);
+*  cpy(Parm_Str[3] , op);
+*
+*  if (isdigit(Parm_Str[3][0])  || Parm_Str[3][0] == '-')
+*      goto isnum;
+*
+*  if (num !=0)
+*  {   conv_err();
+*      return;
+*  }
+*
+*isnum:
+*  converted_num=strtol(Parm_Str[3], &errpos,10);
+*  if (*errpos == NULL)                              /*  numeric  */
+*  {
+*     Parm_Bin[3]=converted_num;
+*     return;
+*  }
+*
+** Not numeric, and maybe it should be.  */
+*
+*  if (num!=0)
+*  {
+*      conv_err();
+*      Parm_Bin[3]=0;
+*  }
+*
+* /* not lit, or number, so get the value of the symbolic */
+*}
+*
+        CLI     PARMST3,C''''
+        BNE     NQU3
+        DROPQUSR #PARMST3
+        JOLRETN  RC=0
+NQU3    DS     0H
+        TNUM    #PARMST3
+        LTR     R15,R15
+        BZ      ISNUM3
+        LA      R1,#PARMST3
+        CALL    GETSYM
+        FIX 'GETSYM   #PARMST3'
+        MVC     #PARMST3(L'PARMST3),#OP
+        TNUM    #PARMST3
+        LTR     R15,R15
+        BZ      ISNUM3
+*#5#366  DS     0H
+        LTR     R9,R9        Is a NUMBER PARAMETER NEEDED ?
+        BZ      ISNUM3
+NOTNUM3 DS      0H
+   JOLERR  355,'Characters Found Instead of NUMBERs in Expression'
+        SR      R1,R1
+        ST      R1,PARMBIN3
+        JOLRETN RC=4
+ISNUM3  DS      0H
+        ST      R1,PARMBIN3
+        JOLRETN  RC=0
+#5#363  DS      0H
+*
+*       }
+*       if (num!=0)
+*
+        LTR     R9,R9        Is a NUMBER PARAMETER NEEDED ?
+        BNZ     NOTNUM3
+        SR      R1,R1
+        ST      R1,PARMBIN3
+        JOLRETN RC=0
+        LTORG
+*
+*
+*       void         PushRand(char *str, int len_str, char strtype)
+*
+*86   1   0 PUSHRAND:PROC (STRING,TYPE);
+*
+*87   2   0 DCL STRING                   CHAR(253) VAR;
+*88   2   0 DCL TYPE                     BIN FIXED(7);
+*
+*
+*
+*
+PUSHRPRM DSECT
+RSTRADDR DS    A
+RSTRLEN  DS    H
+RSTRTYPE DS    C
+XX6           DSECT
+         JOLSAVE    CSECT=UJP18PSR
+         ORG   UJP18PSR                                           J50
+PUSHRAND EQU        *
+         ENTRY PUSHRAND                                           J50
+         ORG
+*
+* R1 points to the string address, R0 contains the type
+*
+         LR      R9,R1
+         LR      R10,R0
+*        USING   PUSHRPRM,R9
+*       {
+*       static int temp_len;
+*
+*       if (RANDCNTL > 10)
+*
+        CLC     RANDCNTL,=H'10'
+        BL      #6#98
+        JOLERR  309,'Too Many Operands - PushRand'
+        JOLRETN 4
+        B       #6#170
+#6#98   DS      0H
+*       else {
+*       RANDCNTL = RANDCNTL + 1;
+*
+        LH      R1,RANDCNTL
+        LA      R1,1(R1)
+        STH     R1,RANDCNTL
+*       temp_len = len_str;
+        LH      R15,0(R9)       Get string length
+*
+*       if (temp_len  >         dv_Rand [1].max_len)
+*
+        CH      R15,=AL2(L'RAND+2)
+        BL      #6#146
+*
+*       temp_len  =     dv_Rand [1].max_len-1;
+*
+        LA      R15,L'RAND
+#6#146  DS      0H
+*
+*
+*       memcpy(dv_Rand [RANDCNTL].str_addr ,str,temp_len+1);
+*
+*94   2   0     RAND(RAND_CNTL)=STRING;
+         LH     R8,RANDCNTL
+         MH     R8,=AL2(L'RAND+2)
+         LA     R8,#RAND(R8)              Address the right whole
+         STH    R15,0(R8)                 Save length
+         MVC    2(L'RAND,R8),2(R9)        Shift the string
+*
+*95   2   0     RAND_TYPE(RAND_CNTL)=TYPE;
+*       Rand_Type[RANDCNTL] = strtype;
+*
+         LH     R1,RANDCNTL
+         LA     R1,RANDTYPE(R1)
+*        IC     R14,RSTRTYPE
+         STC    R10,0(R1)
+*
+*       dv_Rand [RANDCNTL].curr_len =temp_len;
+*
+#6#170   DS     0H
+*
+*
+        JOLRETN RC=0
+        LTORG
+*       }
+*
+*
+*
+*       int          PopRand1(void)
+*
+XX7           DSECT
+*        JOLSAVE  CSECT=POPRAND1
+         JOLSAVE    CSECT=UJP18PO1
+         ORG   UJP18PO1                                           J50
+POPRAND1 EQU        *
+         ENTRY POPRAND1                                           J50
+         ORG
+*
+*        WTO     'POPRAND1 Entered'
+*       {
+*
+*       if (RANDCNTL < 1) {
+*
+        CLC     RANDCNTL,=H'1'
+        BNL     #7#122
+*
+*
+        JOLERR  310,'Too Few Operands - PopRand1'
+        JOLRETN RC=4
+*
+*       else {
+*       {
+*
+*103   2   1         OP1=RAND(RAND_CNTL);
+#7#122   DS     0H
+         LH     R1,RANDCNTL
+         MH     R1,=AL2(L'RAND+2)
+         LA     R15,#RAND(R1)               Get address of right hole
+         MVC    #OP1(L'OP1+2),0(R15)
+*
+*
+*104   2   1         OP1TYPE=RAND_TYPE(RAND_CNTL);
+*       op1type = Rand_Type[RANDCNTL];
+         LH     15,RANDCNTL
+         IC     10,RANDTYPE(15)
+         STC    10,OP1TYPE
+*
+*
+*105   2   1         RAND_CNTL=RAND_CNTL-1;
+         SH     R15,=H'1'
+         STH    R15,RANDCNTL
+*
+*
+*       WTO     'POPPED'
+*       WTO      OP1,79
+        JOLRETN RC=0
+        LTORG
+*
+*
+XX8           DSECT
+*        JOLSAVE  CSECT=POPRAND2
+         JOLSAVE    CSECT=UJP18PO2
+         ORG   UJP18PO2                                           J50
+POPRAND2 EQU        *
+         ENTRY POPRAND2                                           J50
+         ORG
+*
+*       {
+*        WTO     'POPRAND2 Entered'
+*
+*       if (RANDCNTL < 1) {
+*
+        CLC     RANDCNTL,=H'1'
+        BNL     #8#122
+*
+*
+        JOLERR  311,'Too Few Operands - PopRand2'
+        JOLRETN RC=4
+*
+#8#122  DS      0H
+*
+*
+*       else {
+*       {
+*
+*                OP2=RAND(RAND_CNTL);
+         LH     R1,RANDCNTL
+         MH     R1,=AL2(L'RAND+2)
+         LA     R15,#RAND(R1)               Get address of right hole
+         MVC    #OP2(L'OP2+2),0(R15)
+*
+*
+*                 OP2TYPE=RANDTYPE(RAND_CNTL);
+*       op2type = Rand_Type[RANDCNTL];
+         LH     15,RANDCNTL
+         IC     10,RANDTYPE(15)
+         STC    10,OP2TYPE
+*
+*
+*105   2   1         RAND_CNTL=RAND_CNTL-1;
+         SH     R15,=H'1'
+         STH    R15,RANDCNTL
+*
+*
+*       WTO     'POPPED'
+*       WTO      OP2,79
+        JOLRETN RC=0
+        LTORG
+*
+*
+*
+*       int          PUSHRATR(char *str, int len_str)
+*
+* PROCEDURE  PUSHRATR
+PUSHTPRM DSECT
+TSTRADDR DS    A
+TSTRLEN  DS    H
+XX9           DSECT
+*          JOLSAVE CSECT=PUSHRATR
+         JOLSAVE    CSECT=UJP18PTR
+         ORG   UJP18PTR                                           J50
+PUSHRATR EQU        *
+         ENTRY PUSHRATR                                           J50
+         ORG
+         LR      R9,R1
+*        USING   PUSHTPRM,R9
+*        WTO     'PUSH RATOR Entered'
+*
+*121   2   0     IF RATOR_CNTL>PARSE_depth
+*               THEN DO;
+         LH     R14,RATORCNT
+         CH     R14,PARSEDEP
+         BNH    #9#122
+         JOLERR 312,'Too Many Operators'
+         JOLRETN RC=4
+#9#122   DS     0H
+*
+*       else {
+*       Rator_Cntl = Rator_Cntl + 1;
+*
+        LA      R14,1(R14)
+        STH     R14,RATORCNT
+*
+*       temp_len = len_str;
+*
+*126   2   0     RATOR(RATOR_CNTL)=STRING;
+         LH     R5,RATORCNT
+         MH     R5,=AL2(L'RATOR+2)
+*        STH    R15,#RATOR(R5)
+         LA     R8,#RATOR(R5)
+         MVC    0(L'RATOR,R8),0(R9)   TSTRADDR
+*
+*127   2   0     RATOR_PRTY(RATOR_CNTL)=TKN_PRTY;
+*
+*       Rator_Prty[Rator_Cntl] = TKN_prty;
+*
+         LH     R5,RATORCNT
+         IC     R1,TKNPRTY
+         STC    R1,RATORPRT(R5)
+*
+         JOLRETN RC=0
+        LTORG
+*
+*
+*       int          PopRator(void)
+*
+XX10          DSECT
+*         JOLSAVE CSECT=POPRATOR
+         JOLSAVE    CSECT=UJP18POR
+         ORG   UJP18POR                                           J50
+POPRATOR EQU        *
+         ENTRY POPRATOR                                           J50
+         ORG
+*
+*       if (Rator_Cntl < 1) {
+*130   2   0     IF RATORCNT<1
+*                THEN DO;
+*        WTO     'POPRATOR Entered'
+         LH     9,RATORCNT
+         CH     9,=H'0'
+         BNL    #10#122
+         JOLERR 313,'Too Few Operators- PopRator'
+         JOLRETN RC=4
+*134   2   0     ELSE DO;
+*135   2   1         OPR=RATOR(RATOR_CNTL);
+#10#122  DS     0H
+         LH     R1,RATORCNT
+         MH     R1,=AL2(L'RATOR+2)
+         LA     R9,#RATOR(R1)
+         MVC    #OPR(L'OPR),0(R9)
+*136   2   1         RATOR_CNTL=RATOR_CNTL-1;
+*       Rator_Cntl = Rator_Cntl - 1;
+         LH     15,RATORCNT
+         SH     15,=H'1'
+         STH    15,RATORCNT
+*       WTO     'POPPED OPR:'
+*       WTO      OPR,79
+         JOLRETN RC=0
+        LTORG
+*
+*
+XX11          DSECT
+*        JOLSAVE CSECT=TUNSTACK
+         JOLSAVE    CSECT=UJP18UNS
+         ORG   UJP18UNS                                           J50
+TUNSTACK EQU        *
+         ENTRY TUNSTACK                                           J50
+         ORG
+*        WTO     'TUNSTACK Entered'
+*
+*
+*Unstack :
+*      if ((*Rator[Rator_Cntl] == ',')       /* Last one on stack par
+*      || (*Rator[Rator_Cntl] == '('))       /* or function start ?
+*         ;
+*      else
+*      {
+*         if ((Rator_Cntl != 1)
+*         && (Rator_Prty[Rator_Cntl] >= Tkn_prty))
+*         {
+*Pop:
+*           if (PopRator() != 0) goto error;
+*           if (PopRand2() != 0) goto error;
+*           if (PopRand1() != 0) goto error;
+*
+*           Add_triple();
+*
+*/* if generating code  call PushRand('#'+ascii(Tnumber+48),20); */
+*
+*           goto Unstack;
+*        }
+*     }
+*     goto ok;
+*error:
+*      puts("\nError\n");
+*
+*ok:;
+* }
+*
+P18UNST9 DS     0H
+*       Unstack :
+*       if ((*Rator[Rator_Cntl] == ',')
+*       || (*Rator[Rator_Cntl] == '('))
+*         ;
+*
+        LH      R15,RATORCNT
+        LR      R1,R15
+        MH      R1,=AL2(L'RATOR+2)
+        LA      R14,RATOR(R1)
+        CLI     0(R14),C','
+        BE      P18UNRET
+        CLI     0(R14),C'('
+        BE      P18UNRET
+*
+*       else
+*       {
+*       if ((Rator_Cntl != 1)
+*       && (Rator_Prty[Rator_Cntl] >= TKN_prty))
+***     && (TKNPRTY < Rator_Prty[Rator_Cntl]))
+*
+        LH      R15,RATORCNT       reload not needed!
+        CH      R15,=H'1'
+        BE      P18UNRET
+        LR      R1,R15             Rator_Cntl
+*       SLL     R1,1
+        SR      R14,R14
+        SR      R15,R15
+        IC      R14,RATORPRT(R1)
+        IC      R15,TKNPRTY
+        CR      R15,R14             Compare TKNPRTY with RATORPRTY
+        BH      P18UNRET
+*
+*       {
+*       Pop:
+*       if (PopRator() != 0) goto error;
+*
+        CALL    POPRATOR
+        LTR     R15,R15
+        BNZ     P18UNERR
+*
+*       if (PopRand2() != 0) goto error;
+*
+        CALL    POPRAND2
+        LTR     R15,R15
+        BNZ     P18UNERR
+*
+*       if (PopRand1() != 0) goto error;
+*
+        CALL    POPRAND1
+        LTR     R15,R15
+        BNZ     P18UNERR
+*
+*
+*       Add_triple();
+*
+        CALL    ADDTRIPL
+*
+        B       P18UNST9
+*       goto Unstack;
+*
+*       }
+*       }
+*       goto ok;
+*
+        B       P18UNRET
+P18UNERR DS     0H
+*
+*       error:
+*       puts('\nError\n');
+*
+        JOLERR  314,'ERROR'
+P18UNRET DS    0H
+*
+*       ok:;
+*       }
+*
+        JOLRETN RC=0
+        LTORG
+*
+*
+*       int          Add_triple()
+*
+XX12          DSECT
+*        JOLSAVE   CSECT=ADDTRIPL
+         JOLSAVE    CSECT=UJP18AD3
+         ORG   UJP18AD3                                           J50
+ADDTRIPL EQU        *
+         ENTRY ADDTRIPL                                           J50
+         ORG
+*
+*        WTO     'ADDTRIPL Entered'
+*
+*int          Add_triple()                          /* Function */
+*{
+*      if (EvaluateTable() == 4)
+*          return 4;
+*      Tkntype = op1type;
+* /*   put skip edit ('Evalated to ',op,' Type=',op1type)(a);
+*      put skip edit ('opr=',opr)(A); */
+*
+*      if (*opr == ',')
+*          ;
+*      else
+*      PushRand(op, length(op), op1type);
+*      return 0;
+*}
+*
+*       if (EvaluateTable() == 4)
+*
+        CALL    EVALTABL
+        LTR     R15,R15
+        BZ      #12#74
+        JOLRETN RC=4
+#12#74  DS     0H
+*
+*       TKNtype = op1type;
+*
+        MVC     TKNTYPE,OP1TYPE
+*
+*       if (*opr == ',')
+*
+        CLI     OPR,C','
+        BNE     #12#122
+        B       #12#146
+#12#122  DS     0H
+*
+*       else
+*       PushRand(op, dv_op.curr_len, op1type);
+*
+        LA      R1,#OP
+        IC      R0,OP1TYPE
+        CALL    PUSHRAND
+#12#146  DS     0H
+        JOLRETN RC=0
+        LTORG
+*
+*
+*       srch_func_tab()
+XX13          DSECT
+*        JOLSAVE CSECT=SRCHFUNC
+         JOLSAVE    CSECT=UJP18FUN
+         ORG   UJP18FUN                                           J50
+SRCHFUNC EQU        *
+         ENTRY SRCHFUNC                                           J50
+         ORG
+*
+*        WTO     'SRCHFUNC Entered'
+TOOHIIND EQU     R9
+*
+*       {
+*       static char    toohighind;
+*
+*       static int             r5, r6;
+*
+*       static char    *r4;
+*       static char    *r8;
+*       static int           memcmp_result;
+*
+*       fnswi=0;
+*
+*       CLEAR   FNRTNADR
+        MVC     FNRTNADR,=F'0'
+*
+*       fnparms=0;
+*
+*       CLEAR   FNPARMS
+        MVC     FNPARMS,=F'0'
+        L       R10,=A(FUNCTBL)
+        USING   FUNCTBL,R10
+*
+*       r5=  FTABCNT;
+*
+        LH      R5,FTABCNT
+*
+*       if (r5 < 64)
+*
+        CH      R5,=H'64'
+        BNL     #13#74
+*
+*       r5=64;
+*
+        LA      R5,64
+        B       #13#122
+#13#74  DS     0H
+*
+*       else if (r5 < 128)
+*
+        CH      R5,=H'128'
+        BNL     #13#122
+*
+*       r5 = 128;
+*
+        LA      R5,128
+#13#122  DS     0H
+*
+*
+*       r5 = r5 >> 1;
+*
+        SRA     R5,1
+*
+*       r6 = r5;
+*
+        LR      R6,R5
+*
+*       r8=func_table[FTABCNT-1].func_name     ;
+*
+*       LH      R1,FTABCNT
+*       SH      R1,=H'1'
+*       MH      R1,FTABLEN
+*       LA      R8,FUNCTBL(R1)
+#13#146  DS     0H
+*
+*       loop:
+*       r6 = r6 >> 1;
+*
+        SRA     R6,1
+*
+*       r4=func_table[r5-1].func_name;
+*
+        LR      R15,R5
+        SH      R15,=H'1'
+        MH      R15,FTABLEN
+        LA      R4,FUNCTBL(R15)
+*
+*       if (r5 >= FTABCNT)
+*           goto toohigh;
+*
+        CH      R5,FTABCNT
+        BNL     TOOHIGH
+*
+*       if (r4 > r8) goto toohigh;
+*
+        C       R4,FTABEND
+        BH      TOOHIGH
+*
+*       memcmp_result =memcmp(r4, op1,dv_op1.curr_len);
+*
+        CLC     0(8,R4),OP1
+        BE      FOUND
+        BH      TOOHIGH
+*
+TOOLOW   DS     0H
+*
+*       toolow:
+*       toohighind = 0;
+*
+        SR      TOOHIIND,TOOHIIND
+*
+*       r5 = r5 + r6;
+*
+        AR      R5,R6
+*
+*       goto testend;
+*
+        B       TESTEND
+TOOHIGH  DS     0H
+*
+*       toohigh:
+*       toohighind = 1;
+*
+        LA      TOOHIIND,1
+*
+*       r5 = r5 - r6;
+*
+        SR      R5,R6
+*
+TESTEND  DS     0H
+*
+        LTR     R6,R6
+        BE      #13#434
+        B       #13#146
+#13#434  DS     0H
+*
+*notfound:
+*       if (toohighind) r5 = r5 - 1;
+*
+        CH      TOOHIIND,=H'0'
+        BE      #13#482
+        SH      R5,=H'1'
+#13#482  DS     0H
+*
+*       r5 = r5 + 1;
+*
+        LA      R5,1(R5)
+*
+*       return 4;
+*
+        JOLRETN RC=4
+#13#506  DS     0H
+*
+FOUND   DS      0H
+*       fnswi   =func_table[r5-1].switch_number;
+*
+        LR      R15,R5
+        SH      R15,=H'1'
+        MH      R15,FTABLEN
+        L       R4,FUNCADR(R15)      Get Address of routine
+        ST      R4,FNRTNADR
+*
+*       fnparms=func_table[r5-1].number_of_parms;
+*
+        L       R4,FUNCNOP(R15)      Get number of parameters
+        STH     R4,FNPARMS
+        JOLRETN RC=0
+        LTORG
+        DROP    R10
+*
+*       int          EvaluateTable()
+XX14          DSECT
+*        JOLSAVE CSECT=EVALTABL,BASE=(R11,R12)
+         JOLSAVE    CSECT=UJP18EVL,BASE=(R11,R12)
+         ORG   UJP18EVL                                           J50
+EVALTABL EQU        *
+         ENTRY EVALTABL                                           J50
+         ORG
+*
+*        WTO     'EVALTABL Entered'
+*
+*       {static char       * conv_code;
+*       static int           i, j;
+*
+*       static int           k;
+*       static char        * temp_index;
+*       static char        * temp_quote;
+*
+*
+*       union opr2 {
+*       int  opr_l2_int;
+*       char opr_l2_char[2];
+*       }   opr_conv;
+*
+*       static int           temp_len;
+*
+*       static char          op_posn[] = {
+*       '**+ - * / ~ & ->.x,x:== >=<=> < | & ¬<¬>¬=¬ '};
+*
+         B    PASTTBL
+OPPOSN   DC C'**+ - * / ~ && ->.x,x:== >=<=> < | && ¬<¬>¬=¬ ' ;
+*         /*  1 3 5 7 9 11  15  19  23  27  31  35  39  43
+*                         13  17  21  25  29  33  37  41  */
+*   Used to get Operator Position (not used ^)
+*
+*       static char *temp_posn;
+*
+*       if (*opr == '(')
+*
+PASTTBL  DS   0H
+        CLI     OPR,C'('
+*
+*       goto dofunc;
+*
+        BE      DOFUNC
+*
+*       }
+*
+*       if (*opr == ',') {
+*
+        CLI     OPR,C','
+        BNE     NOTPARM
+*
+*t_max_parm:
+*
+*       if (Parm_Cntl + 1 > 3) {
+*
+        LH      R1,PARMCNTL
+        LA      R1,1(R1)
+        CH      R1,=H'3'
+        BNH     P18#PRM
+*
+*
+P18315   DS    0H                                                 J51
+        JOLERR  315,'Too many Parameters'
+        JOLRETN  RC=4
+*
+P18#PRM  DS     0H
+*
+*       else {
+*       Parm_Cntl = Parm_Cntl + 1;
+*
+        STH     R1,PARMCNTL
+*
+*       {
+*        cpy ( Parm_Str[Parm_Cntl],op1);
+*
+        LH      R1,PARMCNTL
+        CH      R1,=H'1'               ; do it manually !
+        BNE     P18PTRY2
+        MVC     #PARMST1(L'PARMST1),#OP1
+        MVC     PARMBIN1,OP1BIN
+        MVC     PARMTYP1,OP1TYPE
+        B       ENDPARM1
+P18PTRY2 CH      R1,=H'2'               ; do it manually !
+        BNE     P18PTRY3
+        MVC     #PARMST2(L'PARMST2),#OP1
+        MVC     PARMBIN2,OP1BIN
+        MVC     PARMTYP2,OP1TYPE
+        B       ENDPARM1
+P18PTRY3 CH      R1,=H'3'               ; do it manually !
+        BNE     P18PTRY4
+        MVC     #PARMST3(L'PARMST3),#OP1
+        MVC     PARMBIN3,OP1BIN
+        MVC     PARMTYP3,OP1TYPE
+        B       ENDPARM1
+P18PTRY4 DS     0H
+*       WTO     'Wrong Parameter Subscript'
+         B     P18315                                             J51
+*       JOLRETN  RC=4
+        MH      R1,=AL2(L'PARMST1+2)
+        LA      R1,#PARMST1(R1)
+        MVC     0(L'PARMST1,R1),#OP1
+*
+* no    Parm_Dec[Parm_Cntl]=op1dec;
+*       Parm_Bin[Parm_Cntl]= op1dec;
+*
+        LH      R1,PARMCNTL
+        SLL     R1,1
+        SLL     R1,1
+        L       R1,OP1BIN
+        ST      R2,PARMBIN1(R1)
+*
+*       PARMTYPE[Parm_Cntl]=op1type;
+*
+        LH      R1,PARMCNTL
+        IC      R15,OP1TYPE
+        STC     R15,PARMTYP1(R1)
+*
+*       }
+*        return 0;           /* End of Parameter Processing for now */
+ENDPARM1 DS     0H
+        JOLRETN RC=0
+*
+NOTPARM  DS     0H
+*
+*       }
+*
+*
+*       if (op2type != 3)
+*
+        CLI     OP2TYPE,3              Literal ?
+        BE      #14#458
+*
+*       {
+*       if ((_ctype[(op2[0]) + 1] & 2)  || op2[0] == '-')
+*
+        TNUM    #OP2
+        LTR     R15,R15
+        BZ      #14#434
+*
+*       else
+*       {
+*       getsym(op2);
+*
+        LA      R1,#OP2
+        CALL    GETSYM
+*
+        MVC     #OP2(L'OP2),#OP
+#14#434  DS     0H
+*
+*        };
+*       }
+*
+*       }
+*
+        B       #14#482
+#14#458  DS     0H
+*
+*       else
+*       {         dropqusr(&dv_op2.curr_len,op2);
+*
+        DROPQUSR #OP2
+*
+        MVI     QUOTEFND,1
+#14#482  DS     0H
+*
+*       }
+*
+*
+*       if (opr[0]==':'
+*       &&  opr[1]=='=')
+*
+        CLC     OPR(2),=C':='
+        BNE     NOTASSGN
+*
+*
+        MVC      SYMBOLIC,OP1
+*
+*        };
+*       i = GETSYMname(symbolic);
+*
+        LA      R1,#OP1
+        CALL    GETSYMNM (#OP1)  cvcdelete NEXT LISTING
+        STH     R1,I
+*
+*        asm gencpy op,vtyp_op,vmaxl_op,op2,vtyp_op2,vmaxl_op2;
+*
+        MVC      #OP(L'OP),#OP2
+*
+*        };
+*
+*       temp_quote=memchr(op,'\'',dv_op.curr_len);
+*
+        LA      R14,1
+        LA      R1,OP
+        LR      R15,R1
+        AH      R15,#OP
+TQU1    CLI     0(R1),C''''
+        BE      ##3
+        BXLE    R1,R14,TQU1
+*
+*       if ((temp_quote!=0) || QUOTEFND)
+*
+        CLI     QUOTEFND,0
+        BE      STORFINL
+##3  DS     0H
+*
+*           cpychar(work_string,'\'');           /* Init to a quote */
+*
+*           for (j=0; j<length(op); j++)
+*           {
+*                catchar(work_string,op[j]);
+*                if (op[j] == '\'')
+*                    catchar(work_string,'\''); /* Make double quote */
+*
+*           }
+*           catchar(work_string,'\'');           /* Add last quote  */
+*           cpy(op,work_string);
+*       }
+*       store_sym(symbolic, op,length(op), i);
+*       return 0;
+*    }
+*       MVC     #WORK(3),=H'1',C''''      370 Sim Bug
+         CLC   #OP,ZERO          Zero length string ?             J52
+         BNE   CHKQ                                               J52
+         B     STORFINL                                           J52
+         MVC   #WORK(2),=H'2'                                     J52
+         MVC   WORK(2),=C''''''                                   J52
+         B     STORFINL                                           J52
+CHKQ     DS      0H                                               J52
+        MVC     #WORK(2),=H'1'
+        MVI      WORK,C''''
+        MVI      WORK+1,0
+*
+*       };
+*
+         SR      R15,R15                                          J52
+         LA      R1,0
+         LH      R14,#WORK
+P18NXCH1 IC      R15,OP(R1)
+         STC     R15,WORK(R14)
+         CH      R15,=X'007D'    A QUOTE?
+         BNE     NOEXTRQU
+         LA      R14,1(R14)
+         STC     R15,WORK(R14)
+NOEXTRQU DS      0H
+         LA      R1,1(R1)
+         LA      R14,1(R14)
+         CH      R1,#OP
+         BL      P18NXCH1
+         LA      R15,C''''
+         STC     R15,WORK(R14)
+         LA    R14,1(R14)        +1 for 2nd quote                 J51
+         STH     R14,#WORK
+         MVC     #OP(L'OP),#WORK
+*       store_sym(symbolic, op,dv_op.curr_len, i);
+*
+STORFINL LA      R1,#OP
+        LH      R0,I
+        CALL    STORESYM             ;OP,I)
+*
+        JOLRETN  RC=0
+NOTASSGN  DS     0H
+#14#1250  DS     0H                  cvcvcvc
+*       }
+*
+*       if (op1type != 3)
+*
+        CLI     OP1TYPE,3
+        BE      #14#1442
+*
+*       {
+*       if ((_ctype[(op1[0]) + 1] & 2)  || op1[0] == '-')
+*
+        TNUM    #OP1
+        LTR     R15,R15
+        BZ      #14#1418
+*
+*       else
+*       {
+*       getsym(op1);
+*
+        LA      R1,#OP1
+        CALL    GETSYM     (OP1)
+*
+*
+        MVC     #OP1(L'OP1),#OP
+#14#1418  DS     0H
+*
+*       }
+*
+        B       #14#1466
+#14#1442  DS     0H
+*
+*       else
+*       {         dropqusr(&dv_op1.curr_len,op1);
+*
+        DROPQUSR #OP1
+*
+        MVI     QUOTEFND,1
+#14#1466  DS     0H
+*
+*       }
+*
+*
+*    if ((clc(opr, '|| ',3))
+*        || (*opr == ':')
+*        || (*opr == '.'))
+*    {
+*
+        CLC     OPR(2),=C'||'
+        BE      #14#1562
+        CLC     OPR,=C': '
+        BE      #14#1562
+        CLI     OPR,C'.'
+        BE      #14#1562
+        B       #14#1634
+#14#1562  DS     0H
+*
+*
+*do_concat:
+*          dropquotes(op1);
+*          dropquotes(op2);
+*
+*          cpy(op,quote);
+*          cat(op,op1);
+*          cat(op,op2);
+*          cat(op,quote);
+*          op1type=3;                  /* Set Character Type   */
+*          return 0;
+* FOLLOWING CODE COULD BE BETTER !! Clem Clarke, May, 1991
+        DROPQUSR #OP1
+        DROPQUSR #OP2
+        MVI     OP,C''''               Set a Quote
+        LA      R1,1                   Length so far
+        LA      R15,OP+1               R15 = Move Position
+        LH      R5,#OP1                Get Length of Source 1
+        CH      R5,=AL2(L'OP)          Greater than Destination?
+        BL      LEN1OK                 No
+        LA      R5,L'OP-2              Yes, Reduce Length
+LEN1OK  EX      R5,*+4                 Shift the string
+        MVC     0(*-*,R15),OP1          Executed MVC
+        AR      R1,R5                  Length so Far
+        STH     R1,#OP                 Not Necessary ?
+        AR      R15,R5                 Set R15 to next location
+*
+        LH      R5,#OP2                Get Length of 2nd String
+        AR      R1,R5                  New Length if concatenated
+        CH      R1,=AL2(L'OP)          Will it be too big?
+        BL      LEN2OK
+* Calculate max length left
+        LA      R5,L'OP-2
+        SH      R5,#OP
+        BCTR    R5,0
+LEN2OK  EX      R5,*+4
+        MVC     0(*-*,R15),OP2
+        AR      R15,R5                Point to end of concatenated stri
+        MVI     0(R15),C''''
+        AH      R5,#OP
+        LA      R5,1(R5)
+        STH     R5,#OP                 Reset the length
+*       op1type=3;
+*
+        MVI     OP1TYPE,3
+*
+        JOLRETN  RC=0
+#14#1634  DS     0H
+*
+*       }
+*
+        TNUM    #OP1                   Is it a Number ?
+        ST      R1,OP1BIN
+        LA      R0,#OP1
+*       HALT
+        LTR     R15,R15                Test if number returned
+        BNE     P18NOTN1               No, not a number
+*
+*       op1type=0;
+*
+        MVI     OP1TYPE,0              Yes, a number - set type
+        LH      R15,#OP1               Load length
+        BCTR    R15,0
+        EX      R15,P18PACK1           Pack the number
+        LA      R1,OP1DEC
+        LA      R0,#OP1
+*       HALT
+        B       #14#1730
+P18NOTN1  DS     0H
+*
+*       else op1type=3;
+*
+        MVI     OP1TYPE,3
+#14#1730  DS     0H
+*
+*
+*       op2dec=strtol(op2, &conv_code,10);
+*
+        TNUM    #OP2
+        ST      R1,OP2BIN
+        LTR     R15,R15
+        BNE     #14#1802
+*
+*       op2type = 0;
+*
+        MVI     OP2TYPE,0
+        LH      R15,#OP2                                          75128
+        BCTR    R15,0                                             75128
+        EX      R15,P18PACK2                                      75128
+        B       #14#1826
+#14#1802  DS     0H
+*
+*       else op2type = 3;
+*
+        MVI     OP2TYPE,3
+#14#1826  DS     0H
+*
+*
+        MVC      OPRL2(2),OPR
+*
+*
+*       k = 0;
+*K       EQU      R5
+        MVI      K,0
+*
+        LA       R1,OPPOSN
+        LR       R15,R1
+        AH       R15,=AL2(L'OPPOSN)
+        LA       R14,2
+P18FPOS CLC      OPRL2,0(R1)
+        BE       P18FNDP
+        BXLE     R1,R14,P18FPOS
+        B       #14#1874
+*
+*       k=temp_posn-op_posn+1;
+*
+P18FNDP DS      0H
+        S        R1,=A(OPPOSN)
+        LA       R1,1(R1)
+        STC      R1,K
+#14#1874  DS     0H
+*
+*       op1bit = 0;
+*
+        MVC      OP1BIT,=F'0'
+*
+*       BITANS = 0;
+*
+        MVC      BITANS,ZERO
+*
+*       if (k == 0) goto invalid_op;
+*
+        CLI     K,0
+        BE      INVALOP
+*
+*OPPOSN   DC C'**+ - * / ~ & ->.x,x:== >=<=> < | & ^<^>^=^ ' ;
+*          /*  1 3 5 7 9 11  15  19  23  27  31  35  39  43
+*       if (k <= 11) {
+*
+        CLI     K,11                   Less than 11 is **,+,-,*,/
+        BH      P18DOBIT
+*
+*       if ((op1type== 0)  && (op2type == 0)) ;
+*
+        CLI     OP1TYPE,0              Check if Operands numeric
+        BNE     #14#2018
+        CLI     OP2TYPE,0
+        BNE     #14#2018
+        B       P18DOBIT
+#14#2018  DS     0H
+*
+        JOLERR  444,'Not Numeric'
+        JOLRETN RC=4
+*
+*cvcvc  B       F14826
+P18DOBIT  DS     0H
+*
+*       }
+*
+*
+*       if (k == 1) {
+*
+        CLI     K,1
+        BNE     #14#2138
+NOTIMPL   DS     0H
+*
+*
+*       not_imp:
+        JOLERR 316,'** Not Implemented'
+*
+        JOLRETN  RC=4
+#14#2138  DS     0H
+*
+*       else if (k == 3)             op1dec=op1dec+op2dec;
+*
+        CLI     K,3
+        BNE     #14#2186
+        AP      OP1DEC,OP2DEC        ADD THE NUMBERS
+        B       STORNUM
+#14#2186  DS     0H
+*
+*       else if (k == 5)             op1dec=op1dec-op2dec;
+*
+        CLI     K,5
+        BNE     #14#2234
+*       HALT
+        SP      OP1DEC,OP2DEC
+        B       STORNUM
+#14#2234  DS     0H
+*
+*       else if (k == 7)             op1dec=op1dec*op2dec;
+*
+        CLI     K,7
+        BNE     #14#2282
+* I don't have documentation for the 370 here, and so this
+*   code is copied from the main Jol.
+*
+* I guess it stops 0C6's in MP!
+*
+         ZAP   WORK(15),OP1DEC    LETS NOT 0C7 OK                 91200
+         ZAP   P85NO2,OP2DEC      Reduce Size of number    cvc    91200
+         MP    WORK(15),P85NO2    MULTIPLY THE NUMBERS             DASD
+         MVC   P85NO1,WORK+5      MOVE BACK THE ANSWER             DASD
+         ZAP   OP1DEC,P85NO1      move to recieve area     cvc    91200
+        B       STORNUM
+         B     P85SANS
+        LA      R0,OP1DEC
+        LA      R1,OP2DEC
+        MP      OP1DEC,OP2DEC    MULTIPLY THE NUMBERS             DASD
+*       M       R1,OP2DEC
+*       ST      R1,OP1DEC
+*        ZAP    WORK(16),OP1DEC(8)
+*        MP     WORK(16),OP2DEC(8)
+*        ZAP    WORK+24(8),WORK(16)
+*        MVC    OP1DEC(8),WORK.10+24
+        B       STORNUM
+#14#2282  DS     0H
+*
+*       else if (k == 9)             op1dec=op1dec/op2dec;
+*
+        CLI     K,9
+        BNE     #14#2330
+         ZAP   P85NO2,OP2DEC      Reduce Size of number    cvc    91200
+         ZAP   P85NO1,OP1DEC      Reduce Size of number    cvc    91200
+         CP    P85NO2,=P'0'
+         BNZ   P85DP
+         JOLERR  239,'ZERO DIVIDE'
+P85DP    DP P85NO1,P85NO2      DO THE DIVIDE
+*******************IGNORE THE REMAINDER FOR NOW
+* LATER WE MAY LET THE GUY SAY %X=%Y/100 AND %Z = REMAINDER (OR SOME
+*     SUCH RUBISH).
+         SPACE
+* NOW SHIFT THE ANSWER BACK DOWN TO THE RIGHT SPOT
+         ZAP   P85NO1,P85NO1(L'P85NO1-L'P85NO2)
+         ZAP   OP1DEC,P85NO1      move to recieve area     cvc    91200
+*P85DIV   CP    P85NO2,=P'0'
+*         BZ    P85ZEDIV
+*         DP P85NO1,P85NO2      DO THE DIVIDE
+*        ZAP    WORK(16),OP1DEC(8)
+*        DP     WORK(16),OP2DEC(8)
+*        MVC    OP1DEC(8),WORK
+        B       STORNUM
+#14#2330  DS     0H
+*
+*       else if (k == 11)            op1dec=-1 * op2dec;
+*
+        CLI     K,11
+        BNE     #14#2378
+         ZAP    WORK(9),OP2DEC(8)
+         MP     WORK(9),1555(1,3)
+         ZAP    WORK(8),WORK(9)
+  FIX  ' MVC    OP1DEC(8),WORK.10+17'
+        B       STORNUM
+#14#2378  DS     0H
+*
+*       else
+*       {
+*
+*       if ((op1type == 0)
+*       && (op2type == 0))
+*
+* Bit or comparison operations here.
+*
+*OPPOSN   DC C'**+ - * / ~ & ->.x,x:== >=<=> < | & ^<^>^=^ ' ;
+*          /*  1 3 5 7 9 11  15  19  23  27  31  35  39  43
+*
+        CLI     OP1TYPE,0              Check if Character Ops
+        BNE     P18CHAR
+        CLI     OP2TYPE,0
+        BNE     P18CHAR
+*
+*       {
+*       tempdec = op1dec - op2dec;
+*
+        L       R1,OP1BIN              Do the calculation once !!!
+        S       R1,OP2BIN
+        ST      R1,TEMPBIN
+*
+*       temp1 = tempdec;
+*
+        ST      R1,TEMP1
+*
+*       if (k == 23) { if (temp1 == 0) BITANS = 1; }
+*
+        CLI     K,23                   =
+        BNE     #14#2522
+        CLC     TEMP1,=F'0'
+        BNE     STRBIT           was be                           J51
+        MVI     BITANS+3,1
+        B       STRBIT
+#14#2522  DS     0H
+*
+*       else if (k == 41) { if (temp1 != 0) BITANS = 1; }
+*
+        CLI     K,41
+        BNE     #14#2618
+        CLC     TEMP1,=F'0'
+        BE      STRBIT
+        MVI     BITANS+3,1
+        B       STRBIT
+#14#2618  DS     0H
+*
+*       else if (k == 25) { if (temp1 >= 0) BITANS = 1; }
+*
+        CLI     K,25
+        BNE     #14#2714
+*       CLC     TEMP1,=F'0'
+        C       R1,=F'0'                                          J52
+        BL      STRBIT
+         DC    X'0700'                                            J52
+        MVI     BITANS+3,1
+        B       STRBIT
+#14#2714  DS     0H
+*
+*       else if (k == 27) { if (temp1 <= 0) BITANS = 1; }
+*
+        CLI     K,27
+        BNE     #14#2810
+*       CLC     TEMP1,=F'0'
+        C       R1,=F'0'                                          J52
+        BH      STRBIT
+         DC    X'0700'                                            J52
+        MVI     BITANS+3,1
+        B       STRBIT
+#14#2810  DS     0H
+*
+*       else if (k == 31) { if (temp1 < 0) BITANS = 1;      }
+*
+        CLI     K,31
+        BNE     #14#2906
+*       CLC     TEMP1,=F'0'
+        C       R1,=F'0'                                          J52
+        BNL     STRBIT                                            J52
+         DC    X'0700'                                            J52
+* was BH ****                                                     J52
+        MVI     BITANS+3,1
+        B       STRBIT
+#14#2906  DS     0H
+*
+*       else if (k == 29) { if (temp1 > 0) BITANS = 1;      }
+*
+        CLI     K,29
+        BNE     #14#3002
+*       CLC     TEMP1,=F'0'
+        C       R1,=F'0'                                          J52
+        BNH     STRBIT
+         DC    X'0700'                                            J52
+        MVI     BITANS+3,1
+        B       STRBIT
+#14#3002  DS     0H
+*
+*       else if (k == 39) { if (!(temp1 > 0)) BITANS = 1;}
+*
+        CLI     K,39
+        BNE     #14#3098
+*       CLC     TEMP1,=F'0'
+        C       R1,=F'0'                                          J52
+        BH      STRBIT
+         DC    X'0700'                                            J52
+        MVI     BITANS+3,1
+        B       STRBIT
+#14#3098  DS     0H
+*
+*       else if (k == 37) { if (!(temp1 < 0)) BITANS = 1;}
+*
+        CLI     K,37
+        BNE     #14#3194
+*       CLC     TEMP1,=F'0'
+        C       R1,=F'0'                                          J52
+        BL      STRBIT
+         DC    X'0700'                                            J52
+        MVI     BITANS+3,1
+        B       STRBIT
+#14#3194  DS     0H
+*
+*
+*
+*       else {
+*       temp1=op1dec;
+*
+        L       R1,OP1BIN
+        ST      R1,TEMP1
+*
+*       op1bit = temp1;
+*
+        ST      R1,OP1BIT
+*
+*       temp2=op2dec;
+*
+        L       R1,OP2BIN
+        ST      R1,TEMP2
+*
+*       op2bit = temp2;
+*
+        ST      R1,OP2BIT
+*
+*
+*       if (k == 13)           BITANS =       op1bit  & op2bit;
+*
+        CLI     K,13
+        BNE     #14#3242
+        L       R1,OP1BIT
+        N       R1,OP2BIT
+        ST      R1,BITANS
+        B       P18MAKEN
+#14#3242  DS     0H
+*
+*       else if (k == 33)     BITANS =       op1bit  | op2bit;
+*
+        CLI     K,33
+        BNE     #14#3290
+        L       R1,OP1BIT
+        O       R1,OP2BIT
+        ST      R1,BITANS
+        B       P18MAKEN
+#14#3290  DS     0H
+*
+*       else if (k == 43)     BITANS = ! op2bit;
+*
+        CLI     K,43
+        BNE     #14#3338
+        L       R1,OP2BIT
+        LNR     R1,R1
+        ST      R1,BITANS
+        B       P18MAKEN
+#14#3338  DS     0H
+*
+*       else goto not_imp;
+*
+        B       NOTIMPL
+P18MAKEN  DS     0H
+*
+*       op1type=0;
+*
+        MVI     OP1TYPE,0
+*
+*       if (BITANS == 0) goto store_zero;
+*
+        CLC     BITANS,=F'0'
+        BE      P18FALSE
+*#14#3410  DS     0H
+*
+*       if (this_is_an_if) goto store_minus1;
+*
+        CLI     THISIF,0
+        BNE     P18TRUE
+*
+*       temp1 = BITANS;
+        MVC     TEMP1,BITANS
+*       op1bin = temp1;
+        MVC     OP1BIN,TEMP1
+*
+*       goto store_bin;
+*
+        B       STRBIN
+STRBIT  DS     0H
+*
+*       }
+*
+*       if (BITANS != 0) goto store_minus1;
+*
+        CLC     BITANS,=F'0'
+        BNE     P18TRUE
+        B       P18FALSE
+*       }
+*
+        B       #14#4394
+P18CHAR   DS     0H
+*
+*       else {
+*
+* If %list(1) causes problems  if LIST(1) not there, becuase      J52
+* X'00'  put in to indicate not defined.                          J52
+         CLI   OP1,0                                              J52
+         BNE   OP1THERE                                           J52
+         MVI   OP1,C' '                                           J52
+OP1THERE DS    0H                                                 J52
+         CLI   OP2,0                                              J52
+         BNE   OP2THERE                                           J52
+         MVI   OP2,C' '                                           J52
+OP2THERE DS    0H                                                 J52
+*
+* Somewhow, we can end up with a zero length and '' in OP1!!!.    J52
+         CLC   #OP1,ZERO         Length Zero?                     J52
+         BNE   OP1NQU01                                           J52
+         MVC   OP1(4),BLANKS                                      J52
+OP1NQU01 DS    0H                                                 J52
+         CLC   #OP2,ZERO         Length Zero?                     J52
+         BNE   OP2NQU01                                           J52
+         MVC   OP2(4),BLANKS                                      J52
+OP2NQU01 DS    0H                                                 J52
+*       if (k == 23)      { if ((gencmp(op1, op2) == 0))
+*
+        CLI     K,23
+        BNE     P18TCHNE
+*       CVCCMP  OP1,OP2
+        CLC     OP1,OP2
+        BNE     P18FALSE
+        B       P18TRUE
+*
+*       else if (k == 41) { if ((gencmp(op1, op2) != 0))
+*
+P18TCHNE CLI     K,41
+        BNE     P18TCHGE
+*       CVCCMP  OP1,OP2
+        CLC     OP1,OP2
+        BNE     P18TRUE
+        B       P18FALSE
+*
+*       else if (k == 25) { if ((gencmp(op1, op2) >= 0))
+*
+P18TCHGE CLI     K,25
+        BNE     P18TCHLE
+*       CVCCMP  OP1,OP2
+        CLC     OP1,OP2
+        BL      P18FALSE
+        B       P18TRUE
+*
+*       else if (k == 27) { if ((gencmp(op1, op2) <= 0))
+*
+P18TCHLE CLI     K,27
+        BNE     P18TCHLT
+*       CVCCMP  OP1,OP2
+        CLC     OP1,OP2
+        BH      P18FALSE
+        B       P18TRUE
+*
+*       else if (k == 31) { if ((gencmp(op1, op2) < 0))
+*
+P18TCHLT CLI     K,31
+        BNE     P18TCHGT
+*       CVCCMP  OP1,OP2
+        CLC     OP1,OP2
+        BL      P18TRUE
+        B       P18FALSE
+*
+*       else if (k == 29) { if ((gencmp(op1, op2) > 0))
+*
+P18TCHGT CLI     K,29
+        BNE     #14#4178
+*       CVCCMP  OP1,OP2
+        CLC     OP1,OP2
+        BH      P18TRUE
+        B       P18FALSE
+*
+*       else if (k == 37) { if (!((gencmp(op1, op2) < 0)))
+*1;}
+*
+#14#4178 DS     0H
+        CLI     K,37
+        BNE     #14#4274
+*       CVCCMP  OP1,OP2
+        CLC     OP1,OP2
+        BL      P18TRUE
+        B       P18FALSE
+*
+*       else if (k == 39) { if (!((gencmp(op1, op2) > 0)))
+*1;}
+*
+#14#4274 DS     0H
+        CLI     K,39
+        BNE     NOTIMPL
+*       CVCCMP  OP1,OP2
+        CLC     OP1,OP2
+        BH      P18TRUE
+        B       P18FALSE
+*
+*       else goto not_imp;
+*
+        B       NOTIMPL
+#14#4394  DS     0H
+*
+*       }
+*
+*       if (op1bit == 0) goto store_zero;
+*
+        CLC     OP1BIT,ZERO
+        BNE     #14#4466
+        B       P18FALSE
+        B       STORNUM
+#14#4466  DS     0H
+*
+*       else goto store_minus1;
+*
+        B       P18TRUE
+*#14#4490  DS     0H
+*
+*       }
+*       goto store_num ;
+*
+        B       STORNUM
+DOFUNC  DS     0H
+*
+*
+*       dofunc:
+*       {
+*
+*       if (srch_func_tab() !=0) goto badfunc;
+*
+        CALL    SRCHFUNC
+        LTR     R15,R15
+        BNZ     #14#4826
+*
+*
+*       if (fnparms == -1)
+*
+        CLC     FNPARMS,=H'-1'
+        BE      #14#4754
+P18SWIT DS      0H
+*
+*
+*       if (fnparms == 0)
+*
+        CLC     FNPARMS,=H'0'
+        BNE     #14#4706
+*
+*       if (Parm_Cntl == 1)
+*
+        CLC     PARMCNTL,=H'1'
+        BNE     #14#4706
+*
+*       if (*Parm_Str[1] == '\0')
+*
+        CLC     #PARMST1,=H'0'
+        BNE     #14#4706
+*
+*       goto doswitch;
+*
+        B       #14#4754
+#14#4706  DS     0H
+*
+*
+*
+*       if (Parm_Cntl != fnparms) goto func_err;
+*
+        CLC     PARMCNTL,FNPARMS
+        BNE     F14682
+*
+*
+#14#4754 DS     0H
+*       doswitch:
+*
+*       switch (fnswi) {
+*
+        L       R1,FNRTNADR
+        BR      R1                      ; Set By Lookup Routine
+*
+#14#4826  DS     0H
+*
+*
+* badfunc:
+*
+        JOLERR 317,'Invalid Function'
+*       };
+*       goto bad_return;
+        B       BADRETN
+CAPS    DS     0H
+*       case CAPS:
+*
+*make_caps:  if (Parm_Type[1] != 3)       /* literal ?? */
+*                get_parm1(0);            /* no */
+*
+*            cpy(op,Parm_Str[1]);
+*            strupr(op);
+*            goto add_quotes;
+*           break;
+*
+        CLI     PARMTYP1,3
+        BE      #14#5090
+        GETPARM1 0
+#14#5090  DS     0H
+        MVC     #OP(L'OP),#PARMST1
+        OC      OP,BLANKS               ; STRUPR
+        B       ADDQUOTE
+*
+CARDRTN DS     0H
+*
+* case CARD:
+*       GETPARM1(1);
+*
+        GETPARM1 1
+*       MVC     #OP(6),=H'4',C'CARD'      370 Sim Bug
+        MVC     #OP(2),=H'4'
+        MVC      OP(5),=C'CARD '
+        B       LISTITEM
+*
+CENTER  DS     0H
+CENTRE  DS     0H
+*
+*       case CENTER:
+*       case CENTRE:
+*
+*       if (Parm_Type[2] != 3)
+*           get_parm2(0);
+*
+*           { int         j;
+*
+*
+*           if (Parm_Type[2] != 3)          /* Get Value of parm(1) */
+*               get_parm2(0);
+*
+*           else
+*           {     dropquotes(Parm_Str[2]);
+*                 quote_found=1;
+*           }
+*
+*           get_parm1(1);
+*           if (Parm_Bin[1] > sizeof(op))
+*               Parm_Bin[1] = sizeof(op);
+*
+*           memset(op,' ', Parm_Bin[1]);
+*           length(op) = Parm_Bin[1];
+*           op[length(op)] = '\0';
+*
+*           j = length(Parm_Str[2]) / 2;
+*           j = (Parm_Bin[1] / 2) - j;
+*
+*           if (j <=0)
+*           {   cpy(op,Parm_Str[2]);}
+*           else memcpy(&op[j],Parm_Str[2], length(Parm_Str[2]));
+*           goto add_quotes;
+*           break;
+*
+*           }
+*
+        CLI     PARMTYP2,3
+        BE      #14#5330
+        GETPARM2 0
+        B       #14#5354
+#14#5330  DS     0H
+        DROPQUSR #PARMST2
+        MVI     QUOTEFND,1
+#14#5354  DS     0H
+        GETPARM1 1
+*       if (Parm_Bin[1] > sizeof(op))
+*       Parm_Bin[1] = sizeof(op);
+*
+        CLC     PARMBIN1,=AL2(L'OP)
+        BL      #14#5450
+*
+        MVC     PARMBIN1,=AL2(L'OP)
+#14#5450  DS     0H
+*       memset(op,' ', Parm_Bin[1]);
+        MVI     OP,C' '
+        MVC     OP+1(L'OP-1),OP
+*       dv_op.curr_len = Parm_Bin[1];
+        MVC     #OP(2),PARMBIN1+2
+*
+*       op[dv_op.curr_len] = '\0';
+*  Don't Need It (above)
+*
+*       j = dv_Parm_Str[2].curr_len / 2;
+*
+        LH      R1,#PARMST2
+        SRL     R1,1                    Halve the old string length
+*       MVI     J,R1
+*
+*       j = (Parm_Bin[1] / 2) - j;
+*
+        L       R15,PARMBIN1            Load new string length
+        SRL     R15,1                   Halve it
+        SR      R15,R1                  Calc offset to move string to
+*       STH     R1,J
+*
+*       if (j <=0)
+*
+        CH      R15,=H'0'
+        BH      #14#5546
+*
+        MVC     #OP(L'OP),#PARMST2       Error, string too big
+*
+*
+        B       #14#5570
+#14#5546  DS     0H
+*
+*       else memcpy(&op[j],Parm_Str[2], dv_Parm_Str[2].curr_len);
+*
+        LA      R14,OP                  Get receive area addr
+        AR      R14,R15                 Add Centring offset
+        LH      R1,#PARMST2             Get amount to move
+        EX      R1,CENTSTR
+#14#5570  DS     0H
+        B       ADDQUOTE
+CENTSTR MVC     0(*-*,R14),PARMST2
+*
+*       break;
+*
+        B       BREAK
+CHAR    DS     0H
+*
+*       }
+*
+*       case CHAR:
+*           if (Parm_Type[1] != 3)       /* literal ?? */
+*               GETPARM1(1);             /* no */
+*
+*           cpychar(op,' ');
+*
+*           op[0] = Parm_Bin[1];
+*           goto add_quotes;
+*           break;
+*
+        CLI     PARMTYP1,3
+        BE      #14#5666
+*       get_parm1(1);
+        GETPARM1 1
+#14#5666  DS     0H
+*
+*       MVC     #OP(3),=H'1',C' '         370 Sim Bug
+        MVC     #OP(2),=H'1'
+        MVC      OP(2),BLANKS
+*       op[0] = Parm_Bin[1];
+        MVC     OP(1),PARMBIN1+3          get last byte
+        B       ADDQUOTE
+*
+*       break;
+*
+        B       BREAK
+*
+*
+*       case DEF:
+*       case DEFINED:
+*       i = getsymname(Parm_Str[1]);
+*
+        LA      R1,#PARMST1
+        CALL    GETSYM
+*       if (!(i > 0)) goto store_zero;
+        LTR     R15,R15
+        BNE     #14#5834
+        B       P18FALSE
+#14#5834  DS     0H
+*
+*       goto store_minus1;
+*
+        B       P18TRUE
+*
+*
+EOF     DS     0H
+*
+*
+*       case EOF:
+*
+*       if (ujp18teof(Parm_Str[1]) == 4) goto store_minus1;
+*
+        LA      R1,PARMST1
+*cvc    CALL    P18TEOF
+        LTR     R15,R15
+        BNE     #14#5930
+        B       P18TRUE
+#14#5930  DS     0H
+*
+*       goto store_zero;
+*
+        B       P18FALSE
+EXIST   DS     0H
+*
+*
+*       case EXIST:
+*
+*
+*       goto store_zero;
+*
+        B       P18FALSE
+*
+GETENV  DS     0H
+*
+*       case GETENV:
+*
+*       {
+*       char  *envret;
+*       get_parm1(0);
+*
+        GETPARM1 0
+        DROPQUSR #PARMST1
+*       strupr(Parm_Str[1]);
+*
+        OC      PARMST1,BLANKS
+*
+*       envret =getenv(Parm_Str[1]);
+*
+        LA      R1,#PARMST1
+        CALL    GETENV
+*
+*       if (envret==0) envret="";
+*
+        LTR     R15,R15
+        BZ      #14#6026
+*       MVC     #OP(3),=H'0',C' '         370 Sim Bug
+        MVC     #OP(2),=H'0'
+        MVI      OP,C' '
+#14#6026  DS     0H
+*
+*
+        B       ADDQUOTE
+*
+INKEY   DS     0H
+*
+*       case INKEY:
+*
+*       {enum {dest_len=(sizeof op)-1};
+*       if (vtyp_op & FSTR)
+*
+        B       #14#6098
+*
+*       { dv_op.curr_len=dest_len;
+*
+*       MVI     _dv_op+8,253
+*
+*        memset(op,' ',dest_len);
+*
+*       mov     ax,253
+*       push    ax
+*       mov     ax,32
+*       push    ax
+*       mov     ax,offset DGROUP:_op
+*       push    ax
+*       CALL    memset
+*       add     sp,6
+#14#6098  DS     0H
+*
+*
+*       }
+*       if (vtyp_op & VSTR)
+*       { dv_op.curr_len=0;
+*
+*       MVI     _dv_op+8,0
+*
+*        op[0]=0;
+*
+        MVI     OP,0
+*
+*
+*       }
+*       };
+*       op1type= 3;
+*
+        MVI     OP1TYPE,3
+*
+*
+*       if (kbhit()) {
+*
+*       CALL    kbhit
+*       or      ax,ax
+*       BE      #14#6218
+*
+*
+*
+*       {enum {dest_len=(sizeof op)-1};
+*       if (vtyp_op & FSTR)
+*
+        B       #14#6194
+*
+*       { dv_op.curr_len=dest_len;
+*
+*       MVI     _dv_op+8,253
+*
+*        op[0]= getche();
+*
+*       CALL    getche
+*       MVI     op,al
+*
+*        if(dest_len>sizeof getche())
+*        memset(&op[1],' ',dest_len-1);
+*
+*       mov     ax,252
+*       push    ax
+*       mov     ax,32
+*       push    ax
+*       mov     ax,offset DGROUP:_op+1
+*       push    ax
+*       CALL    memset
+*       add     sp,6
+#14#6194  DS     0H
+*
+*
+*       }
+*       if (vtyp_op & VSTR)
+*       { dv_op.curr_len=1;
+*
+*       MVI     _dv_op+8,1
+*
+*        op[0]=getche();
+*
+*       CALL    getche
+*       MVI     op,al
+*
+*        op[1]='\0';
+*
+*       MVI     op+1,0
+#14#6218  DS     0H
+*
+*
+*       }
+        B       ADDQUOTE
+INDEX   DS     0H
+*
+*case INDEX:
+*
+*           if (Parm_Type[2] != 3)            /* Get Value */
+*               get_parm2(0);
+*
+*           else
+*           {     dropquotes(Parm_Str[2]);
+*                 quote_found=1;
+*           }
+*           if (Parm_Type[1] != 3)                   /* Get Value */
+*           get_parm1(0);
+*
+*           else
+*           {     dropquotes(Parm_Str[1]);
+*                 quote_found=1;
+*           }
+*           temp_index = strstr(Parm_Str[2], Parm_Str[1]);
+*           if (temp_index==NULL) op1bin = 0;
+*           else op1bin = temp_index - Parm_Str[2] +1;
+*
+*           goto store_bin;
+*
+* i=index('lit','srch-string')
+*
+* Remember that the parameters are REVERSED, so 1 has the srch-string
+*          and 2 has the main string
+*
+        CLI     PARMTYP2,3             Literal ?
+        BE      #14#6290               Yes
+        LA      R1,0
+        CALL    GETPARM2               No, Get value
+        B       #14#6314
+#14#6290  DS     0H
+        DROPQUSR #PARMST2
+        MVI     QUOTEFND,1
+#14#6314  DS     0H
+        CLI     PARMTYP1,3
+        BE      #14#6362
+        GETPARM1 0
+        B       #14#6386
+#14#6362  DS     0H
+        DROPQUSR #PARMST1
+        MVI     QUOTEFND,1
+#14#6386  DS     0H
+         MVC   #WORK(L'TKN),#TKN       SHIFT STRING TO WORK      A DASD
+         LH    R9,#PARMST2             RELOAD LENGTH AND         A DASD
+         LA    R10,#PARMST2               ADDRESS                A DASD
+* AS USUAL, R10 -> SYMBOLIC                              CHG30011 76200
+*           R9 CONTAINS LENGTH.                          CHG30011 76200
+* NOW SET UP A BXLE LOOP FOR THE INDEX LOOP.             CHG30011 76200
+         LTR   R9,R9          IS R9=0                    CHG30011 76200
+         BE    P85RZERO       YES, THEREFORE LOOP IMPOSS CHG30011 76200
+         CLC   #PARMST1,=H'0' CHECK STRING TOO           CHG30011 76200
+         BE    P85RZERO       EMPTY, -> RETURN ZERO.     CHG30011 76200
+         SPACE 1                                         CHG30011 76200
+         LA    R14,1          SET INCREMENT              CHG30011 76200
+         LA    R15,2(R10,R9)  AND END ADDRESS            CHG30011C DASD
+         BCTR  R15,0          -1                         CHG30011 76200
+         LA    R10,2(R10)                                CHG30011 76200
+         LR    R0,R10         SAVE START ADDRESS         CHG30011 76200
+         LH    R5,#PARMST1    GET LENGTH OF INDEX STRING CHG30011 76200
+         BCTR  R5,0           -1                         CHG30011 76200
+P85INDLP EX    R5,P85CLC                                 CHG30011 76200
+         BE    P85GOTIN                                  CHG30011 76200
+         BXLE  R10,R14,P85INDLP LOOP                     CHG30011 76200
+         LA    R9,0
+         ST    R9,OP1BIN
+         B     STRBIN
+         SPACE 1                                         CHG30011 76200
+P85GOTIN EQU   *                                         CHG30011 76200
+* R10 CONTAINS START ADDR OF STRING FOUND, WHILE R0      CHG30011 76200
+*  CONTAINS THE ACTUAL START OF THE STRING PROPER        CHG30011 76200
+         LR    R5,R0          NEED FOR CLI               CHG30011 76200
+         SR    R10,R5                                    CHG30011 76200
+* R10 = START ADDR OFFSET OF FOUND STRING.               CHG30011 76200
+* WE MUST SEE IF STRING HAS QUOTES, BECAUSE IF SO WE     CHG30011 76200
+*  MUST BUMP THE OFFSET BY 1 BECAUSE ANY ATTEMPTED USAGE CHG30011 76200
+*  OF THE STRING WILL REQUIRE THE OFFSET-1               CHG30011 76200
+         CLI   0(R5),C''''                               CHG30011 76200
+         BNE   *+4                                       CHG30011 76200
+         LA    R10,1(R10)                                CHG30011 76200
+         LR    R9,R10                                    CHG30011 76200
+         ST    R9,OP1BIN
+        B       STRBIN
+         B     P85STLEN                                  CHG30011 76200
+         SPACE 3                                         CHG30011 76200
+P85CLC   CLC   0(*-*,R10),PARMST1 EXECUTED FOR 'INDEX' FUNC
+*
+*       if (temp_index==0) op1bin = 0;
+*
+        BNE     #14#6434
+        MVC     OP1BIN,=F'0'
+        B       #14#6458
+#14#6434  DS     0H
+*
+*       else op1bin = temp_index - Parm_Str[2] +1;
+*
+*cvc    MVI     op1bin,ax
+*       MVI     op1bin+2,dx
+#14#6458  DS     0H
+*
+*
+*       goto store_bin;
+*
+        B       STRBIN
+*
+*
+LEFT    DS     0H
+*
+*
+*       case LEFT:
+*
+*
+*           if (Parm_Type[2] != 3)          /* Get Value of parm(1) */
+*               get_parm2(0);
+*
+*           else
+*           {     dropquotes(Parm_Str[2]);
+*                 quote_found=1;
+*           }
+*
+*           cpy(Parm_Str[3],Parm_Str[2]);
+*
+*           get_parm1(1);                     /* Get number */
+*
+*           Parm_Bin[2] = 1;
+*           goto do_part_substr;
+*           break;
+*
+        CLI     PARMTYP2,3
+        BE      #14#6554
+        GETPARM2 0
+        B       #14#6578
+#14#6554  DS     0H
+        DROPQUSR #PARMST2
+        MVI     QUOTEFND,1
+#14#6578  DS     0H
+        MVI     OP,C' '                Clear Receive area
+        MVC     OP+1(L'OP-1),OP
+        GETPARM1  1                    Get Number
+        L       R1,PARMBIN1            Get number specified
+        STH     R1,#OP
+        EX      R1,MVCLEFT
+        B       ADDQUOTE
+*
+*
+MVCLEFT MVC     OP(*-*),PARMST2
+*
+*
+*
+LENGTH  DS     0H
+*
+*
+*           if (Parm_Type[1] != 3)                   /* Get Value */
+*           get_parm1(0);
+*
+*           else
+*           {     dropquotes(Parm_Str[1]);
+*                 quote_found=1;
+*           }
+*           op1bin = length(Parm_Str[1]);
+*           goto store_bin;
+*           break;
+*
+*
+* DO LENGTH FUNCTION HERE.                               CHG30011 76200
+         B     REALLEN
+*cvcvc   BAL   R6,P85GETNM    GET THE NAME               CHG30011 76200
+         LTR   R15,R15        DID WE ?                   CHG30011 76200
+         BNZ   P85RZERO       NO, RETURN 0 THEN          CHG30011 76200
+*cvcvc   USING SYMOVLY,R5                                CHG30011 76200
+* ON RETURN, R5 -> SYMOVLY                               CHG30011 76200
+*            R7 -> SYMBOLIC                              CHG30011 76200
+*            R8 CONTAINS LENGTH                          CHG30011 76200
+         LTR   R8,R8          TEST 0 LENGTH              CHG30011 76200
+         BZ    P85STLEN       LENGTH IS 0, STORE IT      CHG30011 76200
+         CLI   2(R7),C''''    GOT QUOTES ?               CHG30011 76200
+         BNE   P85STLEN       NO,SO LENGTH IS OK NOW     CHG30011 76200
+         SH    R8,=H'2'       YES, -2 FOR QUOTES.        CHG30011 76200
+P85STLEN CVD   R8,DBL         CONVERT TO DEC PACKED      CHG30011 76200
+         ZAP   P85NO1,DBL     MOVE TO P85NO1             CHG30011 76200
+         B     P85SANS        STORE ANSWER               CHG30011 76200
+         SPACE 2                                         CHG30011 76200
+P85CAPS  DS    0H                                                 J40B
+*cvcvc   BAL   R6,P85GETNM    GET THE NAME                        J40B
+         LTR   R15,R15        DID WE ?                            J40B
+         BNZ   P85CAP90       NO, FORGET IT                       J40B
+*cvc     USING SYMOVLY,R5                                         J40B
+* ON RETURN, R5 -> SYMOVLY                                        J40B
+*            R7 -> SYMBOLIC                                       J40B
+*            R8 CONTAINS LENGTH                                   J40B
+         LTR   R8,R8          TEST 0 LENGTH                       J40B
+         BZ    P85CAP90       LENGTH IS 0, IGNORE IT              J40B
+         BCTR  R8,0                                               J40B
+         OC    2(0,R7),BLANKS                                     J40B
+         EX    R8,*-6                                             J40B
+*
+*
+REALLEN  DS    0H
+*       if (Parm_Type[1] != 3)
+*
+        CLI     PARMTYP1,3
+        BE      #14#6722
+*
+*       get_parm1(0);
+*
+        GETPARM1 0
+        B       #14#6746
+#14#6722  DS     0H
+*
+        DROPQUSR #PARMST1
+        MVI     QUOTEFND,0              Numeric return
+#14#6746  DS     0H
+*       op1bin = dv_Parm_Str[1].curr_len;
+        LH      R1,#PARMST1
+        ST      R1,OP1BIN
+        B       STRBIN
+*
+*
+*
+LIST    DS     0H
+*
+*           get_parm1(1);
+*
+*           cpylit(op,"LIST");
+*list_item:
+*           catstr(op, f4(Parm_Bin[1]));
+*           return 0;
+*           break;
+*
+*
+*case LIST:
+        GETPARM1 1
+*       MVC     #OP(8),=H'4',C'LIST'       370 Sim Bug
+        MVC     #OP(2),=H'4'
+        MVC      OP(4),=C'LIST'
+LISTITEM  DS     0H
+        L       R1,PARMBIN1
+        CVD     R1,DBL
+        UNPK    OP+4(4),DBL
+        OI      OP+7,C'0'
+        MVC     #OP(2),=H'8'
+         B     BREAK                                              J52
+*       B       ADDQUOTE                                          J51
+*       JOLRETN RC=0
+*
+*
+LOWER   DS     0H
+*
+*
+*case LOWER:
+*           if (Parm_Type[1] != 3)       /* literal ?? */
+*               get_parm1(0);            /* no */
+*
+*           cpy(op,Parm_Str[1]);
+*           strlwr(op);
+*           goto add_quotes;
+*           break;
+        CLI     PARMTYP1,3
+        BE      #14#6986
+*       get_parm1(0);
+        GETPARM1 0
+#14#6986  DS     0H
+        MVC     #OP(L'OP),#PARMST1
+        LA      R1,OP                    Load Start address of string
+        LR      R15,R1                   Copy to R15
+        AH      R15,#OP                  Add length to give stop
+        LA      R14,1                    BXLE increment
+        SR      R0,R0                    Clear R0
+LOWNEXT CLI     0(R1),C'A'
+        BL      LOWBXLE
+        CLI     0(R1),C'Z'
+        BH      LOWBXLE
+        IC      R0,0(R1)                    Load character
+TOLOW   EQU     C'A'-C'a'
+        SH      R0,=AL2(TOLOW)
+        STC     R0,0(R1)
+LOWBXLE BXLE    R1,R14,LOWNEXT
+*       JOLERR  318,'To Lower Not Down Yet'
+        B       ADDQUOTE
+*
+*
+POS     DS     0H
+*
+*case POS:
+*
+*           if (Parm_Type[2] != 3)            /* Get Value */
+*               get_parm2(0);
+*
+*           else
+*           {     dropquotes(Parm_Str[2]);
+*                 quote_found=1;
+*           }
+*           if (Parm_Type[1] != 3)                   /* Get Value */
+*           get_parm1(0);
+*
+*           else
+*           {     dropquotes(Parm_Str[1]);
+*                 quote_found=1;
+*           }
+*           temp_index = strstr(Parm_Str[1], Parm_Str[2]);
+*           if (temp_index==NULL) op1bin = 0;
+*           else op1bin = temp_index - Parm_Str[1] +1;
+*
+*           goto store_bin;
+*           break;
+*
+        CLI     PARMTYP2,3
+        BE      #14#7130
+        GETPARM2 0
+        B       #14#7154
+#14#7130  DS     0H
+        DROPQUSR #PARMST2
+        MVI     QUOTEFND,1
+#14#7154  DS     0H
+        CLI     PARMTYP1,3
+        BE      #14#7202
+        GETPARM1 0
+        B       #14#7226
+#14#7202  DS     0H
+        DROPQUSR #PARMST1
+        MVI     QUOTEFND,1
+#14#7226  DS     0H
+*
+        FIX     'INDEX NOT DONE'
+*
+*       if (temp_index==0) op1bin = 0;
+*
+*       cmp     word ptr DGROUP:b#w+43,0
+*       BNE     #14#7274
+        MVI     OP1BIN,0
+        MVI     OP1BIN+2,0
+        B       #14#7298
+#14#7274  DS     0H
+*
+*       else op1bin = temp_index - Parm_Str[1] +1;
+*
+*cvcv   MVI     op1bin,ax
+*cvc    MVI     op1bin+2,dx
+#14#7298  DS     0H
+*
+*
+*       goto store_bin;
+*
+        B       STRBIN
+*
+*
+PUTENV  DS     0H
+*
+*
+*
+* case PUTENV:
+*
+*           {char *temp_equ;
+*
+*               get_parm1(0);
+*               dropquotes(Parm_Str[1]);
+*
+*               temp_equ = strchr(Parm_Str[1],'=');
+*               if (temp_equ != NULL)
+*               {
+*                   *temp_equ = '\0';
+*                   strupr(Parm_Str[1]);
+*                   *temp_equ = '=';
+*               }
+*
+*               op1bin = putenv(Parm_Str[1]);
+*               goto store_bin;
+*               break;
+*           }
+*
+        GETPARM1 0
+        DROPQUSR #PARMST1
+        FIX     'PUTENV Not Supported'
+*       if (temp_equ != 0)
+*
+*       cmp     word ptr DGROUP:b#w+53,0
+        BE      #14#7394
+*
+*       {
+*       *temp_equ = '\0';
+*
+*       strupr(Parm_Str[1]);
+*       *temp_equ = '=';
+*
+#14#7394  DS     0H
+*
+*       }
+*
+*       op1bin = putenv(Parm_Str[1]);
+*
+*cvc    MVI     op1bin,ax
+*cvc    MVI     op1bin+2,dx
+*
+*       goto store_bin;
+*
+        B       STRBIN
+*
+*       break;
+*
+        B       BREAK
+RIGHT   DS     0H
+*
+*
+*       }
+*
+*case RIGHT:
+*
+*
+*           if (Parm_Type[2] != 3)          /* Get Value of parm(1) */
+*               get_parm2(0);
+*
+*           else
+*           {     dropquotes(Parm_Str[2]);
+*                 quote_found=1;
+*           }
+*
+*           cpy(Parm_Str[3],Parm_Str[2]);
+*
+*           get_parm1(1);                     /* Get number */
+*
+*           Parm_Bin[2] = length(Parm_Str[2]) - Parm_Bin[1] + 1;
+*           if (Parm_Bin[2] <1)
+*               Parm_Bin[2] =1;
+*
+*           goto do_part_substr;
+*           break;
+*
+        CLI     PARMTYP2,3
+        BE      #14#7490
+        GETPARM2 0
+        B       #14#7514
+#14#7490  DS     0H
+        DROPQUSR #PARMST2
+        MVI     QUOTEFND,1
+#14#7514  DS     0H
+*
+        MVI     OP,C' '                Clear Receive area
+        MVC     OP+1(L'OP-1),OP
+        GETPARM1  1                    Get Number
+        L       R1,PARMBIN1            Get Right Number Specified
+        STH     R1,#OP
+        LTR     R1,R1
+        BZ      ADDQUOTE               Zero
+        CH      R1,#PARMST2            Over end of string?
+        BH      ADDQUOTE
+        LA      R14,PARMST2            Get right hand side address
+        AH      R14,#PARMST2           Point to end of it
+        SR      R14,R1                 Go back required number
+        SH      R1,=H'1'
+        EX      R1,MVCRITE
+        B       ADDQUOTE
+*
+*
+MVCRITE MVC     OP(*-*),0(R14)
+*
+*
+*
+*
+STMTSR  DS     0H
+*       case STMT:
+*       {
+*
+        MVC     #OP,=H'4'
+        MVC     OP(4),PRNTSTMT
+        B       ADDQUOTE
+*
+*
+*
+STRIP   DS     0H
+*       case STRIP:
+*       {
+*
+*
+        CLI     PARMTYP1,3
+        BE      #ST#5090
+        GETPARM1 0
+        B       #ST#7514
+#ST#5090  DS     0H
+        DROPQUSR #PARMST1
+        MVI     QUOTEFND,1
+#ST#7514  DS     0H
+        MVC     #OP(L'OP),#PARMST1
+         LA    R1,OP                                              cvc
+         LR    R15,R1                                             cvc
+         AH    R15,#OP                                            cvc
+         LA    R14,1                                              cvc
+FBLANK1  CLI   0(R1),C' '                                         cvc
+         BNE   GBLANK1                                            cvc
+         BXLE  R1,R14,FBLANK1                                     cvc
+         B     DONESTRP                                           cvc
+GBLANK1  DS    0H                                                 cvc
+* R1 points to 1st non-blank character                            cvc
+         LA    R0,OP                                              cvc
+         MVC   OP,0(R1)                                           cvc
+         SR    R1,R0                                              cvc
+         LH    R0,#OP                                             cvc
+         SR    R0,R1                                              cvc
+         STH   R0,#OP                                             cvc
+FLASTB   LA    R15,OP-1                                           cvc
+         AH    R15,#OP                                            cvc
+         CLI   0(R15),C' '                                        cvc
+         BNE   DONESTRP                                           cvc
+         LH    R15,#OP                                            cvc
+         SH    R15,=H'1'                                          cvc
+         BM    DONESTRP                                           cvc
+         STH   R15,#OP                                            cvc
+         B     FLASTB                                             cvc
+DONESTRP B      ADDQUOTE
+*
+*
+*
+*
+SUBSTR  DS     0H
+*
+*       case SUBSTR:
+*       if (Parm_Cntl < 2) goto func_err;
+*
+        CLC     PARMCNTL,=H'2'
+        BL      F14682           too few parms
+        BH      #14#7850         NOP later (leave for fresh listi ngs
+#14#7850  DS     0H
+*
+*       if (Parm_Cntl == 3)
+*
+        CLC     PARMCNTL,=H'3'
+        BE      ##7
+        B       #14#8354
+##7  DS     0H
+*
+*       {
+*       if (Parm_Type[3] != 3)
+*
+        CLI     PARMTYP3,3
+        BE      #14#7922
+*
+*
+*        {cpy(Parm_Str[3],get_value(Parm_Str[3]));}
+*
+*       LA      R1,#PARMST3
+*       CALL    GETVALUE
+*cvc    MVC     #OP,#GOTVALUE
+        GETPARM3 0
+        B       #14#7946
+#14#7922  DS     0H
+*
+*       else
+*       {     dropqusr(Parm_Str[3]);
+*
+        DROPQUSR #PARMST3
+*
+        MVI     QUOTEFND,1
+#14#7946  DS     0H
+*
+*       }
+*       get_parm2(1);
+*
+        GETPARM2 1
+*
+        GETPARM1 1
+#14#7970  DS     0H
+*
+*
+*       do_part_substr:
+*       if (dv_Parm_Str[3].curr_len >= Parm_Bin[2])
+*
+        CLC     #PARMST3,PARMBIN2+2                               J51
+        BL      #14#8258
+        BNE     #14#8042
+#14#8042  DS     0H
+*
+*
+*       {   static char  *temp_substr;
+*
+*       temp_substr = Parm_Str[3];
+*
+        LA      R1,PARMST3-1
+*
+*       temp_substr = temp_substr + Parm_Bin[2] - 1;
+*
+        A       R1,PARMBIN2
+*
+*
+*        {gencpystr(&dv_op,temp_substr);};
+*
+        MVC     OP(L'OP),0(R1)
+         LH    R14,#PARMST3      Get Current Length               J51
+         S     R14,PARMBIN2      Subtract start point             J51
+         BM    SUBSERR                                            J51
+         STH   R14,#OP           Store in new area                J51
+*
+*       if (Parm_Bin[1] > 0
+*       &&  Parm_Bin[1] < sizeof ( Parm_Str[0]) )
+*
+        L       R14,PARMBIN1     Get 3rd parameter
+        LTR     R14,R14          =0]
+        BM      #14#8210
+        CH      R14,=AL2(L'PARMST1)
+        BL      #14#8186
+         B     ADDQUOTE                                           J51
+*       B       P85NCALC
+#14#8186  DS     0H
+         STH   R14,#OP                                            J51
+         B     ADDQUOTE                                           J51
+*
+*       op[Parm_Bin[1]] = '\0';
+*
+*cvc    mov     bx,word ptr DGROUP:_Parm_Bin+4
+*cvc    MVI     op[bx],0
+#14#8210  DS     0H
+*
+*       dv_op.curr_len = strlen(op);
+*
+*cvc    LA      R1,OP
+*cvc    CALL    STRLEN
+*cvc    STH     R1,#OP
+*
+*
+SUBSERR  DS    0H                                                   J51
+         MVC   #OP,ZERO                                           J51
+         B     ADDQUOTE                                           J51
+*        B     P85NCALC        STORE SUBSTR REQUESTED    CHG30011 76200
+         JOLRETN RC=0                                            J51
+         MVC   #TKN(L'TKN+2),0(R7) SHIFT STRING TO TKN   CHG30011 76200
+         BAL   R14,DROPQUOT        AND DROP QUOTES       CHG30011 76200
+         MVC   #WORK(L'TKN+2),#TKN SHIFT TO WORK.        CHG30011 76200
+         SPACE 1                                         CHG30011 76200
+         GETTKN (R1)          GET TOKEN AFTER NAME       CHG30011 76200
+        STH     R1,TKNCURR
+         CLI   TKN,C','       IS IT A ','                CHG30011 76200
+         BNE   P85SUBER       NO                         CHG30011 76200
+         GETTKN (R1)          YES, GET START POSN        CHG30011 76200
+        STH     R1,TKNCURR
+         STH   R1,TKNCURR     SAVE TOKEN POINTER         CHG30011 76200
+         TNUM  #TKN           CONVERT TO NUMERIC         CHG30011 76200
+         LTR   R15,R15                                   CHG30011 76200
+         BNZ   P85SUBER       ERROR IN CONVERSION        CHG30011 76200
+         LR    R8,R1          SAVE START                 CHG30011 76200
+         LA    R9,2000   **** SET OPTIONAL LENGTH HIGH   CHG30011 76200
+         GETTKN TKNCURR       GET NEXT TOKEN             CHG30011 76200
+        STH     R1,TKNCURR
+         CLI   TKN,C','        ','                       CHG30011 76200
+         BNE   P85SUBE1       NOPE, END PART(1) SUBSTR   CHG30011 76200
+         GETTKN (R1)          GET OPTIONAL LENGTH        CHG30011 76200
+        STH     R1,TKNCURR
+         TNUM  #TKN           CONVERT TO NUMERIC         CHG30011 76200
+         LTR   R15,R15                                   CHG30011 76200
+         BNZ   P85SUBER                                  CHG30011 76200
+         LR    R9,R1                                     CHG30011 76200
+P85SUBE1 EQU   *                                         CHG30011 76200
+         SPACE 2                                         CHG30011 76200
+* WORK CONTAINS STRING                                   CHG30011 76200
+* R8 CONTAINS START OF STRING                            CHG30011 76200
+* R9 CONTAINS LENGTH TO MOVE OR A VERY HIGH NUMBER       CHG30011 76200
+         SPACE 1                                         CHG30011 76200
+* CALCULATE LENGTH TO MOVE (IE NEW LENGTH AFTER          CHG30011 76200
+*   SUBSTR FUNCTION).                                    CHG30011 76200
+         LH    R1,#WORK       GET CURRENT LENGTH         CHG30011 76200
+         SR    R1,R8          -START POSN OF SUBSTR      CHG30011 76200
+         A     R1,ONE         +1 COS SUBSTR STARTS AT 1 ^0 C77263  DASD
+         BNP   P85NULLX       <=0, RETURN NULL           CHG30011 76200
+         CR    R1,R9          IS CURRENT LENGTH>L'REQD   CHG30011 76200
+         BL    P85NSWP        YES                        CHG30011 76200
+         LR    R1,R9          NO, SET TO LESSER LENGTH   CHG30011 76200
+P85NSWP  STH   R1,#WORK       STORE IT                   CHG30011 76200
+         LTR   R1,R1          IS LENGTH=0 <0             CHG30011 76200
+         BNP   P85NULLX       YES, STORE NULL            CHG30011 76200
+         BCTR  R1,0           -1 FROM R1                 CHG30011 76200
+         LA    R8,WORK-1(R8)  POINT TO FIRST PART OF SUBSTR       76200
+         EX    R1,P85MVCSU    MOVE                       CHG30011 76200
+         B     P85NCALC        STORE SUBSTR REQUESTED    CHG30011 76200
+         SPACE 3
+*
+*
+*       }
+*
+        B       #14#8330
+#14#8258  DS     0H
+*
+*Here, only2 parms for SUBSTR
+*
+*       else
+*       {enum {dest_len=(sizeof op)-1};
+*       if (vtyp_op & FSTR)
+*
+        B       #14#8306
+*
+*       { dv_op.curr_len=dest_len;
+*
+*cvc    MVI     _dv_op+8,253
+*
+*        memset(op,' ',dest_len);
+*
+        MVI     OP,C' '
+        MVC     OP+1(L'OP-1),OP
+#14#8306  DS     0H
+*
+*
+*       }
+*       if (vtyp_op & VSTR)
+*       { dv_op.curr_len=0;
+*
+*cvc    MVI     _dv_op+8,0
+*
+*        op[0]=0;
+*
+*cvc    MVI     op,0
+#14#8330  DS     0H
+*
+*
+        B       ADDQUOTE
+#14#8354  DS     0H
+*
+*       else {
+*       if (Parm_Type[2] != 3)
+*
+        CLI     PARMTYP2,3
+        BE      #14#8402
+*
+*
+*        {gencpystr(&dv_Parm_Str[2],get_value(Parm_Str[2]));}
+*
+        GETPARM2 0                                                J51
+*       LA      R1,PARMST2
+*       CALL    GETVALUE
+*cvc    CALL    gencpystr
+        B       #14#8426
+#14#8402  DS     0H
+*
+*       else
+*       {     dropqusr(&dv_Parm_Str[2].curr_len,Parm_Str[2]);
+*
+        DROPQUSR  #PARMST2
+*
+        MVI     QUOTEFND,1
+#14#8426  DS     0H
+*
+*       }
+*       get_parm1(1);
+*
+        GETPARM1 1
+*
+*
+*       {  static char *temp_substr;
+*
+*       if (dv_Parm_Str[2].curr_len >= Parm_Bin[1])
+*
+*cvc    mov     ax,word ptr DGROUP:dv_Parm_Str+28
+*cvc    cwd
+*cvc    cmp     dx,word ptr DGROUP:_Parm_Bin+6
+*cvc    jl      #14#8546
+*cvc    BNE     #14#8522
+*cvc    cmp     ax,word ptr DGROUP:_Parm_Bin+4
+*cvc    jb      #14#8546
+#14#8522  DS     0H
+*
+*       {
+*       temp_substr = Parm_Str[2];
+*
+*cvc    MVI     b#w+57,offset DGROUP:PARMST2
+*
+*       temp_substr = temp_substr +  Parm_Bin[1] -1;
+*
+*cvc    mov     ax,word ptr DGROUP:b#w+57
+*cvc    add     ax,word ptr DGROUP:_Parm_Bin+4
+*cvc    dec     ax
+*cvc    MVI     b#w+57,ax
+*
+*
+*        {gencpystr(&dv_op,temp_substr);};
+*
+*
+        LA      R1,PARMST2-1
+*
+*       temp_substr = temp_substr + Parm_Bin[2] - 1;
+*
+        A       R1,PARMBIN1
+*
+        MVC     OP(L'OP),0(R1)        temp_substr
+*
+*       }
+*
+        B       ADDQUOTE
+#14#8546  DS     0H
+*
+*
+*       else
+*       {enum {dest_len=(sizeof op)-1};
+*       if (vtyp_op & FSTR)
+*
+        B       #14#8594
+*
+*       { dv_op.curr_len=dest_len;
+*
+*cvc    MVI     _dv_op+8,253
+*
+*        memset(op,' ',dest_len);
+*
+*cvc    mov     ax,253
+*cvc    push    ax
+*cvc    mov     ax,32
+*cvc    push    ax
+*cvc    mov     ax,offset DGROUP:_op
+*cvc    push    ax
+*cvc    CALL    memset
+*cvc    add     sp,6
+#14#8594  DS     0H
+*
+*
+*       }
+*       if (vtyp_op & VSTR)
+*       { dv_op.curr_len=0;
+*
+*cvc    MVI     _dv_op+8,0
+*
+*        op[0]=0;
+*
+        MVI     OP,0
+ADDQUOTE  DS     0H
+*
+*
+*add_quotes:
+*       op1type=3;
+*
+        MVI     OP1TYPE,3
+* To make IF etc work easily,  we must add blanks at the          J52
+* end of the string.                                               J52
+         LH    R1,#OP            Get current length of the string J52
+         LA    R15,L'OP          Get maximum length               J52
+         SR    R15,R1            Length on right to blank fill.   J52
+         BNP   RETQUOT           Something wrong.                 J52
+         BCTR  R15,0                                              J52
+         LA    R1,OP(R1)         Starting spot                    J52
+         EX    R15,FILLBLNK                                       J52
+*
+*       return 0;
+*
+RETQUOT  DS    0H                                                 J52
+        JOLRETN  RC=0
+        B       F14850
+FILLBLNK MVC   0(*-*,R1),=CL255' '                                J52
+*
+*       break;
+*
+        B       BREAK
+*
+*
+SYMBOL  DS     0H
+*       case SYMBOL:
+*
+*       if ((*Parm_Str[1] == '\'')
+*       ||      (Parm_Type[1] == 0))
+*
+        CLI     PARMST1,C''''
+        BE      #14#8714
+        CLI     PARMTYP1,0
+        BNE     #14#8786
+#14#8714  DS     0H
+*       MVC     #OP(6),=H'3',C'LIT'       370 Sim Bug
+        MVC     #OP(2),=H'3'
+        MVC      OP(3),=C'LIT'
+        B       #14#8930
+#14#8786  DS     0H
+*
+*       else {
+*       i = getsymname(Parm_Str[1]);
+*
+        LA      R1,#PARMST1
+        CALL    GETSYM
+        LTR     R15,R15
+*
+*       if (!(i > 0))
+*
+        BZ      #14#8882
+*
+*
+*       MVC     #OP(6),=H'3',C'BAD'       370 Sim Bug
+        MVC     #OP(2),=H'3'
+        MVC      OP(3),=C'BAD'
+        B       #14#8930
+#14#8882  DS     0H
+*
+*       MVC     #OP(6),=H'3',C'VAR'       370 Sim Bug
+        MVC     #OP(2),=H'3'
+        MVC      OP(3),=C'VAR'
+*
+#14#8930  DS     0H
+*
+*
+*        };
+*       }
+        B       ADDQUOTE
+*
+*       break;
+*
+        B       BREAK
+*
+TYPE      DS     0H
+*
+*case TYPE:
+*
+P85TYPE  DS    0H                                                 J52
+        CLI     PARMST1,C''''                                     J52
+        BE      TYPELITX                                          J52
+        CLI     PARMTYP1,0                                        J52
+        BE      TYPENUMX                                          J52
+*        BAL   R6,P85GETNM    GET NAME                   CHG30011 76200
+         FINDSYM PARMST1       FIND THE SYMBOLIC (BIN SEARCH)     87150
+         LTR   R15,15          DID WE FIND IT?
+         BNZ   P85NULLX        Didn't get it.                     87150
+         LR    R5,R0           SYMNAME POINTER
+         USING SYMOVLY,R5                                CHG30011
+* NAME NOT THERE                                         CHG30011
+*        JOLERR 425,'%',#TKN,' NOT FOUND FOR TYPE '      CHG30011
+*        JOLERR '410#TKN NOT FOUND FOR'
+         SPACE 3
+*85GETDT DS    0H
+         LR    R5,R0          GET ADDRESS OF SYMBOLIC TABLE
+         L     R1,SYMADDR     GET ADDRESS SYMBOLIC       CHG30011
+         DROP  R5                                                 J52
+         MVC   DBL(2),0(R1)   SHIFT LENGTH SO NO 0C6     CHG30011
+*        LH    R1,DBL         LOAD R8 WITH THE LENGTH    CHG30011
+*        LTR   R15,R15        DID WE GET IT              CHG30011
+         B     P85TYPE2                                  CHG30011
+P85NULLX MVC   #OP,ZERO                                  CHG30011
+         MVI   OP,C' '                                            J52
+         B     ADDQUOTE       STORE BLANK AS RETURN      CHG30011C
+P85TYPE2 EQU   *                                         CHG30011
+         MVC   #WORK(L'TKN),0(R1)   SHIFT SYMBOLIC VALUE JOL30011
+         TNUM  #WORK          TEST NUMERIC               JOL30011
+         LTR   R15,R15         IS IT ?                   JOL30011
+         BNZ   P85TYPNN       NOT NUMERIC                JOL30011
+TYPENUMX MVC   OP(3),=C'NUM'                             JOL30011 J52
+P85SET3  MVC   #OP,=H'3'                                 JOL30011 J52
+         B     ADDQUOTE       GO STORE                   JOL30011 76200
+P85TYPNN CLI   2(R7),C''''    IS IT LITERAL ?            JOL30011 76200
+         BNE   P85NTLIT       NOT A LITERAL              JOL30011 76200
+TYPELITX MVC   OP(3),=C'LIT' SET 'LIT'                   JOL30011 J52
+         B     P85SET3        SET LENGTH TO 3, GO TO STR JOL30011 76200
+P85NTLIT EQU   *                                         JOL30011 76200
+* MUST BE CHAR                                           JOL30011 76200
+         MVC   #OP,=H'4'                                 JOL30011 J52
+         MVC   OP(4),=C'CHAR'                            JOL30011 J52
+         B     ADDQUOTE                                  JOL30011 76200
+         SPACE 3                                         JOL30011 76200
+*
+*       if (*Parm_Str[1] == '\'')
+*
+        CLI     PARMST1,C''''
+        BNE     #14#9074
+*
+*       MVC     #OP(6),=H'3',C'LIT'       370 Sim Bug
+        MVC     #OP(2),=H'3'
+        MVC      OP(3),=C'LIT'
+        B       #14#9674
+#14#9074  DS     0H
+*
+*       else if (Parm_Type[1] == 0)
+*
+        CLI     PARMTYP1,0
+        BNE     #14#9170
+*
+*
+*       MVC     #OP(6),=H'3',C'NUM'        370 Sim Bug
+        MVC     #OP(2),=H'3'
+        MVC      OP(3),=C'NUM'
+        B       #14#9674
+#14#9170  DS     0H
+*
+*       else
+*       {
+*       i = GETSYMty(Parm_Str[1]);
+*
+        LA      R1,#PARMST1
+        CALL    GETSYMTY
+*
+*       if (!(i > 0)) goto store_zero;
+*
+        LTR     R15,R15
+        BP      #14#9242
+        B       P18FALSE
+        B       #14#9242
+#14#9242  DS     0H
+*
+*       else
+*       {
+*
+*
+*       }
+*
+*       if (*op == '\'')
+*
+        CLI     OP,C''''
+        BNE     #14#9482
+*
+*       {
+*       dropqusr(&dv_op.curr_len,op);
+*
+        DROPQUSR #OP
+*
+*       i=strtol(op, &conv_code,10);
+*
+        TNUM    #OP
+*
+*       if ((dv_op.curr_len > 0) && (*conv_code == 0))
+*
+        LTR     R15,R15
+        BNZ     #14#9386
+*       MVC     #OP(5),=H'3',C'NUM'        370 Sim Bug
+        MVC     #OP(2),=H'3'
+        MVC      OP(3),=C'NUM'
+        B       #14#9458
+#14#9386  DS     0H
+*       MVC     #OP(5),=H'3',C'LIT'         370 Sim Bug
+        MVC     #OP(2),=H'3'
+        MVC      OP(3),=C'LIT'
+*       else
+*       {{enum{tlen=sizeof "LIT"};
+#14#9458  DS     0H
+*
+*
+        B       #14#9674
+#14#9482  DS     0H
+*
+*       else
+*       {
+*       i=strtol(op, &conv_code,10);
+*
+        TNUM    #OP
+*
+*       if ((dv_op.curr_len > 0) && (*conv_code == 0))
+*
+        CLC     #OP,=H'0'
+        BNH     #14#9602
+        LTR     R15,R15
+        BNZ     #14#9602
+*
+*       MVC     #OP(5),=H'3',C'NUM'         370 Sim Bug
+        MVC     #OP(2),=H'3'
+        MVC      OP(3),=C'NUM'
+        B       #14#9674
+#14#9602  DS     0H
+*
+*
+*
+*       else
+*       MVC     #OP(6),=H'4',C'CHAR'        370 Sim Bug
+        MVC     #OP(2),=H'4'
+        MVC      OP(4),=C'CHAR'
+#14#9674  DS     0H
+*
+*       }
+        B       ADDQUOTE
+*
+*
+UPPER   DS     0H
+*
+*       case UPPER:
+*       goto make_caps;
+*
+        B      CAPS
+*
+USERID  DS     0H
+*
+*       case USERID:
+*       {
+        MVC #OP,=H'7'
+*cvc    MVC  OP(8),SYSUID
+        B       ADDQUOTE
+*
+*       break;
+*
+        B       BREAK
+*
+WHEREXA DS     0H
+*
+*       case WHEREX:
+*       op1bin = wherex();
+*
+*       CALL    WHEREX
+*       cwd
+*       MVI     op1bin,ax
+*       MVI     op1bin+2,dx
+*
+*       goto store_bin;
+*
+        B       STRBIN
+*
+*       break;
+*
+        B       BREAK
+*
+WHEREYA DS     0H
+*
+*       case WHEREY:
+*       op1bin = wherey();
+*
+*       CALL    WHEREY
+*       cwd
+*       MVI     op1bin,ax
+*       MVI     op1bin+2,dx
+*
+*       goto store_bin;
+*
+        B       STRBIN
+*
+*       break;
+*
+        B       BREAK
+#14#9914  DS     0H
+*
+*
+*
+*       default:
+*
+        JOLERR   319,'Function ''',OP1,''' Not Yet Implemented'
+*
+*
+        JOLRETN  RC=4
+        B       BADRETN
+BREAK      DS     0H
+*
+*       }
+*       return 0;
+*
+        JOLRETN  RC=0
+        B       F14850
+*
+INVALOP DS     0H
+*
+*invalid_op:
+*
+        JOLERR  330,'Expression Has Invalid Operator ''',OPRL2,''''
+*       WTO     OPRL2
+*       HALT
+        JOLRETN RC=4
+STORNUM    DS     0H
+*
+*       }
+*store_num :
+*       op1type=0;
+*
+        MVI      OP1TYPE,0
+*
+*       ltoa(op1dec, op, 10);
+*
+*       L       R1,OP1BIN
+*       CVD     R1,DBL
+STRDEC  MVC     OP+8(8),BLANKS
+        MVI     QUOTEFND,0             don't want quotes on numbers
+        UNPK    OP(8),OP1DEC
+        OI      OP+7,X'F0'
+        MVC     #OP,=H'8'
+        LA      R0,#OP
+        LA      R14,OP1DEC
+        LA      R15,OP2DEC
+         MVC   WORK(30),BLANKS CLEAR A FEW BYTES OF WORK          75128
+         UNPK WORK(13),OP1DEC
+         OI    WORK+12,X'F0'
+         LA    R1,WORK
+         LA    R15,WORK+12
+         LA    R14,1
+P85FINDN CLI   0(R1),C'0'
+         BNE   P85ASTRT
+         BXLE  R1,R14,P85FINDN
+         MVI   OP,C'0'                                            75049
+         MVI   OP+1,C' '                                          75049
+         MVI   #OP+1,1         SET LENGTH TO 1                    74303
+        B       STORE
+*        B     P85STOR
+P85ASTRT MVC   #OP+2(13),0(R1)
+         SR    R15,R1
+         LA    R15,1(R15)
+         STH   R15,#OP
+         SPACE 1                                                  75128
+* NOW, IF THE ANSWER IS -VE, WE MUST PUT A '-' IN THE ANSWER      75128
+*  BEFORE WE STORE IT.                                            75128
+         CP    OP1DEC,=P'0'                                       75128
+         BNM   STORE                                              75128
+         LA    R15,1(R15)     ADD 1 TO LENGTH                     75128
+         STH   R15,#WORK      STORE IN #WORK                      75128
+         MVI   WORK+0,C'-'    SHIFT IN - SIGN                     75128
+         MVC   WORK+1(30),OP  SHIFT IN NUMBER                     75128
+         MVC   #OP(L'OP+2),#WORK
+        B       STORE
+*       HALT
+*       TNUM    OP
+STORE   DS     0H
+*
+*
+*       store:;
+*       reduce:;
+*
+*       if (*op == ' ') {
+*
+        CLI     OP,C' '
+        BNE     F14346
+*
+*       if (*op == ' ')
+*
+        CLI     OP,C' '
+        BNE     F14322
+*
+*       {
+*
+        B       F14274
+*
+*       { dv_op.curr_len=dest_len;
+*
+*cvcvc  MVI     _dv_op+8,253
+*
+*        memset(op,' ',dest_len);
+*
+*cvcvc  MVC     OP(DEST_LEN),BLANKS
+F14274     DS     0H
+*
+*
+*       }
+*       if (vtyp_op & VSTR)
+*       { dv_op.curr_len=0;
+*
+*cvcvc  MVI     _dv_op+8,0
+*
+*        op[0]=0;
+*
+        MVI     OP,0
+*
+*       goto symblank;
+*
+        B       F14346
+F14322     DS     0H
+*
+*       }
+*       memcpy(op, &op[1], dv_op.curr_len);
+*
+        MVC     OP(L'OP-1),OP+1
+*
+*       op.curr_len=op.curr_len - 1;
+*
+        LH      R1,#OP
+        SH      R1,=H'1'
+        STH     R1,#OP
+*
+        B       STORE
+F14346     DS     0H
+*
+*       }
+*       symblank:;
+*       store_char :;
+*       return 0;
+*
+        SR      R1,R1
+        B       F14850
+STRBIN  DS     0H
+*
+*       store_bin:;
+*       op1type= 0;
+*
+        MVI     OP1TYPE,0
+*
+*       ltoa(op1bin, op,10);
+*
+        L       R1,OP1BIN
+        CVD     R1,DBL
+        ZAP     OP1DEC,DBL
+        B       STRDEC
+*
+        UNPK    OP(8),DBL
+        OI      OP+7,X'F0'
+*
+*       goto store;
+*
+        B       STORE
+P18FALSE   DS     0H
+*
+*
+*store_zero:;
+*
+        MVC     #OP,=H'1' ,C'0'
+        MVI      OP,C'0'
+*
+F14466     DS     0H
+*
+*       }
+*       };
+*retnum:;
+*       op1type= 0;
+*
+        MVI     OP1TYPE,0
+*
+*       return 0;
+*
+        JOLRETN  RC=0
+*
+*store_one:
+*
+        MVC     #OP(2),=H'1' ,C'1'
+        MVI      OP,C'1'
+*       };
+*       goto retnum;
+*
+        B       F14466
+P18TRUE    DS     0H
+*
+*       store_minus1:
+*       op1type=0;
+*
+        MVI     OP1TYPE,0
+        MVC     #OP(2),=H'2' ,C'-1'
+        MVC      OP(2),=C'-1'
+*
+*
+*       return 0;
+*
+        JOLRETN RC=0
+F14682     DS     0H
+*
+*
+*
+*       func_err:
+        JOLERR  321,'Invalid Number of Parameters (',PARMCNTL,         *
+               ') for Function ',OP1
+        JOLRETN RC=4
+BADRETN    DS     0H
+*
+F14850     DS     0H
+*
+*       }
+*
+        JOLRETN  RC=0
+P18PACK1 PACK OP1DEC,OP1(*-*) PACK 1ST NUMBER,EX SETS 2ND LENGTH
+P18PACK2 PACK OP2DEC,OP2(*-*) PACK 2ND NUMBER,EX SETS 2ND LENGTH
+        LTORG
+        DS   0D
+FUNCTBL DC   CL8'CAPS    '
+FUNCNOP DC   F'1'            Could be Half word, but needs to be padded
+*                         anyway for the next address constant, so ..
+FUNCADR DC   A(CAPS)
+        ENTRY CAPS
+        DC   CL8'CARD    ',F'1',A(CARDRTN)
+        ENTRY CARDRTN
+        DC   CL8'CENTER  ',F'2',A(CENTER)
+        ENTRY CENTRE
+        DC   CL8'CENTRE  ',F'2',A(CENTRE)
+        DC   CL8'CHAR    ',F'1',A(CHAR)
+        ENTRY CHAR
+*       DC   CL8'CURSOR  ',F'1',A(CURSOR)
+*       DC   CL8'DEF     ',F'1',A(DEF)
+*       DC   CL8'DEFINED ',F'1',A(DEFINED)
+*       DC   CL8'DOSCD   ',F'1',A(DOSCD)
+*       DC   CL8'DOSCHDIR',F'1',A(DOSCHDIR)
+*       DC   CL8'DOSDRIVE',F'1',A(DOSDRIVE)
+*       DC   CL8'DOSENV  ',F'1',A(DOSENV)
+*       DC   CL8'DOSVOLUM',F'1',A(DOSVOLUM)
+        DC   CL8'EOF     ',F'1',A(EOF)
+        DC   CL8'EXIST   ',F'1',A(EXIST)
+        DC   CL8'GETENV  ',F'1',A(GETENV)
+        DC   CL8'INDEX   ',F'2',A(INDEX)
+        ENTRY INDEX
+        DC   CL8'INKEY   ',F'0',A(INKEY)
+        DC   CL8'LEFT    ',F'2',A(LEFT)
+        ENTRY LEFT
+        DC   CL8'LENGTH  ',F'1',A(LENGTH)
+        ENTRY LENGTH
+*       genfunc (LINEIN,1)
+*       genfunc (LINEOUT,1)
+*       genfunc (LINESIZE,1)
+        DC   CL8'LIST    ',F'1',A(LIST)
+        ENTRY LIST
+        DC   CL8'LOWER   ',F'1',A(LOWER)
+        ENTRY LOWER
+*       genfunc (MAX,2)
+*       genfunc (MIN,2)
+        DC   CL8'POS     ',F'2',A(POS)
+        ENTRY POS
+        DC   CL8'PUTENV  ',F'1',A(PUTENV)
+        DC   CL8'RIGHT   ',F'2',A(RIGHT)
+        ENTRY RIGHT
+*       DC   CL8'SCRSIZE ',F'1',A(SCRSIZE)
+*       genfunc (SIGN,1)
+*       genfunc (SOURCELINE,0)
+        DC   CL8'STMT    ',F'0',A(STMTSR)
+        DC   CL8'STRIP   ',F'-1',A(STRIP)
+        DC   CL8'SUBSTR  ',F'-1',A(SUBSTR)
+        ENTRY SUBSTR
+        DC   CL8'SYMBOL  ',F'1',A(SYMBOL)
+        ENTRY SYMBOL
+*if 0
+*       genfunc (TRIM,1)
+*endif
+        DC   CL8'TYPE    ',F'1',A(TYPE)
+        ENTRY TYPE
+        DC   CL8'UPPER   ',F'1',A(UPPER)
+        DC   CL8'USERID  ',F'0',A(USERID)
+        DC   CL8'WHEREX  ',F'0',A(WHEREXA)
+        DC   CL8'WHEREY  ',F'0',A(WHEREYA)
+FTABEND DC   A(*)
+FTABLEN DC   AL2(8+4+4)
+FTABCNT DC   AL2((*-FUNCTBL)/12)
+*
+*       END
+*
+*
+*XX15          DSECT
+*TEMP85  JOLSAVE
+*
+*
+         FIX   'IT ALSO HAS TO DO SOME OTHER THINGS: SEE SUBSTR'  J40B
+P85CAP90 DS    0H             STORE ANSWER               CHG30011 76200
+         JOLRETN RC=0
+P85NFUNC EQU   *
+* NOW REMOVE QUOTES IF THEY ARE ON EITHER STRING
+           SPACE 1                                                74303
+* THIS NEXT BIT OF CODE PERFORMS THE FOLLOWING:-                  74303
+*  IF WE ARE CONCATENATING 2 STRINGS LIKE 'A'||'B' WE WANT        74303
+*  THE RESULT TO BE STORED WITH QUOTES STILL AROUND THE RESULTANT 74303
+*  STRING. HOWEVER,IN ANY OTHER CASE,WE DON'T CARE.               74303
+* THE REASON FOR THIS IS SO THAT THE TYPE FUNCTION CAN BE USED    74303
+*  TO TEST IF THE STRING IS A LITERAL STRING, EG IF TYPE(%A)='LIT'74303
+*  WILL WORK CORRECTLY.                                           74303
+         CLC   DBL(2),BLANKS NO SECOND PART??                     76200
+         BE    P85NCALC                                           76200
+         CLC   DBL(2),=C'||'    CONCATENATION ?                   74303
+         BE    P85CAT1          NO,->                             74303
+         CLC   DBL(2),=C'!!'    CONCATENATION ?                   74303
+         BNE   P85NOTC1         NO,->                             74303
+P85CAT1  CLI   WORK,C''''                                         74303
+         BNE   P85NOTC1                                           74303
+         CLC   #TKN,ZERO      ANY 2ND ITEM?                 FIX-X 76200
+         BE    P85NCALC                                           76200
+         CLI   TKN,C''''                                          74303
+         BNE   P85NOTC1                                           74303
+* WELL,DROP THE END QUOTE OF THE WORK AREA,AND THE BEGINNING      74303
+*  QUOTE OFF TKN                                                  74303
+         LH    R1,#WORK                                           74303
+         BCTR  R1,0                                               74303
+         STH   R1,#WORK                                           74303
+         LH    R1,#TKN                                            74303
+         BCTR  R1,0                                               74303
+         STH   R1,#TKN                                            74303
+         MVC   TKN(L'TKN-1),TKN+1                                 74303
+         B     P85CONCT        GO DO CONCATENATION                74303
+         SPACE 2                                                  74303
+P85NOTC1 EQU   *                                                  74303
+         CLI   WORK,C''''
+         BNE   P85NQU1
+         MVC   WORK(L'TKN),WORK+1 DROP 1ST QUOTE         JOL30035 76200
+         LH    R1,#WORK
+         SH    R1,=H'2'
+         STH   R1,#WORK
+P85NQU1  EQU    *
+         CLI   TKN,C''''
+         BNE   P85NQU2
+         MVC   TKN(L'TKN),TKN+1   DROP 1ST QUOTE         JOL30035 76200
+         LH    R1,#TKN
+         SH    R1,=H'2'
+         STH   R1,#TKN
+P85NQU2  EQU    *
+         CLC   DBL(2),BLANKS
+         BE    P85NCALC        A STRAIGHT ASSIGNMENT IS REQUIRD
+         CLC   DBL(2),=C'||'   CONCATENATE
+         BE    P85CONCT        YES,GO DO CONCAT
+         CLC   DBL(2),=C'!!'   CONCATENATE
+         BE    P85CONCT        YES,GO DO CONCAT
+*cvc     JOLERR 308,'INVALID ASSIGN:-STRING IS ''',#TKNSTRG,''''  75128
+         JOLERR 308,'INVALID ASSIGN:-STRING IS ''',#TKNSTRG,''''  75128
+         B     P85SET0        SET ANSWER TO 0                     75128
+         SPACE 2                                                  75128
+P85ARITH EQU   *                                                  75128
+* HERE THE OPERATOR MUST BE A NUMERIC ONE
+* NOW LOOK AT THE OPERATOR AND PERFORM THE DESIRED ACTION
+         CLI   DBL,C'+'
+         BE    P85PLUS
+         CLI   DBL,C'-'
+         BE    P85MINUS
+         CLI   DBL,C'*'
+         BE    P85MULT
+         CLI   DBL,C'/'
+         BE    P85DIV
+         MVC   TKN(2),DBL      SHIFT OFFENDING <OPERATOR> IN      74303
+         MVI   #TKN+1,2        AND SET LENGTH=2
+*cvc     JOLERR 301,'''',#TKN,''' IS AN INVALID ARITHMETIC OPERATOR'
+         JOLERR 322,#TKN,''' IS AN INVALID ARITHMETIC OPERATOR'
+P85SET0  EQU   *                                                  75128
+         ZAP   P85NO1,=P'0'    SET ANSWER TO ZERO
+         B     P85SANS         STORE THE ANSWER
+P85CONV1 MVC   #TKN(L'TKN+2),#WORK                                74303
+P85CONV2 DS    0H
+*cvc     JOLERR '302ERROR CONVERTING ''' ,#TKN,''' TO ARITHMETIC'
+         JOLERR 302,'ERROR CONVERTING ''',#TKN,''' TO ARITHMETIC'
+         ZAP   P85NO1,=P'0'    SET ANSWER TO ZERO
+         B     P85SANS         STORE THE ANSWER
+P85ZEDIV DS    0H
+         JOLERR 304,'ZERO DIVIDE CONDITION'
+P85RZERO EQU   *                                                  76200
+         ZAP   P85NO1,=P'0'    SET ANSWER TO ZERO
+         B     P85CONVA
+         SPACE 3
+P85CONCT BAL   R14,CONCAT     CONCATENATE ITEMS TO WORK           75128
+         LTR   R15,R15        DID CONCAT WORK ?                   75128
+         BZ    P85MACRO       GO STORE RESULT NOW                 75128
+         JOLERR 403,'LENGTH ERROR CONCATENATING ''',#TKN,''''
+*        JOLERR '403LENGTH ERROR CONCATENATING ''' ,#TKN,''''
+         B     P85STOR
+P85PLUS  AP    P85NO1,P85NO2   ADD THE NUMBERS
+         B     P85CONVA        CONVERT ANSWER
+P85MINUS SP    P85NO1,P85NO2   SUBTRACT THE NUMBERS
+         B     P85CONVA
+P85MULT  EQU    *                                                  DASD
+         ZAP   WORK(15),P85NO1    LETS NOT 0C7 OK                  DASD
+         MP    WORK(15),P85NO2    MULTIPLY THE NUMBERS             DASD
+         MVC   P85NO1,WORK+5      MOVE BACK THE ANSWER             DASD
+         B     P85SANS
+P85DIV   CP    P85NO2,=P'0'
+         BZ    P85ZEDIV
+         DP P85NO1,P85NO2      DO THE DIVIDE
+*******************IGNORE THE REMAINDER FOR NOW
+* LATER WE MAY LET THE GUY SAY %X=%Y/100 AND %Z = REMAINDER (OR SOME
+*     SUCH RUBISH).
+         SPACE
+* NOW SHIFT THE ANSWER BACK DOWN TO THE RIGHT SPOT
+         ZAP   P85NO1,P85NO1(L'P85NO1-L'P85NO2)
+P85SANS  EQU   *
+P85CONVA EQU    *
+* STORE THE ANSWER.
+P85STOR  EQU   *
+         MVC   #WORK(L'TKN+2),#TKN
+P85MACRO EQU   *
+P85NCALC EQU    *
+* NOW TO STORE THE ANSWER
+* NOW,INITIALLY,SHIFT THE VALUE IN IF IT WILL FIT.HOWEVER,WE      74303
+*  WON'T SET ANY OF THE POINTERS TILL WE POP THE NAME IN THE      74303
+*  STACK,SO IF WE DON'T PUT THE NAME IN FOR SOME REASON,WE WILL   74303
+*  ONLY HAVE WASTED A MOVE.                                       74303
+         JOLRETN RC=0                                             J51
+         SR    R8,R8            R8=REORG INDICATOR IF VALUE WON'T
+*                               FIT,CALL REORG AND TRY AGAIN IT IT
+*                               STILL WON'T FIT -> ERROR
+P85TVFIT L     R1,ASYMTBL      LOAD THE ADDRESS OF THE TABLE      74303
+         AH    R1,SYMLEN       +LENGTH =LAST USEABLE ADDRESS      74303
+*                              IN THE TABLE                       74303
+         L     R6,ANEXTSYM     LOAD A(NEXTSYM)                    74303
+         LR    R7,R6           SAVE IT FOR A MINUTE               74303
+         LH    R15,#WORK       LOAD LENGTH OF STRING TO GO IN     74303
+         LA    R15,1(R15)      ADD 2-1 (#WORK=2,-1 FOR EXECUTE)   75128
+         AR    R6,R15          ADD IT TO R6                       74303
+         CR    R6,R1           WILL IT FIT ?                      74303
+         BNL   P85REORG        NO,REORG TABLE                     74303
+         EX    R15,P85MVCVA    SHIFT VALUE INTO TABLE             74303
+         LA    R6,1(R7,R15)    SET R6 TO NEXT AVAILABLE SPOT      74303
+*                              WHICH IS (ANEXTSYM+L'VALUE)        74303
+* FIRST LETS SEE IF THE NAME IS ALREADY IN THE STACK.
+*cvc     FINDSYM SYMBOLIC      FIND THE SYMBOLIC (BIN SEARCH)     87150
+         LA  R1,SYMBOLIC      FIND THE SYMBOLIC (BIN SEARCH)     87150
+         CALL  GETSYM          FIND THE SYMBOLIC (BIN SEARCH)     7150
+         STH   R1,P85TBLPS     SAVE POSITION FOR BINARY LOOKUP TABLE
+         STH   R15,P85WASFN    WAS FOUND INDICATOR
+         LR    R5,R0           SYMNAME POINTER
+         LTR   R15,15          DID WE FIND IT?
+         BNZ   P85NOTFN
+         B     P85GOTNM        WE HAVE IT                         7150
+         L     R5,ASYMTBL      ADDRESS SYMBOLIC TABLE
+         LH    R1,NOSYMS       NO USED SO FAR.
+         MH    R1,=H'12'       LENGTH TABLE ENTRIES
+         LR    R15,R5
+         AR    R5,R1
+         LH    R14,=H'-12'
+         USING SYMOVLY,R5
+P85FNAME CLC   SYMBOLIC(8),SYMNAME
+         BE    P85GOTNM
+         BXH   R5,R14,P85FNAME
+* NAME NOT HERE SO ENTER IT INTO THE STACK PROVIDED THAT
+*     THERE IS ROOM TO ENTER THE SYMBOLIC NAME IN THE TABLE       74303
+*     OF SYMBOLIC NAMES.                                          74303
+P85NOTFN EQU   *                                                  74303
+P85STRIT LH    R1,NOSYMS
+         LR    R5,R1           PUT NON-INCREMENTED VALUE IN R5    87150
+         LA    R1,1(R1)
+         CH    R1,MAXSYMS
+         BH    P85ERR05        CANNOT ENTER NAME IN STACK,TOO MANY74303
+*                              AND NO AMOUNT OF RE-ORGANING WILL  74303
+*                              DROP THE NUMBER OF NAMES (ONLY THE 74303
+*                              PART FOR THE VALUE,AS THE NAMES    74303
+*                              ARE DROPPED AT THE END OF EACH     74303
+*                              MACRO).                            74303
+         STH   R1,NOSYMS       RESET NUMBER OF SYMBOLIC NAMES     74303
+         SPACE
+         MH    R5,=H'12'
+         A     R5,ASYMTBL
+         MVC   SYMNAME,SYMBOLIC      * NAME STORED
+         ST    R7,SYMADDR      R7=ANEXTSYM,IE ADDR VALUE WHICH    74303
+*                              HAS ALREADY BEEN MOVED IN          74303
+         MVC   SYMLEVEL(1),LEVEL+1
+         ST    R6,ANEXTSYM     RESET ANEXTSYM                     74303
+* STORE THE OFFSET IN THE BINARY LOOKUP TABLE
+* NOTE, IF THE SYMBOL WAS FOUND, WE WANT TO REPLACE IT RATHER THAN
+*       INSERTING IT SO THAT WE ONLY HAVE THE NAME IN THE TABLE ONCE.
+         CLC   P85WASFN,ZERO   IF ZERO, THE NAME WAS FOUND        87150
+         BNE   P85INS
+*cvc     L     R15,ATBLCNTL
+*cvc     USING TABLCNTL,R15
+         LH    R1,P85TBLPS     GET TABLE POSITION
+         BCTR  R1,0
+         AR    R1,R1           DOUBLE IT
+*cvc     A     R1,ACUROFFS     POINT TO POSITION IN OFFSET TABLE
+         LH    R14,NOSYMS
+         BCTR  R14,0
+         MH    R14,=H'12'
+         STH   R14,0(R1)
+         JOLRETN RC=0
+*        DROP  R15
+P85INS   DS    0H                                                 87150
+         LA    R1,P85TBLPS                                        87150
+*cvc     CALL  UJP02INS                                           87150
+         JOLRETN RC=0
+         SPACE 3
+P85GOTNM EQU   *
+* NOW THE NAME IS ALREADY IN THE SYMBOLIC PARAMETER TABLE ENTRIES.
+*    IF THE LEVEL IN THE STACK IS EXTERNAL OR EQUAL TO THE CURRENT
+*    LEVEL,WE WILL OVERWRITE IT.
+*    IF THE CURRENT LEVEL IS > THAN THE LEVEL NOW,WE SHALL CREATE
+*    A NEW ENTRY.
+         CLI   SYMLEVEL,X'FF'  EXTERAL ?
+         BE    P85USENM        YES,SO DO THE ASSIGN
+         CLC   SYMLEVEL,LEVEL+1
+         BH    P85NOTFN        ENTER SAME NAME AT DIFFERENT LEVEL
+* NAME IS HERE SO WE MUST OVER-WRITE THE INFORMATION (IF THERE IS ROOM)
+P85USENM EQU   *                                                  74303
+* SET UP NEW ADDRESS IN SYMADDR
+         MVC   SYMADDR+1(3),ANEXTSYM+1
+         ST    R6,ANEXTSYM     RESET NEXT VARIABLE ADDRESS        74303
+         JOLRETN RC=0                                             74303
+P85ERR05 DS     0H
+         JOLERR 425,'SYMBOLIC NAME ''',SYMBOLIC,''' CANNOT BE STORED'
+*        JOLERR '405SYMBOLIC NAME ''' ,SYMBOLIC,''' CANNOT BE STORED'
+P85RETNF JOLRETN RC=16
+P85REORG LTR   R8,R8           HAS REORG ALREADY BEEN CALLED ?    74303
+         BZ    P85RORG2        NO,SO DO IT,AND TEST FIT AGAIN     74303
+P85ERR07 DS     0H
+         ENTRY  P85ERR07
+         JOLERR 426,'CANNOT STORE VALUE OF ''',SYMBOLIC,''''
+*        JOLERR '406CANNOT STORE VALUE OF ''' SYMBOLIC,''''
+         JOLRETN RC=16                                            74303
+P85RORG2 LA    R8,1            SET R8 NON-ZERO                    74303
+*cvc     CALL UJS19RSM         RE-ORG THE TABLE NOW               74303
+         B     P85TVFIT        GO TEST IF IT WILL FIT NOW.        74303
+P85PACK1 PACK P85NO1,OP1(*-*) PACK 1ST NUMBER,EX SETS 2ND LENGTH
+P85PACK2 PACK P85NO2,OP2(*-*) PACK 2ND NUMBER,EX SETS 2ND LENGTH
+P85CLRTK MVC   TKNSTRG(*-*),BLANKS  CLEAR A BIT OF TKNSTRG        74303
+P85MVCVA MVC   0(*-*,R7),#WORK SHIFT VALUE OF ASSIGN -> TABLE     74303
+P85MVCSU MVC   WORK(*-*),0(R8) EXECUTED FOR SUBSTR FUNC  CHG30011 76200
+           DROP R5                                                74303
+         SPACE 3                                         CHG30011 76200
+P85SUBER DS     0H
+         JOLERR 429,'SUBSTR IN ERROR :-',#TKNSTRG        CHG30011 76200
+*        JOLERR '409SUBSTR IN ERROR :-' ,#TKNSTRG        CHG30011 76200
+         B     P85NULLX                                  CHG30011 76200
+         SPACE 2                                         CHG30011 76200
+P85GETNM EQU   *                                         CHG30011 76200
+* BAL'D ON R6 FOR INDEX ETC FUNCTIONS                    CHG30011 76200
+         LR    R8,R1           SAVE THE VALUE FOR THE ROUTINES    87150
+         FINDSYM TKN           FIND THE SYMBOLIC (BIN SEARCH)     87150
+*        LA   R1,TKN           FIND THE SYMBOLIC (BIN SEARCH)     87150
+*        CALL GETSYM           FIND THE SYMBOLIC (BIN SEARCH)     87150
+         LTR   R15,15          DID WE FIND IT?
+         BZ    P85GETDT        WE HAVE IT, GET IT'S DETAILS       87150
+         LR    R5,R0           SYMNAME POINTER
+         USING SYMOVLY,R5                                CHG30011 76200
+* NAME NOT THERE                                         CHG30011 76200
+         JOLERR 420,'%',#TKN,' NOT FOUND FOR ',#WORK     CHG30011 76200
+*        JOLERR '410#TKN NOT FOUND FOR'
+         LR    R15,R6         SOME NON-ZERO VALUE        CHG30011 76200
+         BR    R6                                        CHG30011 76200
+         SPACE 3                                         CHG30011 76200
+P85GETDT DS    0H
+         LR    R5,R0          GET ADDRESS OF SYMBOLIC TABLE       87150
+         L     R7,SYMADDR     GET ADDRESS SYMBOLIC       CHG30011 76200
+         MVC   DBL(2),0(R7)   SHIFT LENGTH SO NO 0C6     CHG30011 76200
+         LR    R1,R8           RESTORE THE ORIGINAL R1 VALUE      87150
+         LH    R8,DBL         LOAD R8 WITH THE LENGTH    CHG30011 76200
+         BR    R6             RETURN TO CALLER           CHG30011 76200
+         SPACE 3                                         CHG30011 76200
+           LTORG
+        END

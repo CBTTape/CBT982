@@ -1,0 +1,59 @@
+         MACRO
+         DYNP1 &P,&KEY,&L=1,&N=4
+.*  CODES NAME TYPE PARAMS
+.*   REVISED OCT 77 TO CHECK FOR ZERO LENGTH REAL TIME NAME INPUT.
+.*   IF LENGTH NOT POSITIVE THEN TU POINTER NULLIFIED.
+         GBLA  &K,&T,&S
+         GBLC  &R,&B
+         LCLA  &I,&J
+         AIF   ('&P'EQ'').C
+&T       SETA  &T+1
+         LCLC  &C,&D
+         AIF   ('&P(2)'EQ'').B
+&C       SETC  '&P(2)'
+         AIF   ('&P(2)'(1,1) NE'(').A
+&C       SETC  '0&C'
+.A       ANOP
+&D       SETC  'CHECK IF '.'&KEY'.' LENGTH ZERO'
+D&R&S    SR    1,1
+         CH    1,&C&B&D
+&S       SETA  &S+1
+         BNL   D&R&S          ZERO, NEG, NO TU POINTER
+         LA    1,TU&R&T       POINT TO TU
+&D       SETC  '&N'.'('.'&P(1)'.'+2,1)'
+         MVC   &D,&C            MOVE LENGTH AND NAME
+&I       SETA  4*(&T-1)
+D&R&S    ST    1,TUPL&R+&I    STORE POINTER
+&S       SETA  &S+1
+         B     D&R&S
+&C       SETC  ' FROM '.'&P(2)'.'+2'
+TU&R&T   DC    AL2(&K,&L,0),&P(1)C' '&B&KEY&C
+         AGO   .C
+.B       ANOP
+&I       SETA  K'&P
+&D       SETC  '&P'
+&C       SETC  '&&'
+&C       SETC  '&C'(1,1)
+.B0      ANOP
+&J       SETA  &J+1
+         AIF   ('&D'(&J,1) NE'&C').B01   CHECK FOR AMPERSANDS
+&I       SETA  &I+1
+&D       SETC  '&D'(1,&J).'&D'(&J,&I-&J)   DOUBLE THEM
+&J       SETA  &J+1
+.B01     AIF   (&J LT &I).B0       END TEST
+&J       SETA  K'&P
+         AIF   (&I+K'&B+K'&KEY GE 38).B1
+TU&R&T   DC    AL2(&K,&L,&J),C'&D'&B&KEY
+         AGO   .C
+.B1      AIF   (&I GT 38).B2
+TU&R&T   DC  AL2(&K,&L,&J),C'&D'
+         MNOTE '*     &KEY'
+         AGO   .C
+.B2      ANOP
+&C       SETC  '&D'(1,38)
+TU&R&T   DC    AL2(&K,1,&J),C'&C'
+&C       SETC  '&D'(39,&I-38)
+         DC    C'&C'&B&KEY
+.C       ANOP
+&K       SETA  &K+1
+         MEND

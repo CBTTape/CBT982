@@ -1,0 +1,8 @@
+DEVNAMET TITLE 'DUMMY DEVICE NAME TABLE FOR JOL ON OSIV/X8'
+DEVNAMET CSECT
+         DC     F'4'
+         DC    X'3050200B',CL8'DA'
+         DC    X'32108003',CL8'MT'
+         DC    CL8'DA',X'3050200B'
+         DC    CL8'MT',X'32108003'
+         END

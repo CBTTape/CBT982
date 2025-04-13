@@ -1,0 +1,326 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=windows-1252">
+  <meta name="Generator" content="Microsoft Word 10 (filtered)">
+  <title>Syntax Notation</title>
+  <style>
+<!--
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Arial";}
+ /* Page Definitions */
+ @page Section1
+	{size:612.0pt 792.0pt;
+	margin:72.0pt 90.0pt 72.0pt 90.0pt;}
+div.Section1
+	{page:Section1;}
+ /* List Definitions */
+ ol
+	{margin-bottom:0cm;}
+ul
+	{margin-bottom:0cm;}
+-->
+  </style>
+</head>
+<body style="" lang="EN-US">
+<div class="Section1">
+<table class="MsoNormalTable"
+ style="margin-left: 5.4pt; border-collapse: collapse;" border="0"
+ cellpadding="0" cellspacing="0">
+  <tbody>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+      </td>
+      <td style="padding: 0cm 5.4pt; width: 337.95pt;" valign="top"
+ width="451">
+      <p class="MsoNormal" style="text-align: right;" align="right"><b><u><span
+ style="font-size: 18pt;">Syntax Notation</span></u></b></p>
+      <p class="MsoNormal" style="text-align: right;" align="right"><span
+ style="font-size: 10pt;">&nbsp;</span></p>
+      <p class="MsoNormal" style="text-align: right;" align="right"><span
+ style="font-size: 10pt;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+      </td>
+      <td style="padding: 0cm 5.4pt; width: 337.95pt;" valign="top"
+ width="451">
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">The
+format of the statements described in this manual provide a brief,
+uniform and precise explanation of the general patterns of the Jol
+language instructions.&nbsp; The notation does not describe the
+meanings of the language elements, but it indicates the order in which
+the elements may (or must) appear, the punctuation, and the options
+that are allowed.</span></p>
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">For
+example:</span></p>
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+      </td>
+      <td
+ style="border: 1pt solid windowtext; padding: 0cm 5.4pt; width: 337.95pt;"
+ valign="top" width="451">
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+      <p class="MsoNormal" style="margin-left: 43.2pt;"><b><span
+ style="font-size: 10pt;">COPY</span></b><span style="font-size: 10pt;">&nbsp;&nbsp;
+
+      <b>{</b> <i>dsid</i> | <i>dsname</i> <b>} </b></span></p>
+      <p class="MsoNormal" style="margin-left: 43.2pt;"><b><span
+ style="font-size: 10pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+TO</span></b><span style="font-size: 10pt;">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>{</b> <i>dsid</i>
+| <i>dsname</i> <b>}&nbsp;&nbsp; </b></span></p>
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+      </td>
+      <td style="padding: 0cm 5.4pt; width: 337.95pt;" valign="top"
+ width="451">
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">states
+
+that
+the <b>COPY</b> consists of:</span></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Symbol;">·<span
+ style="font-family: &quot;Arial&quot;; font-style: normal; font-variant: normal; font-weight: normal; font-size: 7pt; line-height: normal; font-size-adjust: none; font-stretch: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      </span></span><span style="font-size: 10pt;">The <b>COPY</b>
+word itself.</span></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Symbol;">·<span
+ style="font-family: &quot;Arial&quot;; font-style: normal; font-variant: normal; font-weight: normal; font-size: 7pt; line-height: normal; font-size-adjust: none; font-stretch: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      </span></span><span style="font-size: 10pt;">A <b>DSID</b> or <b>Data
+Set
+Name</b> that is to be used as input. The <b>&nbsp;</b>&nbsp;indicate
+that you must write a <b>DSID</b> or a <b>DSNAME</b>.</span></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 14.15pt; text-indent: -14.15pt;"><span
+ style="font-size: 10pt; font-family: Symbol;">·<span
+ style="font-family: &quot;Arial&quot;; font-style: normal; font-variant: normal; font-weight: normal; font-size: 7pt; line-height: normal; font-size-adjust: none; font-stretch: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      </span></span><span style="font-size: 10pt;">The reserved word <b>TO</b>,
+which
+is then followed by the name of the <b>DSID</b> or data set name
+to which the data indicated in the first variable will be copied to.</span></p>
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 0cm 5.4pt; width: 112.8pt;" valign="top"
+ width="150">
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+      </td>
+      <td style="padding: 0cm 5.4pt; width: 337.95pt;" valign="top"
+ width="451">
+      <p class="MsoNormal" style=""><span style="font-size: 10pt;">The
+following rules apply:</span></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 22.8pt; text-indent: -22.8pt;"><span
+ style="font-size: 10pt;">1 &nbsp;&nbsp;&nbsp;&nbsp; Uppercase letters
+and words are coded exactly as they appear in the
+format description, as are any special characters.&nbsp; Thus:</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 43.2pt;"><b><span
+ style="font-size: 10pt;">PRINT </span></b><i><span
+ style="font-size: 10pt;">&nbsp;data-set-name</span></i><span
+ style="font-size: 10pt;">;</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">states that the word <b>PRINT</b> must be
+coded exactly as shown.&nbsp; Special characters:</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 43.2pt;"><b><span
+ style="font-size: 10pt;">= . / ( ) + - ' * , &lt; &gt; | </span></b><b><span
+ style="font-size: 10pt; font-family: Symbol;">ù</span></b><b><span
+ style="font-size: 10pt;"> ^ : ; %</span></b></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">and the composite special characters:</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 43.2pt;"><b><span
+ style="font-size: 10pt; font-family: Symbol;">ù</span></b><b><span
+ style="font-size: 10pt;">&gt; ^&gt;</span></b><span
+ style="font-size: 10pt;">&nbsp; </span><span
+ style="font-size: 10pt; font-family: Symbol;">ù</span><b><span
+ style="font-size: 10pt;">&lt; ^&lt;</span></b><span
+ style="font-size: 10pt;">&nbsp; <b>&gt;=</b>&nbsp; </span><span
+ style="font-size: 10pt; font-family: Symbol;">ù</span><b><span
+ style="font-size: 10pt;">= &lt;=</span></b><span
+ style="font-size: 10pt;">&nbsp; <b>/*</b>&nbsp; <b>*/ </b>&nbsp;<b>||</b></span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">must be coded as shown.</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">Note that the symbol <b>^</b> can be used
+instead of the symbol </span><span
+ style="font-size: 10pt; font-family: Symbol;">ù</span><span
+ style="font-size: 10pt;"> on terminals that do not support the <b>EBCID
+
+      </b></span><b><span style="font-size: 10pt; font-family: Symbol;">ù</span></b><b><span
+ style="font-size: 10pt;"> </span></b><span style="font-size: 10pt;">(NOT)
+symbol.</span></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 21.6pt; text-indent: -21.6pt;"><span
+ style="font-size: 10pt;">2 &nbsp;&nbsp;&nbsp;&nbsp; <i>Italic </i>lowercase,
+letters, words<b>,</b> and symbols in the format
+descriptions represent variables for which specific information is
+substituted when the parameter is coded. For example:</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 43.2pt;"><b><span
+ style="font-size: 10pt;">NAME =</span></b><span
+ style="font-size: 10pt;"> <i>dsname</i></span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">indicates that the data set name must be
+substituted for the word "<i>dsname</i>".</span></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 21.6pt; text-indent: -18.3pt;"><span
+ style="font-size: 10pt;">3 &nbsp;&nbsp; <b>Braces&nbsp; </b>&nbsp;are
+a
+special notation and are never coded in any statements. They indicate
+that a choice must be made from one of the items enclosed in the
+braces. For example:</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 34.8pt;"><b><span
+ style="font-size: 10pt;">{&nbsp; DEFINE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></b></p>
+      <p class="MsoNormal" style="margin-left: 34.8pt;"><b><span
+ style="font-size: 10pt;">{&nbsp; DECLARE&nbsp; }</span></b><span
+ style="font-size: 10pt;">&nbsp;&nbsp;&nbsp;&nbsp; <i>data-set-identifier</i></span></p>
+      <p class="MsoNormal" style="margin-left: 34.8pt;"><b><span
+ style="font-size: 10pt;">{&nbsp;
+DCL&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</span></b></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">indicates that you must use either <b>DEFINE,
+DECLARE</b> or <b>DCL</b> to indicate that you wish to define an item
+in <b>JOL.</b></span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">Sometimes, instead of vertically stacking the
+items, the vertical stroke is used to indicate that a choice must be
+made.&nbsp; For example:</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 43.2pt;"><b><span
+ style="font-size: 10pt;">FB | VB</span></b></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">indicates that you must choose <b>"VB"</b>
+or <b>"FB".</b></span></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 21.6pt; text-indent: -18.3pt;"><span
+ style="font-size: 10pt;">4 &nbsp;&nbsp; <b>Square
+brackets [ ]</b> are a special notation and are never coded.&nbsp; They
+indicate that an enclosed item or items are optional and you can code
+one or none of the items.&nbsp; For example:</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 43.2pt;"><b><span
+ style="font-size: 10pt;">PARALLEL [MOUNT]</span></b></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">indicates that the <b>MOUNT</b> may, or may
+not, be coded, and if it is coded, it must immediately follow the word <b>PARALLEL.</b></span></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 21.6pt; text-indent: -18.3pt;"><span
+ style="font-size: 10pt;">5 &nbsp;&nbsp; <b>An ellipsis .
+. .</b> (three consecutive periods) is a special notation and is used
+to indicate that the preceding item can be coded more than once in
+succession._For example:</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 43.2pt;"><b><span
+ style="font-size: 10pt;">VOL [=]</span></b><span
+ style="font-size: 10pt;"> <i>volume</i> <b><i>[</i>, . . .<i>]</i></b></span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">indicates that more than one volume may be
+coded.&nbsp; If another volume name follows the first, a comma must
+precede the second volume name.</span></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 21.6pt; text-indent: -18.3pt;"><span
+ style="font-size: 10pt;">6 &nbsp;&nbsp; <b>Underlining</b>
+is used to indicate the default that will be applied if none of the
+options are chosen.&nbsp; For example:</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 43.2pt;"><b><span
+ style="font-size: 10pt;">[ <u>FB</u> | VB ]</span></b></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">indicates that you may code <b>"VB"</b> or <b>"FB",</b>
+but if you do not code either option, <b>"FB"</b> is chosen as the
+default.</span></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 21.6pt; text-indent: -18.3pt;"><span
+ style="font-size: 10pt;">7 &nbsp;&nbsp; A blank is used to
+separate identifiers and constants that are not separated by special
+characters or comments.&nbsp; Where one blank is required or allowed
+any number may be used.&nbsp; With the exception of character string
+constants, no identifier, constant or composite symbol may contain
+blanks.</span></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 21.6pt; text-indent: -18.3pt;"><span
+ style="font-size: 10pt;">8 &nbsp;&nbsp; Comments are
+permitted wherever a blank is allowed and are treated as blanks if no
+blank is found.&nbsp; Comments do not effect the program in any way but
+are used for documentation purposes only.</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">A comment is commenced by the composite
+symbol, <b>/*</b>, and terminated by the composite symbol, <b>*/</b>.&nbsp;
+Any
+character may be coded in the comment except the end of comment
+composite character which would terminate the comment.&nbsp; Examples
+of the comment are:</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 43.2pt;"><span
+ style="font-size: 10pt;">a)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      <b>/*THIS IS A COMMENT*/</b></span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 43.2pt;"><span
+ style="font-size: 10pt;">b)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      <b>/* THIS COMMENT EXTENDS</b></span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 86.4pt;"><b><span
+ style="font-size: 10pt;">OVER TWO LINES */</span></b></p>
+      <p class="MsoNormal"
+ style="margin: 6pt 0cm 0.0001pt 21.6pt; text-indent: -18.3pt;"><span
+ style="font-size: 10pt;">9 &nbsp;&nbsp; A special type of
+identifier or data type is the symbolic variable.&nbsp; A symbolic
+variable is a name which commences with the <b>percent character</b>, <b>%</b>.</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">It contains a character string of up to 253
+characters which may be used to replace various parts of a JOL program
+during the preprocessor phase of the compile.&nbsp; When a statement is
+found with any symbolic variables as part of the text, they are
+replacedby the current value of the symbolic variables.</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">Symbolic Variables may be used to replace all
+or part of a Jol statement, or a card image file.&nbsp; For example:</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 64.8pt;"><b><span
+ style="font-size: 10pt;">%A='PRINT INPUT';</span></b></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt;">...</span></b></p>
+      <p class="MsoNormal" style="margin-left: 64.8pt;"><b><span
+ style="font-size: 10pt;">%A;</span></b></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">will modify the Jol program, and insert the
+statement <b>PRINT INPUT</b> at the <b>%A;</b>.</span></p>
+      <p class="MsoNormal" style="margin: 6pt 0cm 0.0001pt 21.6pt;"><span
+ style="font-size: 10pt;">Symbolic Variables may be saved in a data set
+with the <b>SAVESYMS</b> command, and retrieved in another job, or the
+same job executed at a later time.&nbsp; This facility allows
+information entered by a user to be used as initial values at some
+later time.</span></p>
+      <p class="MsoNormal" style="margin-top: 6pt;"><span
+ style="font-size: 10pt;">See "<i>Compile Time Facilities"</i> on the
+following pages for further details about Symbolic Variables.</span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+<p class="MsoNormal" style=""><span style="font-size: 10pt;">&nbsp;</span></p>
+</div>
+</body>
+</html>

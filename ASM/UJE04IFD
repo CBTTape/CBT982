@@ -1,0 +1,459 @@
+         TITLE 'UJE04IF: HANDLE EXECUTE IF STATEMENT'
+         JOLSAVE CSECT=UJE04IF
+         L     R7,AWINST
+         USING INSTR,R7
+         L     R5,ARETN
+         USING RETNAREA,R5
+* THIS CSECT IS RESPONSIBLE FOR CALCULATING AND WORKING OUT IF
+*     AN 'IF' STATEMENT IS TRUE OR FALSE
+         SPACE 2
+         B     E04START
+* THE RETURN CODES ARE
+*    0 IF THE STATEMENT WAS TRUE
+*    4 IF THE STATEMENT WAS FALSE
+*    16 IF AN ERROR CONDITION AROSE
+RETN16   LA    R15,16
+         JOLRETN RC=(15)
+E04START DS     0H
+         XC #OP,#OP
+         CLEAR OP
+         MVC   TKNCURR,=H'1'   SKIP THE 'IF'
+E04MAINA DS   0H
+           CLEAR #E04SYM1,E04SYM1,#E04SYM2,E04SYM2,#E04SYM,E04SYM,     *
+               E04NUM1,E04NUM2                                    74365
+           CLC TKNCURR,TKNNO
+           BH  E04ENDP1
+           GETTKN LOCN=TKNCURR GET A TOKEN
+           STH R1,TKNCURR
+           CLI TKN,C'&&'       AND ?
+           BE E04MUV1
+           CLI TKN,C'|'
+           BE E04MUV1
+           CLI TKN,C'('
+           BE E04MUV1
+           CLI TKN,C')'
+           BE E04MUV1
+           B  E04TIDNT         TEST IF IT IS AN IDENTIFIER
+E04MUV1    BAL R10,E04CONC   MOVE ()|& INTO STRING
+           B   E04MAINA
+E04TIDNT   CLI TKNTYPE,2       <IDENTIFIER> ?
+           BNE E04NIDNT        NO
+           MVC #E04SYM1(14),#TKN   MOVE NAME IN
+           GETTKN LOCN=TKNCURR GET THE NEXT TOKEN
+           BAL R10,E04TOP      TEST IF OPERATOR
+           LTR R15,R15
+           BZ  E04OP1
+* HERE THE REQUEST WAS SIMPLY TO SEE IF THE PROGRAM RAN,IE THE
+*     PERSON CONCERNED REALLY COULDN'T CARE LESS WHAT THE
+*     RETURN CODE WAS.
+* CHECK IF ERROR HERE                                    CHG26028 76200
+         CLC   =C'ERROR ',#E04SYM1+2 IF ERROR ?          CHG26028 76200
+         BNE   E04NERR1                                  CHG26028 76200
+* IF ERROR CODED                                         CHG26028 76200
+         CLI   ERRORIND,0     HAS AN ABEND OCCURED ?     CHG26028 76200
+         BE    E04FTEST       NO, MARK THIS FALSE        CHG26028 76200
+* ERROR HAS OCCURED.                                     CHG26028 76200
+         OI    INERRORL,X'0F' SAY IN IF ERROR WITH A ABEND COND    DASD
+         TM   INERRORL,X'F0' ALREADY SET ERROR LEVEL ?   CHG26028  DASD
+         BO   E04TRU01  YES,DONT RESET COS MAY BE        CHG26028  DASD
+*                         ALREADY IN ERROR LOOP        CHG26028 76200
+         MVC   ERRLEVEL(L'ERRLEVEL+L'ERRNEST),LEVEL      CHG26028 76200
+         OI    INERRORL,X'F0'                            CHG26028  DASD
+         B     E04TRU01       SET TRUE                   CHG26028 76200
+         SPACE 2                                         CHG26028 76200
+E04NERR1 DS    0H                                        CHG26028 76200
+         MVC   #E04SYM(14),#E04SYM1 SHIFT IN NAME
+         BAL   R10,E04GETV     GET ITS VALUE (IF IT RAN)
+         LTR   R15,R15         DID WE FIND IT ?
+         BZ    E04TRU01        YES,THEREFORE TEST TRUE
+E04FTEST MVC   #TKN(4),=XL4'0002C640' 'F' FOR FALSE
+         BAL   R10,E04CONCA
+         B     E04MAINA
+TRUE     DS    0H
+E04TRU01 DS    0H
+         MVC   #TKN(4),=XL4'0002E340'  'T' FOR TRUE
+         BAL   R10,E04CONCA    CONCATENATE THE'T' IN
+         B     E04MAINA        CONTINUE THE LOOP
+         SPACE 3
+E04NIDNT CLI   TKNTYPE,0       <NUMBER> ??
+         BE    E04ISN1
+         JOLERR 501,'SYMBOL ''',#TKN,''' IN ERROR'
+E04ISN1  TNUM  #TKN
+         ST    R1,E04NUM1                                         75128
+         GETTKN LOCN=TKNCURR
+         STH   R1,TKNCURR
+         BAL   R10,E04TOP      TEST IF <OPERATOR>
+         LTR   R15,R15
+         BZ    E04OP1          SURE WAS
+         JOLERR 502,'NO OPERATOR BUT ''',#TKN,''' AFTER ',E04NUM1
+E04OP1   DS    0H
+         STH   R1,TKNCURR
+* HERE WE HAD <SYMBOL> <OPERATOR>
+*        OR  <NUMBER> <OPERATOR>
+         GETTKN LOCN=TKNCURR   GET THE OTHER SIDE OF THE COMPARE
+         STH   R1,TKNCURR
+         CLI   TKNTYPE,0       <NUMBER> ?
+         BE    E04NUM2L
+         CLI   TKNTYPE,2       <IDENTIFIER> ?
+         BE    E04SYM2L
+         JOLERR 503,'EXPECTED NAME OR NUMBER,NOT ''',#TKN,''''
+         ST    R15,E04NUM2
+E04SYM2L MVC   #E04SYM2(14),#TKN
+         B     E04COMP
+E04NUM2L TNUM #TKN
+         ST    R1,E04NUM2                                         75128
+E04COMP  DS    0H
+* ******* ANY SUPPORT CODE ******* SEPT 75
+         CLC   =C'ANY ',E04SYM1
+         BNE   E04NOANY
+         IFNULL E04SYM2,E04ANOK ANY <OP> <NUMBER> I HOPE...
+         JOLERR 209,'TEST FOR  ''ANY''',OPERATOR,'''',                 *
+               E04SYM2,''' INVALID'
+         B     E04FTEST
+E04ANOK  DS    0H
+* OK WE HAVE A NUMBER AND ANY.
+* FIRST OF ALL, FIND THE OPERATOR IN THE TABLE
+         LA    R1,OPS
+         LA    R15,OPS+OPSLEN
+         LA    R14,8
+E04OPLUP CLC   OPERATOR(2),0(R1)
+         BE    E04ANYOP
+         BXLE  R1,R14,E04OPLUP
+         B     E04BADOP
+E04ANYOP DS    0H
+         L     R4,4(R1)          GET TRUE ROUTINE AND BE CODES
+         LA    R1,IDSTART
+         USING IDOVLY,R1
+         LH    R15,NOIDS
+         MH    R15,=H'18'
+         LA    R15,IDSTART(R15)
+         LA    R14,18
+E04ANY99 CLC   IDNAME,=XL8'0000000000000000'                      75311
+         BE    E04BXL99                                           75311
+         CLC   IDNAME,=CL8'MACRO'                                 75311
+         BE    E04BXL99                                           75311
+         CLC   IDRETN,E04NUM2
+         EX    R0,0(R4)     GO TO TRUE IF IT IS TRUE              75128
+E04BXL99 BXLE  R1,R14,E04ANY99                                    87150
+         B     E04FTEST
+* WE ARE NOW READY TO DO THE REPLACEMENTS FOR ANY NAMES,
+*     THEN WE SHALL DO THE COMPARES.
+E04NOANY IFNULL E04SYM1,E04NUM1R  NAME BLANK,IE A <NUMBER> ORIGINLY
+         MVC   #E04SYM(14),#E04SYM1
+         BAL   R10,E04GETV     GET THE NAMES VALUE
+         LTR   R15,R15         DID WE ?
+         BNZ   E04FTEST        NO,THEREFORE STEP NOT RUN AND
+*                              SO TEST IS FALSE.
+         ST    R1,E04NUM1
+E04NUM1R IFNULL E04SYM2,E04NUM2R
+         MVC   #E04SYM(14),#E04SYM2
+         BAL   R10,E04GETV     GET THE NAME'S VALUE
+         LTR   R15,R15         DID WE ?
+         BNZ   E04FTEST        NO,SO MARK IT FALSE TOO
+         ST    R1,E04NUM2
+E04NUM2R DS    0H
+* NOW FIX UP THE OPERATORS,IE LOAD THE ADDRESS OF A BE OR BNH ETC TYPE
+*    INSTRUCTION THAT IS TO BE EXECUTED AFTER THE COMPARE
+         LA    R1,OPS
+         LA    R15,OPS+OPSLEN
+         LA    R14,8
+TESTOP   CLC   OPERATOR(2),0(R1)
+         BE    VALIDOP
+         BXLE  R1,R14,TESTOP
+E04BADOP JOLERR 504,'''',#TKN,''' IS NOT AN OPERATOR'             75128
+         B     RETN16
+OPS      DS    0F
+         DC    CL4'= ',A(EQ)
+         DC    CL4'¬=',A(NE)
+         DC    CL4'> ',A(GT)
+         DC    CL4'< ',A(LT)
+         DC    CL4'¬>',A(NG)
+         DC    CL4'¬<',A(NL)
+         DC    CL4'>=',A(GE)
+         DC    CL4'<=',A(LE)
+OPSLEN   EQU   *-OPS
+EQ       BE    TRUE
+NE       BNE   TRUE
+GT       BH    TRUE
+LT       BL    TRUE
+NG       BNH   TRUE
+NL       BNL   TRUE
+GE       BNL   TRUE            SAME AS ¬<
+LE       BNH   TRUE            SAME AS ¬>
+VALIDOP  L     R4,4(R1)        ADDRESS OF INSTRUCTION TO EXECUTE AFTER
+*                              THE COMPARE
+         CLC   E04NUM1,E04NUM2
+         EX    R0,0(R4)        ****** BRANCH ON CONDITION TRUE
+         B     E04FTEST
+         SPACE 3
+OPERATOR DS    CL2
+         SPACE 3
+E04TOP   DS    0H
+*THIS LITTLE ROUTINE IS CALLED WHEN I SUSPECT A THING COULD BE AN
+*    OPERATOR
+           MVC OPERATOR,TKN
+           LA  R15,OPS                                            74365
+E04TOPL    CLC OPERATOR,0(R15)                                    74365
+           BE  E04ISOP                                            74365
+           LA R15,8(R15)                                          74365
+           C R15,=A(OPS+OPSLEN)                                   74365
+           BL E04TOPL                                             74365
+           LA R15,4
+           BR R10
+E04ISOP  DS    0H
+           SR  R15,R15
+           BR R10
+E04CONCA DS    0H
+E04CONC  DS    0H
+* CONCATENATE TWO BYTES FROM #TKN TO #STRING
+           LH  R15,#OP    CURRENT LENGTH
+           LR R14,R15
+           LA  R15,2(R15) +2 BYTES
+           CH  R15,=AL2(L'OP) WILL IT BE TOO LONG ?
+           BH  E04IFCOM PLEX
+           STH R15,#OP    NEW LENGTH STORED
+           LA R15,OP(R14) GET ABSOLUTE ADDRESS OF WHERE THESE TWO
+*                                BYTES ARE GOING TO GO
+           MVC 0(2,R15),TKN    THEY ARE NOW IN
+           BR  R10             GO BACK TO WHERE I CAME FROM
+E04IFCOM DS    0H
+           JOLERR 505,'IF TOO COMPLEX'
+         B     RETN16
+E04ENDP1 DS    0H
+           TITLE 'SIMPLIFY IF AND ATTEMP TO DETERMINE IF TRUE OR FALSE'
+* AT THIS STAGE WE HAVE REAL IDEA HOW COMPLEX THE IF STATEMENT IS
+* DISREGARDING BRACKETS THOUGH IT CANNOT HAVE MORE THAN
+*    F|T TYPE INFORMATION
+           SPACE 3
+* NOW THE STRING WE HAVE BUILT UP LOOKS SOMETHING LIKE THIS:-
+*     (T|F)&(T&T)
+* NOW THE BASIC IDEA OF THIS SECTION OF CODE IS TO REPLACE ANY
+*    F & T WITH AN F(ETC) THEN REDUCE THE STRING SIZE UNTIL WE
+*     FINALLY END UP WITH AN 'F' OR 'T'
+           SPACE 3
+* NOW :-
+*          F & T = F
+*          F & F = F
+*
+*          T & T = T
+*          T & F = F
+*
+*          F | T = T
+*          F | F = F
+*
+*          T | T = T
+*          T | F = T
+*
+* AS AND'S USUALLY HAVE PRECEDENCE I'LL GO FOR THEM FIRST
+* BRACKETED EXPRESSIONS CAN ALSO BE REDUCED AS ABOVE
+* OK,I THINK WE SHALL START
+REDUCL0  DS    0H
+           LA R1,OP
+           LH R15,#OP
+           LA R15,OP(R15)
+           MVC 0(6,R15),BLANKS
+           LA  R14,2
+           USING XDSECT,R1
+REDUCL     CLC FANDT,X                         F & T =F
+           BE  MAKEF
+           CLC FANDF,X                         F & F =F
+           BE  MAKEF
+           CLC TANDT,X                         T & T =T
+           BE  MAKET
+           CLC TANDF,X                         T & F =F
+           BE MAKEF
+           CLC FORT,X                          F | T =T
+           BE  MAKET
+           CLC FORF,X                          F | F =F
+           BE  MAKEF
+           CLC TORT,X                          T | T =T
+           BE  MAKET
+           CLC TORF,X                          T | F =T
+           BE  MAKET
+* NOW DO THE F | ? TYPE ONES,PROVIDED THAT EITHER SIDE OF WHERE
+*    WE ARE AT THE MOMENT DOESN'T CONTAIN A LEFT OR A RIGHT BRACKET
+********* NOTE *** THE ONLY SYMBOLS THAT CAN BE IN THE STRING ARE:-
+*    1. T
+*    2. F
+*    3. &
+*    4. |
+*    5. (
+*    6. )
+           SPACE 3
+           CLI X,C'('
+           BE  TX4CLOSE
+           CLI X,C')'
+           BE  ENDREDCL
+           CLI X+4,C')'
+           BE  ENDREDCL
+          CLI X+4,C'('
+           BE  ENDREDCL
+           B   TESTFQ
+TX4CLOSE   CLI X+4,C')'                        (  ) SPECIAL CASE,
+           BNE ENDREDCL                        WE CAN REDUCE IT
+           MVI X,C' '
+           MVI X+4,C' '
+           B   ENDREDCL
+TESTFQ     CLC X(2),=C'  '     DON'T DO ANYTHING IF ANY
+           BE ENDREDCL         SYMBOLS ARE BLANK
+           CLC X+2(2),=C'  '
+           BE ENDREDCL
+           CLC X+4(2),=C'  '
+           BE ENDREDCL
+           BE  MAKEF
+           CLC X+2(4),FANDF+2                  ? & F
+           BE  MAKEF
+           CLC X(4),TANDT                      T & ?
+           BE  MAKEQ2
+           CLC X+2(4),TANDT+2                  ? & T
+           BE  MAKEQ1
+           CLC X(4),FORF                       F | ?
+           BE  MAKEQ2
+           CLC X(4),TORT                       T | ?
+           BE  MAKET
+           CLC X+2(4),TORT+2                   ? | T
+           BE  MAKET
+           CLC X+2(4),FORF+2                   ? | F
+           BE  MAKEQ1
+* WELL THAT ABOUT WRAPS UP THIS SET  OF TRIPLES
+ENDREDCL   BXLE R1,R14,REDUCL
+* IF WE FELL OUT HERE WE HAVE BEEN ALONG THE STRING (OR DOWN THE STACK
+*              IF YOU WANT TO THINK OF IT THAT WAY)
+           SPACE
+* NOW WE SHALL COMPRESS THE BLANK SPOTS OUT OF THE STRING
+*    IF THE LENGTH DOESN'T CHANGE,THAT MEANS AS FAR AS WE ARE
+*          CONCERNED WE CANNOT REDUCE THE STRING ANY MORE.
+*    THE FIRST POSITION SHOULD CONTAIN A 'T' | 'F' OR ELSE WE
+*    HAVE AN ERROR.
+           LA R1,OP
+           LA R14,2
+           LH R15,#OP
+           LA R15,OP(R15)
+           LR  R2,R1
+REDUCL2    CLC X(2),=C'  '
+           BNE REDCNOTB
+REDUCL3    BXLE R1,R14,REDUCL2
+* END LOOP
+           LA R0,OP
+           LR R1,R2
+           SR  R1,R0
+           STH R1,#OP
+           LTR R1,R1
+           BM  E04ERR1
+           CLC #OP,=AL2(L'OP-4)
+           BH E04ERR2
+           CR  R2,R15
+           BE EVALUATE                         NO REDUCTION
+           B   REDUCL0
+REDCNOTB   MVC 0(2,R2),X
+           LA  R2,2(R2)
+           B   REDUCL3
+EVALUATE DS    0H
+* THE MOMENT OF TRUTH
+           CLC #OP,=H'2'
+           BNE E04RETN8        BLAST,COULDN'T EVALUATE IT
+           CLI OP,C'T'
+           BE  E04RETN0        GOOD
+           CLI OP,C'F'
+           BNE E04RETN8
+           B   E04RETN4        GOOD
+           DS  0H
+FANDT      DC  CL6'F && T '
+FANDF      DC  CL6'F && F '
+TANDT      DC  CL6'T && T '
+TANDF      DC  CL6'T && F '
+FORF       DC  CL6'F | F'
+TORF       DC  CL6'T | F '
+TORT       DC  CL6'T | T '
+FORT       DC  CL6'F | T '
+MAKET      MVC X,=CL6'T'
+           B   ENDREDCL
+MAKEF      MVC X,=CL6'F'
+           B   ENDREDCL
+MAKEQ1     MVC X+2(4),=CL4' '
+           B   ENDREDCL
+MAKEQ2     MVC X(4),=CL4' '
+           B   ENDREDCL
+E04RETN0 DS    0H
+* THE IF IS BASICALLY TRUE.                              CHG26028 76200
+*   HOWEVER, WE MAY HAVE THE SITUATION WHERE AN IF IS TRUCHG26028 76200
+*   BUT AN ABEND HAS OCCURED, SO WE MUST CHECK THAT.     CHG26028 76200
+         CLI   ERRORIND,0  ANY ABENDS?                   CHG26028 76200
+         BE    E04REAL0    NO, SO RETURN 0 (TRUE)        CHG26028 76200
+         TM   INERRORL,X'0F' ARE WE IN ERROR DO GROUP OR CHG26028  DASD
+*                    WAS 'ERROR' FOUND IN THIS 'IF'?     CHG26028 76200
+         BZ   E04RETN4     ABEND, AND NO 'ERROR' SO FALSECHG26028  DASD
+E04REAL0 JOLRETN RC=0                                    CHG26028 76200
+E04RETN4 JOLRETN RC=4
+E04ERR1    JOLERR 508,'IF:-INTERNAL ERROR'                        74365
+           B  RETN16
+E04ERR2    JOLERR 506,'IF:-INTERNAL ERROR'
+           B  RETN16
+E04RETN8 DS    0H
+           JOLERR 507,'IF:-INTERNAL ERROR'
+E04GETV  DS    0H
+* THIS ROUTINE SCANS THE RETURN CODE TABLE AND RETURNS THE VALUE
+*     IN REGISTER 1.
+* IF IT CAN'T BE FOUND,R15 IS SET TO 4.
+*     NEW SEPT 75  ********* MAXCC,LASTCC, ANY **********
+          CLC =C'LASTCC ',E04SYM
+          BNE E04TMAX
+          L   R1,LASTCC                                           75311
+          SR  R15,R15
+          BR  R10
+E04TMAX   CLC =C'MAXCC ',E04SYM
+          BNE E04NMAX
+          L   R1,MAXCC                                            75311
+          SR  R15,R15
+          BR  R10
+E04NMAX   DS    0H
+**** 'ANY' DONE LATER ON *****************
+           LH R1,#E04SYM       LENGTH OF IDENTIFIER
+           SH R1,=H'4'         THE IDENTIFIER WAS CONVERTED
+*                              IN THE JOL-COMPILER SO THAT THE
+*                              IDENTIFIER NOW CONTAINS THE STMT
+*                              NUMBER OF IDENTIFIER STEP WHICH
+*                              IS SUPPOSED TO RUN.
+*                              THIS GETS OVER THE RUDDY PROBLEM
+*                              OF HAVING DUMPLICATE NAMES OUTPUT
+*                              TWICE (LIKE IN A MACRO) AT A DIFF-
+*                              ERENT LEVEL AND HAVING THE LABEL
+*                              NAME TESTED.
+           LA R1,E04SYM(R1)    START ADDR OF STATEMENT NUMBER
+           MVC E04STMT,0(R1)   MOVE IT AWAY.
+           MVC 0(4,R1),=CL4' ' CLEAR STATEMENT NUMBER
+           LH  R15,NOIDS       GET CURRENT NUMBER OF IDENTIFIERS
+           MH  R15,=H'18'
+           LA  R15,IDSTART(R15)
+           LA  R1,IDSTART
+           LA  R14,18
+           USING IDOVLY,R1
+E04FNDL    CLC E04STMT,IDSTMT  STATEMENTS EQUAL ?
+           BE  E04GOTID        HURRAY,WE HAVE IT
+           BXLE R1,R14,E04FNDL CONTINUE ZEE LOOP
+           LA  R15,4           DIDN'T FIND IT,RETURN A 4
+           BR  R10             GO BACK
+           SPACE 3
+E04GOTID DS    0H
+E04SUB3R   MVC CALLAREA(4),IDRETN
+         L     R1,CALLAREA
+         SR    R15,R15
+         BR    R10
+#E04SYM1 DS    H
+E04SYM1  DS    CL12
+#E04SYM2 DS    H
+E04SYM2  DS    CL12
+#E04SYM  DS    H
+E04SYM   DS    CL12
+         SPACE
+E04NUM1  DS    F
+E04NUM2  DS    F
+E04STMT  DS    CL4
+#OP      DS    H
+OP       DS    CL100
+         DC   80S(*)
+         LTORG
+         DS    0D
+XDSECT   DSECT
+X        DS    CL6
+         DROP  R7,R5

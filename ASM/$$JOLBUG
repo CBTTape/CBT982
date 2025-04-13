@@ -1,0 +1,27 @@
+         GENSAVE CSECT=$$JOLBUG
+         L     R4,0(R1)            LOAD PASSED ADDRESS
+UJSN$JOL NOP   UJSO$JOL
+         TM    FLAG,X'80'                                         J50
+         BO    UJSOTRMO                                           J50
+*        OI    UJSN$JOL+1,X'F0'    TURN THIS BRANCH ON
+         OI    FLAG,X'80'                                         J50
+         TM    $JOL$BUG+48,X'10'   IS $JOL$BUG OPEN ??
+         BO    UJSO$JOL            YEP---SOMEONE IS USING OUR DD
+         LA    R1,$JOL$BUG+X'28'   ADDRESS DDNAME WE WANT         87150
+         CALL  SRCHTIOT            FASTER WAY TO SEE IF DDNAME PRESENT
+         LTR   R15,R15
+         BNZ   UJSOTRMO            NOPE  JUST LEAVE
+*        OPEN  ($JOL$BUG,(AD))
+         OPEN  ($JOL$BUG,(OUTPUT))
+         TM    $JOL$BUG+48,X'10'   IS IT OPEN NOW ??
+         BZ    UJSOTRMO            NOPE  JUST LEAVE
+UJSO$JOL DS    0H
+         PUT   $JOL$BUG,(R4)       OUTPUT ERRORS ONLY
+         CLOSE ($JOL$BUG),TYPE=T
+         XI    FLAG,X'80'                                         J50
+UJSOTRMO GENRETN
+FLAG     DC    X'00'                                              J50
+$JOL$BUG DCB   DDNAME=JOLBUG,MACRF=PM,DSORG=PS,RECFM=F,LRECL=80,       *
+               BLKSIZE=80
+CALLAREA DS    2F
+         END

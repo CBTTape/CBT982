@@ -1,0 +1,32 @@
+//EDU199C JOB (1011,1011),CLARKE,MSGCLASS=X,NOTIFY=EDU199
+//ASM EXEC ASMFCLG,MAC='CLARKE.JOL40.MACLIB',TIME.GO=(1)
+//SYSPRINT DD  SYSOUT=*
+//SYSIN DD *
+         GENSAVE CSECT=FRED
+         L     R5,=F'10000000'
+         L     R6,=F'8'
+LOOP     DS    0H
+         LA    R0,TKNX
+*        LA    R14,TKN1
+         LA    R1,L'TKNX
+         SLR   R15,R15
+*        LR   R15,R1
+         MVCL  R0,R14
+*        MVI   TKN,C' '
+*        LH    R6,#TKN
+*        EX    R6,EXMVC
+*        MVC   TKN+1(8),TKN
+*        XC    TKN(250),TKN
+*        MVC   TKN(250),=CL256' '
+*        MVC   TKN+2(250),TKN
+         BCT   R5,LOOP
+         GENRETN
+EXMVC    MVC   TKN+1(*-*),TKN
+#TKN     DC    H'8'
+TKN      DC    CL256' '
+#TKN1    DC    H'8'
+TKN1     DC    CL256' '
+#TKNX    DC    H'8'
+TKNX     DS    CL600' '
+         END  FRED
+//LKED.SYSPRINT DD SYSOUT=*

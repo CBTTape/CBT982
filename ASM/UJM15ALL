@@ -1,0 +1,139 @@
+UJM15 TITLE 'FREE DYNAMIC ALLOCATION CONTROL BLOCKS'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974
+* COPYRIGHT CCS 1975,1976,1980
+* COPYRIGHT CCS 1981,1982.
+* COPYRIGHT CCS-JOL 1984.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+*
+*
+*
+******************************************************************
+*
+* NEW MODULE, CODED OCTOBER 16, 1984
+*  THIS MODULE SETS UP THE CONTROL BLOCKS FOR THE ALLOC, OPENFILE
+*    ETC MODULES.
+*
+******************************************************************
+*
+* MODULES INVOLVED ARE UJM15ALL, UJM15DAL
+*                      UJP17OPN, UJP18GET, UJP19PUT,
+*                      UJP60REA, UJP61WRI, UJP19FRE,
+*
+******************************************************************
+*
+* DATE 16 OCT, 1984
+* C. V. CLARKE COPYRIGHT CCS-JOL.
+*
+         PRINT OFF
+         COPY JOLCOM
+         PRINT ON,DATA
+         TITLE 'ALLOCATE DYNAMIC ALLOCATION CONTROL BLOCKS'
+         JOLSAVE CSECT=UJM15ALL
+         GETMAIN R,LV=REQDLEN
+         ST    R1,USER5
+         L     R14,=A(M15DCBS)
+         USING M15DCBS,R14
+         USING DYNCON,R7
+         LR    R0,R14         GET ADDRESS OF DCB CONSTANT AREA
+         LR    R14,R1         AREA TO GO TO
+         LA    R1,REQDLEN     GET LENGTH TO MOVE
+         LR    R15,R1         AND 'TO' LENGTH
+         MVCL  R14,R0
+         JOLRETN
+         DROP  R14
+         LTORG
+         DC   10S(*,*,*,*)
+         LTORG
+         EJECT
+         TITLE 'FREE DYNAMIC ALLOCATION AREAS'
+         JOLSAVE CSECT=UJM15FRE
+* THIS CSECT GETS CONTROL AFTER THE PRE-PROCESSOR HAS FINISHED    84290
+*
+* IT MUST TIDY UP THE ALLOCATED DATA SET, CLOSE THEM AND FREE THEM.
+         L    R4,USER5
+         LTR  R4,R4
+         BNZ  M152OK1
+         JOLERR 401,'NO DCBS TO FREE'
+         JOLRETN  ,      NO NEED FOR ERROR CODE
+M152OK1  DS    0H
+* CHECK IF ANY DCBS ARE OPEN
+         USING M15DCBS,R4
+         LM    R7,R9,M15START
+         USING ALLDDNAM,R1
+M152DO1  CLC   ALLDDNAM,BLANKS
+         BE    M152LUP2
+* TEST IF OPEN, AND IF NOT CLOSE, AND FREEPOOL
+         LA    R3,ALLDCB
+         ST    R3,CALLAREA
+         MVI   CALLAREA,X'80'
+         CLOSE MF=(E,CALLAREA)
+         FREEPOOL (R3)
+M152LUP2 BXLE  R7,R8,M152DO1
+         JOLRETN
+         SPACE 3
+         LTORG                                           JOL30027 76200
+         CNOP  0,8                                       JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)                JOL30027 76200
+         COPY  DYNFCNTL
+M15DCBS  CSECT
+         PRINT NOGEN
+M15START DC    A(DCB1)
+M15INCR  DC    A(DCB1END-DCB1)
+M15END   DC    A(DCBSEND-1)
+M15MAX   DC    A((DCBSEND-DCB1)/(DCB1END-DCB1))
+DCB1     DC    CL8' '        DDNAME
+DCB1STAT DC    X'0'          OPEN STATUS
+M15DCB1  DCB   DDNAME=NONE1,MACRF=(PM,GM),DSORG=PS
+DCB1END  DS    0H
+DCB2     DC    CL8' '        DDNAME
+DCB2STAT DC    X'0'          OPEN STATUS
+M15DCB2  DCB   DDNAME=NONE2,MACRF=(PM,GM),DSORG=PS
+DCB3     DC    CL8' '        DDNAME
+DCB3STAT DC    X'0'          OPEN STATUS
+M15DCB3  DCB   DDNAME=NONE3,MACRF=(PM,GM),DSORG=PS
+DCB4     DC    CL8' '        DDNAME
+DCB4STAT DC    X'0'          OPEN STATUS
+M15DCB4  DCB   DDNAME=NONE4,MACRF=(PM,GM),DSORG=PS
+DCB5     DC    CL8' '        DDNAME
+DCB5STAT DC    X'0'          OPEN STATUS
+M15DCB5  DCB   DDNAME=NONE5,MACRF=(PM,GM),DSORG=PS
+DCB6     DC    CL8' '        DDNAME
+DCB6STAT DC    X'0'          OPEN STATUS
+M15DCB6  DCB   DDNAME=NONE6,MACRF=(PM,GM),DSORG=PS
+DCB7     DC    CL8' '        DDNAME
+DCB7STAT DC    X'0'          OPEN STATUS
+M15DCB7  DCB   DDNAME=NONE7,MACRF=(PM,GM),DSORG=PS
+DCB8     DC    CL8' '        DDNAME
+DCB8STAT DC    X'0'          OPEN STATUS
+M15DCB8  DCB   DDNAME=NONE8,MACRF=(PM,GM),DSORG=PS
+DCB9     DC    CL8' '        DDNAME
+DCB9STAT DC    X'0'          OPEN STATUS
+M15DCB9  DCB   DDNAME=NONE9,MACRF=(PM,GM),DSORG=PS
+DCBA     DC    CL8' '        DDNAME
+DCBASTAT DC    X'0'          OPEN STATUS
+M15DCBA  DCB   DDNAME=NONEA,MACRF=(PM,GM),DSORG=PS
+DCBSEND  DS 0H
+REQDLEN  EQU   DCBSEND-M15START
+         DCBD  DSORG=PS,DEVD=DA                                   75128
+         END

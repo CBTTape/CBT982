@@ -1,0 +1,862 @@
+         SPACE 3                                                        DYN00100
+DALSTART   EQU   *                                                      DYN00200
+******************************************************************      DYN00300
+DAYDDNAM  DS     0H               ALIGN ON HALF WORD                    DYN00400
+DAKDDNAM  DC     AL2(DALDDNAM)      INIT KEY                            DYN00500
+DA#DDNAM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN00600
+DAVDDNAM  DC     AL2(L'DAPDDNAM) INITIALISE L'PARM                      DYN00700
+DAPDDNAM  DC     CL8' '        INITIALISE TO BLANKS                     DYN00800
+         SPACE 3                                                        DYN00900
+******************************************************************      DYN01DYN
+DAYDSNAM  DS     0H               ALIGN ON HALF WORD                    DYN01100
+DAKDSNAM  DC     AL2(DALDSNAM)      INIT KEY                            DYN01200
+DA#DSNAM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN01300
+DAVDSNAM  DC     AL2(L'DAPDSNAM) INITIALISE L'PARM                      DYN01400
+DAPDSNAM  DC     CL44' '        INITIALISE TO BLANKS                    DYN01500
+         SPACE 3                                                        DYN01600
+******************************************************************      DYN01700
+DAYMEMBR  DS     0H               ALIGN ON HALF WORD                    DYN01800
+DAKMEMBR  DC     AL2(DALMEMBR)      INIT KEY                            DYN01900
+DA#MEMBR  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN02DYN
+DAVMEMBR  DC     AL2(L'DAPMEMBR) INITIALISE L'PARM                      DYN02100
+DAPMEMBR  DC     CL8' '        INITIALISE TO BLANKS                     DYN02200
+         SPACE 3                                                        DYN02300
+******************************************************************      DYN02400
+DAYSTATS  DS     0H               ALIGN ON HALF WORD                    DYN02500
+DAKSTATS  DC     AL2(DALSTATS)      INIT KEY                            DYN02600
+DA#STATS  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN02700
+DAVSTATS  DC     AL2(L'DAPSTATS) INITIALISE L'PARM                      DYN02800
+DAPSTATS  DC     XL1'0'        INITIALISE TO X'0'                       DYN02900
+         SPACE 3                                                        DYN03DYN
+******************************************************************      DYN03100
+DAYNDISP  DS     0H               ALIGN ON HALF WORD                    DYN03200
+DAKNDISP  DC     AL2(DALNDISP)      INIT KEY                            DYN03300
+DA#NDISP  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN03400
+DAVNDISP  DC     AL2(L'DAPNDISP) INITIALISE L'PARM                      DYN03500
+DAPNDISP  DC     XL1'0'        INITIALISE TO X'0'                       DYN03600
+         SPACE 3                                                        DYN03700
+******************************************************************      DYN03800
+DAYCDISP  DS     0H               ALIGN ON HALF WORD                    DYN03900
+DAKCDISP  DC     AL2(DALCDISP)      INIT KEY                            DYN04DYN
+DA#CDISP  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN04100
+DAVCDISP  DC     AL2(L'DAPCDISP) INITIALISE L'PARM                      DYN04200
+DAPCDISP  DC     XL1'0'        INITIALISE TO X'0'                       DYN04300
+         SPACE 3                                                        DYN04400
+******************************************************************      DYN04500
+DAYTRK  DS     0H               ALIGN ON HALF WORD                      DYN04600
+DAKTRK  DC     AL2(DALTRK)      INIT KEY                                DYN04700
+DA#TRK  DC     AL2(0)           NO PARAMETERS REQD                      DYN04800
+         SPACE 3                                                        DYN04900
+******************************************************************      DYN05DYN
+DAYCYL  DS     0H               ALIGN ON HALF WORD                      DYN05100
+DAKCYL  DC     AL2(DALCYL)      INIT KEY                                DYN05200
+DA#CYL  DC     AL2(0)           NO PARAMETERS REQD                      DYN05300
+         SPACE 3                                                        DYN05400
+******************************************************************      DYN05500
+DAYBLKLN  DS     0H               ALIGN ON HALF WORD                    DYN05600
+DAKBLKLN  DC     AL2(DALBLKLN)      INIT KEY                            DYN05700
+DA#BLKLN  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN05800
+DAVBLKLN  DC     AL2(L'DAPBLKLN) INITIALISE L'PARM                      DYN05900
+DAPBLKLN  DC     AL3(0)        INITIALISE TO 0                          DYN06DYN
+         SPACE 3                                                        DYN06100
+******************************************************************      DYN06200
+DAYPRIME  DS     0H               ALIGN ON HALF WORD                    DYN06300
+DAKPRIME  DC     AL2(DALPRIME)      INIT KEY                            DYN06400
+DA#PRIME  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN06500
+DAVPRIME  DC     AL2(L'DAPPRIME) INITIALISE L'PARM                      DYN06600
+DAPPRIME  DC     AL3(0)         INITIALISE TO 0                         DYN06700
+         SPACE 3                                                        DYN06800
+******************************************************************      DYN06900
+DAYSECND  DS     0H               ALIGN ON HALF WORD                    DYN07DYN
+DAKSECND  DC     AL2(DALSECND)      INIT KEY                            DYN07100
+DA#SECND  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN07200
+DAVSECND  DC     AL2(L'DAPSECND) INITIALISE L'PARM                      DYN07300
+DAPSECND  DC     AL3(0)         INITIALISE TO 0                         DYN07400
+         SPACE 3                                                        DYN07500
+******************************************************************      DYN07600
+DAYDIR  DS     0H               ALIGN ON HALF WORD                      DYN07700
+DAKDIR  DC     AL2(DALDIR)      INIT KEY                                DYN07800
+DA#DIR  DC     AL2(1)           SET UP 1 PARAMETER REQUEST              DYN07900
+DAVDIR  DC     AL2(L'DAPDIR) INITIALISE L'PARM                          DYN08DYN
+DAPDIR  DC     AL3(0)         INITIALISE TO 0                           DYN08100
+         SPACE 3                                                        DYN08200
+******************************************************************      DYN08300
+DAYRLSE  DS     0H               ALIGN ON HALF WORD                     DYN08400
+DAKRLSE  DC     AL2(DALRLSE)      INIT KEY                              DYN08500
+DA#RLSE  DC     AL2(0)           NO PARAMETERS REQD                     DYN08600
+         SPACE 3                                                        DYN08700
+******************************************************************      DYN08800
+DAYSPFRM  DS     0H            SPACE FORMAT                             DYN08900
+DAKSPFRM  DC     AL2(DALSPFRM)      INIT KEY                            DYN09DYN
+DA#SPFRM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN09100
+DAVSPFRM  DC     AL2(L'DAPSPFRM) INITIALISE L'PARM                      DYN09200
+DAPSPFRM  DC     XL1'0'        INITIALISE TO X'0'                       DYN09300
+         SPACE 3                                                        DYN09400
+******************************************************************      DYN09500
+DAYROUND  DS     0H               ALIGN ON HALF WORD                    DYN09600
+DAKROUND  DC     AL2(DALROUND)      INIT KEY                            DYN09700
+DA#ROUND  DC     AL2(0)           NO PARAMETERS REQD                    DYN09800
+         SPACE 3                                                        DYN09900
+******************************************************************      DYN1DYN0
+DAYVLSER  DS     0H               ALIGN ON HALF WORD                    DYN10100
+DAKVLSER  DC     AL2(DALVLSER)      INIT KEY                            DYN10200
+DA#VLSER  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN10300
+DAVVLSER  DC     AL2(L'DAPVLSE1) INITIALISE L'PARM                      DYN10400
+DAPVLSE1  DC     CL6' '        INITIALISE TO BLANKS                     DYN10500
+DAVVLSE1   DC     AL2(L'DAPVLSE2)                                       DYN10600
+DAPVLSE2   DC     CL6' '                                                DYN10700
+DAVVLSE3   DC     AL2(L'DAPVLSE3)                                       DYN10800
+DAPVLSE3   DC     CL6' '                                                DYN10900
+DAVVLSE4   DC     AL2(L'DAPVLSE4)                                       DYN11DYN
+DAPVLSE4   DC     CL6' '                                                DYN11100
+DAVVLSE5   DC     AL2(L'DAPVLSE5)                                       DYN11200
+DAPVLSE5   DC     CL6' '                                                DYN11300
+DAVVLSE6   DC     AL2(L'DAPVLSE6)                                       DYN11400
+DAPVLSE6   DC     CL6' '                                                DYN11500
+         SPACE 3                                                        DYN11600
+******************************************************************      DYN11700
+DAYPRIVT  DS     0H               ALIGN ON HALF WORD                    DYN11800
+DAKPRIVT  DC     AL2(DALPRIVT)      INIT KEY                            DYN11900
+DA#PRIVT  DC     AL2(0)           NO PARAMETERS REQD                    DYN12DYN
+         SPACE 3                                                        DYN12100
+******************************************************************      DYN12200
+DAYVLSEQ  DS     0H               ALIGN ON HALF WORD                    DYN12300
+DAKVLSEQ  DC     AL2(DALVLSEQ)      INIT KEY                            DYN12400
+DA#VLSEQ  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN12500
+DAVVLSEQ  DC     AL2(L'DAPVLSEQ) INITIALISE L'PARM                      DYN12600
+DAPVLSEQ  DC     H'0'           INITIALISE TO 0                         DYN12700
+         SPACE 3                                                        DYN12800
+******************************************************************      DYN12900
+DAYVLCNT  DS     0H               ALIGN ON HALF WORD                    DYN13DYN
+DAKVLCNT  DC     AL2(DALVLCNT)      INIT KEY                            DYN13100
+DA#VLCNT  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN13200
+DAVVLCNT  DC     AL2(L'DAPVLCNT) INITIALISE L'PARM                      DYN13300
+DAPVLCNT  DC     AL1(0)         INITIALISE TO 0                         DYN13400
+         SPACE 3                                                        DYN13500
+******************************************************************      DYN13600
+DAYVLRDS  DS     0H               ALIGN ON HALF WORD                    DYN13700
+DAKVLRDS  DC     AL2(DALVLRDS)      INIT KEY                            DYN13800
+DA#VLRDS  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN13900
+DAVVLRDS  DC     AL2(L'DAPVLRDS) INITIALISE L'PARM                      DYN14DYN
+DAPVLRDS  DC     CL44' '        INITIALISE TO BLANKS                    DYN14100
+         SPACE 3                                                        DYN14200
+******************************************************************      DYN14300
+DAYUNIT  DS     0H               ALIGN ON HALF WORD                     DYN14400
+DAKUNIT  DC     AL2(DALUNIT)      INIT KEY                              DYN14500
+DA#UNIT  DC     AL2(1)           SET UP 1 PARAMETER REQUEST             DYN14600
+DAVUNIT  DC     AL2(L'DAPUNIT) INITIALISE L'PARM                        DYN14700
+DAPUNIT  DC     CL8' '        INITIALISE TO BLANKS                      DYN14800
+         SPACE 3                                                        DYN14900
+******************************************************************      DYN15DYN
+DAYUNCNT  DS     0H               ALIGN ON HALF WORD                    DYN15100
+DAKUNCNT  DC     AL2(DALUNCNT)      INIT KEY                            DYN15200
+DA#UNCNT  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN15300
+DAVUNCNT  DC     AL2(L'DAPUNCNT) INITIALISE L'PARM                      DYN15400
+DAPUNCNT  DC     AL1(0)         INITIALISE TO 0                         DYN15500
+         SPACE 3                                                        DYN15600
+******************************************************************      DYN15700
+DAYPARAL  DS     0H               ALIGN ON HALF WORD                    DYN15800
+DAKPARAL  DC     AL2(DALPARAL)      INIT KEY                            DYN15900
+DA#PARAL  DC     AL2(0)           NO PARAMETERS REQD                    DYN16DYN
+         SPACE 3                                                        DYN16100
+******************************************************************      DYN16200
+DAYSYSOU  DS     0H               ALIGN ON HALF WORD                    DYN16300
+DAKSYSOU  DC     AL2(DALSYSOU)      INIT KEY                            DYN16400
+DA#SYSOU  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN16500
+DAVSYSOU  DC     AL2(L'DAPSYSOU) INITIALISE L'PARM                      DYN16600
+DAPSYSOU  DC     CL1' '        INITIALISE TO BLANKS                     DYN16700
+         SPACE 3                                                        DYN16800
+******************************************************************      DYN16900
+DAYSPGNM  DS     0H               ALIGN ON HALF WORD                    DYN17DYN
+DAKSPGNM  DC     AL2(DALSPGNM)      INIT KEY                            DYN17100
+DA#SPGNM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN17200
+DAVSPGNM  DC     AL2(L'DAPSPGNM) INITIALISE L'PARM                      DYN17300
+DAPSPGNM  DC     CL8' '        INITIALISE TO BLANKS                     DYN17400
+         SPACE 3                                                        DYN17500
+******************************************************************      DYN17600
+DAYSFMNO  DS     0H               ALIGN ON HALF WORD                    DYN17700
+DAKSFMNO  DC     AL2(DALSFMNO)      INIT KEY                            DYN17800
+DA#SFMNO  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN17900
+DAVSFMNO  DC     AL2(L'DAPSFMNO) INITIALISE L'PARM                      DYN18DYN
+DAPSFMNO  DC     CL8' '        INITIALISE TO BLANKS                     DYN18100
+         SPACE 3                                                        DYN18200
+******************************************************************      DYN18300
+DAYOUTLM  DS     0H               ALIGN ON HALF WORD                    DYN18400
+DAKOUTLM  DC     AL2(DALOUTLM)      INIT KEY                            DYN18500
+DA#OUTLM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN18600
+DAVOUTLM  DC     AL2(L'DAPOUTLM) INITIALISE L'PARM                      DYN18700
+DAPOUTLM  DC     AL3(0)         INITIALISE TO 0                         DYN18800
+         SPACE 3                                                        DYN18900
+******************************************************************      DYN19DYN
+DAYCLOSE  DS     0H               ALIGN ON HALF WORD                    DYN19100
+DAKCLOSE  DC     AL2(DALCLOSE)      INIT KEY                            DYN19200
+DA#CLOSE  DC     AL2(0)           NO PARAMETERS REQD                    DYN19300
+         SPACE 3                                                        DYN19400
+******************************************************************      DYN19500
+DAYCOPYS  DS     0H               ALIGN ON HALF WORD                    DYN19600
+DAKCOPYS  DC     AL2(DALCOPYS)      INIT KEY                            DYN19700
+DA#COPYS  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN19800
+DAVCOPYS  DC     AL2(L'DAPCOPYS) INITIALISE L'PARM                      DYN19900
+DAPCOPYS  DC     AL1(0)         INITIALISE TO 0                         DYN2DYN0
+         SPACE 3                                                        DYN20100
+******************************************************************      DYN20200
+DAYLABEL  DS     0H               ALIGN ON HALF WORD                    DYN20300
+DAKLABEL  DC     AL2(DALLABEL)      INIT KEY                            DYN20400
+DA#LABEL  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN20500
+DAVLABEL  DC     AL2(L'DAPLABEL) INITIALISE L'PARM                      DYN20600
+DAPLABEL  DC     XL1'0'        INITIALISE TO X'0'                       DYN20700
+         SPACE 3                                                        DYN20800
+******************************************************************      DYN20900
+DAYDSSEQ  DS     0H               ALIGN ON HALF WORD                    DYN21DYN
+DAKDSSEQ  DC     AL2(DALDSSEQ)      INIT KEY                            DYN21100
+DA#DSSEQ  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN21200
+DAVDSSEQ  DC     AL2(L'DAPDSSEQ) INITIALISE L'PARM                      DYN21300
+DAPDSSEQ  DC     H'0'           INITIALISE TO 0                         DYN21400
+         SPACE 3                                                        DYN21500
+******************************************************************      DYN21600
+DAYPASPR  DS     0H               ALIGN ON HALF WORD                    DYN21700
+DAKPASPR  DC     AL2(DALPASPR)      INIT KEY                            DYN21800
+DA#PASPR  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN21900
+DAVPASPR  DC     AL2(L'DAPPASPR) INITIALISE L'PARM                      DYN22DYN
+DAPPASPR  DC     XL1'0'        INITIALISE TO X'0'                       DYN22100
+         SPACE 3                                                        DYN22200
+******************************************************************      DYN22300
+DAYINOUT  DS     0H               ALIGN ON HALF WORD                    DYN22400
+DAKINOUT  DC     AL2(DALINOUT)      INIT KEY                            DYN22500
+DA#INOUT  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN22600
+DAVINOUT  DC     AL2(L'DAPINOUT) INITIALISE L'PARM                      DYN22700
+DAPINOUT  DC     XL1'0'        INITIALISE TO X'0'                       DYN22800
+         SPACE 3                                                        DYN22900
+******************************************************************      DYN23DYN
+DAYEXPDT  DS     0H               ALIGN ON HALF WORD                    DYN23100
+DAKEXPDT  DC     AL2(DALEXPDT)      INIT KEY                            DYN23200
+DA#EXPDT  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN23300
+DAVEXPDT  DC     AL2(L'DAPEXPDT) INITIALISE L'PARM                      DYN23400
+DAPEXPDT  DC     CL5' '        INITIALISE TO BLANKS                     DYN23500
+         SPACE 3                                                        DYN23600
+******************************************************************      DYN23700
+DAYRETPD  DS     0H               ALIGN ON HALF WORD                    DYN23800
+DAKRETPD  DC     AL2(DALRETPD)      INIT KEY                            DYN23900
+DA#RETPD  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN24DYN
+DAVRETPD  DC     AL2(L'DAPRETPD) INITIALISE L'PARM                      DYN24100
+DAPRETPD  DC     H'0'           INITIALISE TO 0                         DYN24200
+         SPACE 3                                                        DYN24300
+******************************************************************      DYN24400
+DAYDUMMY  DS     0H               ALIGN ON HALF WORD                    DYN24500
+DAKDUMMY  DC     AL2(DALDUMMY)      INIT KEY                            DYN24600
+DA#DUMMY  DC     AL2(0)           NO PARAMETERS REQD                    DYN24700
+         SPACE 3                                                        DYN24800
+******************************************************************      DYN24900
+DAYFCBIM  DS     0H               ALIGN ON HALF WORD                    DYN25DYN
+DAKFCBIM  DC     AL2(DALFCBIM)      INIT KEY                            DYN25100
+DA#FCBIM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN25200
+DAVFCBIM  DC     AL2(L'DAPFCBIM) INITIALISE L'PARM                      DYN25300
+DAPFCBIM  DC     CL4' '        INITIALISE TO BLANKS                     DYN25400
+         SPACE 3                                                        DYN25500
+******************************************************************      DYN25600
+DAYFCBAV  DS     0H               ALIGN ON HALF WORD                    DYN25700
+DAKFCBAV  DC     AL2(DALFCBAV)      INIT KEY                            DYN25800
+DA#FCBAV  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN25900
+DAVFCBAV  DC     AL2(L'DAPFCBAV) INITIALISE L'PARM                      DYN26DYN
+DAPFCBAV  DC     XL1'0'        INITIALISE TO X'0'                       DYN26100
+         SPACE 3                                                        DYN26200
+******************************************************************      DYN26300
+DAYQNAME  DS     0H               ALIGN ON HALF WORD                    DYN26400
+DAKQNAME  DC     AL2(DALQNAME)      INIT KEY                            DYN26500
+DA#QNAME  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN26600
+DAVQNAME  DC     AL2(L'DAPQNAME) INITIALISE L'PARM                      DYN26700
+DAPQNAME  DC     CL8' '        INITIALISE TO BLANKS                     DYN26800
+         SPACE 3                                                        DYN26900
+******************************************************************      DYN27DYN
+DAYTERM  DS     0H               ALIGN ON HALF WORD                     DYN27100
+DAKTERM  DC     AL2(DALTERM)      INIT KEY                              DYN27200
+DA#TERM  DC     AL2(0)           NO PARAMETERS REQD                     DYN27300
+         SPACE 3                                                        DYN27400
+******************************************************************      DYN27500
+DAYUCS  DS     0H               ALIGN ON HALF WORD                      DYN27600
+DAKUCS  DC     AL2(DALUCS)      INIT KEY                                DYN27700
+DA#UCS  DC     AL2(1)           SET UP 1 PARAMETER REQUEST              DYN27800
+DAVUCS  DC     AL2(L'DAPUCS) INITIALISE L'PARM                          DYN27900
+DAPUCS  DC     CL4' '        INITIALISE TO BLANKS                       DYN28DYN
+         SPACE 3                                                        DYN28100
+******************************************************************      DYN28200
+DAYUFOLD  DS     0H               ALIGN ON HALF WORD                    DYN28300
+DAKUFOLD  DC     AL2(DALUFOLD)      INIT KEY                            DYN28400
+DA#UFOLD  DC     AL2(0)           NO PARAMETERS REQD                    DYN28500
+         SPACE 3                                                        DYN28600
+******************************************************************      DYN28700
+DAYUVRFY  DS     0H               ALIGN ON HALF WORD                    DYN28800
+DAKUVRFY  DC     AL2(DALUVRFY)      INIT KEY                            DYN28900
+DA#UVRFY  DC     AL2(0)           NO PARAMETERS REQD                    DYN29DYN
+         SPACE 3                                                        DYN29100
+******************************************************************      DYN29200
+DAYDCBDS  DS     0H               ALIGN ON HALF WORD                    DYN29300
+DAKDCBDS  DC     AL2(DALDCBDS)      INIT KEY                            DYN29400
+DA#DCBDS  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN29500
+DAVDCBDS  DC     AL2(L'DAPDCBDS) INITIALISE L'PARM                      DYN29600
+DAPDCBDS  DC     CL44' '        INITIALISE TO BLANKS                    DYN29700
+         SPACE 3                                                        DYN29800
+******************************************************************      DYN29900
+DAYDCBDD  DS     0H               ALIGN ON HALF WORD                    DYN3DYN0
+DAKDCBDD  DC     AL2(DALDCBDD)      INIT KEY                            DYN30100
+DA#DCBDD  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN30200
+DAVDCBDD  DC     AL2(L'DAPDCBDD) INITIALISE L'PARM                      DYN30300
+DAPDCBDD  DC     CL8' '        INITIALISE TO BLANKS                     DYN30400
+         SPACE 3                                                        DYN30500
+******************************************************************      DYN30600
+DAYSUSER DS    0H                 ALIGN ON HALF WORD                    DYN30700
+DAKSUSER DC    AL2(DALSUSER)        INIT KEY                            DYN30800
+DA#SUSER DC    AL2(1)             SET UP 1 PARAMETER REQUEST            DYN30900
+DAVSUSER DC    AL2(L'DAPSUSER) INITIALISE L'PARM                        DYN31DYN
+DAPSUSER DC    CL8' ' WOZ 7 LONG  INITIALISE TO BLANKS                  DYN31100
+         SPACE 3                                                        DYN31200
+******************************************************************      DYN31300
+DAYSHOLD DS    0H                 ALIGN ON HALF WORD                    DYN31400
+DAKSHOLD DC    AL2(DALSHOLD)        INIT KEY                            DYN31500
+DA#SHOLD DC    AL2(0)             NO PARAMETERS REQD                    DYN31600
+         AIF   (&X8).DYX810                                       88036
+         AIF   (&F4).DYX810                                       J40B
+         SPACE 3                                                        DYN31200
+******************************************************************      DYN31300
+DAYDEFER DS    0H                 ALIGN ON HALF WORD                    DYN31400
+DAKDEFER DC    AL2(DALDEFER)        INIT KEY                            DYN31500
+DA#DEFER DC    AL2(0)             NO PARAMETERS REQD                    DYN31600
+         AGO   .DYX820                                            88036
+.DYX810  ANOP                                                     88036
+         SPACE 3                                                        DYN31200
+******************************************************************      DYN31300
+DAYDEFER DS    0H                 ALIGN ON HALF WORD                    DYN31400
+DAKDEFER DC    AL2(DAL#DFER)        INIT KEY                            DYN31500
+DA#DEFER DC    AL2(0)             NO PARAMETERS REQD                    DYN31600
+.DYX820  ANOP                                                     88036
+         SPACE 3                                                        DYN31700
+******************************************************************      DYN31800
+DAYMSVGP DS    0H                 ALIGN ON HALF WORD                    DYN31900
+DAKMSVGP DC    AL2(DALMSVGP)        INIT KEY                            DYN32DYN
+DA#MSVGP DC    AL2(1)             SET UP 1 PARAMETER REQUEST            DYN32100
+DAVMSVGP DC    AL2(L'DAPMSVGP) INITIALISE L'PARM                        DYN32200
+DAPMSVGP DC    CL8' '          INITIALISE TO BLANKS                     DYN32300
+* DCBS                                                                  DYN32400
+         SPACE 3                                                        DYN32500
+******************************************************************      DYN32600
+DAYBFALN DS    0H                 ALIGN ON HALF WORD                    DYN32700
+DAKBFALN DC    AL2(DALBFALN)        INIT KEY                            DYN32800
+DA#BFALN DC    AL2(1)             SET UP 1 PARAMETER REQUEST            DYN32900
+DAVBFALN DC    AL2(L'DAPBFALN) INITIALISE L'PARM                        DYN33DYN
+DAPBFALN DC    XL1'0'          INITIALISE TO X'0'                       DYN33100
+         SPACE 3                                                        DYN33200
+******************************************************************      DYN33300
+DAYBFTEK DS    0H                 ALIGN ON HALF WORD                    DYN33400
+DAKBFTEK DC    AL2(DALBFTEK)        INIT KEY                            DYN33500
+DA#BFTEK DC    AL2(1)             SET UP 1 PARAMETER REQUEST            DYN33600
+DAVBFTEK DC    AL2(L'DAPBFTEK) INITIALISE L'PARM                        DYN33700
+DAPBFTEK DC    XL1'0'          INITIALISE TO X'0'                       DYN33800
+         SPACE 3                                                        DYN33900
+******************************************************************      DYN34DYN
+DAYBLKSZ DS    0H                 ALIGN ON HALF WORD                    DYN34100
+DAKBLKSZ DC    AL2(DALBLKSZ)        INIT KEY                            DYN34200
+DA#BLKSZ DC    AL2(1)             SET UP 1 PARAMETER REQUEST            DYN34300
+DAVBLKSZ DC    AL2(L'DAPBLKSZ) INITIALISE L'PARM                        DYN34400
+DAPBLKSZ DC    H'0'             INITIALISE TO 0                         DYN34500
+         SPACE 3                                                        DYN34600
+******************************************************************      DYN34700
+DAYBUFIN DS    0H                 ALIGN ON HALF WORD                    DYN34800
+DAKBUFIN DC    AL2(DALBUFIN)        INIT KEY                            DYN34900
+DA#BUFIN DC    AL2(1)             SET UP 1 PARAMETER REQUEST            DYN35DYN
+DAVBUFIN DC    AL2(L'DAPBUFIN) INITIALISE L'PARM                        DYN35100
+DAPBUFIN DC    AL1(0)           INITIALISE TO 0                         DYN35200
+         SPACE 3                                                        DYN35300
+******************************************************************      DYN35400
+DAYBUFL  DS    0H                ALIGN ON HALF WORD                     DYN35500
+DAKBUFL  DC    AL2(DALBUFL)       INIT KEY                              DYN35600
+DA#BUFL  DC    AL2(1)            SET UP 1 PARAMETER REQUEST             DYN35700
+DAVBUFL  DC    AL2(L'DAPBUFL)  INITIALISE L'PARM                        DYN35800
+DAPBUFL  DC    H'0'            INITIALISE TO 0                          DYN35900
+         SPACE 3                                                        DYN36DYN
+******************************************************************      DYN36100
+DAYBUFMX DS    0H                 ALIGN ON HALF WORD                    DYN36200
+DAKBUFMX DC    AL2(DALBUFMX)        INIT KEY                            DYN36300
+DA#BUFMX DC    AL2(1)             SET UP 1 PARAMETER REQUEST            DYN36400
+DAVBUFMX DC    AL2(L'DAPBUFMX) INITIALISE L'PARM                        DYN36500
+DAPBUFMX DC    AL1(0)           INITIALISE TO 0                         DYN36600
+         SPACE 3                                                        DYN36700
+****************************************************************        DYN36800
+DAYBUFNO DS    0H                 ALIGN ON HALF WORD                    DYN36900
+DAKBUFNO DC    AL2(DALBUFNO)        INIT KEY                            DYN37DYN
+DA#BUFNO DC    AL2(1)             SET UP 1 PARAMETER REQUEST            DYN37100
+DAVBUFNO DC    AL2(L'DAPBUFNO) INITIALISE L'PARM                        DYN37200
+DAPBUFNO DC    AL1(0)           INITIALISE TO 0                         DYN37300
+         SPACE 3                                                        DYN37400
+******************************************************************      DYN37500
+DAYBUFOF DS    0H                 ALIGN ON HALF WORD                    DYN37600
+DAKBUFOF DC    AL2(DALBUFOF)        INIT KEY                            DYN37700
+DA#BUFOF DC    AL2(1)             SET UP 1 PARAMETER REQUEST            DYN37800
+DAVBUFOF DC    AL2(L'DAPBUFOF) INITIALISE L'PARM                        DYN37900
+DAPBUFOF DC    XL1'0'          INITIALISE TO X'0'                       DYN38DYN
+         SPACE 3                                                        DYN38100
+******************************************************************      DYN38200
+DAYBUFOU DS    0H                 ALIGN ON HALF WORD                    DYN38300
+DAKBUFOU DC    AL2(DALBUFOU)        INIT KEY                            DYN38400
+DA#BUFOU DC    AL2(1)             SET UP 1 PARAMETER REQUEST            DYN38500
+DAVBUFOU DC    AL2(L'DAPBUFOU) INITIALISE L'PARM                        DYN38600
+DAPBUFOU DC    AL1(0)           INITIALISE TO 0                         DYN38700
+         SPACE 3                                                        DYN38800
+******************************************************************      DYN38900
+DAYBUFRQ DS    0H                 ALIGN ON HALF WORD                    DYN39DYN
+DAKBUFRQ DC    AL2(DALBUFRQ)        INIT KEY                            DYN39100
+DA#BUFRQ DC    AL2(1)             SET UP 1 PARAMETER REQUEST            DYN39200
+DAVBUFRQ DC    AL2(L'DAPBUFRQ) INITIALISE L'PARM                        DYN39300
+DAPBUFRQ DC    AL1(0)           INITIALISE TO 0                         DYN39400
+         SPACE 3                                                        DYN39500
+******************************************************************      DYN39600
+DAYBUFSZ DS    0H                 ALIGN ON HALF WORD                    DYN39700
+DAKBUFSZ DC    AL2(DALBUFSZ)        INIT KEY                            DYN39800
+DA#BUFSZ DC    AL2(1)             SET UP 1 PARAMETER REQUEST            DYN39900
+DAVBUFSZ DC    AL2(L'DAPBUFSZ) INITIALISE L'PARM                        DYN4DYN0
+DAPBUFSZ DC    H'0'             INITIALISE TO 0                         DYN40100
+         SPACE 3                                                        DYN40200
+******************************************************************      DYN40300
+DAYCODE  DS     0H               ALIGN ON HALF WORD                     DYN40400
+DAKCODE  DC     AL2(DALCODE)      INIT KEY                              DYN40500
+DA#CODE  DC     AL2(1)           SET UP 1 PARAMETER REQUEST             DYN40600
+DAVCODE  DC     AL2(L'DAPCODE) INITIALISE L'PARM                        DYN40700
+DAPCODE  DC     XL1'0'        INITIALISE TO X'0'                        DYN40800
+         SPACE 3                                                        DYN40900
+******************************************************************      DYN41DYN
+DAYCPRI  DS     0H               ALIGN ON HALF WORD                     DYN41100
+DAKCPRI  DC     AL2(DALCPRI)      INIT KEY                              DYN41200
+DA#CPRI  DC     AL2(1)           SET UP 1 PARAMETER REQUEST             DYN41300
+DAVCPRI  DC     AL2(L'DAPCPRI) INITIALISE L'PARM                        DYN41400
+DAPCPRI  DC     XL1'0'        INITIALISE TO X'0'                        DYN41500
+         SPACE 3                                                        DYN41600
+******************************************************************      DYN41700
+DAYDEN  DS     0H               ALIGN ON HALF WORD                      DYN41800
+DAKDEN  DC     AL2(DALDEN)      INIT KEY                                DYN41900
+DA#DEN  DC     AL2(1)           SET UP 1 PARAMETER REQUEST              DYN42DYN
+DAVDEN  DC     AL2(L'DAPDEN) INITIALISE L'PARM                          DYN42100
+DAPDEN  DC     XL1'0'        INITIALISE TO X'0'                         DYN42200
+         SPACE 3                                                        DYN42300
+******************************************************************      DYN42400
+DAYDSORG  DS     0H               ALIGN ON HALF WORD                    DYN42500
+DAKDSORG  DC     AL2(DALDSORG)      INIT KEY                            DYN42600
+DA#DSORG  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN42700
+DAVDSORG  DC     AL2(L'DAPDSORG) INITIALISE L'PARM                      DYN42800
+DAPDSORG  DC     XL2'0'        INITIALISE TO X'0'                       DYN42900
+         SPACE 3                                                        DYN43DYN
+******************************************************************      DYN43100
+DAYEROPT  DS     0H               ALIGN ON HALF WORD                    DYN43200
+DAKEROPT  DC     AL2(DALEROPT)      INIT KEY                            DYN43300
+DA#EROPT  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN43400
+DAVEROPT  DC     AL2(L'DAPEROPT) INITIALISE L'PARM                      DYN43500
+DAPEROPT  DC     XL1'0'        INITIALISE TO X'0'                       DYN43600
+         SPACE 3                                                        DYN43700
+******************************************************************      DYN43800
+DAYGNCP  DS     0H               ALIGN ON HALF WORD                     DYN43900
+DAKGNCP  DC     AL2(DALGNCP)      INIT KEY                              DYN44DYN
+DA#GNCP  DC     AL2(1)           SET UP 1 PARAMETER REQUEST             DYN44100
+DAVGNCP  DC     AL2(L'DAPGNCP) INITIALISE L'PARM                        DYN44200
+DAPGNCP  DC     AL1(0)         INITIALISE TO 0                          DYN44300
+         SPACE 3                                                        DYN44400
+******************************************************************      DYN44500
+DAYINTVL  DS     0H               ALIGN ON HALF WORD                    DYN44600
+DAKINTVL  DC     AL2(DALINTVL)      INIT KEY                            DYN44700
+DA#INTVL  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN44800
+DAVINTVL  DC     AL2(L'DAPINTVL) INITIALISE L'PARM                      DYN44900
+DAPINTVL  DC     AL1(0)         INITIALISE TO 0                         DYN45DYN
+         SPACE 3                                                        DYN45100
+******************************************************************      DYN45200
+DAYKYLEN  DS     0H               ALIGN ON HALF WORD                    DYN45300
+DAKKYLEN  DC     AL2(DALKYLEN)      INIT KEY                            DYN45400
+DA#KYLEN  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN45500
+DAVKYLEN  DC     AL2(L'DAPKYLEN) INITIALISE L'PARM                      DYN45600
+DAPKYLEN  DC     AL1(0)         INITIALISE TO 0                         DYN45700
+         SPACE 3                                                        DYN45800
+******************************************************************      DYN45900
+DAYLIMCT  DS     0H               ALIGN ON HALF WORD                    DYN46DYN
+DAKLIMCT  DC     AL2(DALLIMCT)      INIT KEY                            DYN46100
+DA#LIMCT  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN46200
+DAVLIMCT  DC     AL2(L'DAPLIMCT) INITIALISE L'PARM                      DYN46300
+DAPLIMCT  DC     AL3(0)         INITIALISE TO 0                         DYN46400
+         SPACE 3                                                        DYN46500
+******************************************************************      DYN46600
+DAYLRECL  DS     0H               ALIGN ON HALF WORD                    DYN46700
+DAKLRECL  DC     AL2(DALLRECL)      INIT KEY                            DYN46800
+DA#LRECL  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN46900
+DAVLRECL  DC     AL2(L'DAPLRECL) INITIALISE L'PARM                      DYN47DYN
+DAPLRECL  DC     H'0'           INITIALISE TO 0                         DYN47100
+         SPACE 3                                                        DYN47200
+******************************************************************      DYN47300
+DAYMODE  DS     0H               ALIGN ON HALF WORD                     DYN47400
+DAKMODE  DC     AL2(DALMODE)      INIT KEY                              DYN47500
+DA#MODE  DC     AL2(1)           SET UP 1 PARAMETER REQUEST             DYN47600
+DAVMODE  DC     AL2(L'DAPMODE) INITIALISE L'PARM                        DYN47700
+DAPMODE  DC     XL1'0'        INITIALISE TO X'0'                        DYN47800
+         SPACE 3                                                        DYN47900
+******************************************************************      DYN48DYN
+DAYNCP  DS     0H               ALIGN ON HALF WORD                      DYN48100
+DAKNCP  DC     AL2(DALNCP)      INIT KEY                                DYN48200
+DA#NCP  DC     AL2(1)           SET UP 1 PARAMETER REQUEST              DYN48300
+DAVNCP  DC     AL2(L'DAPNCP) INITIALISE L'PARM                          DYN48400
+DAPNCP  DC     AL2(0)         INITIALISE TO 0                           DYN48500
+         SPACE 3                                                        DYN48600
+******************************************************************      DYN48700
+DAYOPTCD  DS     0H               ALIGN ON HALF WORD                    DYN48800
+DAKOPTCD  DC     AL2(DALOPTCD)      INIT KEY                            DYN48900
+DA#OPTCD  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN49DYN
+DAVOPTCD  DC     AL2(L'DAPOPTCD) INITIALISE L'PARM                      DYN49100
+DAPOPTCD  DC     XL1'0'        INITIALISE TO X'0'                       DYN49200
+         SPACE 3                                                        DYN49300
+******************************************************************      DYN49400
+DAYPCIR  DS     0H               ALIGN ON HALF WORD                     DYN49500
+DAKPCIR  DC     AL2(DALPCIR)      INIT KEY                              DYN49600
+DA#PCIR  DC     AL2(1)           SET UP 1 PARAMETER REQUEST             DYN49700
+DAVPCIR  DC     AL2(L'DAPPCIR) INITIALISE L'PARM                        DYN49800
+DAPPCIR  DC     XL1'0'        INITIALISE TO X'0'                        DYN49900
+         SPACE 3                                                        DYN5DYN0
+******************************************************************      DYN50100
+DAYPCIS  DS     0H               ALIGN ON HALF WORD                     DYN50200
+DAKPCIS  DC     AL2(DALPCIS)      INIT KEY                              DYN50300
+DA#PCIS  DC     AL2(1)           SET UP 1 PARAMETER REQUEST             DYN50400
+DAVPCIS  DC     AL2(L'DAPPCIS) INITIALISE L'PARM                        DYN50500
+DAPPCIS  DC     XL1'0'        INITIALISE TO X'0'                        DYN50600
+         SPACE 3                                                        DYN50700
+******************************************************************      DYN50800
+DAYPRTSP  DS     0H               ALIGN ON HALF WORD                    DYN50900
+DAKPRTSP  DC     AL2(DALPRTSP)      INIT KEY                            DYN51DYN
+DA#PRTSP  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN51100
+DAVPRTSP  DC     AL2(L'DAPPRTSP) INITIALISE L'PARM                      DYN51200
+DAPPRTSP  DC     XL1'0'        INITIALISE TO X'0'                       DYN51300
+         SPACE 3                                                        DYN51400
+******************************************************************      DYN51500
+DAYRECFM  DS     0H               ALIGN ON HALF WORD                    DYN51600
+DAKRECFM  DC     AL2(DALRECFM)      INIT KEY                            DYN51700
+DA#RECFM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN51800
+DAVRECFM  DC     AL2(L'DAPRECFM) INITIALISE L'PARM                      DYN51900
+DAPRECFM  DC     XL1'0'        INITIALISE TO X'0'                       DYN52DYN
+         SPACE 3                                                        DYN52100
+******************************************************************      DYN52200
+DAYRSRVF  DS     0H               ALIGN ON HALF WORD                    DYN52300
+DAKRSRVF  DC     AL2(DALRSRVF)      INIT KEY                            DYN52400
+DA#RSRVF  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN52500
+DAVRSRVF  DC     AL2(L'DAPRSRVF) INITIALISE L'PARM                      DYN52600
+DAPRSRVF  DC     AL1(0)         INITIALISE TO 0                         DYN52700
+         SPACE 3                                                        DYN52800
+******************************************************************      DYN52900
+DAYRSRVS  DS     0H               ALIGN ON HALF WORD                    DYN53DYN
+DAKRSRVS  DC     AL2(DALRSRVS)      INIT KEY                            DYN53100
+DA#RSRVS  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN53200
+DAVRSRVS  DC     AL2(L'DAPRSRVS) INITIALISE L'PARM                      DYN53300
+DAPRSRVS  DC     AL1(0)         INITIALISE TO 0                         DYN53400
+         SPACE 3                                                        DYN53500
+******************************************************************      DYN53600
+DAYSOWA  DS     0H               ALIGN ON HALF WORD                     DYN53700
+DAKSOWA  DC     AL2(DALSOWA)      INIT KEY                              DYN53800
+DA#SOWA  DC     AL2(1)           SET UP 1 PARAMETER REQUEST             DYN53900
+DAVSOWA  DC     AL2(L'DAPSOWA) INITIALISE L'PARM                        DYN54DYN
+DAPSOWA  DC     H'0'           INITIALISE TO 0                          DYN54100
+         SPACE 3                                                        DYN54200
+******************************************************************      DYN54300
+DAYSTACK  DS     0H               ALIGN ON HALF WORD                    DYN54400
+DAKSTACK  DC     AL2(DALSTACK)      INIT KEY                            DYN54500
+DA#STACK  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN54600
+DAVSTACK  DC     AL2(L'DAPSTACK) INITIALISE L'PARM                      DYN54700
+DAPSTACK  DC     AL1(0)         INITIALISE TO 0                         DYN54800
+         SPACE 3                                                        DYN54900
+******************************************************************      DYN55DYN
+DAYTHRSH  DS     0H               ALIGN ON HALF WORD                    DYN55100
+DAKTHRSH  DC     AL2(DALTHRSH)      INIT KEY                            DYN55200
+DA#THRSH  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN55300
+DAVTHRSH  DC     AL2(L'DAPTHRSH) INITIALISE L'PARM                      DYN55400
+DAPTHRSH  DC     AL1(0)         INITIALISE TO 0                         DYN55500
+         SPACE 3                                                        DYN55600
+******************************************************************      DYN55700
+DAYTRTCH  DS     0H               ALIGN ON HALF WORD                    DYN55800
+DAKTRTCH  DC     AL2(DALTRTCH)      INIT KEY                            DYN55900
+DA#TRTCH  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN56DYN
+DAVTRTCH  DC     AL2(L'DAPTRTCH) INITIALISE L'PARM                      DYN56100
+DAPTRTCH  DC     XL1'0'        INITIALISE TO X'0'                       DYN56200
+         SPACE 3                                                        DYN56300
+******************************************************************      DYN56400
+DAYIPLTX  DS     0H               ALIGN ON HALF WORD                    DYN56500
+DAKIPLTX  DC     AL2(DALIPLTX)      INIT KEY                            DYN56600
+DA#IPLTX  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN56700
+DAVIPLTX  DC     AL2(L'DAPIPLTX) INITIALISE L'PARM                      DYN56800
+DAPIPLTX  DC     CL7' '        INITIALISE TO BLANKS                     DYN56900
+         SPACE 3                                                        DYN57DYN
+******************************************************************      DYN57100
+DAYDIAGN  DS     0H               ALIGN ON HALF WORD                    DYN57200
+DAKDIAGN  DC     AL2(DALDIAGN)      INIT KEY                            DYN57300
+DA#DIAGN  DC     AL2(0)           NO PARAMETERS REQD                    DYN57400
+         SPACE 3                                                        DYN57500
+******************************************************************      DYN57600
+DAYFUNC  DS     0H               ALIGN ON HALF WORD                     DYN57700
+DAKFUNC  DC     AL2(DALFUNC)      INIT KEY                              DYN57800
+DA#FUNC  DC     AL2(1)           SET UP 1 PARAMETER REQUEST             DYN57900
+DAVFUNC  DC     AL2(L'DAPFUNC) INITIALISE L'PARM                        DYN58DYN
+DAPFUNC  DC     XL1'0'        INITIALISE TO X'0'                        DYN58100
+         SPACE 3                                                        DYN58200
+******************************************************************      DYN58300
+DAYFRID  DS     0H               ALIGN ON HALF WORD                     DYN58400
+DAKFRID  DC     AL2(DALFRID)      INIT KEY                              DYN58500
+DA#FRID  DC     AL2(1)           SET UP 1 PARAMETER REQUEST             DYN58600
+DAVFRID  DC     AL2(L'DAPFRID) INITIALISE L'PARM                        DYN58700
+DAPFRID  DC     CL4' '        INITIALISE TO BLANKS                      DYN58800
+         SPACE 3                                                        DYN58900
+******************************************************************      DYN59DYN
+DAYPASSW  DS     0H               ALIGN ON HALF WORD                    DYN59100
+DAKPASSW  DC     AL2(DALPASSW)      INIT KEY                            DYN59200
+DA#PASSW  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN59300
+DAVPASSW  DC     AL2(L'DAPPASSW) INITIALISE L'PARM                      DYN59400
+DAPPASSW  DC     CL8' '        INITIALISE TO BLANKS                     DYN59500
+         SPACE 3                                                        DYN59600
+******************************************************************      DYN59700
+DAYPERMA  DS     0H               ALIGN ON HALF WORD                    DYN59800
+DAKPERMA  DC     AL2(DALPERMA)      INIT KEY                            DYN59900
+DA#PERMA  DC     AL2(0)           NO PARAMETERS REQD                    DYN6DYN0
+         SPACE 3                                                        DYN60100
+******************************************************************      DYN60200
+DAYCNVRT  DS     0H               ALIGN ON HALF WORD                    DYN60300
+DAKCNVRT  DC     AL2(DALCNVRT)      INIT KEY                            DYN60400
+DA#CNVRT  DC     AL2(0)           NO PARAMETERS REQD                    DYN60500
+         SPACE 3                                                        DYN60600
+******************************************************************      DYN60700
+DAYRTDDN  DS     0H               ALIGN ON HALF WORD                    DYN60800
+DAKRTDDN  DC     AL2(DALRTDDN)      INIT KEY                            DYN60900
+DA#RTDDN  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN61DYN
+DAVRTDDN  DC     AL2(L'DAPRTDDN) INITIALISE L'PARM                      DYN61100
+DAPRTDDN  DC     CL8' '        INITIALISE TO BLANKS                     DYN61200
+         SPACE 3                                                        DYN61300
+******************************************************************      DYN61400
+DAYRTDSN  DS     0H               ALIGN ON HALF WORD                    DYN61500
+DAKRTDSN  DC     AL2(DALRTDSN)      INIT KEY                            DYN61600
+DA#RTDSN  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN61700
+DAVRTDSN  DC     AL2(L'DAPRTDSN) INITIALISE L'PARM                      DYN61800
+DAPRTDSN  DC     CL44' '        INITIALISE TO BLANKS                    DYN61900
+         SPACE 3                                                        DYN62DYN
+******************************************************************      DYN62100
+DAYRTORG  DS     0H               ALIGN ON HALF WORD                    DYN62200
+DAKRTORG  DC     AL2(DALRTORG)      INIT KEY                            DYN62300
+DA#RTORG  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN62400
+DAVRTORG  DC     AL2(L'DAPRTORG) INITIALISE L'PARM                      DYN62500
+DAPRTORG  DC     XL2'0'        INITIALISE TO X'0'                       DYN62600
+         SPACE 3                                                        DYN62700
+******************************************************************      DYN62800
+DAYRTVOL  DS     0H               ALIGN ON HALF WORD                    DYN62900
+DAKRTVOL  DC     AL2(DALRTVOL)      INIT KEY                            DYN63DYN
+DA#RTVOL  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN63100
+DAVRTVOL  DC     AL2(L'DAPRTVOL) INITIALISE L'PARM                      DYN63200
+DAPRTVOL  DC     CL6' '        INITIALISE TO BLANKS                     DYN63300
+         SPACE 3                                                        DYN83200
+******************************************************************      DYN83300
+DAY#RETN DS    0H              ALIGN ON HALF WORD                       DYN83400
+DAK#RETN DC    Y(DAL#RETN)     INIT KEY                                 DYN83500
+DA##RETN DC    Y(1)            ONE PARMS                                DYN83600
+         DC    Y(L'DAP#RETN)                                      88036
+DAP#RETN DC    X'80'                                              88036
+         SPACE 3                                                        DYN63400
+******************************************************************      DYN63500
+DUYDDNAM  DS     0H               ALIGN ON HALF WORD                    DYN63600
+DUKDDNAM  DC     AL2(DUNDDNAM)      INIT KEY                            DYN63700
+DU#DDNAM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN63800
+DUVDDNAM  DC     AL2(L'DUPDDNAM) INITIALISE L'PARM                      DYN63900
+DUPDDNAM  DC     CL8' '        INITIALISE TO BLANKS                     DYN64DYN
+         SPACE 3                                                        DYN64100
+******************************************************************      DYN64200
+DUYDSNAM  DS     0H               ALIGN ON HALF WORD                    DYN64300
+DUKDSNAM  DC     AL2(DUNDSNAM)      INIT KEY                            DYN64400
+DU#DSNAM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN64500
+DUVDSNAM  DC     AL2(L'DUPDSNAM) INITIALISE L'PARM                      DYN64600
+DUPDSNAM  DC     CL44' '        INITIALISE TO BLANKS                    DYN64700
+         SPACE 3                                                        DYN64800
+******************************************************************      DYN64900
+DUYMEMBR  DS     0H               ALIGN ON HALF WORD                    DYN65DYN
+DUKMEMBR  DC     AL2(DUNMEMBR)      INIT KEY                            DYN65100
+DU#MEMBR  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN65200
+DUVMEMBR  DC     AL2(L'DUPMEMBR) INITIALISE L'PARM                      DYN65300
+DUPMEMBR  DC     CL8' '        INITIALISE TO BLANKS                     DYN65400
+         SPACE 3                                                        DYN65500
+******************************************************************      DYN65600
+DUYOVDSP  DS     0H               ALIGN ON HALF WORD                    DYN65700
+DUKOVDSP  DC     AL2(DUNOVDSP)      INIT KEY                            DYN65800
+DU#OVDSP  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN65900
+DUVOVDSP  DC     AL2(L'DUPOVDSP) INITIALISE L'PARM                      DYN66DYN
+DUPOVDSP  DC     XL1'0'        INITIALISE TO X'0'                       DYN66100
+         SPACE 3                                                        DYN66200
+******************************************************************      DYN66300
+DUYUNALC  DS     0H               ALIGN ON HALF WORD                    DYN66400
+DUKUNALC  DC     AL2(DUNUNALC)      INIT KEY                            DYN66500
+DU#UNALC  DC     AL2(0)           NO PARAMETERS REQD                    DYN66600
+         SPACE 3                                                        DYN66700
+******************************************************************      DYN66800
+DUYREMOV  DS     0H               ALIGN ON HALF WORD                    DYN66900
+DUKREMOV  DC     AL2(DUNREMOV)      INIT KEY                            DYN67DYN
+DU#REMOV  DC     AL2(0)           NO PARAMETERS REQD                    DYN67100
+         SPACE 3                                                        DYN67200
+******************************************************************      DYN67300
+DUYOVSNH  DS     0H               ALIGN ON HALF WORD                    DYN67400
+DUKOVSNH  DC     AL2(DUNOVSNH)      INIT KEY                            DYN67500
+DU#OVSNH  DC     AL2(0)           NO PARAMETERS REQD                    DYN67600
+         SPACE 3                                                        DYN67700
+******************************************************************      DYN67800
+DUYOVCLS  DS     0H               ALIGN ON HALF WORD                    DYN67900
+DUKOVCLS  DC     AL2(DUNOVCLS)      INIT KEY                            DYN68DYN
+DU#OVCLS  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN68100
+DUVOVCLS  DC     AL2(L'DUPOVCLS) INITIALISE L'PARM                      DYN68200
+DUPOVCLS  DC     CL1' '        INITIALISE TO BLANKS                     DYN68300
+         SPACE 3                                                        DYN68400
+******************************************************************      DYN68500
+DUYOVSUS  DS     0H               ALIGN ON HALF WORD                    DYN68600
+DUKOVSUS  DC     AL2(DUNOVSUS)      INIT KEY                            DYN68700
+DU#OVSUS  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN68800
+DUVOVSUS  DC     AL2(L'DUPOVSUS) INITIALISE L'PARM                      DYN68900
+DUPOVSUS  DC     CL7' '        INITIALISE TO BLANKS                     DYN69DYN
+         SPACE 3                                                        DYN69100
+******************************************************************      DYN69200
+DUYOVSHQ  DS     0H               ALIGN ON HALF WORD                    DYN69300
+DUKOVSHQ  DC     AL2(DUNOVSHQ)      INIT KEY                            DYN69400
+DU#OVSHQ  DC     AL2(0)           NO PARAMETERS REQD                    DYN69500
+         SPACE 3                                                        DYN69600
+******************************************************************      DYN69700
+DCYDDNAM  DS     0H               ALIGN ON HALF WORD                    DYN69800
+DCKDDNAM  DC     AL2(DCCDDNAM)      INIT KEY                            DYN69900
+DC#DDNAM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN7DYN0
+DCVDDNAM  DC     AL2(L'DCPDDNAM) INITIALISE L'PARM                      DYN70100
+DCPDDNAM  DC     CL200' '        INITIALISE TO BLANKS                   DYN70200
+         SPACE 3                                                        DYN70300
+******************************************************************      DYN70400
+DCYPERMC  DS     0H               ALIGN ON HALF WORD                    DYN70500
+DCKPERMC  DC     AL2(DCCPERMC)      INIT KEY                            DYN70600
+DC#PERMC  DC     AL2(0)           NO PARAMETERS REQD                    DYN70700
+         SPACE 3                                                        DYN70800
+******************************************************************      DYN70900
+DDYDDNAM  DS     0H               ALIGN ON HALF WORD                    DYN71DYN
+DDKDDNAM  DC     AL2(DDCDDNAM)      INIT KEY                            DYN71100
+DD#DDNAM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN71200
+DDVDDNAM  DC     AL2(L'DDPDDNAM) INITIALISE L'PARM                      DYN71300
+DDPDDNAM  DC     CL8' '        INITIALISE TO BLANKS                     DYN71400
+         SPACE 3                                                        DYN71500
+******************************************************************      DYN71600
+DRYTCBAD  DS     0H               ALIGN ON HALF WORD                    DYN71700
+DRKTCBAD  DC     AL2(DRITCBAD)      INIT KEY                            DYN71800
+DR#TCBAD  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN71900
+DRVTCBAD  DC     AL2(L'DRPTCBAD) INITIALISE L'PARM                      DYN72DYN
+DRPTCBAD  DC     AL4(0)         INITIALISE TO 0                         DYN72100
+         SPACE 3                                                        DYN72200
+******************************************************************      DYN72300
+DRYCURNT  DS     0H               ALIGN ON HALF WORD                    DYN72400
+DRKCURNT  DC     AL2(DRICURNT)      INIT KEY                            DYN72500
+DR#CURNT  DC     AL2(0)           NO PARAMETERS REQD                    DYN72600
+         SPACE 3                                                        DYN72700
+******************************************************************      DYN72800
+DNYDDNAM  DS     0H               ALIGN ON HALF WORD                    DYN72900
+DNKDDNAM  DC     AL2(DDNDDNAM)      INIT KEY                            DYN73DYN
+DN#DDNAM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN73100
+DNVDDNAM  DC     AL2(L'DNPDDNAM) INITIALISE L'PARM                      DYN73200
+DNPDDNAM  DC     CL8' '        INITIALISE TO BLANKS                     DYN73300
+         SPACE 3                                                        DYN73400
+******************************************************************      DYN73500
+DNYRTDUM  DS     0H               ALIGN ON HALF WORD                    DYN73600
+DNKRTDUM  DC     AL2(DDNRTDUM)      INIT KEY                            DYN73700
+DN#RTDUM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN73800
+DNVRTDUM  DC     AL2(L'DNPRTDUM) INITIALISE L'PARM                      DYN73900
+DNPRTDUM  DC     XL1'0'        INITIALISE TO X'0'                       DYN74DYN
+         SPACE 3                                                        DYN74100
+******************************************************************      DYN74200
+DIYDDNAM  DS     0H               ALIGN ON HALF WORD                    DYN74300
+DIKDDNAM  DC     AL2(DINDDNAM)      INIT KEY                            DYN74400
+DI#DDNAM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN74500
+DIVDDNAM  DC     AL2(L'DIPDDNAM) INITIALISE L'PARM                      DYN74600
+DIPDDNAM  DC     CL8' '        INITIALISE TO BLANKS                     DYN74700
+         SPACE 3                                                        DYN74800
+******************************************************************      DYN74900
+DIYDSNAM  DS     0H               ALIGN ON HALF WORD                    DYN75DYN
+DIKDSNAM  DC     AL2(DINDSNAM)      INIT KEY                            DYN75100
+DI#DSNAM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN75200
+DIVDSNAM  DC     AL2(L'DIPDSNAM) INITIALISE L'PARM                      DYN75300
+DIPDSNAM  DC     CL44' '        INITIALISE TO BLANKS                    DYN75400
+         SPACE 3                                                        DYN75500
+******************************************************************      DYN75600
+DIYRTDDN  DS     0H               ALIGN ON HALF WORD                    DYN75700
+DIKRTDDN  DC     AL2(DINRTDDN)      INIT KEY                            DYN75800
+DI#RTDDN  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN75900
+DIVRTDDN  DC     AL2(L'DIPRTDDN) INITIALISE L'PARM                      DYN76DYN
+DIPRTDDN  DC     CL8' '        INITIALISE TO BLANKS                     DYN76100
+         SPACE 3                                                        DYN76200
+******************************************************************      DYN76300
+DIYRTDSN  DS     0H               ALIGN ON HALF WORD                    DYN76400
+DIKRTDSN  DC     AL2(DINRTDSN)      INIT KEY                            DYN76500
+DI#RTDSN  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN76600
+DIVRTDSN  DC     AL2(L'DIPRTDSN) INITIALISE L'PARM                      DYN76700
+DIPRTDSN  DC     CL44' '        INITIALISE TO BLANKS                    DYN76800
+         SPACE 3                                                        DYN76900
+******************************************************************      DYN77DYN
+DIYRTMEM  DS     0H               ALIGN ON HALF WORD                    DYN77100
+DIKRTMEM  DC     AL2(DINRTMEM)      INIT KEY                            DYN77200
+DI#RTMEM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN77300
+DIVRTMEM  DC     AL2(L'DIPRTMEM) INITIALISE L'PARM                      DYN77400
+DIPRTMEM  DC     CL8' '        INITIALISE TO BLANKS                     DYN77500
+         SPACE 3                                                        DYN77600
+******************************************************************      DYN77700
+DIYRTSTA  DS     0H               ALIGN ON HALF WORD                    DYN77800
+DIKRTSTA  DC     AL2(DINRTSTA)      INIT KEY                            DYN77900
+DI#RTSTA  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN78DYN
+DIVRTSTA  DC     AL2(L'DIPRTSTA) INITIALISE L'PARM                      DYN78100
+DIPRTSTA  DC     XL1'0'        INITIALISE TO X'0'                       DYN78200
+         SPACE 3                                                        DYN78300
+******************************************************************      DYN78400
+DIYRTNDP  DS     0H               ALIGN ON HALF WORD                    DYN78500
+DIKRTNDP  DC     AL2(DINRTNDP)      INIT KEY                            DYN78600
+DI#RTNDP  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN78700
+DIVRTNDP  DC     AL2(L'DIPRTNDP) INITIALISE L'PARM                      DYN78800
+DIPRTNDP  DC     XL1'0'        INITIALISE TO X'0'                       DYN78900
+         SPACE 3                                                        DYN79DYN
+******************************************************************      DYN79100
+DIYRTCDP  DS     0H               ALIGN ON HALF WORD                    DYN79200
+DIKRTCDP  DC     AL2(DINRTCDP)      INIT KEY                            DYN79300
+DI#RTCDP  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN79400
+DIVRTCDP  DC     AL2(L'DIPRTCDP) INITIALISE L'PARM                      DYN79500
+DIPRTCDP  DC     XL1'0'        INITIALISE TO X'0'                       DYN79600
+         SPACE 3                                                        DYN79700
+******************************************************************      DYN79800
+DIYRTORG  DS     0H               ALIGN ON HALF WORD                    DYN79900
+DIKRTORG  DC     AL2(DINRTORG)      INIT KEY                            DYN8DYN0
+DI#RTORG  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN80100
+DIVRTORG  DC     AL2(L'DIPRTORG) INITIALISE L'PARM                      DYN80200
+DIPRTORG  DC     XL2'0'        INITIALISE TO X'0'                       DYN80300
+         SPACE 3                                                        DYN80400
+******************************************************************      DYN80500
+DIYRTLIM  DS     0H               ALIGN ON HALF WORD                    DYN80600
+DIKRTLIM  DC     AL2(DINRTLIM)      INIT KEY                            DYN80700
+DI#RTLIM  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN80800
+DIVRTLIM  DC     AL2(L'DIPRTLIM) INITIALISE L'PARM                      DYN80900
+DIPRTLIM  DC     H'0'           INITIALISE TO 0                         DYN81DYN
+         SPACE 3                                                        DYN81100
+******************************************************************      DYN81200
+DIYRTATT  DS     0H               ALIGN ON HALF WORD                    DYN81300
+DIKRTATT  DC     AL2(DINRTATT)      INIT KEY                            DYN81400
+DI#RTATT  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN81500
+DIVRTATT  DC     AL2(L'DIPRTATT) INITIALISE L'PARM                      DYN81600
+DIPRTATT  DC     XL1'0'        INITIALISE TO X'0'                       DYN81700
+         SPACE 3                                                        DYN81800
+******************************************************************      DYN81900
+DIYRTLST  DS     0H               ALIGN ON HALF WORD                    DYN82DYN
+DIKRTLST  DC     AL2(DINRTLST)      INIT KEY                            DYN82100
+DI#RTLST  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN82200
+DIVRTLST  DC     AL2(L'DIPRTLST) INITIALISE L'PARM                      DYN82300
+DIPRTLST  DC     XL1'0'        INITIALISE TO X'0'                       DYN82400
+         SPACE 3                                                        DYN82500
+******************************************************************      DYN82600
+DIYRTTYP  DS     0H               ALIGN ON HALF WORD                    DYN82700
+DIKRTTYP  DC     AL2(DINRTTYP)      INIT KEY                            DYN82800
+DI#RTTYP  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN82900
+DIVRTTYP  DC     AL2(L'DIPRTTYP) INITIALISE L'PARM                      DYN83DYN
+DIPRTTYP  DC     XL1'0'        INITIALISE TO X'0'                       DYN83100
+         SPACE 3                                                        DYN83200
+******************************************************************      DYN83300
+DIYRELNO  DS     0H               ALIGN ON HALF WORD                    DYN83400
+DIKRELNO  DC     AL2(DINRELNO)      INIT KEY                            DYN83500
+DI#RELNO  DC     AL2(1)           SET UP 1 PARAMETER REQUEST            DYN83600
+DIVRELNO  DC     AL2(L'DIPRELNO) INITIALISE L'PARM                      DYN83700
+DIPRELNO  DC     H'0'           INITIALISE TO 0                         DYN83800
+         SPACE 3                                                        DYN83200
+DALEND    DS   0D                                                       DYN83900

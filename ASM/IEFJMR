@@ -1,0 +1,143 @@
+*        %GOTO JMRBSL;       /* BILINGUAL HEADER                     /*
+         MACRO
+         IEFJMR
+*        LEVEL=4    6/1/72
+JMR      DSECT
+         SPACE 2
+***********************************************************************
+*                                                                     *
+*    JMR   -  JOB MANAGEMENT RECORD                                   *
+*                                                                     *
+***********************************************************************
+         SPACE 2
+JMRTTR   DS    XL4                     TTRL OF THIS JMR         XL03120
+JMRNXT   DS    XL4                     TTRL OF NEXT RECORD      XL03120
+*
+*  THE FOLLOWING 72 BYTES WILL BE IN PQA
+JMRJOB   DS    8C            JOB NAME   EBCDIC
+JMRENTRY DS    F             JOB ENTRY TIME IN 1/100 SEC
+JMREDATE DS    F             ENTRY DATE 00YYDDDF
+JMRCPUID DS    4C            CPU-ID AND MDL FROM SMCA
+JMRUSEID DS    8C            USER ID
+JMRSTEP  DS    C             STEP NUMBER
+JMRLGEND EQU   *
+JMRLOGSZ EQU   JMRLGEND-JMRJOB  SIZE OF JOB LOG COPIED TO DSB
+*
+JMROPT   DS    X             OPTION SWITCHES
+JMRJOBSW EQU   X'80'         JOB FCTN REQUESTED
+JMRSTPSW EQU   X'40'         STEP FCTN REQUESTED
+JMREXITS EQU   X'20'         USER EXITS REQUESTED
+JMRXONLY EQU   X'10'         EXITS ONLY SPECIFIED
+*
+         DS    2C            RESERVED
+JMRUCOM  DS    F             USER COMMUNICATION INITIALIZED 0(NOT
+*                            USED BY THE SYSTEM)
+JMRTNRDR DS    F             REAL TIME IN THE ISC
+JMRNLRD  DS    F             NUMBER OF LINES READ
+JMRJPR   DS    CL2           JOB PRIORIYTY
+JMRJOBC  DS    CL2           JOB CLASSES
+JMRTNPR  DS    F             REAL TIME FOR PRINT PROCESS
+JMRLPR   DS    F             NUMBER OF LINES PRINTED
+JMRTNPU  DS    F             REAL TIME FOR PUNCH PROCESS
+JMRLNPU  DS    F             NUMBER OF LINES PUNCHED
+JMRTNT   DS    F             REAL TIME FOR TAPE PROCESS
+JMRLWT   DS    F             NUMBER OF LINES WRITTEN TO TAPE
+JMRUJVP  DS    F             ADDRESS OF IEFUJV/PTR TO SYS1.MAN RECORD
+JMRSIZE  EQU   *-JMRJOB      SIZE OF JMR IN PQA(72 BYTES)
+*
+*
+JMRDRSTP DS    2F            ISC STOP TIME AND DATE
+JMRJOBIN DS    F             JOB SYSIN COUNT
+JMRRDR   DS    2C            ISC DEVICE TYPE AND CLASS
+         DS    2C            RESERVED
+JMRSYSOC DS    5C            SYSOUT CLASSES
+*
+*   THE FOLLOWING INFORMATION WILL BE PASSED TO IEFUJV IN R/I
+*
+JMRJCLCD DS    C             JCL VERB CODE
+         DS    2C             RESERVED
+JMRJOBP  DS    F             PTR TO JOB LOG
+JMRJCLP  DS    F             PTR TO JCL CARD
+JMRJCLCP DS    F             PTR TO JCL CODE
+JMRPTRS  EQU   JMRJOBP
+JMRPTOFS DS    F             PTR TO OPERAND OFFSET
+JMRRESID DS    CL7                     RES USER ID
+JMRRESRV DS    CL1                     RES RESERVED
+         MEND  , */
+*%JMRBSL  :  ;
+*DECLARE
+*  1 JMR      BASED(JMRPTR),
+*
+*
+*/* **************************************************************** */
+*/*                                                                  */
+*/*  JMR   -  JOB MANAGEMENT RECORD                                  */
+*/*                                                                  */
+*/* **************************************************************** */
+*
+*
+*   2 JMRTTR      CHAR(4),             /* TTRL OF THIS JMR    XL03120*/
+*   2 JMRNXT      CHAR(4),             /* TTRL OF NEXT RECORD XL03120*/
+*
+*/* HE FOLLOWING 72 BYTES WILL BE IN PQA                             */
+*   2 JMRSIZE,                           /* SIZE OF JMR IN PQA       */
+*    3 JMRLOGSZ,                         /* SIZE OF JOB LOG COPIED   */
+*/*                                         TO DSB                   */
+*
+*     4 JMRJOB  (8) CHAR(1),             /* JOB NAME EBCDIC          */
+*     4 JMRENTRY  FIXED(31),             /* JOB ENTRY TIME IN 1/100
+*                                            SEC                     */
+*     4 JMREDATE  FIXED(31),             /* ENTRY DATE 00YYDDDF      */
+*     4 JMRCPUID (4) CHAR(1),            /* CPU-ID AND MDL FROM SMCA */
+*     4 JMRUSEID (8) CHAR(1),            /* USER ID                  */
+*     4 JMRSTEP   CHAR(1),               /* STEP NUMBER              */
+*
+*    3 JMROPT      CHAR(1),              /* OPTION SWITCHES          */
+*     4 JMRJOBSW BIT(1),                 /* JOB FCTN REQUESTED       */
+*     4 JMRSTPSW BIT(1),                 /* STEP FCTN REQUESTED      */
+*     4 JMREXITS BIT(1),                 /* USER EXITS REQUESTED     */
+*     4 JMRXONLY BIT(1),                 /* EXITS ONLY SPECIFIED     */
+*
+*     4 *        BIT(1),                 /* RESERVED                 */
+*     4 *        BIT(1),                 /* RESERVED                 */
+*     4 *        BIT(1),                 /* RESERVED                 */
+*     4 *        BIT(1),                 /* RESERVED                 */
+*    3 *        (2) CHAR(1),             /* RESERVED                 */
+*    3 JMRUCOM     FIXED(31),            /* USER COMMUNICATION
+*                                           INITIALIZED 0(NOT  USED
+*                                           BY THE SYSTEM)           */
+*    3 JMRTNRDR    FIXED(31),            /* REAL TIME IN THE ISC     */
+*    3 JMRNLRD     FIXED(31),            /* NUMBER OF LINES READ     */
+*    3 JMRJPR      CHAR(2),              /* JOB PRIORIYTY            */
+*    3 JMRJOBC     CHAR(2),              /* JOB CLASSES              */
+*    3 JMRTNPR     FIXED(31),            /* REAL TIME FOR PRINT
+*                                           PROCESS                  */
+*    3 JMRLPR      FIXED(31),            /* NUMBER OF LINES PRINTED  */
+*    3 JMRTNPU     FIXED(31),            /* REAL TIME FOR PUNCH
+*                                           PROCESS                  */
+*    3 JMRLNPU     FIXED(31),            /* NUMBER OF LINES PUNCHED  */
+*    3 JMRTNT      FIXED(31),            /* REAL TIME FOR TAPE
+*                                           PROCESS                  */
+*    3 JMRLWT      FIXED(31),            /* NUMBER OF LINES WRITTEN
+*                                           TO TAPE                  */
+*
+*
+*    3 JMRUJVP     FIXED(31),             /* ADDRESS OF IEFUJV/PTR TO
+*                                           SYS1.MAN RECORD          */
+*   2 JMRDRSTP (2) FIXED(31),            /* ISC STOP TIME AND DATE   */
+*    2 JMRJOBIN    FIXED(31),             /* JOB SYSIN COUNT          */
+*   2 JMRRDR   (2) CHAR(1),              /* ISC DEVICE TYPE AND CLASS*/
+*    2 *        (2) CHAR(1),              /* RESERVED                 */
+*   2 JMRSYSOC (5) CHAR(1),              /* SYSOUT CLASSES           */
+*
+*/* THE FOLLOWING INFORMATION WILL BE PASSED TO IEFUJV IN R/I        */
+*
+*   2 JMRJCLCD    CHAR(1),               /* JCL VERB CODE            */
+*   2 *        (2) CHAR(1),              /* RESERVED                 */
+*   2 JMRJOBP     FIXED(31),             /* PTR TO JOB LOG           */
+*    3 JMRPTRS    FIXED(31),             /* JMRPTRS EQU JMRJOBP      */
+*   2 JMRJCLP     FIXED(31),             /* PTR TO JCL CARD          */
+*    2 JMRJCLCP    FIXED(31),             /* PTR TO JCL CODE          */
+*   2 JMRPTOFS     FIXED(31),          /* PTR TO OPERAND OFFSET      */
+*   2 JMRRESID     CHAR(7),            /* RES USER ID             RES*/
+*   2 JMRRESRV     CHAR(1);            /* RES RESERVED            RES*/

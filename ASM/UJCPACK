@@ -1,0 +1,79 @@
+UJS04PAK   CSECT
+STOP       EQU 4
+START      EQU 3
+INPUT      EQU 5
+OP         EQU 6
+BLANK      EQU 7
+CH         EQU 8
+LIT        EQU 9
+PARMINIT   EQU 1
+BASE       EQU 11
+NOLITS     EQU 10
+* GENERAL  PURPOSE ROUTINE FOR REMOVING BLANKS FROM CHARACTER STRINGS
+*    R1 POINTS TO START OF STRING WHICH CONTAINS LENGTH AS FIRST
+*          2 BYTES(PL1 OPTIMISER VARYING STRING)
+* REENTERABLE
+           SPACE 2
+           ORG UJS04PAK
+UJCPACK    EQU  *
+UJCPAK     EQU  *
+           ENTRY UJCPACK,UJCPAK
+           ORG
+           SAVE (14,12),,*
+           LR  BASE,15
+           USING UJS04PAK,BASE
+           L 1,0(1)            LOAD ADDR OF PARM
+           SPACE 2
+* FIX UP STARTING POSN,STOP POSN ETC
+           LA  START,2(,PARMINIT)
+           LH 15,0(PARMINIT)
+           LR  STOP,START
+           AR  STOP,15         ADD LENGTH,STOP NOW=STOP ADDRESS
+           MVI  0(STOP),C' '   CLEAR EXTRA BYTE AT END OF STRING
+           LA  STOP,1(,STOP)
+           SPACE 2
+* NOW FIX UP INPUT,OP POINTERS
+           LR  INPUT,START
+           LR  OP,INPUT        POP BACK IN SAME POSNS
+           SPACE 2
+* FIX REGISTERS WITH ' ' & ''''
+           LA  BLANK,C' '
+           LA  LIT,C''''
+           SPACE 2
+* CLEAR CH
+           SR  CH,CH
+* NOW WE CAN GET UNDER WAY
+LOOP       IC  CH,0(INPUT)
+           CR  CH,BLANK        BLANK ?
+           BE  BLNKCH          YES
+           CR  CH,LIT          LITERAL SIGN ''''
+           BE  LITCH           YES
+           STC CH,0(OP)
+NEXT       LA  OP,1(,OP)
+ADD1IN     LA  INPUT,1(,INPUT)
+           CR  INPUT,STOP      GONE FAR ENOUGH ?
+           BE  RETN            YES
+           B   LOOP
+BLNKCH     EQU *
+           B   ADD1IN          JUST IGNORE IT
+LITCH      EQU *
+           STC CH,0(OP)        STORE THE QUOTE SIGN
+* NOW WE MUST LOOP AROUND AND AROUND UNTIL WE FIND ANOTHER ONE,
+*    STORING ALL OTHER CHARACTERS UNTIL THE NEXT ' APPEARS
+LOOP2      LA  OP,1(,OP)
+           LA  INPUT,1(,INPUT)
+           CR  INPUT,STOP
+           BE  RETN
+           IC  CH,0(INPUT)
+           STC CH,0(OP)
+           CR  CH,LIT
+           BE  NEXT
+           B   LOOP2
+           SPACE 3
+RETN       EQU *
+*NOW RESET  THE LENGTH OF THE STRING
+           SR  START,OP
+           LCR START,START
+           STH START,0(PARMINIT)
+           RETURN (14,12),T,RC=(15)
+           END

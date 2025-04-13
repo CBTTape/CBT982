@@ -1,0 +1,1600 @@
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE
+* COPYRIGHT CCS 1992
+* COPYRIGHT CCS 2008
+* SHOWDBF:  Shows a selectable list of files from the Jol Data    cvc
+*           Set Repository.                                       cvc
+*           Parameters:
+*              1. LEVEL(high-level-index)                         cvc
+*              2. MODELS - shows only MODELS                      cvc
+*              3. PRINTERS - shows only PRINTERS                  cvc
+*              4. ALL      - shows files, models and printers.    cvc
+* SHOWDSN:  Shows a selectable list of files from the System      cvc
+*           Catalog.                                              cvc
+*           Parameters:
+*              1. LEVEL(high-level-index)                         cvc
+         SPACE 3
+         PRINT OFF                                                J50
+         COPY  JOLCOM
+*        COPY  DDDSNDET
+*      COPY CPY/JOLCOMD.CPY
+         PRINT ON                                                 J50
+         COPY  P28PARMS                                           J50
+*
+MAXDBF   EQU 400
+MAXL3270 EQU 17          Number of lines of files to display on 3270
+*
+*char     dsnames[MAXDBF][45] ;
+         EJECT                                                    J52
+         COPY  SHOWDATA
+*TEMPDSN DSECT                                                    cvc
+*JUNK    DS    CL30                                               cvc
+*DDDSNAME DS    CL44                                              cvc
+*       USING   TEMPDSN,R10  (R10 Set below in SHOWDBF)
+MEMDSECT DSECT                                                    cvc
+MEMBERS  DS     CL8                                               cvc
+         USING SHOWDATA,R12      (Set below in main line)
+         EJECT                                                    J52
+UJX03SHO JOLSAVE CSECT=UJX03SHO   SHOWDBF
+*
+*       {
+*
+*          int  count, R1 ;
+*       //   char work_string[100];
+*
+*          clrscr();
+*
+*       CALL    CLRSCR
+*
+*
+*          Syspfk=0;
+*
+*       MVI     SYSPFK,0
+*
+*
+*       #if defined(FULL_JOL)
+*          gettkn (2);
+*          strcpy(work_string,Tkn);
+*       #else
+*          strcpy(work_string,argv[1]);    /* Copy command line */
+*
+         B     CONS2
+MSGMODL DC   C'--- Please Select a Model from the List ---'
+         DC    D'0'              Zap and alignment                J52
+MSGPRNT DC   C'--- Please Select a Printer from the List ---'
+         DC    D'0'              Zap and alignment                J52
+MSGFORP DC   C'--- Please Select a File or Printer from the List ---'
+         DC    D'0'              Zap and alignment                J52
+MSGDSN  DC   C'--- Please Select a Data Set from the List ---'
+         DC    D'0'              Zap and alignment                J52
+MSGMEM  DC   C'--- Please Select a Member from the List ---'
+         DC    D'0'              Zap and alignment                J52
+*
+CONS2    L    R12,=A(SHOWDATA)
+         USING SHOWDATA,R12
+         L    R10,P27GBL
+         USING PANELWRK,R10
+*       L       R6,=V(P29POPWK)
+*cvc    USING   P29POPWK,R6
+         ICM   R4,15,SCRNROWS Terminal Area been initialised ?    J50
+         BNZ   P29NOGTM                                           J50
+         CALL$ P27INIT        Find terminal type etc.             J50
+P29NOGTM DS    0H                                                 J50
+         LA    R4,PANSTRM     Point to work area
+         USING #PARM,R4
+         MVC   #COLUMNS,SCRNCOLS
+         MVC   #LINES,SCRNROWS
+*cvc     L     R10,=V(P27DSAVE)
+         USING #PARM,R4
+         LA    R5,#ITEMDSC
+         USING DITEM,R5
+         XC    #SCITEMS(LFIXED+3),#SCITEMS
+*
+*          strupr(work_string);
+*
+        MEMUPR  WORK,L'TKN
+*
+*
+*          ee.key[0] = '\0';                /* Set Key to the First */
+*
+*       MVC     DBFKEY,BLANKS
+         MVC   DBFKEY(8),SYSUID  In case no level is coded        J52
+*
+        MVC     RETDSN,BLANKS
+        MVC     #RETDSN,ZERO
+*
+        LA      R10,WORK                                          cvc
+        USING   DDDSNDET,R10                                      cvc
+        MVC     TKNCURR,=H'2'
+        GETTKN  TKNCURR
+         CLI   TKN,C''''         is it just showdbf 'sysut1';     J52
+         BNE   TRYLEV            yes.                             J52
+         MVC   SELMSG,MSGFORP                                     j52
+         MVC   #SELMSG,=AL2(L'MSGFORP)                            j52
+         B     USEMSG            yes.                             J52
+TRYLEV   DS    0H                                                 J52
+        MVC     #WORK(L'TKN),#TKN
+        STH     R1,TKNCURR                                        cvc
+         MVC   DBFKEY(8),SYSUID  In case no level is coded        J52
+        CLC     =C'LEVEL ',TKN                                    cvc
+        BNE     NOLEV                                             cvc
+        GETTKN  TKNCURR                Get '('                    cvc
+        CLI     TKN,C'('                                          cvc
+        BNE     NOBRAC                                            cvc
+        STH     R1,TKNCURR                                        cvc
+        GETTKN  TKNCURR                                           cvc
+        STH     R1,TKNCURR                                        cvc
+NOBRAC  CLI     TKN,C''''                                         cvc
+        BNE     NQUOT                                             cvc
+        LH      R1,#TKN                                           cvc
+        SH      R1,=H'1'                                          cvc
+        STH     R1,#TKN                                           cvc
+        MVC     TKN,TKN+1                                         cvc
+        LA      R1,TKN-1(R1)                                      cvc
+        MVI     0(R1),C' '                                        cvc
+NQUOT   CLI     TKN,C' '                                          cvc
+         BNE   KEYNNUL                                            J52
+         MVC   DBFKEY(8),SYSUID  Copy in UserID                   J52
+         MVC   TKN(8),SYSUID     Copy in UserID                   J52
+         JOLERR 201,'Empty Level Specified for SHOW - Using ''',  J52  *
+               DBFKEY,''''                                        J52
+KEYNNUL MVC     DBFKEY,TKN                                        cvc
+        MEMUPR  DBFKEY,L'DBFKEY                                   cvc
+        GETTKN  TKNCURR                                           cvc
+        CLI     TKN,C')'                                          cvc
+        BNE     NOLEV                                             cvc
+        STH     R1,TKNCURR                                        cvc
+NOLEV   DS      0H                                                cvc
+*
+*          if (strcmp(work_string,"MODELS") == 0)
+*
+        GETTKN  TKNCURR                                           cvc
+        CLC   =C'MODELS',WORK
+        BNE     @3@74
+          MVC      SELMSG,MSGMODL
+          MVC      #SELMSG,=AL2(L'MSGMODL)
+          MVI     SELTYPE,C'M'
+        B       @3@242
+@3@74   DS   0H
+*
+*
+*          else if (strcmp(work_string,"PRINTERS")==0)
+*
+        CLC     =C'PRINTERS',WORK
+        BNE     @3@122
+          MVC      SELMSG,MSGPRNT
+          MVC      #SELMSG,=AL2(L'MSGPRNT)
+          MVI     SELTYPE,C'P'
+        B       @3@242
+@3@122   DS   0H
+*
+*
+*          else if (strcmp(work_string,"ALL")==0)
+*
+        CLC     =C'A L',WORK
+        BNE     @3@218
+          MVC      SELMSG,MSGFORP
+          MVC      #SELMSG,=AL2(L'MSGFORP)
+        MVI     SELTYPE,C'D'                                      J52
+*
+*
+*                gettkn (3);
+*                strcpy(select_ddname,Tkn);
+*
+        MVC     TKNCURR,=H'3'
+        GETTKN  TKNCURR
+USEMSG   DS    0H                                                 J52
+         CLC   =CL8'SHOWMEM',ICOMMAND                             J52
+         BNE   NOTMEM1                                            J52
+        MVC     SELMSG,MSGMEM                                     J52
+        MVC     #SELMSG,=AL2(L'MSGMEM)                            J52
+        MVI     SELTYPE,C'D'                                      J52
+NOTMEM1  DS    0H                                                 J52
+        MVC     #SELDDNM(L'SELDDNM),#TKN
+*
+*
+*                if (*select_ddname == '\'')
+*
+        CLI     SELDDNM,C''''
+        BNE     @3@194
+*
+*     {
+*     strcpy(select_ddname,&select_ddname[1]);/* DDNAME READS WRITES et
+*
+        MVC     SELDDNM,SELDDNM+1
+*
+*                  R1=strlen(select_ddname);         /* Drop quotes */
+*
+        LH      R1,#SELDDNM
+        SH      R1,=H'2'                                          j52
+        STH     R1,#SELDDNM
+*
+*                  select_ddname[R1 - 1] ='\0';
+*
+*       LA      R1,SELDDNM(R1)
+*       MVI     0(R1),0
+@3@194   DS   0H
+*
+*                }
+*                SELTYPE='A';
+*
+        MVI     SELTYPE,C'A'
+*
+*          }
+*
+        B       @3@242
+@3@218   DS   0H
+*
+*
+*          else
+*          {
+*                SELMSG="Select a Data Set to Update";
+*
+        CLC     #SELMSG,=H'0'
+         BNE   @3@242                                             J52
+        MVC     SELMSG,MSGDSN
+        MVC     #SELMSG,=AL2(L'MSGDSN)
+        MVI     SELTYPE,C'D'
+@3@242   DS   0H
+*
+*          }
+*
+*
+*          dd_dbf = work_string;
+*
+        LA      R1,WORK
+*       ST      R1,_dd_dbf
+*
+* getdbf_again:
+*
+GETDBFAG DS   0H
+*
+*          count=getdbfs();
+*
+        CALL    UJX03GET         GetDBF
+        LTR     R15,R15                                           cvc
+         BNZ   UJXBAD            Error somewhere                  J52
+*       STH     R1,COUNT
+*
+*
+*
+* next_stage:
+*           if (count>1)
+*
+        CLC     COUNT,=H'1'
+        BNH     @3@362
+*
+*           {
+*                 strcpy(DSNAMES[count]," ");
+*
+*       LH      R15,COUNT
+*       MH      R15,=AL2(L'DSNAMES)
+*       LA      R15,DSNAMES(R15)
+*       MVC     0(L'DSNAMES,R15),BLANKS
+*
+*                 pointers[count]=(char *)&DSNAMES[count];
+*
+*       LH      R15,COUNT
+*       LR      R14,R15
+*       MH      R15,=AL2(L'DSNAMES)
+*       SLL     R14,2
+*       ST      R15,POINTERS(R14)
+*
+*
+*       //        shell(&pointers[0],count);
+*       //        for (R1 = 0; R1 < count; R1++)
+*       //           printf("%s\n", pointers[R1]);
+*
+*         /*      count --; */
+*
+*                 display_dbf(&pointers[0],count);
+*
+@3@338   DS   0H
+        LH      R1,COUNT
+        LA      R0,POINTERS
+        CALL$   DISPDBF
+*
+*           }
+*
+        B       @3@434
+@3@362   DS   0H
+*
+*           else  if (count ==1)
+*
+        CLC     COUNT,=H'1'
+        BNE     @3@410
+        B       @3@338
+@3@410   DS   0H
+*
+*                 display_dbf(&pointers[0],count);
+*
+*           else
+*           {
+*                 Syspfk = 7;
+*
+        MVC     SYSPFK,=H'7'
+*
+*                 goto getdbf_again;
+*
+        B       GETDBFAG
+@3@434   DS   0H
+*
+*
+*                 display_ctr("No Files to Select",10);
+*                 display_ctr("Press Any Key",12);
+*                 getkey();
+*                 return(99);
+*           }
+*
+*           if (Syspfk !=0)
+*
+        CLC     SYSPFK,=H'3'
+        BE      RETNODAT
+*
+        CLC     SYSPFK,ZERO
+        BNE     GETDBFAG
+*
+*               goto getdbf_again;
+*
+*           clrscr();
+*
+*           if (RETDSN[0] == '\'')
+*
+RETNODAT CLI    RETDSN,C''''
+        BNE     @3@506
+*
+*           {
+*               strcpy(RETDSN,&RETDSN[1]);
+*
+        MVC     RETDSN(L'RETDSN),RETDSN+1
+*
+*               RETDSN[strlen(RETDSN)-1] ='\0';
+*
+        LH      R15,#RETDSN
+        SH      R15,=H'2'
+         BM    @3@506                                             J52
+        STH     R15,#RETDSN
+@3@506   DS   0H
+*
+*           }
+*
+*
+        MVC     ICOMMAND,=CL8'MACRO'
+        MVC     SYMBOLIC,=C'SHOWSEL '
+*
+*           strcat(work_string,RETDSN);
+*
+        MVC     #WORK(60),#RETDSN
+* Drop last blanks                                                J52
+FLASTB   LA    R15,WORK-1                                         cvc
+         AH    R15,#WORK                                          cvc
+         CLI   0(R15),C' '                                        cvc
+         BNE   DONESTRP                                           cvc
+         LH    R15,#WORK                                          cvc
+         SH    R15,=H'1'                                          cvc
+         BM    DONESTRP                                           cvc
+         STH   R15,#WORK                                          cvc
+         B     FLASTB                                             cvc
+DONESTRP DS    0H
+*
+*
+*               return(99);
+*
+        CALL$   UJP85ASN
+*       B       @3@578
+@3@554   DS   0H
+*
+*
+*           return(0);
+*
+        JOLRETN  RC=0
+*@3@578  DS   0H
+*
+UJXBAD  JOLRETN  RC=16
+*
+*       #endif
+*
+*
+*       }
+        LTORG
+*
+*
+*
+*
+*
+*
+*
+*       void print_heads_dbf()
+         EJECT                                                    J52
+UJX03GET JOLSAVE CSECT=UJX03GET SIZE=C242SVEL                     75311
+*
+*       {
+*               if (!dbf_open)
+*
+        MVC    COUNT,ZERO                                         cvc
+        CLC    =CL8'SHOWDSN',ICOMMAND   dbf or dsn ?              cvc
+        BNE    TRYMEM                                             cvc
+* Show catalog entries here.                                      cvc
+*                                                                 cvc
+*       LA     R1,=A()                                            cvc
+         MVI   CIROPT,2                                           J52
+        LA     R1,AREALN                                          cvc
+        ST     R1,CIRWA                                           cvc
+        L      R1,=A(DSNSIZE)    Size of Work Area                cvc
+        STH    R1,AREALN         Set Parameter to IKJEHCIR        cvc
+        LA     R1,DBFKEY                                          cvc
+        ST     R1,CIPSRCH        Set Level to search for          cvc
+        LA     R1,CIRSAREA                                        cvc
+        ST     R1,CIRSAVE        Set Save area for LOCATE etc     cvc
+        SR     R0,R0                                              cvc
+        ST     R0,CIRCVOL                                         cvc
+        ST     R0,CIRPSWD                                         cvc
+        LA     R1,CIROPT                                          cvc
+        LINK   EP=IKJEHCIR                                        cvc
+        LTR    R15,R15                                            cvc
+        BZ     CATOK                                              cvc
+         CH    R15,=H'4'         4 means (???) that some data was J52
+* returned, but that the area was too small.                      J52
+         BNE   X03CATER                                           J52
+         CLI   DSNAMES+1,C' '                                     J52
+         BNE   TOOMANY                                            J52
+         JOLERR 202,'No Names Found to Display'                   J52
+        JOLRETN RC=16                                             cvc
+TOOMANY  JOLERR 203,'Too Many CATALOG Names to Display Them All'  J52
+         MVC   DATALIN,AREALN                                     J52
+         B     CATOK                                              J52
+X03CATER DS    0H                                                 J52
+        JOLERR 304,'Catalog Error'                                cvc
+        JOLRETN RC=16                                             cvc
+CATOK   LH     R15,DATALIN                                        cvc
+         SR    R14,R14                                            J52
+        S      R15,=F'4'                                          cvc
+        LA     R1,45                                              cvc
+        DR     R14,R1                                             cvc
+        STH    R15,COUNT                                          cvc
+FIXPTRS SR     R7,R7                                              cvc
+NXTPTRC LR     R8,R7                                              cvc
+        MH     R8,=H'45'                                          cvc
+        LA     R8,DSNAMES+1(R8)                                   cvc
+        LR     R9,R7                                              cvc
+        SLL    R9,2                                               cvc
+        ST     R8,POINTERS(R9)                                    cvc
+        LA     R7,1(R7)                                           cvc
+        CH     R7,COUNT                                           cvc
+        BL     NXTPTRC                                            cvc
+        LH     R1,COUNT                                           cvc
+         L     R14,4(R13)     GET SAVE AREA ADDRESS
+         ST    R0,20(,R14)    Set R0 for JOLRETN
+         ST    R1,24(,R14)    And R1
+        JOLRETN RC=0                                              cvc
+TRYMEM  DS     0H                                                 cvc
+        CLC    =CL8'SHOWMEM',ICOMMAND   dbf or dsn ?              cvc
+        BNE    DODBF                                              cvc
+         GETTKN 2                                                 J52
+         MVC   WORK(8),TKN       DDNAME                           J52
+         $CALL READPDS,(WORK,CALLAREA)                            J52
+         LTR   R15,R15                                            J52
+         BZ    MEMSOK                                             J52
+        JOLERR 305,'Error Reading Member List'                    cvc
+        JOLRETN RC=16                                             cvc
+MEMSOK  DS     0H                                                 cvc
+* Now READPDS copies members into an area, each name is 8 bytes   J52
+* CALLAREA contains the address                                  J52
+         STH   R1,COUNT                                           J52
+         L     R1,CALLAREA       Pointer to member names          J52
+        SR     R7,R7                                              cvc
+NXTPTRM LR     R8,R7                                              cvc
+        MH     R8,=H'44'                                          cvc
+        LA     R8,DSNAMES+1(R8)                                   cvc
+         MVC   0(44,R8),BLANKS   Clear first                      J52
+         MVC   0(8,R8),0(R1)     Now Shift Member Name            J52
+MEMLEN   EQU   12                                                 J52
+         LA    R1,MEMLEN(R1)     Bump to next                     J52
+        LR     R9,R7                                              cvc
+        SLL    R9,2                                               cvc
+        ST     R8,POINTERS(R9)                                    cvc
+        LA     R7,1(R7)                                           cvc
+        CH     R7,COUNT                                           cvc
+        BL     NXTPTRM                                            cvc
+        LH     R1,COUNT                                           cvc
+         L     R14,4(R13)     GET SAVE AREA ADDRESS
+         ST    R0,20(,R14)    Set R0 for JOLRETN
+         ST    R1,24(,R14)    And R1
+        JOLRETN RC=0                                              cvc
+DODBF   DS     0H                                                 cvc
+*       CLI     DBFOPEN,0
+*       BNE     @2@146
+*       MVC    COUNT,=H'10'                                       cvc
+         LA    R7,WORK                                            cvc
+         USING DDDSNDET,R7                                        cvc
+         L     R6,VSAMCBS                                         J50
+         TM    UJFLAG1,UF1DBOPN+UF1DBERR                          J50
+         BNZ   X04XX             OPENED, OR IN ERROR              J50
+         USING VSAMINFO,R6                                        J50
+         VSOPEN (JOLDSDB,INPUT),MF=(E,CALLAREA),NRETURN=X04XX
+*        CALL  VSOPEN                                             cvc
+         B     @2@98          Get First                           cvc
+         ST    R15,CALLAREA                                       J50
+         OI    UJFLAG1,UF1DBERR                                   J50
+         JOLERR 506,'ERROR ',CALLAREA,' OPENING JOL DS DB',RC=16
+         JOLRETN RC=16
+X04XX    DS    0H                                                 J50
+         OI    UJFLAG1,UF1DBOPN                                   J50
+         TM    UJFLAG1,UF1DBERR  IF VSAM ERROR,                   J50
+         BNZ   X04RET0           IGNORE IT                        J50
+         TM    UJFLAG1,UF1DBOPN  IF NOT OPEN                      J50
+         BZ    X04RET0           IGNORE IT                        J50
+*        IC    R15,DDOSVB+1                                       J50
+         BCTR  R15,0                                              J50
+*        MEMCPY X04DS,DDDSNDET,R15                                J50
+*        MVC   X042DS(0),DDDSNDET                                 J50
+X04MODL  DS    0H
+         LA    R6,X04DS                                           J50
+*        JOLERR 007,'GETTING DATA FROM JOLDSDB FOR ',                  .
+*              DDDSNAME-DDDSNDET(R6)                              J50
+         L     R6,VSAMCBS        RELOADED FOR MODEL LOOP CVC      J50
+         B     DO1ST                                              J52
+*
+*               {
+*                  opendb();
+*
+*       CALL    OPENDB
+*
+*
+*                  if (!dbf_open) { ;
+*
+*       CLI     DBFOPEN,0
+*       BNE     @2@98
+@2@74   DS   0H
+*
+*                     return 16;
+*
+        JOLRETN RC=16
+X04RET0 JOLRETN RC=0                                              J50
+@2@98   DS   0H
+*
+*                  }
+*                  if (first_key(&nameindex) != IX_OK)
+*
+*       BE      @2@146
+DO1ST    DS    0H                                                 J52
+         MVC   DDDSNAME,DBFKEY                                    J52
+         VSIO  GETFIRST,JOLDSDB,WORK,NRETURN=GOT1ST
+*        VSIO  GETFIRST,JOLDSDB,(R7),NRETURN=JRETN0
+*        LA    R1,WORK
+*        CALL  VSGET1ST                                           cvc
+         LTR   R15,R15           NOT FOUND                        J50
+         BNZ   X04NF             THAT'S IT?                       J50
+         B     GOT1ST                                             cvc
+         ST    R15,CALLAREA                                       J50
+         OI    UJFLAG1,UF1DBERR                                   J50
+         JOLERR 308,'VSAM READ ERROR ON JOLDSDB: PROCESSING CANCELLED'
+         JOLRETN RC=4                                             J50
+X04NF    JOLERR 309,'No Files in Jol Data Base File'
+         JOLRETN RC=16                                            J50
+*
+*            {
+*       WTO     'Bad Index or No Files in Jol Data Base File\n'
+*       B       @2@74
+@2@146   DS   0H
+X04MERG  DS    0H                                                 J50
+*
+*                      return(16);
+*                  }
+*                }
+*
+*                if (Syspfk == 7)
+*
+        CLC     SYSPFK,=H'7'
+        BNE     @2@290
+*
+*                {   int R9;
+*                    for (R9=1; R9<=(MAXL3270 *2); R9++)
+*
+        LA      R9,1
+        B       @2@242
+@2@194   DS   0H
+*
+*                    {
+*                        prev_key(&ee, &nameindex) ;
+*
+*        VSIO  GETPREV,JOLDSDB,X042DS,NRETURN=X04MERG
+*        CALL  VSGETPRV                                           cvc
+*        LTR   R15,R15                                            cvc
+*        BNZ                                                      cvc
+@2@242   DS   0H
+        CH      R9,=H'34'
+        BNH     @2@194
+*
+*                    }
+*                    Syspfk=0;
+*
+        MVC     SYSPFK,ZERO
+@2@290   DS   0H
+*
+*                }
+*
+        SR       R1,R1
+*
+*                goto got_1st;
+*
+        B       GOT1ST
+GETLOOP  DS   0H
+*
+*
+*       try_again:
+*             ;
+*       get_loop:
+*
+*
+*                if (next_key(&ee, &nameindex) != IX_OK)
+*
+         VSIO  GETNEXT,JOLDSDB,WORK,NRETURN=GOT1ST
+*        LA    R1,WORK
+*        CALL  VSGETNXT                                           cvc
+         LTR   R15,R15                                            cvc
+        BZ      GOT1ST
+        JOLRETN RC=0                                              J52
+        B       FIXPTRS
+        B       @2@890
+GOT1ST   DS   0H
+*
+*
+*            /* seek to the record address stored in ENTRY e->recptr */
+*
+*                if (ee.key[0] == '\0')              /* Skip nulls */
+*
+        CLI     DDDSNAME,C' '
+        BE      GETLOOP
+*
+*
+* switch (SELTYPE)
+*
+        CLI     SELTYPE,C'M'
+        BNE     NOTMODL
+*
+*     {
+*         case 'M':                       /* Models wanted only */
+*         if  (memcmp(ee.key, "\'MODEL=",7) == 0)
+*
+        CLC     =C'MODEL=',DDDSNAME
+        BNE     @2@866
+*
+*                         {
+*                              strcpy(dsnames[R1], &ee.key[7]);
+*
+        LA      R15,DDDSNAME+6
+*
+* store_rec:
+*
+STORREC  DS   0H
+        LH      R14,COUNT             Don't upset R1
+        LA      R14,1(R14)                                        cvc
+        STH     R14,COUNT                                         cvc
+        MH      R14,=AL2(L'DSNAMES)
+        LA      R14,DSNAMES(R14)
+        MVC     0(L'DSNAMES,R14),0(R15)
+*
+SETPTR   DS   0H
+*
+* set_ptr:               pointers[R1]=DSNAMES[R1];
+*
+        LH      R14,COUNT
+        MH      R14,=AL2(L'DSNAMES)
+        LA      R14,DSNAMES(R14)
+        LH      R15,COUNT
+        SLL     R15,2
+        ST      R14,POINTERS-4(R15)
+        B       GETLOOP
+*       B       @2@866
+@2@722   DS   0H
+*
+*
+NOTMODL DS      0H
+        CLI     SELTYPE,C'P'
+        BNE     NOTPRNT
+*
+* case 'P':                       /* Printers only wanted */
+*       if  (memcmp(ee.key, "\'PRINTER=",9) == 0)
+*
+        CLC     =C'PRINTER=',DDDSNAME
+        BNE     @2@866
+*
+*      {
+*                 strcpy(DSNAMES[R1], &ee.key[9]);
+*
+        LA      R15,DDDSNAME+8       Skip PRINTER=
+        B       STORREC
+@2@770   DS   0H
+*
+*                 goto store_rec;
+*       }
+*          break;
+*                    case 'D':
+*                         if (ee.key[0] != '\'')
+*
+NOTPRNT DS      0H
+        CLI     SELTYPE,C'D'
+        BNE     NOTDSN
+        LA      R15,DDDSNAME                                      cvc
+        B       STORREC                                           cvc
+*       CLI     WORK+8,C''''
+*       BE      @2@866
+*       B       @2@842
+@2@818   DS   0H
+*
+*       {
+*                    strcpy(DSNAMES[R1], ee.key);
+*                     goto set_ptr;
+*       }
+*        break;
+*
+*   case 'A':
+*           if  (memcmp(ee.key, "\'MODEL=",7) != 0)
+*
+NOTDSN  DS      0H
+        CLI     SELTYPE,C'A'
+        BNE     NOTALL
+        CLC     =C'MODEL=',DDDSNAME
+        BE      @2@866
+@2@842   DS   0H
+*
+*                         {
+*                              strcpy(DSNAMES[R1], ee.key);
+*
+        LR      R14,R1
+        LA      R15,DDDSNAME                                      cvc
+         B     STORREC                                            J52
+*cvclistLH      R14,COUNT                                         j52
+*cvclistMH      R14,=AL2(L'DSNAMES)
+*cvclistLA      R14,DSNAMES(R14)
+        MVC     0(L'DSNAMES,R14),DDDSNAME
+*
+*               goto set_ptr;
+*
+        B       SETPTR
+NOTALL  DS      0H                                                cvc
+        JOLERR  110,'NOTALL Label branched to !!!'                cvc
+@2@866   DS   0H
+*
+*                         }
+*                    }
+*                }
+*
+*                if (R1>MAXL3270)
+*
+        CH      R1,=AL2(MAXL3270)
+        BH      @@4
+        B       GETLOOP
+@@4   DS   0H
+@2@890   DS   0H
+*
+*                   return (R1);
+*
+        LR      R15,R1
+@2@914   DS   0H
+*
+*
+*                goto try_again;
+*           }
+*
+        JOLRETN RC=(15)
+        LTORG
+*
+*       int main(int argc,char *argv[])
+SELCONS DATASECT
+*
+         EJECT                                                    J52
+PRTHEADS JOLSAVE CSECT=PRTHEADS
+*
+*       {
+*
+         B     PRTHSTRT                                           J52
+*EMPZZ  DATASECT
+#DISPXXX DC  AL2(DISPXXXE-DISPXXX)
+DISPXXX  DC  C'Jol Set Repository Selection Panel'
+DISPXXXE EQU *
+         DC    D'0'              Zap and alignment                J52
+*
+#DISPYYY DC  AL2(DISPYYYE-DISPYYY)
+DISPYYY  DC  C'Data Sets from System Catalog Selection Panel'
+DISPYYYE EQU *
+*
+         DC    D'0'              Zap and alignment                J52
+#DISPMEM DC  AL2(DISPMEME-DISPMEM)
+DISPMEM  DC  C'Member Selection Panel'
+DISPMEME EQU *
+*
+*
+         DC    D'0'              Zap and alignment                J52
+#DISPUNK DC  AL2(DISPUNKE-DISPUNK)
+DISPUNK  DC  C'*** Unknown Selection Panel ***'
+DISPUNKE EQU *
+*
+         DC    D'0'              Zap and alignment                J52
+#MSG2    DC     AL2(MSG2E-MSG2)
+MSG2     DC  C'Use Cursor Keys to Select Data Set'
+*        DC  C' or Member'
+         DC    C'.'                                               J52
+MSG2E    EQU *
+*
+         DC    D'0'              Zap and alignment                J52
+#MSG3    DC     AL2(MSG3E-MSG3)
+MSG3     DC  C'F3 Exits, Enter Selects Data Set. F7 Previous Screen;'
+         DC  C' F8 Next Screen'
+MSG3E    EQU *
+*
+*           clrscr();
+*
+*       CALL    CLRSCR
+*
+*
+*           display_ctr(display_xxx,21);
+*
+*                                                                 J52
+PRTHSTRT DS    0H                                                 J52
+         XC    TXTROWNO(LFIXED),TXTROWNO                          J51
+         MVI   TXTATTR,0               COPY ATTRIBUTE,
+         MVI   TXTCOLR,VWHITE          COPY COLOUR
+         CLC   =CL8'DBFSHOW ',ICOMMAND                            J52
+         BE    ISDBFMS                                            J52
+         CLC   =CL8'SHOWDBF ',ICOMMAND                            J52
+         BNE   TRYDSN                                             J52
+ISDBFMS  LA    R15,#DISPXXX                                       J52
+         B     GOTTYMS                                            J52
+TRYDSN   DS    0H                                                 J52
+         CLC   =C'SHOWDSN ',ICOMMAND                              J52
+         BNE   TRYMEM33                                           J52
+         LA    R15,#DISPYYY                                       J52
+         B     GOTTYMS                                            J52
+TRYMEM33 DS    0H                                                 J52
+         CLC   =C'SHOWMEM ',ICOMMAND                              J52
+         BNE   INVALMSG                                           J52
+         LA    R15,#DISPMEM                                       J52
+         B     GOTTYMS                                            J52
+INVALMSG LA    R15,#DISPUNK                                       J52
+GOTTYMS  DS    0H                                                 J52
+         LH    R1,0(R15)         Get Message Length               J52
+         STH   R1,TXTLEN               Put in Screen Area
+         MEMCPY LITERAL,2(R15),R1
+         SRL   R1,1                    DIVIDE BY 2
+         SH    R1,=H'40'
+         LPR   R1,R1
+         STH   R1,TXTCOLNO
+         MVC   TXTROWNO,=H'21'         Set up bottom line
+*        MVC   TXTCOLNO,=H'1'
+         MVC   REPROWNO,=H'0'          Set up lines for menu bar
+         MVC   REPCOLNO,=H'0'
+         MVC   RPLYLEN,=H'0'
+*        LH    R1,#DISPXXX             Get length of Menu Text
+         LH    R1,TXTLEN               Get Message Length
+         AH    R1,RLITLEN
+         AR    R5,R1                   Point to new SCRN area
+*        LA    R5,LFIXED(R5)           Add the fixed length area
+         AH    R5,=AL2(LFIXED)         Add the fixed length area
+         LH    R1,#SCITEMS             Increment number of items
+         LA    R1,1(R1)
+         STH   R1,#SCITEMS
+*       LA      R0,21                  Row number
+*       LA      R1,#DISPXXX
+*       CALL    _DISPLAY_CTR
+*
+*
+*        /* display_ctr(x[2)],21); */
+@5@74   DS   0H
+*
+*       #endif
+*
+*           display_str(reverse);
+*
+*        display_ctr(SELMSG,0); // a Data Set Name, Model or Printer"
+*
+*       SR      R0,R0                  Row number
+*       LA      R1,#SELMSG
+*       CALL    _DISPLAY_CTR
+         XC    TXTROWNO(LFIXED),TXTROWNO                          J51
+         MVI   TXTATTR,0               COPY ATTRIBUTE,
+         MVI   TXTCOLR,VCYAN           COPY COLOUR
+         LH    R1,#SELMSG
+         MEMCPY LITERAL,SELMSG,R1
+         SRL   R1,1                    DIVIDE BY 2
+         SH    R1,=H'40'
+         LPR   R1,R1
+         STH   R1,TXTCOLNO
+         MVC   TXTROWNO,=H'1'          Set up top line
+         MVC   REPROWNO,=H'0'          Set up lines for menu bar
+         MVC   REPCOLNO,=H'0'
+         MVC   RPLYLEN,=H'0'
+         LH    R1,#SELMSG              Get length of Menu Text
+         STH   R1,TXTLEN               Put in Screen Area
+         AH    R1,RLITLEN
+         AR    R5,R1                   Point to new SCRN area
+*        LA    R5,LFIXED(R5)           Add the fixed length area
+         AH    R5,=AL2(LFIXED)         Add the fixed length area
+         LH    R1,#SCITEMS             Increment number of items
+         LA    R1,1(R1)
+         STH   R1,#SCITEMS
+*
+*           display_ctr(message2,23);
+*
+*       LA      R0,23                  Row number
+*       LA      R1,#MSG2
+*       CALL    _DISPLAY_CTR
+         XC    TXTROWNO(LFIXED),TXTROWNO                          J51
+         MVI   TXTATTR,0               COPY ATTRIBUTE,
+         MVI   TXTCOLR,VCYAN           COPY COLOUR
+         LH    R1,#MSG2
+         MEMCPY LITERAL,MSG2,R1
+         SRL   R1,1                    DIVIDE BY 2
+         SH    R1,=H'40'
+         LPR   R1,R1
+         STH   R1,TXTCOLNO
+         MVC   TXTROWNO,=H'23'         Set up bottom row
+         MVC   REPROWNO,=H'0'          Set up lines for menu bar
+         MVC   REPCOLNO,=H'0'
+         MVC   RPLYLEN,=H'0'
+         LH    R1,#MSG2                Get length of Menu Text
+         STH   R1,TXTLEN               Put in Screen Area
+         AH    R1,RLITLEN
+         AR    R5,R1                   Point to new SCRN area
+*        LA    R5,LFIXED(R5)           Add the fixed length area
+         AH    R5,=AL2(LFIXED)         Add the fixed length area
+         LH    R1,#SCITEMS             Increment number of items
+         LA    R1,1(R1)
+         STH   R1,#SCITEMS
+*
+*
+*
+*
+*           display_ctr(message3,24);
+*
+*       LA      R0,23                  Row number
+*       LA      R1,#MSG3
+*       CALL    _DISPLAY_CTR
+         XC    TXTROWNO(LFIXED),TXTROWNO                          J51
+         MVI   TXTATTR,0               COPY ATTRIBUTE,
+         MVI   TXTCOLR,VCYAN           COPY COLOUR
+         LH    R1,#MSG3
+         MEMCPY LITERAL,MSG3,R1
+         SRL   R1,1                    DIVIDE BY 2
+         SH    R1,=H'40'
+         LPR   R1,R1
+         STH   R1,TXTCOLNO
+         MVC   TXTROWNO,=H'24'         Set up row 24
+         MVC   REPROWNO,=H'0'          Set up lines for menu bar
+         MVC   REPCOLNO,=H'0'
+         MVC   RPLYLEN,=H'0'
+         LH    R1,#MSG3                Get length of Menu Text
+         STH   R1,TXTLEN               Put in Screen Area
+         AH    R1,RLITLEN
+         AR    R5,R1                   Point to new SCRN area
+*        LA    R5,LFIXED(R5)           Add the fixed length area
+         AH    R5,=AL2(LFIXED)         Add the fixed length area
+         LH    R1,#SCITEMS             Increment number of items
+         LA    R1,1(R1)
+         STH   R1,#SCITEMS
+*
+*
+*           display_str(select_ddname);
+*
+*       LA      R1,#select_ddname
+*       CALL    _DISPLAY_STR
+         XC    TXTROWNO(LFIXED),TXTROWNO                          J51
+         MVI   TXTATTR,0               COPY ATTRIBUTE,
+         MVI   TXTCOLR,VRED            COPY COLOUR
+         LH    R1,#SELDDNM
+         LTR   R1,R1                                              J52
+         BZ    NOSELM                                             J52
+         MEMCPY LITERAL,SELDDNM,R1
+         STH   R1,TXTLEN
+         MVC   TXTROWNO,=H'3'          Set up top line
+         MVC   TXTCOLNO,=H'4'
+         MVC   REPROWNO,=H'0'          Set up lines for menu bar
+         MVC   REPCOLNO,=H'0'
+         MVC   RPLYLEN,=H'0'
+*        LH    R1,#MSG3                Get length of Menu Text
+*        STH   R1,TXTLEN               Put in Screen Area
+         AH    R1,RLITLEN
+         AR    R5,R1                   Point to new SCRN area
+         AH    R5,=AL2(LFIXED)         Add the fixed length area
+         LH    R1,#SCITEMS             Increment number of items
+         LA    R1,1(R1)
+         STH   R1,#SCITEMS
+*
+*       cmp     _directvideo,0
+*       BE      @5@122
+*       call    near ptr _lowvideo
+@5@122   DS   0H
+*
+*       #endif
+*        /* call cputs(addr(reverse)); */
+*
+*           display_str(reverse);
+*
+*       }    /* Headings */
+*
+NOSELM  LR      R15,R5                                            cvc
+        JOLRETN RC=(15)
+        LTORG
+*
+*
+*
+*
+*
+*       display_dbf(char *pointers[],int count)
+*
+         EJECT                                                    J52
+DISPDBF JOLSAVE CSECT=DISPDBF
+*
+*       {
+*      /* Displays files across the screen.  Allows user to use Curso
+*            keys to select files.
+*         */
+*        int R1,R9;
+*
+*        /*
+*        dcl based_f_name            char(14) based; */
+*
+*
+*           for (R1=1;R1<=(MAXDBF/MAXL3270);R1++)
+*
+        LA      R1,1
+        B       @6@122
+@6@50   DS   0H
+*
+*           {
+*                  control.start[R1]=((R1-1)*MAXL3270)+1;
+*
+        LR      R15,R1
+        BCTR    R15,0
+        MH      R15,=AL2(MAXL3270)
+        LA      R15,1(R15)
+        LR      R14,R1
+        SLL     R14,1
+        STH     R15,CSTART(R14)
+*
+*                  control.stop[R1]=R1*MAXL3270;
+*
+        LR      R15,R1
+        MH      R15,=AL2(MAXL3270)
+         LA    R15,1(R15)        Add 1 for last dsname            J52
+        LR      R14,R1
+        SLL     R14,1
+        STH     R15,CSTOP(R14)
+*
+*
+*                  if(control.stop[R1]>count)
+*
+        LR      R15,R1
+        SLL     R15,1
+        LH      R14,CSTOP(R15)
+         SH    R14,=H'1'         For last entry                   J52
+        CH      R14,COUNT
+        BNH     @6@98
+*
+*                  {
+*                     control.stop[R1]=count;
+*
+        LR      R15,R1
+        SLL     R15,1
+        LH      R14,COUNT
+         LA    R14,1(R14)                                         J52
+        STH     R14,CSTOP(R15)
+*
+*                     goto done;
+*
+        B       DONE
+@6@98   DS   0H
+        LA      R1,1(R1)
+@6@122   DS   0H
+        CH      R1,=AL2(MAXDBF/MAXL3270+1)
+        BNH     @6@50
+*       jle     @6@50
+*
+*                  }
+*           }
+*
+* done:
+*
+DONE     DS   0H
+*           control.noscreens =R1;
+*
+        STH     R1,NOSCREEN
+*
+*
+*           if ((control.noscreens-1)*MAXL3270==count)
+*
+        LH      R15,NOSCREEN
+        BCTR    R15,0
+        MH      R15,=AL2(MAXL3270)
+        CH      R15,COUNT
+        BNE     @6@194
+*
+*               control.noscreens=control.noscreens-1;
+*
+        LH      R15,NOSCREEN
+        BCTR    R15,0
+        STH     R15,NOSCREEN
+@6@194   DS   0H
+*
+*
+*           R1=1;
+*
+        MVC    THISNO,=H'0'      Set this screen to 1
+*
+* display2:
+DISPLAY2 DS   0H
+*           display_screen_dbf(&pointers[0],
+*                              control.start[R1],
+*                              control.stop[R1]);
+*
+        LA      R1,POINTERS
+        ST      R1,CALLAREA
+        LH      R1,THISNO
+        LA      R1,1(R1)
+        SLL     R1,1
+        LH      R15,CSTART(R1)
+        STH     R15,CALLAREA+4
+        LH      R15,CSTOP(R1)
+        STH     R15,CALLAREA+6
+        LA      R1,CALLAREA
+        CALL    DISPSCRN
+*
+         CLI   RETDSN,C' '       A data set selected ?            J52
+         BNE   @6@602            Yes, Return                      J52
+*           if(Syspfk==3) return;
+*
+        CLC     SYSPFK,=H'3'
+        BE      @6@602
+*
+*           if(Syspfk==2) return;
+*
+        CLC     SYSPFK,=H'2'
+        BE      @6@602
+*
+*           if(Syspfk==0
+*             && Binary_Input_Char==13) return;
+*
+        CLC     SYSPFK,ZERO
+        BNE     @6@314
+*       CLI     _Key_Board_Values+2,13
+*       BE      @6@602
+@6@314   DS   0H
+*
+*           if( Syspfk==8)
+*
+        CLC     SYSPFK,=H'8'
+        BNE     @6@458
+         LH    R1,THISNO                                          J52
+         LA    R1,1(R1)                                           J52
+         CH    R1,NOSCREEN                                        J52
+         BNL   DISPLAY2                                           J52
+         STH   R1,THISNO                                          J52
+         B     DISPLAY2                                           J52
+*
+*           {
+*              return;
+*
+        B       @6@602
+        B       @6@506
+        B       @6@530
+*
+*
+*              if(R1+1>control.noscreens)
+*              {
+*                  putchar('\a');
+*              }
+*              else R1=R1+1;
+*
+        LA      R1,1(R1)
+*
+*              goto display2;
+*
+        B       DISPLAY2
+@6@458   DS   0H
+*
+*           }
+*           if(Syspfk==7)
+*
+        CLC     SYSPFK,=H'7'
+        BNE     DISPLAY2
+         LH    R1,THISNO                                          J52
+         SH    R1,=H'1'                                           J52
+         CH    R1,=H'0'                                           J52
+         BL    DISPLAY2                                           J52
+         STH   R1,THISNO                                          J52
+         B     DISPLAY2                                           J52
+*
+*           {
+*              return;
+*
+        B       @6@602
+@6@506   DS   0H
+*cvc    BEEP
+@6@530   DS   0H
+*
+*              if(R1-1<1)
+*              {
+*                  putchar('\a');
+*              }
+*
+        B       DISPLAY2
+*
+*              else R1=R1-1;
+*
+        BCTR    R1,0
+*
+*              goto display2;
+*
+        B       DISPLAY2
+@6@602   DS   0H
+*
+*           }
+*           goto display2;
+*
+*       /*
+*           control.STARTPOS=1;
+*           for (R1=control.start_posn;control.start+posn<=count;R1++)
+*              R9=R1-1;
+*              call GoToRC(R9/5+2,(R9%5))*16);
+*              display_f=pointers(R1)->based_f_name;
+*              call cputs(addr(display_f));
+*           }
+*        */
+*
+*       }
+*
+        JOLRETN  RC=0
+        LTORG
+*
+*
+*
+         EJECT                                                    J52
+DISPPARM DSECT                                                    cvc
+PTRADDR  DS    A                                                  cvc
+DSTART   DS    H                                                  cvc
+DSTOP    DS    H                                                  cvc
+DISPSCRN JOLSAVE CSECT=DISPSCRN
+*
+*       display_screen_dbf(char *pointers[],
+*                      int start,int stop)  /*INTERNAL PROCEDURE */
+* {
+*  /* Calculate the position for the data set name.
+*     We want the list to go down the left hand side of the screen,
+*     then down the second column etc.
+*
+*    HOWEVER, if there are not enough items to totally fill the screen,
+*     then we won't run all the way down the left, but calculate how
+*     many we can fit across the screen and do it. It's neater.
+*   */
+*   /* The basic routine calculates as follows:-
+*
+*           ROW=mod(number,maxrows)
+*           COL=number/maxrows * 16;
+*
+*           There is a problem on the second screen, and another
+*           on the last screen.
+*
+*   */
+*
+*
+*       print_heads_dbf();
+*
+        LR      R6,R1                                             cvc
+*       L       R6,0(R6)                                          cvc
+* Initialise screen area                                          J52
+*                                                                 J52
+CURSOUT  LA    R5,#ITEMDSC                                        J52
+         USING  DITEM,R5                                          J52
+         XC    #SCITEMS(LFIXED+3),#SCITEMS                        J52
+*                                                                 J52
+        USING   DISPPARM,R6                                       cvc
+        CALL    PRTHEADS
+        LR      R5,R15         Current pointer to screen work area vc
+*
+*
+*           no_of_files_to_do=stop-start;
+*
+        LH      R1,DSTOP
+        SH      R1,DSTART
+        STH     R1,NOFLSDO
+*
+*
+*           NOROWS=no_of_files_to_do+1;
+*
+        LA      R1,1(R1)
+        STH     R1,NOROWS
+*
+*
+*
+*           if(no_of_files_to_do == NOROWS*5)  NOROWS=NOROWS-1;
+*
+        LA      R14,5
+        MH      R14,NOROWS
+        CH      R14,NOFLSDO
+        BNE     @7@74
+        LH      R1,NOROWS
+        SH      R1,=H'1'
+        STH     R1,NOROWS
+@7@74   DS   0H
+*
+*
+*           offset=start-1;
+*
+        LH      R1,DSTART
+        SH      R1,=H'1'
+        STH     R1,OFFSET
+*
+*           stop2=stop-start;
+*
+        LH      R1,DSTOP
+        SH      R1,DSTART
+        STH     R1,STOP2
+*
+*
+*           for ( R7=0; R7<=stop2; R7++)
+*
+        LA      R7,0
+        B       @7@146
+@7@98   DS   0H
+*
+*           {
+*               curs_row=(R7 % NOROWS)+2;
+*
+        LR      R15,R7
+        SR      R14,R14                                           cvc
+        LH      R8,NOROWS                                         cvc
+        DR      R14,R8
+        LA      R14,2(R14)                                        cvc
+        STH     R14,WHEREY
+*
+*               WHEREX=10; /* R1/NOROWS; */
+*
+        MVC     WHEREX,=H'25'
+*
+*               gotorc(curs_row + 1,25 /* (curs_col*16) + 1*/ );
+*
+        LH      R1,WHEREY
+        LA      R1,1(R1)
+*       GOTORC  (R1),25
+*
+*               cputs(pointers[R1+offset]);
+*
+         XC    TXTROWNO(LFIXED),TXTROWNO                          J51
+         MVI   TXTCOLR,VGREEN          COPY COLOUR
+        LR      R14,R7
+        AH      R14,OFFSET
+        SLL     R14,2
+        L       R14,POINTERS-4(R14)                               cvc
+         LA    R1,44                                              J52
+        MEMCPY  LITERAL,0(R14),R1
+        LH      R15,WHEREY                                        cvc
+        STH     R15,TXTROWNO                                      cvc
+        LH      R15,WHEREX                                        cvc
+        STH     R15,TXTCOLNO
+        MVC     REPROWNO,=H'0'          Set up lines for menu bar
+        MVC     REPCOLNO,=H'0'
+        MVC     RPLYLEN,=H'0'
+        LA      R1,44                   Get length of File Text
+        STH     R1,TXTLEN               Put in Screen Area
+        AH      R1,RLITLEN
+        AR      R5,R1                   Point to new SCRN area
+*       LA      R5,LFIXED(R5)           Add the fixed length area
+        AH      R5,=AL2(LFIXED)         Add the fixed length area
+         LH    R1,#SCITEMS             Increment number of items
+         LA    R1,1(R1)
+         STH   R1,#SCITEMS
+@7@146   DS   0H
+        LA      R7,1(R7)
+        CH      R7,STOP2
+        BNH     @7@98
+*        B     RESTART                                            J52
+*NCROWS  LH    R1,#SCITEMS             Increment number of items
+*        LA    R1,1(R1)
+*        STH   R1,#SCITEMS
+*       B       @7@98
+*
+*           }
+*
+* restart:
+*
+RESTART  DS   0H
+*           curs_row=2;
+*
+        MVC     WHEREY,=H'2'
+*
+*           curs_col=0;
+*
+        MVC     WHEREX,ZERO
+LOOP     DS   0H
+*
+*
+*       loop:
+*           R1=(curs_col*NOROWS)+curs_row-2;
+*
+        LH      R1,WHEREX
+        MH      R1,NOROWS
+        AH      R1,WHEREY
+        SH      R1,=H'2'
+*
+*           if(R1+offset>=stop) goto restart;
+*
+        AH      R1,OFFSET
+        CH      R1,DSTOP
+        BNL     RESTART
+*
+*           gotorc(curs_row + 1, 25 /* (curs_col*16) + 1*/ );
+*
+        LH      R1,WHEREY
+        LA      R1,1(R1)
+*cvc    GOTORC  (R1),25
+*
+*
+*       /*  if( directwrite) then*/
+*           display_str(reverse);
+*           display_str/* cputs*/ (pointers[R1+offset]);
+*           strcpy(RETDSN,pointers[R1+offset]);
+*        /* if IBM_Direct_Write  then
+*           call cputs(addr(reverse));   /* ordinary */
+*           display_str(reverse);
+*           gotorc(curs_row + 1,25 /*(curs_col*16) + 1*/ );
+@7@242   DS   0H
+*
+*
+*       get_key:
+*           getkey();
+*
+         LA    R0,4000(R4)    GET WORK AREA FOR SCREEN HANDLER FIX DJD
+         LR    R15,R0         se t up dummy name for popup        J50
+         S     R15,=F'16'                                         J50
+         MVC   0(16,R15),BLANKS                                   J50
+         LR    R1,R4          POINT TO START OF PARAMETER AREA
+         MVI   SETCURSR,3                                         J52
+         MVI   SETCURSC,25                                        J52
+        CALL    UJP28SCR
+*
+*
+*       /*  display_str(reverse); */
+*           display_str(RETDSN);      /* Pop out non-reversed name */
+*
+*
+*
+*           if(Syspfk==3
+*           || Syspfk==2
+*           || Syspfk==7
+*           || Syspfk==8) return;
+*
+        CLC     SYSPFK,=H'3'
+        BNE     @@5
+        B       @7@1010
+@@5   DS   0H
+        CLC     SYSPFK,=H'2'
+        BNE     @@6
+        B       @7@1010
+@@6   DS   0H
+        CLC     SYSPFK,=H'7'
+        BNE     @@7
+        B       @7@1010
+@@7   DS   0H
+        CLC     SYSPFK,=H'8'
+        BNE     @@8
+        B       @7@1010
+@@8   DS   0H
+*
+*
+*           if(Syspfk==0
+*           && Binary_Input_Char==13) return;
+*
+        CLC     SYSPFK,=H'0'
+        BE      @7@506
+*       cmp     _Key_Board_Values+2,13
+*       BNE     @@9
+        B       @7@1010
+@@9   DS   0H
+@7@506   DS   0H
+*
+*        /*   cputs(addr(display_f)); */
+*           if(curs_col>4) { curs_col=0; curs_row=curs_row+1; }
+*
+         LH    R1,WHEREY                                          J52
+         LH    R15,NOROWS                                         J52
+         LA    R15,2(R15)                                         J52
+         CR    R1,R15            (norows+2)                       J52
+         BH    CURSOUT           Cursor out of range              J52
+         CH    R1,=H'2'                                           J52
+         BL    CURSOUT                                            J52
+         CH    R1,=H'19'                                          J52
+         BH    CURSOUT                                            J52
+         AH    R1,OFFSET                                          J52
+         SLL   R1,2                                               J52
+         L     R14,POINTERS-12(R1)  to allow for two heading lines
+         LTR   R14,R14                                            J52
+         BZ    CURSOUT           Not in correct position          J52
+         MVC   RETDSN(44),0(R14)                                  J52
+         MVC   #RETDSN,=H'44'                                     J52
+         JOLRETN  RC=0                                            J52
+        CLC     WHEREX,=H'4'
+        BNH     @7@842
+        MVC     WHEREX,ZERO
+        LH      R1,WHEREY
+        LA      R1,1(R1)
+        STH     R1,WHEREY
+@7@842   DS   0H
+*
+*           if(curs_col<0) { curs_col=4; curs_row=curs_row-1; }
+*
+        CLC     WHEREX,ZERO
+        BNL     @7@890
+        MVC     WHEREX,=H'4'
+        LH      R1,WHEREY
+        SH      R1,=H'1'
+        STH     R1,WHEREY
+@7@890   DS   0H
+*
+*           if(curs_row>NOROWS+1) curs_row=2;
+*
+        LH      R1,NOROWS
+        LA      R1,1(R1)
+        CH      R1,WHEREY
+        BNL     @7@938
+        MVC     WHEREY,=H'2'
+@7@938   DS   0H
+*
+*           if(curs_row<2)  curs_row=NOROWS+1;
+*
+         LA    R1,2                                               J52
+        CH      R1,WHEREY
+        BH      @@11
+        B       LOOP
+@@11   DS   0H
+        LH      R1,NOROWS
+        LA      R1,1(R1)
+        STH     R1,WHEREY
+*
+*           goto loop;
+*
+        B       LOOP
+@7@1010   DS   0H
+*
+*       Goback:
+*        *
+*       }
+*
+        JOLRETN RC=0
+        LTORG
+IKJEHCIR JOLSAVE CSECT=IKJEHCIR                                   cvc
+*KJDATA DATASECT                                                  cvc
+         B     CONSA                                              J52
+A22     DC    CL44'A1'                                            cvc
+        DC    CL44'A2'                                            cvc
+        DC    CL44'A3'                                            cvc
+        DC    CL44'A4'                                            cvc
+        DC    CL44'A5'                                            cvc
+        DC    CL44'A6'                                            cvc
+        DC    CL44'A7'                                            cvc
+        DC    CL44'A8'                                            cvc
+        DC    CL44'A9'                                            cvc
+        DC    CL44'A10'                                           cvc
+        DC    CL44'A11'                                           cvc
+        DC    CL44'A12'                                           cvc
+        DC    CL44'A13'                                           cvc
+        DC    CL44'A14'                                           cvc
+        DC    CL44'A15'                                           cvc
+        DC    CL44'A16'                                           cvc
+        DC    CL44'A17'                                           cvc
+        DC    CL44'A18'                                           cvc
+        DC    CL44'A19'                                           cvc
+        DC    CL44'A20'                                           cvc
+        DC    CL44'A21'                                           cvc
+        DC    CL44'A22'                                           cvc
+ASIZE   EQU   *-A22                                               cvc
+CONSA    DS    0H                                                 J52
+        LA    R1,ASIZE+4                                          cvc
+        STH   R1,DATALIN                                          cvc
+*       MVC   DSNAMES(250),A22                                    cvc
+        LA    R4,DSNAMES                                          cvc
+        LA    R5,ASIZE                                            cvc
+        LA    R6,A22                                              cvc
+        LA    R7,ASIZE                                            cvc
+        MVCL  R4,R6                                               cvc
+        JOLRETN RC=0                                              cvc
+        LTORG                                                     cvc

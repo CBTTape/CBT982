@@ -1,0 +1,1170 @@
+         AIF      ('&TYPE' NE '').TYPSET
+&TYPE    SETC  'DSECT'
+.TYPSET  ANOP
+         AIF   (&JOLCOM NE 0).ENDJOLC                            75128
+&JOLCOM  SETA  1                                                 75128
+         AIF   ('&TYPE' EQ 'DSECT').DSECT2
+JOLCOM   CSECT COMMON AREA USED IN COMMUNICATION
+         AGO   .STRT2
+.DSECT2  ANOP
+JOLCOM   DSECT COMMON AREA USED IN COMMUNICATION
+.STRT2   ANOP
+*              COMMON AREAS OF THE JOL LANGUAGE PROCESSOR
+         USING JOLCOM,R2                                        74303
+         SPACE 3
+CALLAREA DS    10F           USED IN CALLS(MF=(E,CALLAREA))
+DBL      DS    D             NUMERIC TO CHARACTER CONVERSIONS ETC
+Z4       DS    CL4           WORK SPACE ONLY
+************* DCBS FOR WORK,INPUT AND OUTPUT FILES **************
+ADCBS    DC    A(DCBS)                                           75128
+ASYSPRIN DC    A(SYSPRINT)                                       75128
+ASYSIN   DC    A(SYSIN)                                          75128
+APROCLIB DC    A(PROCLIB)                                        75128
+AWORKFIL DC    A(WORKFILE)                                       75128
+AMACRODC DC    A(MACROLIB)                                       75128
+AJCL     DC    A(JCL)                                            75128
+ASYSTERM DC    A(SYSTERM)                                        80289
+ADATA    DC    A(DATA)
+AWORK2DC DC    A(WORK2DCB)                                       80289
+ASPR2DCB DC    A(SPRDCB2)                                        80289
+ASPR3DCB DC    A(SPRDCB3)                                        80289
+ASPR4DCB DC    A(SPRDCB4)                                        80289
+ASPR5DCB DC    A(SPRDCB5)                                        80289
+AUJS98QU DC    A(0)           ADDRESS OF DOUBLE QUOTE ROUTINE
+* THE NEXT WORD IS FOR THE $LINK COMMAND.
+* THE OS LINK MACRO IS NOT USED AS SOMETIMES JOL REQUIRES A LINKLIB,
+*     AND OTHER TIMES IT DOESN'T.  JOL DETECTS AND FIXES THE PROBLEM.
+         DC    A(CALLAREA)    POINT TO CALLAREA
+AJOLLOAD DC    A(0)
+YEAR     DC    CL4' '         YEAR, EG 1987
+MONTH    DC    CL9' '         MONTH EG NOVEMBER
+MONTHNO  DC    CL2' '         MONTH NUMBER EG 11
+DAY      DC    CL9' '         DAY EG MONDAY
+DAYNO    DC    CL2' '         DAY NUMBER EG 16
+TIME     DC    CL4' '         CURRENT TIME,HHMM
+VERSION  DC    CL4'6.0 '      JOL VERSION/SERIAL FOR PRINTING  2001148
+OSSYS    DC    CL1'2'         SET TO 1 FOR VS1,M,V ETC           80289
+IFTSO    DC    CL1' '         SET NON BLANK IF WE ARE UNDER TSO  80289
+IFFULLSC DC    CL1'Y'         SET ¬ BLANK IF PANELS TO BE USED   80289
+*                              INITIALLY SET ON...               80289
+IFXX1    DC    CL1' '         RESERVED                           80289
+IFXX2    DC    CL1' '         RESERVED                           80289
+IFXX3    DC    CL1' '         RESERVED                           80289
+IFXX4    DC    CL1' '         RESERVED                           80289
+IFXX5    DC    CL1' '         RESERVED                           80289
+IFXX6    DC    CL1' '         RESERVED                           80289
+UJPSTART DC    A(0)           START TIME OF THE PREPROCESSOR
+UJCSTART DC    A(0)           START TIME OF THE COMPILER
+UJOSTART DC    A(0)           START TIME OF THE OPTIMISER
+UJGSTART DC    A(0)           START TIME OF THE GENERATOR
+JOLERRIN DC    X'00'          ERROR INDICATORS SET BY JOLERR      75128
+RUNINDIC DC    C' '           BLANK IF JCL TO BE PRODUCED         75311
+ERRCNT   DC    H'0'           NUMBER OF ERRORS DETECTED
+LASTERRS DC    CL4' '         LAST ERROR STATEMENT PRINTED
+THISPRNT DC    CL1' '         THIS STATEMENT BEEN PRINTED? ¬' '=YES
+PHASE    DC    CL1' '         CURRENT PHASE,'P'Ý'C'Ý'O'Ý'G'
+INLINENO DC    CL8' '         LINE NUMBER FROM CARD INPUT Ý LIBRARY
+           SPACE
+LISTJCL  DC    C' '           SET NON BLANK WHEN LIST OF JCL REQUIRED
+PRINTIND DS    CL1
+ISMACRO  DS    CL1
+STMT     DS    CL4            STATEMENT NUMBER CURRENTLY BEING
+*                             PROCESSED
+PCKDSTMT DC    P'0000'        PACKED STATEMENT NUMBER
+PRNTSTMT DS    CL4            USED TO PRINT THE INPUT STREAM
+PAGENO   DC    P'000'
+LINECNT  DC    H'10000'
+CARDCNT  DC    H'0'           SYSIN CARDS READ
+LASTINST DC    CL8' '         LAST INSTRUCTION SAVED HERE
+MACACCES DC    H'0'           NUMBER ACCESSES TO MACRO LIBRARY
+CP       DC    H'0'           CURRENT CHARACTER POSITION INSYSIN
+INCHAR   DS    CL1            CHARACTER RETURNED FROM UJP52CHR
+EOFSYSIN DC    C' '           SET NON BLANK WHEN EODAD ON SYSIN
+OPERATOR DS    CL2            USED IN UJP04IF                   74303
+LABEL    DS    CL8            STATEMENT LABEL
+LEVEL    DS    H              USED FOR CURRENT LEVEL
+*                             IE DEPTH OF MACROS IN USE
+NEST     DS    H              CURRENT NEST (IE #DO'S IN USE)
+COND     DS    CL100          USED IN 'IF' 'DO' 'END' 'MACRO'
+*                             SEE MODULES UJP00MN,UJC00MN AND UJE00MN
+SAVENEST DS    CL6,CL12       WORK LOCN                           74303
+SYS1NOTE DS    F              FIRST TTR OF WORK FILE
+SYS1NEXT DS    F              TTR  OF NEXT BLOCK ON SYSUT WORK FILE
+         SPACE
+         DS    0H
+#BLANKS  DC    AL2(L'BLANKS)  LENGTH FIELD BELOW (BLANKS)
+BLANKS   DC    CL80' '        USED TO CHECK FOR BLANK AREAS
+APARM    DS    A              ADDRESS OF THE JOL EXEC PARAMETER
+AGOTTEN  DS    A
+LGOTTEN  DS    A
+#CARD    DS    H              LENGTH OF CARD (MIGHT BE FROM A VB FILE)
+CARD     DC    CL80' '        CURRENT CARD FROM INPUT STREAM(S)
+TEMPDSN  DS    CL18           PREFIX FOR TEMP DSNAMES IN OSIV/X8
+         ORG   TEMPDSN
+CARD2XX  DC    CL40' '        RESERVED FOR FUTURE USE
+P50SAVEF DC    F'0'
+TITLE1   DC    CL80' '        FIRST USER CARD FOR 'TITLE' ON PAGE
+TITLE2   DC    CL20' '        PHASE NAME FOR 'TITLE' AS ABOVE
+STARTIME DS    CL8            START TIME OF THIS JOL JOB
+STOPTIME DS    CL8            STOP TIME OF CURRENT COMPILE
+OVERRIDE DS    CL1
+PARMSRCH DC    C' '           SEARCH CATALOGUE INDICATOR
+ASYMTBL  DC    A(0)           ADDRESS OF GOTTEN STORAGE FOR SYMBOLIC
+*                             TABLE
+ANEXTSYM DC    A(0)           ADDRESS OF NEXT FREE LOCATION IN SYMBOLI
+*                             -C PARAMETER TABLE IN WHICH TO STORE
+*                             THE VALUE OF THE PARAMETER
+SYMLEN   DC    H'0'           SIZE TO GET FOR TABLE (JOLGENABLE) 75311
+MAXSYMS  DC    H'0'           MAXIMUM NUMBER OF SYMBOLIC NAMES ALLOWED
+NOSYMS   DS    H              CURRENT NUMBER OF PARAMETERS STORED
+RORGSYMT DC    H'0'           NUMBER OF TIMES SYM TABLE REORGED DURING
+*                             THIS COMPILE
+AIDTBL   DC    A(0)           ADDRESS OF IDENTIFIER TBL (SEE DESC 75128
+*                             IN IDTABLE DSECT BELOW)
+ANEXTID  DC    A(0)           NEXT POSN IN TABLE FOR NEW IDENTIFIER
+IDLEN    DC    H'0'           JOL GENABLE                        75311
+MAXIDS   DC    H'0'           MAXIMUM NUMBER OF DECLARES AND LABELS
+NOIDS    DC    H'0'           CURRENT NUMBER OF DECLARES IN TABLE
+         DC    X'00'            RESERVED                          J50
+         DC    X'00'            RESERVED                          J50
+AREALTBL DC    A(0)
+MAXREALL DC    H'0'
+CURREALL DC    H'0'
+ASTEPTBL DC    A(0)
+NOSTEPS  DC    H'0'
+MAXSTEPS DC    H'0'
+TOTSYMS  DC    H'0'           TOTL # SYMBOLICS PARMS USED THIS COMP 03
+TOTIDS   DC    H'0'           TOTL # IDS USED THIS COMPILE        74303
+TOTAVREC DC    F'0'           TOTAL BYTES USED IN MAIN TABLE      74303
+SUMEXECS DC    F'0'           SUM OF TIMES FOR EACH RUN STMT      80289
+TRANS    DS    CL292          I/O AREA FOR DECODED DECLARES       75128
+* THE 'DATAMEM' CARDS ARE CREATED FROM HERE AND ARE USED BY
+*        THE UJEINIT PROGRAM TO CREATE THE PDS CONTAINING THE
+*        USERS SYSIN CARD FILES AND THE JOL INSTRUCTIONS FOR
+*        THE 'JOL' TRANSIENT SCHEDULER/INITIATOR.
+* THE CARD BELOW TELLS UJEINIT A NEW MEMBER IS ABOUT TO START.
+DATAMEM1 DC    8X'FF'         CHECKED BY 'UJEINIT' FOR VALIDITY
+DATAMEM2 DC    CL15'JOLMEMSTART$$##'
+DATAMEM  DC    CL8' '         MEMBER NAME TO BE USED IN THE 'STOW'
+         DC    CL4'##$$'
+DATAMEM4 DC    CL2'FB'        RECORD FORMAT FIELD FOR THE MEMBER
+DATAMEM5 DC    CL5' '         BLOCKSIZE
+DATAMEM6 DC    CL5' '         RECORD LENGTH
+FILL0001 DC    C' '           FILLER ONLY
+TOTCRDS  DC    F'0'           TOTAL NUMBER OF USER SYSIN CARDS
+*                             AND SET UP IN UJP95 AND UJP96
+           SPACE 2
+WORKDS   DC    P'000'         WORK LOCN USED IN V00MN MODULES     74303
+TEMPDS   DC    P'000'         TO GIVE NAMES TO TEMP & WORK DS     74303
+P53NO    DC    PL3'0'         WORK SPACE FOR MACRO USAGE          74303
+P85NO1   DS    PL10           USED IN ASSIGNMENT STATEMENT        74303
+P85NO2   DS    PL5            USED IN ASSIGNMENT STATEMENT        74303
+           SPACE 1                                                74303
+SYSINMDE DC    CL1' '         SET=1 IF PARMCOL='' & SYSIN BEING   74303
+*                             PROCESSED                           74303
+AVTBLE   DC    A(0)           ADDRESS OF MAIN TABLE               74303
+LVTBLE   DC    A(0)           LENGTH OF TABLE RETURNED FROM 'GETMAIN'
+AVTBLEND DC    A(0)           END OF MAIN TABLE,-8                74303
+ZERO     DC    F'0'
+ONE      DC    F'1'
+         READ  WORKINDB,SF,WORKFILE,MF=L
+         WRITE WORKDECB,SF,WORK2DCB,MF=L
+         SPACE 1
+SAVER4R5 DC    A(0,0)
+         SPACE 3
+ASAVEND  DC    A(0)
+JOLSR14  DC    A(0)
+JOLSAVEX ABEND 23,DUMP
+         SPACE 3
+AP52DCBS DC    A(0)           ADDRESS DCB SAVE AREA (PREP ONLY)   75128
+ACATCNTL DC    A(ACATBUF)                                         76200
+AERRCNTL DC    A(CATX)        POINTER TO WORK FILE BLOCKS         76200
+AP$CNTL  DC    A(P$CNTL)      POINTER TO PRINT COPY SUB-FILE      80291
+AWRKCNTL DC    A(AWORKBUF)
+APRCNTL  DC    A(APRBUF)
+AINSCNTL DC    A(AINSTBUF)
+AWORK2BF DC    A(0)           INPUT BUFFER ADDRESS
+WORK2BLK DC    Y(0)           CURRENT INPUT BUFFER BLOCK NUMBER FOR
+*                             THE WORK FILE.
+*                             THE BLOCK NUMBER MAY BE USED IN
+*                             CONJUNCTION WITH 'WORKTTR' ABOVE TO
+*                             TO CALCULATE WHICH TTR THE DATA BLOCK
+*                             IS ON THE FILE.
+UJFLAG1  DC    X'00'                                              J50
+UF1DBOPN EQU   X'80'            JOL DB OPENED                     J50
+UF1DBINP EQU   X'40'            JOL DS OPENED FOR I/P
+UF1DBERR EQU   X'20'            JOL DS DB UNUSABLE BECAUSE OF ERROR50
+UF1RESVD EQU   X'1F'            RESERVED BITS                     J50
+UJFLAG2  DC    X'00'                                              J50
+UF2RESVD EQU   X'FF'            RESERVED BITS                     J50
+         SPACE 3
+AREADBUF DC    A(0)           ADDRESS OF BUFFER FOR MACROS ETC
+LREADBUF DS    F              LENGTH OF MACRO/INCLUDE BUFFER      75128
+APROGWRK DC    A(0)           DECODE PROG DECLARE AREA (3K)       75128
+AUJS30OP DC    A(0)           LOADED DYNAMICALLY,IT IS THE OUTPUT
+*                             ROUTINE FOR 'WORK' FILE
+P98TTR1  DS    F              TTR OF FIRST BLOCK 0/P BY DYNAM RTNS
+LPROGWRK DC    H'4000'        LENGTH OF WORK AREA FOR PROG DCL
+LMACBUF  DC    H'0'                                               75128
+         SPACE 3
+         DS    0H
+AUVALID  DC    A(0)
+ACOMPEXI DC    A(0)
+STARTAT  DC    CL8' '         START AT LABEL STORED HERE
+STOPAT   DC    CL8' '         STOP AT LABEL STORED HERE
+PGOTO    DC    CL8' '         % GOTO LABEL STORED HERE
+GOTO     DC    CL8' '         GOTO LABEL STORED HERE
+AUJG90   DC    A(0)
+*
+* THE NEXT FIELD IS THE AREA HANDED OVER TO ANY DYNAMIC
+*  ROUTINES, AND CONTAINS THE ADDRESSES OF VARIOUS ROUTINES
+*  AND WORK AREAS THAT THE ROUTINES MAY FEEL LIKE USING.
+*
+DYNPARMS DC    A(0)           ADDRESS OF #TKNSTRNG
+ATKN1    DC    A(0)           ADDRESS OF 'TKNX' WORK AREA         75128
+         DC    A(CALLAREA)    ADDRESS OF 'JOLCOM'
+AUJP90   DC    A(0)
+AUJP85   DS    A              ADDRESS OF UJP85ASN (ASSIGN)
+AUJP02   DS    A              ADDRESS OF UJP02DCL (DECLARE)
+AMACBUF  DC    A(0)           ADDRESS INSTREAM AND INVOKE I/O AREA75128
+AWORK    DC    A(#WORK)       WORK AREA
+         DC    A(DBL)         ADDRESS OF A DOUBLE WORD
+         DC    A(SYMBOLIC)    ADDRESS OF SYMBOLIC NAME AREA
+AJOBDETS DC    A(JOBDETS)     ADDRESS JOB DETAILS
+AGENDETS DS    0A             SAME FIELD AS NEXT ITEM
+AJOLGEN  DC    A(0)           ADDRESS OF JOLGEN DETAILS LOADED
+AUJSPLIT DS    A              TOKEN SPLITER
+AUJP98   DS    A              ADDRESS OF UJP98OP (OP RTN DYNAM RTNS)
+AUJS20   DS    A              ADDRESS OF REPLACE SYMBOLICS
+AUJS21   DC    A(0)           ADDRESS OF FUNCTION RTN
+APRINTLN DC    A(PRINTBUF)    ADDRESS PRINT BUFFER AREA
+UJSPRINT DC    A(0)           ADDRESS OF UJSPRINT SUB RTN
+ATNUM    DC    A(0)           ADDRESS OF TNUM RTN
+ATNUMV   DC    A(0)           AS ABOVE (VARYING STRINGS)
+JCLDDNAM DC    CL8' '         DDNAME OF FILE CONTAINING JCL       76200
+MAXCORE  DC    A(0)           MAXIMUM AMOUNT OF STORAGE TO OBTAIN.
+*                             SET BY JOLOPT INSTRUCTION OR JOL PARM.
+P17FCNTL DC    A(0)             FILE CONTROL INFORMATION          J50
+******************************************************************74303
+* THE FOLLOWING ADDRESS CONSTANTS MAY BE USED AS SEEN FIT BY      74303
+*    THE SYSTEM PROGRAMMER                                        74303
+USER1    DC    A(0)                                               74303
+USER2    DC    A(0)                                               74303
+USER3    DC    A(0)                                               74303
+USER4    DC    A(0)                                               75311
+USER5    DC    A(0)                                               75311
+***************************************************************** 74303
+P27WRKA  DC    A(0)           WORK AREA FOR PANEL
+P27GBL   DC    A(PANELWRK)    FOR PANEL  IMPLEMENTED +++++        84100
+*YSVECT@ DC    A(0)           ++++++ NOT IMPLEMENTED +++++        84100
+TGETAREA DC    A(0)            returned when P28SCR TGETS         84100
+*IOVECT@ DC    A(0)            ------------------------------     84100
+*YSVECT  DC    A(SYSVECTR)    POINTS TO MODULE THAT DOES ALL      84100
+*                             SYSTEM DEPENDENT TASKS, EG          84100
+*                             GETMAINS, CATLG LOOKUPS ETC         84100
+*OVECT   DC    A(IOVECTR)     POINTS TO MODULE THAT DOES I/O      84100
+ATBLCNTL DC    A(0)           ADDRESS OF PRE-PROCESSOR BIN SEARCH TABLE
+LTBLCNTL DC    A(0)           LENGTH OF BINARY TABLE OBTAINED     87150
+AIDCNTL  DC    A(0)           ADDRESS OF COMPILER BIN SEARCH TABLE87150
+LIDCNTL  DC    A(0)           LENGTH OF BINARY TABLE OBTAINED     87150
+#STRING  DS    H
+STRING   DS    CL253
+#OP      DS    H              USED AS A WORK LOCATION IN MANY PLACES
+OP       DS    CL253
+         DS    0H                                                 75128
+SYMBOLIC DS    CL8            USED BY P02,P85 AMONG OTHERS        75128
+         SPACE 2
+INST     DS    H              INSTRUCTIONS USE THIS
+*                             AREA AS WORK AREA AND
+*                             THEY ARE WRITTEN FROM
+*                             HERE
+           ORG INST
+ILENGTH  DS    H              LENGTH OF RECORD
+         DC    H'0'           FOR VB RECORD DESCRIPTOR
+II       DC    C'I'           RECORD TYPE
+ILABEL   DS    CL8            STATEMENT LABEL
+ISTMT    DS    CL4            STATEMENT NUMBER
+ILEVEL   DS    CL1
+INEST    DS    CL1
+ICOMMAND DS    CL8            INSTRUCTION EG 'TYPE'
+IBODY    EQU   *-ILENGTH      LENGTH OF FIXED
+*                             PART OF RECORD
+ITEXT    DS    CL150                                              75128
+         DS    0F
+VSAMCBS  DC    V(VSAMINFO)                                        J50
+VSAMOPN  DC    A(0)                                               J50
+VSAMCLS  DC    A(0)                                               J50
+         DC    S(*,*)
+*        DC    S(*,*,*,*)
+AP18WRK  DC    A(OPERWORK)     P18 Parse Work                     J52
+AP29PWK  DC    A(P29POPWK)     P29 Pop up work area               J52
+SYSUID   DC    CL8' '                                             J52
+***********************************************************************
+*
+* HERE ARE SEVERAL ROUTINES USED BY 'JOL'
+*
+* R2 MUST ALWAYS POINT TO JOLCOM OR FAILURE WILL RESULT
+*
+          SPACE
+* GETTKN MACRO BALS TO GETATKN,WHICH LOADS ADDRESSES AND BRANCHES
+ASRGETKN DC   A(0)      LOADED DYNAMICALLY                        75128
+GETATKN  L    1,ATKN1
+         L    15,ASRGETKN
+         BR   15
+         SPACE 3
+* JOLERR MACRO BALS TO UJS13EP(NN),WHICH LOADS ADDRESSES AND BRANCHES
+* IT ALSO SETS THE SEVERITY INDICATORS,ACCORDING TO THE SEVERITY OF
+*        OF THE MESSAGES
+UJS13EP5 OI   JOLERRIN,X'10'   SET TERMINAL ERROR ON
+         B    UJS13SET
+UJS13EP4 OI   JOLERRIN,X'08'   SET SEVERE ERROR ON
+         B    UJS13SET
+UJS13EP3 OI   JOLERRIN,X'04'   SET 'HOLD' SEVERITY ON
+         B    UJS13SET
+UJS13EP2 OI   JOLERRIN,X'02'   SET ERROR ON
+         B    UJS13SET
+UJS13EP1 OI   JOLERRIN,X'01'   SET WARNING CONDITION AND DEFAULTS
+UJS13EP0 EQU  *
+UJS13SET EQU  *
+         L    15,ASRERROR      AND ADDRESS OF ERROR ROUTINE
+         BR   15               AND BRANCH TO IT (R14 STILL AS WAS
+*                              SO RETURN TO CORRECT CALLER).
+ASRERROR DC   A(0)             ERROR CONTROL ROUTINE
+ERRNUM1  DS   CL5              JOLERR MACRO USES THESE FOR BINARY
+ERRNUM2  DS   CL5                  ITEMS. THEY ARE CONVERTED AND
+ERRNUM3  DS   CL5                  STORED HERE FOR THE JOLERR TO
+ERRNUM4  DS   CL5                  PRINT LATER.
+ERRNUM5  DS   CL5
+         SPACE 3
+* JOLRETN MACRO BRANCHES TO JRETN(NN) WHICH RESETS R13 AND
+*        RETURNS THE APPROPRIATE ERROR CODE
+*******  NOTE, IF THE JOLRETN MACRO IS NOT CALLED WITH A RETURNCODE
+*        OF 0,4,8,12,16 THEN NORMAL EXPANSION TAKES PLACE.
+         SPACE
+JRETN0   SR   R15,R15
+         B    JRETN
+JRETN4   LA   15,4
+         B    JRETN
+JRETN8   LA   15,8
+         B    JRETN
+JRETN12  LA   15,12
+         B    JRETN
+JRETN16  LA   15,16
+JRETN    L    13,4(13)        RESET SAVE AREA ADDRESS
+         L    14,12(13,0)     RESET REGISTER 14
+         LM   0,12,20(13)     RELOAD GENERAL REGISTERS
+         MVI  12(13),X'FF'    SET RETURN INDICATOR
+         BR   14              RETURN TO CALLER
+         SPACE 3                                                74303
+* THE FOLLOWING ROUTINE WILL MOVE A STRING, AND WILL CATER FOR A
+* STRING WHOSE LENGTH IS GREATER THAN 256 BYTES.
+* ON ENTRY R0-> DATA TO MOVE
+*          R1-> RECEIVE AREA
+*
+*      USE MVCL'S               ******
+MOVEDATA DS  0H
+         ST   14,12(13)        SAVE RETURN ADDRESS
+         LR   14,0             COPY FROM HERE
+         LR   0,1              TO HERE
+         LA   15,2             TWO BYTES PREFIX
+         AH   15,0(,14)        + DATA LENGTH
+         LR   1,15             TO SOURCE & DEST LENGTH REGS
+         MVCL 0,14             COPY THE DATA
+         L    14,12(13)
+         BR   14
+         AGO  .SKPDATA
+         ST    R14,JOLSR14    SAVE RETURN ADDRESS
+         LR    R14,R0         14=SEND ADDRESS
+         SR    R15,R15        SET R15 TO 0
+         IC    R15,0(R14)     GET FIRST PART OF LENGTH(NO 0C6)
+         SLL   R15,8          SHIFT LEFT 1 BYTE
+         IC    R15,1(R14)     GET SECOND BYTE OF LENGTH
+         LA    R15,1(R15)     ADD 1 FOR HALF WORD BEFORE STRING
+*                             BUT ACCOUNT FOR -1 FOR MVC EXECUTE
+         LR    R0,R15         SAVE LENGTH
+         SRL   R0,8           DROP BOTTOM LENGTH (<256 BYTES BIT)
+         EX    R15,MOVEEX
+         CH    R15,X00FF        > 256 BYTES TO MOVE ?             75311
+         BH    MOVEGT
+MOVERETN L     R14,JOLSR14
+         BR    R14
+MOVEGT   SLL   R15,24           DROP TOP 3 BYTES                  75128
+         SRL   R15,24           MAKE NORMAL AGAIN                 75128
+         LA    R14,1(R15,R14)   +1 FOR -1 ABOVE +L'DATA SENT
+         LA    R1,1(R1,R15)     +1 FOR -1 ABOVE +L'DATA SENT
+MOVELUP1 MVC   0(256,R1),0(R14) SHIFT 256 BYTES
+         LA    R1,256(R1)
+         LA    R14,256(R14)
+         BCT   R0,MOVELUP1
+         B     MOVERETN
+MOVEEX   MVC   0(*-*,R1),0(R14) EXECUTED MOVE *********************
+.SKPDATA ANOP
+         ORG   MOVEDATA+X'5C'
+X00FF    DC    X'00FF'                                            75311
+THISIF   DC    H'0'                                               J50
+WHEREX   DC    H'0'                                               J50
+WHEREY   DC    H'0'                                               J50
+MONOSCRN DC    H'-1'            reset in P27INIT if SFE supported J50
+SYSPFK   DC    H'0'                                               J50
+* Next FIELDS set for FAL OR IBM terminals in P27init             J51
+VIDSFE   DC    X'0' IBM =X'29'  FAL = X'1B' START FIELD EXTENDED
+VIDSA    DC    X'0' IBM =X'28'  FAL = X'0E' SET ATTRIBUTES        J51
+VIDSF    DC    X'1D'            START FIELD                       J51
+VIDSFEC  DC    X'00'            Set Field Extended with Count     J51
+VIDHICLR DC    X'F2'  Red       Video Highlight Colour default    J51
+VIDLOCLR DC    X'F5'  Normal    Video Normal Colour default CYAN  J53
+*        DC    S(*,*)
+NOCLS    DC    X'00'  Set non 0 if PANEL isn't to clear screen    J52
+         DC    X'00'  SPARE *** ******************************    J52
+SETCURSR DC    X'0'   Set Cursor Row                              J52
+SETCURSC DC    X'0'   Set Cursor Col                              J52
+         DC    S(*,*,*,*)
+TRACEIND DC    X'00'            Set not zero if TRACE on          J51
+ISPGMDCL DC    X'00'            Set not zero if DCL PROG          J51
+MENUCOL  DC    H'0'             Selected Menu Option Column       J52
+         DC    S(*,*)                                             J52
+JOLSAVER DS   0H               THIS ROUTINE SETS UP THE NEXT
+*                              SAVE AREA IN JOLCOMPILER. R15 POINTS
+*                              TO THE NEXT AVAILABLE AMOUNT REQUIRED
+*                              FOR THE SAVE AREA,AND THIS IS OBTAINED
+*                              FROM A BLOCK GOTTEN AT THE START OF
+*                              THE PROGRAM.
+* NOTE: THE FIRST WORD OF THE SAVE AREA CONTAINS THE LENGTH OF THE
+*    THE OLD SAVE AREA (MORE THAN 72 BYTES MAY HAVE BEEN ALLOCATED,
+*    SOME AS A WORK AREA).
+         STM   R4,R5,SAVER4R5  SAVE WORK REGISTERS
+         LR    R4,R13          LOAD OLD SAVE AREA ADDRESS
+         A     R4,0(R13)       ADD LENGTH OF CURRENT SAVE AREA
+*        LA    R4,3(R4)        ADD 3 TO ROUND UP
+*        SRL   R4,2            /4
+*        SLL   R4,2            *4 ,NOW ROUNDED TO FULL WORD
+         LR    R5,R4           SAVE NEW SAVE AREA ADDRESS
+         A     R5,0(R15)       ADD NEW LENGTH REQUIRED
+         C     R5,ASAVEND      WILL IT FIT ?
+         BH    JOLSAVEX        NOPE,ABEND FOR NOW
+         MVC   0(4,R4),0(R15)  SHIFT NEW LENGTH TO FIRST WORD IN NEW
+*                              SAVE-AREA (SO WE KNOW ITS LENGTH LATER)
+         ST    R4,8(R13)       SET UP
+         ST    R13,4(R4)       *   CHAIN
+         LR    R13,R4          SET UP NEW SAVE REGISTER
+         LM    R4,R5,SAVER4R5
+         B     4(R15)          AND BACK TO CALLING ROUTINE
+* REMOVED FROM ABOVE BECAUSE THEY'RE REDUNDANT
+*        STM   R4,R5,SAVER4R5  SAVE WORK REGISTERS
+         LA    R4,3(R4)        ADD 3 TO ROUND UP
+         SRL   R4,2            /4
+         SLL   R4,2            *4 ,NOW ROUNDED TO FULL WORD
+*        LM    R4,R5,SAVER4R5
+*END OF RELOCATED INSTRUCTIONS
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         SPACE 1
+OPBLOCK  DS   0H
+         SPACE 1
+* THIS ROUTINE IS BAL'D TO ON R14 WHEN A MODULE NEEDS TO WRITE
+*        OR OUTPUT A BLOCK TO THE WORKFILE.
+* R1 -> AREA TO GO OUT
+         ST    R14,JOLSR14    SAVE RETURN ADDRESS
+         ST    R1,SAVER4R5    SAVE POINTER -> RECORD
+         MVI   SYS1NEXT+3,1   PREPARE TO POINT TO NEXT RECORD
+         L     R1,AWORKFIL    GET WORKFILE DCB ADDRESS
+* THE NEXT POINT IS NOT USED.  MVS GIVES AN ERROR 001 WHEN USED.  87150
+*        POINT (1),SYS1NEXT   DO THE POINT
+         B     COMGETR                                            87150
+         B     COMGETR                                            87150
+         B     COMGETR                                            87150
+COMGETR  L     R14,SAVER4R5   RELOAD RECORD-BLOCK TO GO OUT
+         WRITE WORKDECB,SF,,(R14),MF=E  WRITE THE BLOCK
+         CHECK WORKDECB       CHECK THAT ITS OK
+         L     R1,AWORK2DC
+         NOTE  (R1)
+         ST    R1,SYS1NEXT    STORE CURRENT TTR IN POINT CONTROL BLOCK
+         L     R14,JOLSR14
+         BR    R14            BACK TO CALLER
+*           IO COUNTERS                                           J50
+WK1INP   DC    PL5'0'                                             J50
+WK1OUT   DC    PL5'0'                                             J50
+WK2INP   DC    PL5'0'                                             J50
+WK2OUT   DC    PL5'0'                                             J50
+         SPACE 3
+*        DC    S(*,*)
+*        DC    S(*,*,*,*)
+*        DC    S(*,*,*,*)
+* THIS ROUTINE CONCATENATES WHATEVER IS IN #TKN TO THE CURRENT
+*        CONTENTS OF #WORK
+* IF #TKN WON'T FIT INTO #WORK, #WORK IS SET TO ITS MAXIMUM       75128
+*        LENGTH, AND R15 SET TO 4, AND RETURN MADE                75128
+         SPACE 3                                                  75128
+CONCAT   STM   R4,R5,SAVER4R5    SAVE REGITERS 4 AND 5            75128
+         LH    R5,#WORK       LOAD CURRENT LENGTH OF #WORK        75128
+         USING TKNX,R3                                            75128
+         LH    R4,#TKN        GET CURRENT LENGTH OF #TKN          75128
+         AR    R4,R5          ADD THEM                            75128
+         C     R4,LWORK   TOO BIG ?                               75128
+         BNH   S32CON                                             75128
+         MVC   #WORK,LWORK+2      SHIFT MAX LENGTH                75128
+         LA    R15,4          SET BAD RETURN CODE                 75128
+S32RETN  LM    R4,R5,SAVER4R5      RELOAD REGISTERS               75128
+         BR    R14                                                75128
+         SPACE 3                                                  75128
+S32CON   STH   R4,#WORK       SET NEW LENGTH IN #WORK             75128
+         LA    R5,WORK(R5)    CALC ADDRESS OF WHERE DATA IS       75128
+*                             TO GO TO.                           75128
+         LH    R4,#TKN        RELOAD SIZE OF TKN NOW              75128
+         BCTR  R4,0           -1 FOR MOVE EXECUTE                 75128
+         EX    R4,S32MUV      SHIFT DATA IN                       75128
+         SR    R15,R15        CLEAR RETURN CODE                   75128
+         B     S32RETN        AND RETURN                          75128
+S32MUV   MVC   0(*-*,R5),TKN  ****EXECUTED****                    75128
+         DROP  R3                                                 75128
+LWORK    DC    A(L'WORK)                                          75128
+AENDWORK DC    A(L'WORK+WORK)                                     80290
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*)
+DROPQUOT EQU *
+         USING TKNX,R3
+* THIS ROUTINE DROPS QUOTES FROM TKNS
+         CLI   TKN,C''''
+         BNE   0(R14)        NO QUOTES,BACK TO CALLER
+         MVI   TKN,C' '      BLANK OUT FISRT QUOTE
+         LH    R15,#TKN      CURRENT LENGTH OF TOKEN
+         BCTR  R15,0
+         BCTR  R15,0
+         STH   R15,#TKN
+         LA    R15,TKN+1(R15) POINT TO LAST QUOTE
+         MVI   0(R15),C' '
+         MVC   TKN(L'TKN),TKN+1 SHIFT STRING BACK
+         BR    R14
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+* THE FOLLOWING ROUTINES DROP BLANKS FROM #WORK Ý #TKN, AND RESET
+*        THE LENGTH OF THE STRING
+DRPBWORK LA    R1,#WORK
+         B     COMDRPB
+DRPBTKN  LA    R1,#TKN
+COMDRPB  LH    R15,0(R1)      GET CURRENT LENGTH OF STRING
+         LA    R15,1(R1,R15)  POINT TO LAST BYTE IN STRING
+         CLI   0(R15),C' '    BLANK ?
+         BNE   COMNBLNK       NO, RESET LENGTH OF STRING
+         BCT   R15,*-8        BACK TO TEST NEXT FIELDÝBYTE
+COMNBLNK SR    R15,R1         GET NEW LENGTH
+         S     R15,ONE
+         BM    DRPERR
+DRPSTR   STH   R15,0(R1)      RESET
+         BR    R14
+DRPERR   SR    R15,R15
+         B     DRPSTR
+* THE FOLLOWING AREAS USED ON OSIV/X8 TO ESTABLISH THE LM NAME IKJEFF18
+EFF18    L     R15,6(,R15)                                        JCS
+         BR    R15                                                JCS
+AEFF18   DS    AL4                                                JCS
+*        DC    S(*,*,*,*)                                         JCS
+*        DC    S(*)                                               JCS
+         DC    S(*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+#WORK    DS    H              USED ALL OVER THE PLACE
+WORK     DS    CL3000
+         AIF   ('&TYPE' EQ 'CSECT').CST2
+DCBS     DSECT
+         AGO .DODCBS
+.CST2    ANOP
+DCBS     CSECT
+.DODCBS  ANOP
+         PRINT NOGEN
+         AIF       ('&TYPE' EQ 'DSECT').DSECT9
+         ENTRY SYSPRINT,SYSIN,DATA,JCL,PROCLIB,WORKFILE,MACROLIB
+         ENTRY SYSTERM,SPRDCB1,SPRDCB2,SPRDCB3,SPRDCB4,SPRDCB5
+         ENTRY SPRDCB6
+.DSECT9  ANOP
+SYSPRINT DCB   DDNAME=SYSPRINT,MACRF=PM,RECFM=VBA,LRECL=138,DSORG=PS, **
+               SYNAD=QSAMSYND BLKSIZE=1330     BLOCKSIZE NOW HARD CODED
+SYSIN    DCB   DDNAME=SYSIN,DSORG=PS,MACRF=GM,SYNAD=QSAMSYND
+DATA     DCB   DDNAME=SYSUT1,RECFM=FB,DSORG=PS,MACRF=(PM,GM),LRECL=80, *
+               SYNAD=QSAMSYND BLKSIZE=3120
+JCL      DCB   DDNAME=JCL,MACRF=PL,RECFM=FB,LRECL=80,DSORG=PS,         *
+               SYNAD=QSAMSYND BLKSIZE=3120
+PROCLIB  DCB   DDNAME=PROCLIB,DSORG=PO,MACRF=R,SYNAD=BSAMSYND
+WORKFILE DCB   DDNAME=SYSUT2,DSORG=PS,MACRF=(WP,RP),                   *
+               RECFM=VB,BLKSIZE=6000,LRECL=5990,SYNAD=BSAMSYND
+MACROLIB DCB   DDNAME=MACROLIB,MACRF=(R),DSORG=PO,SYNAD=BSAMSYND
+MACRODCB EQU   MACROLIB
+SYSTERM  DCB   DDNAME=SYSTERM,DSORG=PS,MACRF=PM,SYNAD=QSAMSYND,  80289 *
+               RECFM=VBA,LRECL=138 BLKSIZE=142
+SPRDCB1  DCB   DDNAME=SPARE1,RECFM=VB,DSORG=PS,MACRF=(PM,GM),LRECL=200,*
+               SYNAD=QSAMSYND
+SPRDCB2  DCB   DDNAME=SPARE2,RECFM=VB,DSORG=PS,MACRF=(PM,GM),LRECL=200,*
+               SYNAD=QSAMSYND
+SPRDCB3  DCB   DDNAME=SPARE3,RECFM=VB,DSORG=PS,MACRF=(PM,GM),LRECL=200,*
+               SYNAD=QSAMSYND
+SPRDCB4  DCB   DDNAME=SPARE4,RECFM=VB,DSORG=PS,MACRF=(PM,GM),LRECL=200,*
+               SYNAD=QSAMSYND
+SPRDCB5  DCB   DDNAME=SPARE5,RECFM=VB,DSORG=PS,MACRF=(PM,GM),LRECL=200,*
+               SYNAD=QSAMSYND
+SPRDCB6  DCB   DDNAME=SPARE6,RECFM=VB,DSORG=PS,MACRF=(PM,GM),LRECL=200,*
+               SYNAD=QSAMSYND
+PRINTBUF DC    AL2(4,0)
+         DC    CL140' '
+* THIS NEXT DCB IS USED FOR THE SAME FILE AS 'WORKFILE' ABOVE
+* HOWEVER, THIS ONE IS USED FOR OUTPUT, NOT INPUT.
+WORK2DCB DCB   DDNAME=SYSUT2,DSORG=PS,MACRF=(WP,RP),                   *
+               RECFM=VB,BLKSIZE=6000,LRECL=5990 SYNAD=BSAMSYND  C51342
+BSAMSYND LR    R11,R15
+         USING BSAMSYND,R11
+         SYNADAF ACSMETH=BSAM
+         L     R13,4(R13)
+         MVC   SYNWTO+8(79),49(R1)
+SYNWTO   WTO   '                                                       *
+                                              ',ROUTCDE=(1,11,14)
+*        L     R13,8(R13)
+*        SYNADRLS
+         ABEND 1,DUMP
+QSAMSYND LR    R11,R15
+         USING QSAMSYND,R11
+         SYNADAF ACSMETH=QSAM
+         L     R13,4(R13)
+         MVC   SYN2WTO+8(79),49(R1)
+SYN2WTO  WTO   '                                                       *
+                                              ',ROUTCDE=(1,11,14)
+         L     R13,8(R13)
+         SYNADRLS
+         ABEND 1,DUMP
+         PRINT GEN
+.ENDJOLC ANOP
+         SPACE 3
+         AIF   ('&TYPE' EQ 'CSECT').JOBC
+JOBDETS  DSECT
+         AGO   .MAKEJOB
+.JOBC    ANOP
+JOBDETS  CSECT
+.MAKEJOB ANOP
+JOBNAME  DS    CL8
+JOBPRGMR DS    CL20           USERS OR PROGRAMMERS NAME
+JOBPRGMQ DC    CL1' '         QUOTE GOES HERE IF NAME 'CLARKE ETC'
+#JOBACCT DS    H              LENGTH OF NEXT FIELD IF USER CODES
+*                             ACCT='ACCOUNT'
+JOBACCT  DS    0CL80          ACCOUNTING INFORMATION HERE
+JOBDEPT  DS    CL80           AS ABOVE (SAME FIELD)
+JOBSUB2  DS    CL20           SUB ACCOUNTING FIELD 2              75128
+JOBSUB3  DS    CL20           SUB ACCOUNTING FIELD 3              75128
+JOBSUB4  DS    CL20           SUB ACCOUNTING FIELD 4              75128
+JOBSUB5  DS    CL20           SUB ACCOUNTING FIELD 5              75128
+JOBSUB6  DS    CL20           SUB ACCOUNTING FIELD 6              75128
+JOBSUB7  DS    CL20           SUB ACCOUNTING FIELD 7              75128
+JOBSUB8  DS    CL20           SUB ACCOUNTING FIELD 8              75128
+JOBSUB9  DS    CL20           SUB ACCOUNTING FIELD 8              80290
+JOBELAP  DS    CL8            ELAPSED JOB TIME FROM JOB STATEMENT
+JOBCPU   DS    CL4            CPU TIME FROM JOB STATEMENT
+JOBTIMEQ DS    CL1            M=MINS,S=SECS
+JOBMSGL  DS    0CL2           MESSAGE CLASS LEVEL FOR OS INTERPRETER
+JOBMSGL1 DS    CL1
+JOBMSGL2 DS    CL1
+JOBMSGCL DS    CL1            MESSAGE CLASS FOR JCL PRINT
+JOBCLASS DS    CL1            OS JOB CLASS CLASS FOR JCL
+JOBREGN  DS    CL4            REGION FOR MVT TYPE SYSTEMS
+JOBREGNQ DS    CL1            QUALIFIER FOR ABOVE,K=K,B=BYTES
+JOBPRTY  DS    CL2            OS JOB PRIORITY FOR JOB CARD
+JOBNOTFY DS    CL7            NOTIFY FIELD FOR TSO
+JOBHOLD  DS    CL4            NON BLANK IF 'HOLD',=TYPRUN=HOLD
+JOBROLL1 DS    CL1            ROLL INDICATORS, 'Y','N' OR BLANK
+JOBROLL2 DS    CL1            AS ABOVE
+JOBTYPE  DS    CL1            T=TEST,P=PRODUCTION
+JOBPERFO DS    AL1            1-255, PERFORMANCE GROUP
+JOBCORE  DS    CL4            REAL Ý VIRT Ý ''
+JOBGRP   DS    CL8            RACF GROUP NAME                    80291
+JOBPASS1 DS    CL8            RACF PASSWORD ONE                  80291
+JOBPASS2 DS    CL8            RACF PASSWORD TWO                  80291
+JOBUSER  DS    CL8            RACF USER                          80291
+JOBRESD1 DS    CL8            RESERVED                           80291
+JOBRESD2 DS    CL8            RESERVED                           80291
+JOBPREF  DS    CL80           CARD TO GO OUT BEFORE A JOB CARD
+* NOTE ANY JCLOP 'STRING' AFTER JOBCARD; ARE HANDLED IN A
+*        DIFFERENT MANNER ALTOGETHER
+* ONLY 1 PREFIX CARD IS ALLOWED AT ALL
+JOBCOPY  DC    CL3' '         NUMBER OF COPIES SPECIFIED
+JOBEXTRA DC    CL40' '        JUNK,UNLESS USERS CODES 'JOBEXTRA=XXX'
+JOBCOND  DC    CL80' '        COND GOES HERE (STOP WHEN INSTRUCTION)
+JOBLIB#  DC    H'0'           NUMBER OF JOB LIBS CURRENTLY STORED
+JOBLIB   DC    H'0',CL44' '   JOB LIBS ARE STORED HERE
+         DC    H'0',CL44' '   JOB LIB 2 IS STORED HERE
+         DC    H'0',CL44' '   JOB LIB 3 IS STORED HERE
+         DC    H'0',CL44' '   JOB LIB 4 IS STORED HERE
+         DC    H'0',CL44' '   JOB LIB 5 IS STORED HERE
+         DC    H'0',CL44' '   JOB LIB 6 IS STORED HERE
+JOBCAT#  DC    H'0'           NUMBER OF JOB CATS CURRENTLY STORED
+JOBCAT   DC    H'0',CL44' '   JOB CAT 1 IS STORED HERE
+         DC    H'0',CL44' '   JOB CAT 2 IS STORED HERE
+         DC    H'0',CL44' '   JOB CAT 3 IS STORED HERE
+         DC    H'0',CL44' '   JOB CAT 4 IS STORED HERE
+         DC    H'0',CL44' '   JOB CAT 5 IS STORED HERE
+         DC    H'0',CL44' '   JOB CAT 6 IS STORED HERE
+JOBDETSE EQU   *
+JOB2END  EQU   *
+         COPY  PGMDETS
+         COPY  DDDSNDET
+         SPACE 3
+IDTABLE  DSECT                THIS TABLE DESCRIBES THE FORMAT OF THE
+*                             IDENTIFIER TABLE.
+.NAME    ANOP
+IDNAME   DS    CL8
+IDADDR   DS    A              ADDRESS OF THE IDENTIFIER IS HELD IN
+*                             THE LOWER 3 BYTES (CAN BE TTR)
+         ORG IDADDR
+IDDISK   DS    CL2            THIS IS THE BLOCK NUMBER CONTAINING
+*                             THE INFORMATION.
+*                             THE NEXT TWO BYTES ARE THE OFFSET
+*                             IN THE BLOCK OF THE DATA
+         ORG
+IDSTMT   DS    CL4            STATEMENT DECLARED ITEM FOUND HERE
+IDTYPE   DS    CL1              01=EXEC
+*                               02=MACRO NAME
+*                               03=DATA SET DECLARE
+*                             IF B'00000111' THEN NAME HAS VOLREF
+*                               1=EXEC DCL
+*                               2=D0 DCL
+IDUSED   DS    CL1              0=NO
+*                               1=YES
+*                               2=SKIPPED (E.G.RESTART)
+IDLEVEL  DS    CL1            LEVEL THE NAME WAS DECLARED AT
+IDNEST   DS    CL1
+IDENTLEN EQU   *-IDTABLE
+         SPACE 3
+SYMOVLY  DSECT
+SYMNAME  DS    CL8            SYMBOLIC PARAMETER NAME
+SYMLEVEL DS    0CL1           LEVEL OR EXTERNAL INDICATER ,X'FF'=EXT
+SYMADDR  DS    AL3            ADDRESS OF THE VALUE PART OF SYMBOLIC
+SYMENTLN EQU   *-SYMOVLY
+         SPACE 3
+TABLCNTL DSECT
+ACUROFFS DS    A               ADDR OF THE CURRENT LEVEL BLOCK
+#POWER2  DS    H               NEXT POWER OF TWO > NUMBER OF ENTRIES
+#ITEMS   DS    H               NUMBER OF ITEMS IN THIS LEVEL
+* THESE NEXT ITEMS SAVE AND RESTORE THE THREE FIELDS ABOVE
+*       WHEN LEVELS CHANGE FOR MACRO STARTS AND MACRO ENDS.
+ALEVOFFS DS    16A             ADDR OF THE CURRENT LEVEL/BLOCK
+#LEVPOW2 DS    16H             NEXT POWER OF TWO > NUMBER OF ENTRIES
+#LEVITEM DS    16H             CURRENT TABLE SIZE
+OLDNOSYM DS    16H             SAVED 'NOSYMS' FOR CALC OF # TO INSERT
+* THE NEXT 16 WORDS POINT TO THE BEGINNING OF EACH SYMBOL TABLE
+*       START.
+ABINOFFS DS    16A             ADDR LEVEL/BLOCK 1 SYMS
+TABSIZE  EQU   *-TABLCNTL      SIZE USED FOR GETMAIN
+BINOFFS  DS    H               ORDERED OFFSETS TO "SYMNAMES" IN
+*                              "SYMOVLY". THERE ARE "MAXSYMS" POINTERS
+*                              ALLOCATED
+         SPACE 3
+P52DCBS  DSECT                                                    75128
+FILENO   DS    H
+CURRCONC DS    CL1            FILE CONCATENATION NUMBER           75128
+CURRBLKS DS    H              LENGTH OF CURRENT BLK READ IN
+CURRLREC DS    H              LENGTH LAST RECORD READ             75128
+ACURREC  DS    A              CURRENT RECORD ADDRESS
+CURRDCB  DS    A              CURRENT CB SAVED HERE
+SAVECARD DS    CL120          OLD SYSIN CARD SAVED HERE
+           SPACE
+SAVEDCB  DS    A
+SAVETTR  DS    A
+SAVECP   DS    AL1                                                75128
+SAVELREC DS    AL1            LENGTH LAST RECORD READ             75128
+SAVEBLKS DS    H
+SAVEPOSN DS    A
+         DS    0F             ALIGN ON A FULLWORD
+SAVEDCBL EQU   *-SAVEDCB
+         DS    CL(SAVEDCBL*32)                                    82300
+P52DCBL  EQU   *-P52DCBS
+BLDL     DS    0D                                                 75128
+BLDLNO   DS    H              SET TO 1                            75128
+BLDLLEN  DS    H              SET TO DEC 58                       75128
+BLDLNAME DS    CL8            NAME TO BE SEARCHED FOR             75128
+BLDLTTR  DS    CL4            TTR + CONCATENATION FILE NO         75128
+BLDLZ    DS    CL1                                                75128
+BLDLC    DS    CL50                                               75128
+         DS    0D
+BLDLL    EQU   *-BLDL                                             75128
+         COPY  TKNX
+* THE FOLLOWING CONSTANTS ARE USED BY THE JOL I/O ROUTINES
+*    TO INPUT/OUTPUT RECORDS FROM THE WORKFILE
+         SPACE 3
+         AIF   ('&TYPE' EQ 'CSECT').CATC
+CATX     DSECT
+         AGO   .MAKER
+.CATC    ANOP
+CATX     CSECT
+.MAKER   ANOP
+ACATBUF  DC    A(0)             ADDRESS OF CATALOGUE SEARCH BUFFER
+LCATBUF  DC    H'0'             LENGTH OF CATALOGUE SEARCH  BUFFER
+CATBLKN  DC    H'0'
+CATMAXBL DC    AL2((CATTTRE-CATTTR1)/4) MAX NUMBER OF BLOCKS
+CATLASTL DC    H'0'             LENGTH OF LAST WRITTEN BLOCK
+CATTTR1  DC    A(0)
+         DC    100A(0)
+CATTTRE  EQU   *
+         SPACE 3
+P$CNTL   DC    A(0)             ADDRESS OF PRINT BUFFER
+LP$BUFF  DC    H'0'             LENGTH OF PRINT  BUFFER
+P$BLKN   DC    H'0'
+P$MAXBL  DC    AL2((P$TTTRE-P$TTTR1)/4) MAX NUMBER OF BLOCKS
+P$LASTL  DC    H'0'             LENGTH OF LAST WRITTEN BLOCK
+P$TTTR1  DC    A(0)
+         DC    100A(0)
+P$TTTRE  EQU   *
+         SPACE 3
+AWORKBUF DC    A(0)
+LWORKBUF DC    H'0'
+WORKBLKN DC    H'0'
+WORKMAXB DC    AL2((WORKTTRE-WORKTTR1)/4)
+WORKLAST DC    H'0'
+WORKTTR1 DC    A(0)
+         DC    200A(0)                                            75128
+WORKTTRE   EQU *
+         SPACE 3
+APRBUF   DC    A(0)
+LPRBUF   DC    H'0'
+PRBLKN   DC    H'0'
+PRMAXBLK DC    AL2((PRTTRE-PRTTR1)/4)
+PRLASTL  DC    H'0'
+PRTTR1   DC    A(0)
+         DC    200A(0)
+PRTTRE   EQU   *
+         SPACE 3
+AINSTBUF DC    A(0)
+LINSTBUF DC    H'0'
+INSTBLKN DC    H'0'
+INSTMAXB DC    AL2((INSTTTRE-INSTTTR1)/4)
+INSTLAST DC    H'0'
+INSTTTR1 DC    A(0)
+         DC    200A(0)
+INSTTTRE EQU   *
+         SPACE 3
+         AGO    .LATER
+* SYSTEM INDEPENDENT ROUTINES.                               84100
+* THE FOLLOWING ROUTINES ARE CALLED WHEN SYSTEM CALLS ARE REQUIRED
+*  THIS REMOVES DEPENDENCIES ON THE OPERATING SYSTEM IN 99% OF JOL.
+         SPACE 3
+         AIF ('&TYPE' EQ 'CSECT').SYSV
+SYSVECTR DSECT
+         AGO .M1
+.SYSV    ANOP
+SYSVECTR CSECT
+.M1      ANOP
+         $SYSCALL
+         SPACE 3
+         AIF ('&TYPE' EQ 'CSECT').IOV
+IOVECTR  DSECT
+         AGO .M2
+.IOV     ANOP
+IOVECTR  CSECT
+.M2      ANOP
+         $IOCALL
+.LATER   ANOP
+         AIF   ('&TYPE' EQ 'CSECT').VSCSECT
+VSAMINFO DSECT
+         AGO .DOVSAM
+.VSCSECT ANOP
+VSAMINFO CSECT
+.DOVSAM  ANOP
+JOLDSDB  DC    CL8'JOLDSDB',8D'0' VSAM IO WORK AREA FOR JOL DS DB J40B
+JOLDSDBO DC    CL8'JOLDSDB',8D'0' VSAM IO WORK AREA FOR JOL DS MODELS
+*                                                                 J53
+***************************************************************** 74303
+*P27GBL  DC    A(PANELWRK)    WORK AREA FOR PANEL
+*P27GBL  DC    A(0)           WORK AREA FOR PANEL
+*THISSYS DC    X'0'
+*
+         AIF   ('&TYPE' EQ 'CSECT').PANSECT
+PANELWRK DSECT
+         AGO .DOPAN
+.PANSECT ANOP
+PANELWRK CSECT
+.DOPAN   ANOP
+* PANEL WRK
+*
+*
+* This are is used by PANEL and POPUP for work areas.
+*
+* It also contains information about the terminal in use.
+*
+DWORD    DS    D                                                  J50
+SIZE1    DS    H                                                  J50
+SIZE2    DS    H                                                  J50
+*
+* Terminal type information.
+*
+SCRNROWS DC    F'24'             Default 24 lines
+SCRNCOLS DC    F'80'             Default 80 lines
+SCRNTYPE DC    X'0'              Not Used Yet
+SCRNCOLR DC    X'0'              0 = no, 1 = yes, 2 = SFE supported
+SCRNSFE  DC    X'0'              1 = SFE supported
+*
+*
+CURRROW  DS    H
+CURRCOL  DS    H
+SPCRROW  DS    H                 Specific Reply Row
+SPCRCOL  DS    H                 Specific Reply Column
+SPCPROW  DS    H                 Specific Prompt Row
+SPCPCOL  DS    H                 Specific Prompt Column
+*        ENTRY CURRROW
+*        ENTRY CURRCOL
+*        ENTRY SPCRROW
+*        ENTRY SPCRCOL
+*        ENTRY SPCPROW
+*        ENTRY SPCPCOL
+P27FLAGS DS    X                                                  J40B
+P27F1BOX EQU   X'80'                                              J40B
+P27F1CTR EQU   X'40'                                              J40B
+P27HI    DC    X'00'             HIGHLIGHTING OPTIONS             J40B
+P27COLOR DC    X'00'             COLOUR OF FIELD                  J40B
+P27ATTR  DC    X'00'             ATTRIBUTE of Field               J40B
+P27MENUB DC    X'00'             Set if MENUBAR specified         J50B
+P27HELPL DC    X'00'             Set if HELPLINE specified        J50B
+P27SHOFL DC    X'00'             Set if SHOWFIELD specified       J50B
+P27AUTOS DC    X'01'             Set if AUTOSKIP specified(Def)   J50B
+P27CAPS  DC    X'01'             Set if CAPS specified(Default)
+LHSMARG  DC  H'0'
+*        ENTRY LHSMARG
+RHSMARG   DC   H'0'
+#DEFTXT   DC   H'0'       ***  GETTXT move the data it finds here
+*        ENTRY #DEFTXT
+DEFTXT    DS   CL250
+#DEFTXTA  DC   H'0'              and here
+DEFTXTA   DS   CL250
+*
+* Often the above are is move to OUTTXT below when it must be saved.
+*
+#OUTTXT   DC   H'0'
+*        ENTRY #OUTTXT
+OUTTXT    DS   CL250
+#OUTTXTA  DC   H'0'
+OUTTXTA   DS   CL250
+#MENTXT  DC    H'0'
+*        ENTRY #MENTXT
+MENTXT   DC    CL250' '                Copy of menu bar
+#HOTKEYS DC    H'0'
+HOTKEYS  DC    CL40' '                 Max of 40 Hot Keys
+THISHOT  DC    C' '
+HOTPOSNS DS    30H        Saved here so we can color etc
+LENTXT   DC    H'0'
+ITEMCNTL DC    H'0'                    Number of items so far
+ITEMPOSN DC    40H'0'                  Offset into MENU String
+ITEMLEN  DC    40H'0'                  Offset into MENU String
+PANFROMF DC    CL8' '           Set when REREAD FROM CODED        J50
+#PANERR  DC    H'0'                                               J50
+PANERR   DC    CL80' '          Panel error message is saved here J50
+         DS    0F                                                 J40B
+#PANLTKN DS    0H               Current Size of nextarea          J50
+PANLTKN  DS  2000C                Work area for PANEL - its
+*                                 saved here for PANEL REREAD and to
+*                                 redisplay the screen after a POPUP.
+PANSTRM  DS  10000C               3270 DATA STREAM SAVED HERE.
+*        ENTRY PANSTRM
+*
+P27SVSIZ EQU   *-PANELWRK
+*
+* Inserted by C. V. Clarke from P18 March 24, 2001
+         AIF   ('&TYPE' EQ 'CSECT').OPRSECT
+OPERWORK DSECT
+         AGO .DOOPER
+.OPRSECT ANOP
+OPERWORK CSECT
+.DOOPER  ANOP
+*OPERWORK      DATASECT
+#OPR          DC     H'0'
+OPR           DC     CL8' '
+*
+OP1TYPE       DC     C'0'
+*                    /* 0 = Numeric            */
+*                    /* 1 = Special Character      */
+*                    /* 2 = Identifier         */
+*                    /* 3 = Quoted String          */
+*                    /* 16= Error              */
+*                    /* 20= Matrix Entry Number    */
+*                    /* 21= Parameter          */
+*                    /* 23= Token Number of 'lit'  */
+*                    /* 33= X(array) for temp 'lit'*/
+#OP1          DC     H'0'
+OP1           DC     CL253' '          /* For Character Opns */
+*        ENTRY #OP1
+OP1BIT        DC     F'0'                  /* For Logical Opns   */
+*        ENTRY OP1BIT
+OP1BIN        DC     F'0'                  /* For Logical Opns   */
+OP1DEC        DC     PL8'0'            /* For Arithmetic Ops */
+*
+OP2TYPE       DC     C'0'
+#OP2          DC     H'0'
+OP2           DC     CL253' '          /* For Character Opns */
+*        ENTRY #OP2
+OP2BIT        DC     F'0'                  /* For Logical Opns   */
+*        ENTRY OP2BIT
+OP2BIN        DC     F'0'                  /* For Logical Opns   */
+OP2DEC        DC     PL8'0'            /* For Arithmetic Ops */
+*
+QUOTEFND      DC     X'0'
+P18LEVEL      DC     H'0'
+*        ENTRY P18LEVEL
+P18NEST       DC     X'0'
+*        ENTRY P18NEST
+DUMDUM        DC     X'0'
+THISISIF      DC     X'0'
+*TOOHIIND      DC     X'0'
+CONVTNUM      DC     F'0'
+PARSEDEP      DC     H'10'
+OPRL2         DC     CL2' '
+P85WASFN DS      H        SET TO 0 IF FOUND, ELSE 4               87150
+P85TBLPS DS      H        TABLE POSITION TO INSERT AT OR OVERRIDE 87150
+*
+*FUNCSECT      DATASECT         /* Used to detect Function end */
+*      2 Function_last_name  char(8), /* Should save nests of names*/
+FUNCLAST      DC    CL8' '   /* Should save nests of names*/
+FUNCLEVS      DC (10)H'0'           bin fixed,
+FUNCCNTL      DC   H'0'        bin fixed;
+FNRTNADR      DC   A(0)
+FNPARMS       DC   H'0'
+*
+SETDONE       DC   X'0'
+BITANS        DC   F'0'
+DEBUG         DC   H'1'
+*
+*X1           DSECT
+*PARSWORK      DATASECT
+*     2 Parameter_Fields,
+PARMCNTL      DC    H'0'  bin fixed(15),
+*        ENTRY PARMCNTL
+*       3 Parm_Str(3)         char(253) var,
+#PARMST1      DC    H'0'
+PARMST1       DC    CL254' '          /* For Character Opns */
+*        ENTRY #PARMST1
+#PARMST2      DC    H'0'
+PARMST2       DC    CL254' '          /* For Character Opns */
+*        ENTRY #PARMST2
+#PARMST3      DC    H'0'
+PARMST3       DC    CL254' '          /* For Character Opns */
+*        ENTRY #PARMST3
+*       3 Parm_Bin(3)         bin fixed,
+PARMBIN1      DC    F'0'
+*        ENTRY PARMBIN1
+PARMBIN2      DC    F'0'
+PARMBIN3      DC    F'0'
+*       3 Parm_type(3)        bin fixed(7); /* 0=num, else char string
+PARMTYP1      DC    X'0'
+*        ENTRY PARMTYP1
+PARMTYP2      DC    X'0'
+PARMTYP3      DC    X'0'
+*
+TKNPRTY       DC    X'0'
+*        ENTRY TKNPRTY
+TNUMBER       DC    H'0'
+TEMP1         DC    F'0'
+TEMP2         DC    F'0'
+TEMPBIN       DC    F'0'
+I             DC     H'0'
+J             DC     H'0'
+K             DC     X'0'
+*BLANKS        DC    CL250' '
+*#WORK         DC     H'0'
+*WORK          DC     CL253' '          /* For Character Opns */
+*DBL           DC     D'0'
+*PSTMT         DC     CL4' '
+*SYSUID        DC     CL8' '
+*P85NO1        DC     PL8'0'
+*P85NO2        DC     PL8'0'
+*
+*
+*
+*    2 Rators,
+RATORCNT      DC    H'0'
+*        ENTRY RATORCNT
+*      3 Rator(parse_depth)   char(10) var,
+#RATOR        DC    H'0'
+RATOR         DC    CL14' '          /* For Character Opns */
+*        ENTRY #RATOR
+RATOR1        EQU   RATOR
+#RATOR2       DC    H'0'
+RATOR2        DC    CL14' '          /* For Character Opns */
+*        ENTRY #RATOR2
+              DC    25CL16' '      SPACE FOR 25 MORE
+RATORPRT      DC    27X'0'
+*        ENTRY RATORPRT
+*    2 Rands,
+RANDCNTL      DC    H'0'
+*      3 Rand_Type(parse_depth) bin fixed(7),  /* See TKNTYPE */
+RANDTYPE      DC    27H'0'
+*        ENTRY RANDTYPE
+*
+*      3 Rand(parse_depth)    char(253) var,
+#RAND         DC    H'0'
+RAND          DC    CL253' '         /* For Character Opns */
+*        ENTRY #RAND
+#RAND2        DC    H'0'
+RAND2         DC    CL253' '         /* For Character Opns */
+*        ENTRY #RAND2
+              DC    25CL255' '      SPACE FOR 25 MORE
+.INCOM   ANOP                                                     J52
+*
+* Inserted by C. V. Clarke from P18 March 24, 2001
+         AIF   ('&TYPE' EQ 'CSECT').POPSECT
+P29POPWK DSECT
+         AGO .DOPOPR
+.POPSECT ANOP
+P29POPWK CSECT
+.DOPOPR  ANOP
+*P29POPWK  DATASECT
+MAXROW    DC  H'0'
+*         ENTRY MAXROW
+MAXWIDTH  DC  H'0'
+*         ENTRY MAXWIDTH
+#RETALTF  DC  H'0'
+RETALTFL  DC  CL30' '
+MENUCOLX  DC  H'10'        *** NOT USED - in JOLCOM now Feb 92.
+*
+#MENBART  DC       H'0'
+MENBARTX  DS  CL400
+MENBARIT  DS  30A  /* POINTS TO START OF MENU ITEM */
+*
+#MENUTKN  DS  H      /* Count of below
+*         ENTRY #MENUTKN
+MENUTKN   DS  30H  /* TOKEN NUMBER OF MACRO
+*
+#MENUTXT  DS  H      /* Count of below
+*         ENTRY #MENUTXT
+MENUTXT   DS  CL400              was 250
+*
+ALTKEYS   DS  CL40
+*         ENTRY ALTKEYS
+*
+ALTFLDS   DS  CL20
+ALTPOSN   DS  A
+*
+I29       DC  H'0'
+*J29      DC  H'0'
+K29       DC  H'0'
+*LEN@TXT  DC  H'0'
+TROW      DC  H'0'
+*LCOL      DC  H'0'
+*
+BLANKPOS  DC  A(0)
+FLDPOSN   DC  A(0)
+ALT@POSN  DC  A(0)
+TESTBRAK  DC  A(0)
+TMPCHAR   DC  CL2' '
+TMPCHAR2  DC  CL2' '
+TXT       DC  A(0)
+ALTCOL    DC  H'0'
+TALTKEY   DC  A(0)
+POPSTRM   DS  CL9000
+         JOLDEF TYPE=DSECT

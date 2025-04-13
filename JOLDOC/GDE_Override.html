@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Overrides</title>
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u><span style="font-style: italic;">Merging Definitions -
+Overrides</span></u></font><font size="5"><i><u><span
+ style="font-weight: normal;"></span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top"><span style="font-style: italic;">Job,
+Program</span> and <span style="font-style: italic;">Data Set
+Definitions</span> may be overridden by simply Declaring the overriding
+Definition before&nbsp; the Definition that is being overridden.<br>
+      <br>
+For example, suppose the following <span style="font-weight: bold;">DSID</span>
+is declared, but it is required to change the <span
+ style="font-weight: bold;">SPACE</span> and the <span
+ style="font-weight: bold;">DSNAME</span>.<br>
+      <br>
+Original:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span
+ style="font-weight: bold;"> DCL INPUT1 DS DSN AR.MASTER(+2)</span><br>
+      <div style="margin-left: 120px;"><span style="font-weight: bold;">SPACE
+10,2 CYLS SYSDA VB 7000,257;</span><br>
+      </div>
+      <br>
+Required:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span
+ style="font-weight: bold;">DSNAME = AR.MASTER(+3)</span><br>
+      <div style="margin-left: 120px;"><span style="font-weight: bold;">SPACE
+= 50,2 CYLS</span><br>
+      </div>
+&nbsp;<br>
+The following definition is placed before the original.<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">DCL
+INPUT1 DS DSN AR.MASTER(+3) SPACE 50,2 CYLS;</span><br>
+      </div>
+      <br>
+When Jol processes the second <span style="font-weight: bold;">DCL
+INPUT1</span>, the <span style="font-weight: bold;">VB 700,257</span>
+and <span style="font-weight: bold;">UNIT</span> of <span
+ style="font-weight: bold;">SYSDA</span> will be merged with the
+details from the first declare, and the <span
+ style="font-weight: bold;">DSN</span> and <span
+ style="font-weight: bold;">SPACE</span> defined on the second Declare
+will be ignored.<br>
+      <br>
+A similar process occurs for Job and Program Definitions.<br>
+      <br>
+Multiple overrides are permitted, thereby making it possible to build a
+Definition piece by piece.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      </td>
+      <td align="left" valign="top">
+      <p><br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+        <li><span style="font-weight: normal;">Overrides may appear in
+any order and do not have to be specified in the order in which they
+are coded in the Jol program.</span></li>
+        <li><span style="font-weight: normal;">The overriding statement
+must come first, therefore when overriding statements in an <span
+ style="font-weight: bold;">INCLUDE</span> library, the overriding
+statement must be coded before the <span style="font-weight: bold;">INCLUDE</span>.</span></li>
+        <li><span style="font-weight: normal;">When merging information
+containing multiple values such as <span style="font-weight: bold;">TIME</span>,
+specify both values in the first statement.</span></li>
+        <li><span style="font-weight: normal;">To override a <span
+ style="font-weight: bold;">DDNAME</span> entry of the type:</span></li>
+      </ol>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">A
+READS B</span><br style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">in
+a Program Definition, the "<span style="font-weight: bold;">DDNAME
+action DSID</span>" must be referenced in full.</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">If
+a <span style="font-weight: bold;">DDNAME</span> is to be nullified,
+it must be coded:-</span><br style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 80px;"><span style="font-weight: normal;"><span
+ style="font-style: italic;">ddname</span> <span
+ style="font-style: italic;">action</span> '<span
+ style="font-weight: bold;">NULLFILE</span>'</span><br
+ style="font-weight: normal;">
+      </div>
+      <br>
+&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

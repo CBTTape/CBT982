@@ -1,0 +1,384 @@
+* MINIDJC WAS WRITTEN TO ALLOW TWO JOBS TO COMPLETE AND THEN
+* ALLOW A THIRD DEPENDANT JOB TO EXECUTE/COMPILE.
+* WRITTEN BY M.GRAHOVAC  CCS
+* TAB ON(10 16 40
+MINIDJC  START 0
+R0       EQU   0
+R1       EQU   1
+R2       EQU   2
+R3       EQU   3
+R4       EQU   4
+R5       EQU   5
+R6       EQU   6
+R7       EQU   7
+R8       EQU   8
+R9       EQU   9
+R10      EQU   10
+R11      EQU   11
+R12      EQU   12
+R13      EQU   13
+R14      EQU   14
+R15      EQU   15
+         SAVE  (14,12),,*
+         USING MINIDJC,R11
+         USING PARM,R6
+         USING RECORD1,R2
+         LR    R11,R15                 R11 BASE REGISTER
+         CNOP  0,4
+         BAL   R15,*+76                -> JUMP OVER SAVE AREA
+         DC    18F'0'                  SAVE AREA
+         ST    R15,8(,R13)             STORE ADDRESS OF MY SAVE
+         ST    R13,4(,R15)             STORE ADDRESS OF CALLERS SAVE
+         LR    R13,R15                 R13 POINTS TO MY SAVE
+         L     R6,0(R1)                R6 POINTS TO PARM FIELD
+         BAL   R10,ENQ                 ENQ AND OPEN DJCFILE1
+         SR    R5,R5                   SET R5 = 0
+         CLI   PARMLEN,X'1A'           IS PARM 26 BYTES
+         BE    DJC1                    -> -> DJC ROUTINE
+         OPEN  SYSIN
+         MVC   ABEND16+32(8),=C'SYSIN   '
+         TM    DCBOFLGS-IHADCB+SYSIN,X'10'
+         BZ    ABEND16
+         CLI   PARMLEN,X'03'           IS PARM 03 BYTES
+         BE    NEWFILE3                -> NEW FILE UPDATE RTN
+         OPEN  (SYSWORK,(OUTPUT))
+         MVC   ABEND16+32(8),=C'SYSWORK '
+         TM    DCBOFLGS-IHADCB+SYSWORK,X'10'
+         BZ    ABEND16
+         CLI   PARMLEN,X'06'           IS PARM 06 BYTES
+         BE    UPDFILE4                -> FILE UPDATE RTN
+         B     ABEND1                  -> TERMINATE RC = 8
+         EJECT
+**********************************************************************
+********** DEPENDANT JOB CONTROL ROUTINE                    **********
+**********************************************************************
+DJC1     LA    R5,4                    SET RETURN CODE AS INCOMPLETE
+GET      BAL   R10,GETDJC1             -> GET A RECORD FROM DCJFILE
+         LR    R2,R1                   SAVE LOCATION OF RECORD
+         CLC   PARMJOB1,NEXTJOB1       LOCATE DEPENDANT JOB
+         BNE   GET                     -> IF WE DONT HAVE IT TRY AGAIN
+         LA    R7,THISJOB1             POINT R7 TO DATA-CARD
+         SR    R4,R4                   CLEAR R4
+         MVC   BYTE,JOBCOUNT           INSERT NO OF PRE-DECESSORS
+         NI    BYTE,X'0F'              TURN OFF F IN 'FX'
+         IC    R4,BYTE                 SET COUNTER
+LOOP     CLC   PARMJOB2,0(R7)          IS IT THIS ONE ?
+         BE    PUT                     -> YEP FOUND IT.
+         LA    R7,18(R7)               POINT TO NEXT JOBNAME
+         BCT   R4,LOOP                 GO BACK INTO LOOP IF R4 ¬= 0
+WTO1     WTO   'MINIDJC : PREDECESSOR NOT ON RECORD'
+         LA    R5,8                    SET BAD RET CODE
+         B     DEQ                     DEQ DJCFILE1 AND RETURN
+PUT      CLC   PARMRUNO,COMMENT2       CHECK LAST VALID UPDATE
+         BNE   PUT1                    -> NOT LVU
+         IC    R4,BYTE                 INS NO. OF JOBIDS ON RECORD
+         LA    R8,THISRUN1             POINT R8 TO RECORD
+LOOP0009 CLC   FILLER1,0(R8)           IS IT FULL OF ASTERISKS
+         BNE   PUT1                    -> NOT FULL OF ASTERISKS
+         LA    R8,18(R8)               POINT R8 TO NEXT FIELD
+         BCT   R4,LOOP0009             -> LOOP ON TILL LAST JOBID
+         SR    R5,R5                   SET R5 TO ZERO
+         B     DJCFILE2                CLOSE FILE
+         SPACE 2
+PUT1     IC    R4,BYTE
+         MVC   8(8,R7),PARMRUNO        INSERT THE RUNNO
+         LA    R8,THISRUN1             POINT TO FIELD 1
+LOOP0010 CLC   PARMRUNO,0(R8)          CHECK ALL RUNNO'S EQUAL
+         BNE   PUTX                    -> NO SO OUTPUT RECORD
+         LA    R8,18(R8)               POINT TO NEXT FIELD
+         BCT   R4,LOOP0010             LOOK AT NEXT RUNNO
+         MVC   COMMENT2,PARMRUNO       INSERT LAST VALID RUNO
+         SR    R5,R5                   SET RC=0
+         IC    R4,BYTE
+         LA    R8,THISRUN1
+LOOP0011 MVC   0(8,R8),FILLER1         FILL RUNNO'S WITH ASTERISKS
+         LA    R8,18(R8)
+         BCT   R4,LOOP0011             -> UNTILL ALL FILLED
+PUTX     LR    R1,R2                   -> RESURRECT R1
+         PUTX  DJCFILE1
+         PUT   SYSPRINT,RECORD1
+DJCFILE2 MVI   DRECORD1,C'*'
+         MVC   DRECORD1+1(131),DRECORD1
+         PUT   SYSPRINT,DRECORD1
+DJCFILE3 BAL   R10,GETDJC1             -> LOOP THRU FILE
+         CLC   NEXTJOB1(8),=C'ZZZZZZZZ'
+         BNE   DJCFILE3                LOOP THRU UNTIL FOUND
+         LR    R1,R2                   RESURRECT REG 1
+         PUTX  DJCFILE1
+***********************************************************************
+* THIS RECORD IS OUTPUT BECAUSE QSAM UPDATE IN PLACE SOMETIMES DROPS  *
+* OFF THE LAST PUTX RECORD WHEN THE FILE IS CLOSED                    *
+***********************************************************************
+         B DJCFILEY
+DJCFILEX WTO   'MINIDJC: RECORD NOT ON FILE FOR DJC.'
+         LA    R5,8                    SET BAD RETURN CODE.
+DJCFILEY CLOSE (DJCFILE1,,SYSPRINT)
+         B     DEQ                     -> -> TERMINATE PROGRAM
+         EJECT
+**********************************************************************
+********** FILE AMENDMENT ROUTINE                           **********
+**********************************************************************
+NEWFILE3 BAL   R10,GETSYSIN
+         CLI   TYPE,C'I'               ONLY INSERT RECORDS ARE VALID
+         BNE   NEWFILE5                -> PRINT ERROR MESSAGE
+         BAL   R10,BUILDREC            BUILD A RECORD
+         BAL   R10,PUTLNK3             AND OUTPUT IT
+         B     NEWFILE3                -> GET ANOTHER RECORD
+NEWFILE5 MVC   RECORD3+112(15),=C'CANNOT INSERT  '
+         PUT   SYSPRINT,RECORD3
+         B     NEWFILE3                -> TRY THE NEXT RECORD
+         SPACE 3
+UPDFILE4 ZAP   COUNTER1,=P'0'
+         LA    R2,DRECORD1
+         MVI   FLAG2,X'00'             SET SYSIN OPEN FLAG
+         MVI   FLAG1,X'00'             SET LINKCNTL OPEN FLAG
+LOOP0002 BAL   R10,GETUPDFL
+LOOP0003 BAL   R10,GETSYSIN
+LOOP0004 LA    R10,GETLNK              POINT R10 TO GETLNK FOR SUB-RTN.
+         CLC   JOBID,NEXTJOB1          SEARCH FOR >= JOBIDS
+         BH    PUTLNK1                 NOT FOUND OUTPUT THEM
+         CLI   TYPE,C'I'               INSERT ?
+         BE    INSERT1                 IF SO -> INSERT1
+         CLI   TYPE,C'U'               UPDATE ?
+         BE    UPDATE                  IF SO -> UPDATE
+         CLI   TYPE,C'D'               DELETE ?
+         BE    DELETE                  IF SO -> DELETE
+         MVC   RECORD3+112(15),=C'C1 NOT I,U OR D'
+ERROR1   PUT   SYSPRINT,RECORD3
+         B     LOOP0003                GET ANOTHER SYSIN RECORD
+         SPACE 2
+INSERT1  MVC   RECORD3+112(15),=C'CANNOT INSERT  '
+         CLC   JOBID,NEXTJOB1          CHECK JOBIDS NOT EQUAL
+         BE    ERROR1                  -> IF EQUAL
+         BAL   R10,BUILDREC            -> BUILD A RECORD
+         BAL   R10,PUTLNK2             OUTPUT THE RECORD
+         B     LOOP0003                -> RETURN & GET NEXT SYSIN
+         SPACE 2
+UPDATE   MVC   RECORD3+112(15),=C'CANNOT UPDATE  '
+         CLC   JOBID,NEXTJOB1          CHECK JOBIDS EQUAL
+         BNE   ERROR1                  -> IF NOT EQUAL
+         BAL   R10,BUILDREC            -> BUILD A RECORD
+         BAL   R10,PUTLNK2             OUTPUT THE RECORD
+         MVI   FLAG3,X'00'             RECORD1 IS RUBBISH
+         B     LOOP0002                RETURN & GET NEXT LINKCNTL
+         SPACE 2
+DELETE   MVC   RECORD3+112(15),=C'CANNOT DELETE  '
+         CLC   JOBID,NEXTJOB1          CHECK JOBIDS EQUAL
+         BNE   ERROR1                  -> IF NOT EQUAL
+         MVI   FLAG3,X'00'             RECORD1 IS RUBBISH
+         B     LOOP0002                RETURN & GET NEXT LINKCNTL
+ABEND1   WTO   'MINIDJC: INVALID PARM FIELD LENGTH',ROUTCDE=(11)
+         LA    R5,8                    SET UP RETURN CODE OF 8
+         B     END                     -> SKIP RC = 0
+ABEND3   WTO   'MINIDJC: RECORD NOT FOUND',ROUTCDE=(11)
+         LA    R5,8                    SET UP RETURN CODE OF 8
+         B     DEQ
+         EJECT
+**********************************************************************
+**********          END OF FILES ROUTINES                   **********
+**********************************************************************
+EOFSYSIN CLOSE SYSIN
+         CLI   PARMLEN,X'06'
+         BE    UPDFILEY
+         CLI   PARMLEN,X'03'
+         BE    NEWFILE8
+         B     DEQ
+         SPACE 2
+NEWFILE8 CLOSE (SYSPRINT,,LINKCNTL)
+         B     DEQ                     -> -> -> TERMINATE PROGRAM
+UPDFILEX MVI   FLAG2,X'FF'             INDICATE EOF ON LINKCNTL
+         CLOSE (LINKCNTL,REREAD)
+         CLI   FLAG1,X'FF'             IS SYSIN CLOSED ALSO ?
+         BE    EOJ1                    -> TERMINATE JOB
+         CLI   FLAG4,X'FF'
+         BE    CLI
+LOOP0005 BAL   R10,GETSYSIN
+CLI      CLI   TYPE,C'I'               INSERT ??
+         BE    INSERT2                 -> YES
+         PUT   SYSPRINT,RECORD3
+         B     LOOP0005                GET ANOTHER SYSIN
+INSERT2  BAL   R10,BUILDREC            BUILD A RECORD
+         BAL   R10,PUTLNK2             OUTPUT THE RECORD
+         B     LOOP0005                GET ANOTHER SYSIN
+         SPACE 2
+UPDFILEY MVI   FLAG1,X'FF'             INDICATE EOF ON SYSIN
+         CLI   FLAG2,X'FF'             IS LINKCNTL CLOSED ALSO ?
+         BE    EOJ1                    -> TERMINATE JOB
+LOOP0006 BAL   R10,GETUPDFL
+         BAL   R10,PUTLNK1             OUTPUT THE RECORD
+         B     LOOP0006                UNTIL END OF FILE
+         SPACE 2
+EOJ1     CLOSE (SYSWORK,REREAD)
+         CP    COUNTER1,=P'0'
+         BE    ERRORZQ
+         MVI   RECORD1,C'*'
+         MVC   RECORD1+1(131),RECORD1
+         PUT   SYSPRINT,RECORD1
+         OPEN  (SYSWORK,(INPUT),LINKCNTL,(OUTPUT))
+LOOP0007 GET   SYSWORK,RECORD2
+         BAL   R10,PUTLNK3             OUTPUT THE RECORD
+         B     LOOP0007                LOOP TILL END OF FILE
+ERRORZQ  WTO   'NO DATA TO OUTPUT TO CONTROL FILE',ROUTCDE=(11)
+         LA    R5,8
+         B     DEQ                     DEQ & TERMINATE
+         SPACE 2
+UPDFILEZ CLOSE (SYSWORK,,SYSPRINT,,LINKCNTL)
+         LA    R5,0                    SET RETURN CODE TO 0
+         B     DEQ                     DEQ & TERMINATE PROGRAM
+         EJECT
+**********************************************************************
+**********          SUB ROUTINES                            **********
+**********************************************************************
+ENQ      OPEN  (SYSPRINT,(OUTPUT))
+         MVC   ABEND16+32(8),=C'SYSPRINT'
+         TM    DCBOFLGS-IHADCB+SYSPRINT,X'10'
+         BZ    ABEND16                 -> SYSPRINT NOT OPEN O.K.
+         MVC   ABEND16+32(8),=C'LINKCNTL'
+ENQ1     ENQ   (QNAME,RNAME,E,,SYSTEM)
+         CLI   PARMLEN,X'06'           IS IT A UPD FILE TO UPDATE ??
+         BE    UPDFILE6                -> YES OPEN LINKCNTL.
+         CLI   PARMLEN,X'03'           IS IT A NEW FILE TO UPDATE ??
+         BE    NEWFILE6                -> YES OPEN LINKCNTL.
+         OPEN  (DJCFILE1,(UPDAT))
+         TM    DCBOFLGS-IHADCB+DJCFILE1,X'10'
+         BO    0(R10)                  -> RETURN TO CALLER
+         B     ABEND16
+UPDFILE6 OPEN  (LINKCNTL,(INPUT))
+         TM    DCBOFLGS-IHADCB+LINKCNTL,X'10'
+         BO    0(R10)                  -> RETURN TO CALLER
+         B     ABEND16
+NEWFILE6 OPEN  (LINKCNTL,(OUTPUT))
+         TM    DCBOFLGS-IHADCB+LINKCNTL,X'10'
+         BO    0(R10)                  -> RETURN TO CALLER
+ABEND16  WTO   'MINIDJC: NO DD CARD FOR LINKCNTL',ROUTCDE=(11)
+         ABEND 16
+DEQ      DEQ   (QNAME,RNAME,,SYSTEM)
+END      LR    R15,R5                  PUT RETURN CODE INTO R15
+         L     R13,4(R13)              POINT R13 TO HIGH SAVE AREA
+         RETURN (14,12),,RC=(15)
+         SPACE 2
+PUTLNK1  PUT   SYSWORK,RECORD1
+         PUT   SYSPRINT,RECORD1
+         AP    COUNTER1,=P'1'
+         MVI   FLAG3,X'00'             RECORD1 IS RUBBISH
+         BR    R10                     -> RETURN TO CALLER
+         SPACE 2
+PUTLNK2  PUT   SYSWORK,RECORD2
+         PUT   SYSPRINT,RECORD2
+         AP    COUNTER1,=P'1'
+         BR    R10                     -> RETURN TO CALLER
+         SPACE 2
+PUTLNK3  PUT   LINKCNTL,RECORD2
+         PUT   SYSPRINT,RECORD2
+         BR    R10                     -> RETURN TO CALLER
+         SPACE 2
+GETLNK   BAL   R10,GETUPDFL
+         B     LOOP0004                -> GO TO NEXT
+         SPACE 2
+BUILDREC MVI   RECORD2,C' '
+         MVC   RECORD2+1(119),RECORD2  CLEAR RECORD2
+         MVC   RECORD2(10),JOBID
+         MVC   BYTE,JOBNO              INSERT NO. OF JOBIDS
+         MVC   RECORD3+112(15),=C'C12 NOT NUMERIC'
+         TM    JOBNO,X'F0'
+         BNO   ERROR1                  -> IF BYTE IS NOT NUMERIC
+         NI    BYTE,X'0F'              TURN OF JUNK BYTES
+         SR    R4,R4                   R4 = 0
+         IC    R4,BYTE
+         LA    R8,REC2JOB1
+         LA    R9,REC3JOB1
+LOOP0012 MVC   0(8,R8),0(R9)
+         MVC   8(8,R8),FILLER1         FILL WITH *****
+         LA    R8,18(R8)
+         LA    R9,9(R9)
+         BCT   R4,LOOP0012
+         BR    R10                     -> RETURN TO CALLER
+         SPACE 2
+GETSYSIN MVI   FLAG4,X'00'             SYSIN RECORD IS RUBBISH
+         MVI   RECORD3,X'40'
+         MVC   RECORD3+1(131),RECORD3
+         GET   SYSIN,RECORD3
+         PUT   SYSPRINT,RECORD3
+         MVC   RECORD3+80(32),=C'MINIDJC: RECORD INVALID BECAUSE '
+         MVI   FLAG4,X'FF'             SYSIN RECORD IS VALID
+         BR    R10                     -> -> RETURN TO CALLER
+         SPACE 2
+GETUPDFL CLI   FLAG3,X'00'             IS RECORD1 STILL VALID ??
+         BNE   0(R10)                  -> -> YES RETURN TO CALLER
+         GET   LINKCNTL,RECORD1
+         MVI   FLAG3,X'FF'             RECORD1 IS VALID
+         BR    R10                     -> -> RETURN TO CALLER
+         SPACE 2
+GETDJC1  GET   DJCFILE1
+         LR    R2,R1                   SAVE THE LOACTION OF THE RECORD
+         PUT   SYSPRINT,RECORD1
+         BR    R10                     -> -> RETURN TO CALLER
+         EJECT
+**********************************************************************
+**********          DATA DECLARATIONS                       **********
+**********************************************************************
+DRECORD1 DC    CL132' '
+RECORD2  DS    0CL132
+         DS    CL12
+REC2JOB1 DS    CL18
+REC2JOB2 DS    CL18
+REC2JOB3 DS    CL18
+REC2JOB4 DS    CL18
+REC2JOB5 DS    CL18
+REC2JOB6 DS    CL18
+REC2DATA DC    CL12'LVU=********'
+         SPACE 2
+RECORD3  DS    0CL132
+TYPE     DS    CL2
+JOBID    DS    CL8
+         DS    CL1
+JOBNO    DS    CL1
+         DS    CL1
+REC3JOB1 DS    CL9
+REC3JOB2 DS    CL9
+REC3JOB3 DS    CL9
+REC3JOB4 DS    CL9
+REC3JOB5 DS    CL9
+REC3JOB6 DS    CL9
+         DS    CL13
+         DS    CL52
+         SPACE 2
+FLAG1    DC    X'00'
+FLAG2    DC    X'00'
+FLAG3    DC    X'00'
+FLAG4    DC    X'00'
+COUNTER1 DC    PL2'0'
+BYTE     DC    CL1' '
+FILLER   DC    CL8' '
+FILLER1  DC    CL8'********'
+QNAME    DC    CL8'USERDSN'
+RNAME    DC    C'P.W$.DJCFILE1'
+         PRINT NOGEN
+LINKCNTL DCB   DSORG=PS,MACRF=(GM,PM),DDNAME=LINKCNTL,              ****
+               RECFM=F,LRECL=132,BLKSIZE=132,EODAD=UPDFILEX
+SYSIN    DCB   DSORG=PS,MACRF=(GM),DDNAME=SYSIN,EODAD=EOFSYSIN
+SYSWORK  DCB   DSORG=PS,MACRF=(PM,GM),DDNAME=SYSWORK,EODAD=UPDFILEZ, ***
+               RECFM=F,LRECL=132,BLKSIZE=132
+SYSPRINT DCB   DSORG=PS,MACRF=(PM),DDNAME=SYSPRINT,                 ****
+               RECFM=F,LRECL=132,BLKSIZE=132
+DJCFILE1 DCB   DSORG=PS,MACRF=(GL,PL),DDNAME=LINKCNTL,EODAD=DJCFILEX
+PARM     DSECT
+         DS    CL1
+PARMLEN  DS    CL1
+PARMJOB1 DS    CL8
+         DS    CL1
+PARMJOB2 DS    CL8
+         DS    CL1
+PARMRUNO DS    CL8
+         DCBD  DSORG=PS
+RECORD1  DSECT
+NEXTJOB1 DS    CL8
+         DS    CL1
+JOBCOUNT DS    CL1
+TWOSPACE DS    CL2
+THISJOB1 DS    CL8
+THISRUN1 DS    CL8
+         DS    CL92                    ABOVE 3 LINES REPEAT 5 TIMES
+COMMENT1 DS    CL4
+COMMENT2 DS    CL8
+         END   MINIDJC

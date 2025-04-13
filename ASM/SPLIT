@@ -1,0 +1,45 @@
+         COPY  JOLCOM
+         EJECT
+         JOLSAVE CSECT=UJZ02SPL
+         USING TKNX,R3
+* THIS ROUTINE SPLITS PARAMETERS UP AND PLACES THEM IN A RETURN
+* LIST ACCORDING TO OTHER PARAMETERS.
+*    SPLIT RECEIVE-NAME,LENGTH OTHERS;
+         MVC      ICOMMAND,=CL8'MACRO' MAKE ASSIGN BETTER.
+         GETTKN   4                    GET LENGTH TO PAD TO.
+         TNUM     #TKN                 CONVERT TO NUMERIC
+         LR       R5,R1                SAVE IN R5
+         GETTKN   2                    GET RECEIVE NAME.
+         MVC      SYMBOLIC,TKN         STORE IN SYMBOLIC NAME FIELD
+         MVC      TKNNO,=H'5'          PREPARE TO LOOP.
+         MVC      #WORK,=H'1'          SET RECEIVE AREA TO '.
+         MVI      WORK,C''''
+Z02LOOP  GETTKN   TKNNO                GET FIRST TOKEN IN LIST
+         STH      R1,TKNNO             SAVE IT
+         CLI      TKN,C' '             END OF LIST?
+         BE       Z02END               END OF LIST, SO RETURN.
+         CLI      TKN,C'('             IGNORE
+         BE       Z02LOOP              LOOP
+         CLI      TKN,C')'             IGNORE
+         BE       Z02LOOP              LOOP
+         CLI      TKN,C','             IGNORE
+         BE       Z02LOOP              LOOP
+         FIX 'WHAT ABOUT IF QUOTED STRINGS ?'
+* HERE WE HAVE A VALID TOKEN.
+         STH      R5,#TKN              RESET LENGTH CORRECTLY
+         BAL      R14,CONCAT           CONCAT TO #WORK
+         B        Z02LOOP              GET NEXT
+Z02END   B     *+4                     ZAP SPACE IF REQUIRED
+         MVC      #TKN,=H'1'
+         MVI      TKN,C''''
+         BAL      R14,CONCAT
+         $CALL UJP85ASN
+         JOLRETN
+         DC    S(*,*,*,*)              ZAP SPACE IF REQUIRED
+         DC    S(*,*,*,*)              ZAP SPACE IF REQUIRED
+         DC    S(*,*,*,*)              ZAP SPACE IF REQUIRED
+         DC    S(*,*,*,*)              ZAP SPACE IF REQUIRED
+UJZ01CAL DC    F'0'                    ADDRESS OF PARM LIST
+UJZ01DTA DC    CL8' '                  PGM-ID FOR LINK
+UJZ01MVC MVC   UJZ01DTA(*-*),TKN       MOVE PGM-ID
+         END

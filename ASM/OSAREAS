@@ -1,0 +1,5 @@
+X CSECT
+         IECDSECS CVT,TCB,TIOT,SMF,SMFRCD,SMFTCT,                      *
+               JMR,JSCB,BASE,UCB,DSCB1,MAIN,UNITTAB,                   *
+               EXPAND=YES
+ END

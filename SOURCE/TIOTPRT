@@ -1,0 +1,41 @@
+         GENSAVE CSECT=TIOTPRT
+         SPACE 2
+         SR    R5,R5
+         EJECT
+         L     R3,16  LOAD GPR 3 WITH ADDRESS OF CVT
+         L     R3,0(R3)  LOAD GPR 3 WITH ADDRESS OF TCB CONTROL
+         L     R3,4(R3)  LOAD GPR 3 WITH POINTER TO CURRENT TCB
+         L     R3,12(R3)  LOAD GPR 3 WITH POINTER TO THE TIOT
+         LA    R3,24(R3)
+         LA    R10,7
+         LA    R6,PRTLINE
+         SPACE 2
+         B     FIRSTPS
+DDENTRY  SR    R4,R4
+         IC    R4,0(R3)
+         AR    R3,R4
+         C     R5,0(R3)
+         BE    EOD
+FIRSTPS  EQU   *
+         MVC   0(8,R6),4(R3)   MOVE DDNAME
+         LA    R6,10(R6)
+         LH    R5,18(R3)
+         BCT   R10,DDENTRY
+OPENDD   NOP   BYOPEN
+         MVI   OPENDD+1,X'F0'
+         OPEN  (SYSPRINT,OUTPUT)
+BYOPEN   PUT   SYSPRINT,PRTLINE
+         MVC   PRTLINE,PRTLINE-1
+         LA    R6,PRTLINE
+         LA    R10,7
+         B     DDENTRY
+EOD      PUT  SYSPRINT,PRTLINE
+         GENRETN
+      DC    C' '
+PRTLINE DC  CL133' '
+        ORG PRTLINE+1
+DDNAME  DS  CL8
+        ORG
+SYSPRINT DCB DDNAME=SYSPRINT,DSORG=PS,MACRF=PM,RECFM=F,LRECL=80,       *
+               BLKSIZE=80
+     END

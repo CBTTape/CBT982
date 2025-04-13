@@ -1,0 +1,4 @@
+         MACRO
+&L       JOLCLOSE &PLIST,&MF=I
+         JOLOPEN  &PLIST,FUNC=CLOSE,MF=&MF
+         MEND

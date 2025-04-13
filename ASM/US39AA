@@ -1,0 +1,199 @@
+US39AA   CSECT
+* THIS ROUTINE IS CALLED WHEN THE #OPEN MACRO IS ISSUED
+           SPACE 1
+* IT MUST:-
+*          1.  EXAMINE ANY DCB EXIT LISTS AND IF 1 IS PRESENT ALTER IT
+*          2.  CHANGE THE QSAM DCB TO A BSAM MACRF FORMAT
+*          3.  ALTER THE ADDRESS OF THE READ OR WRITE MODULE TO
+*              US39BA AND US39CA AS REQUIRED
+*          4.  CONSTRUCT THE DECBS
+*          5.  ALLOCATE A SAVE AREA FOR THE PUT MACRO
+*    PARAMETER IS FOR NORMAL OPEN,IE R1 POINTS TO A WORD WITH
+*          ADDRESS OF DCB,AND HIGH ORDER BYTE CONTAINS THE
+*          OPTION :-
+*              128=INPUT
+*              142=AD (X8), EXTEND (OTHER OS/VS)
+*              143=OUTPUT
+R0         EQU 0
+R1         EQU 1
+R2         EQU 2
+R3         EQU 3
+R4         EQU 4
+R5         EQU 5
+R6         EQU 6
+R7         EQU 7
+R8         EQU 8
+R9         EQU 9
+R10        EQU 10
+R11        EQU 11
+R12        EQU 12
+R13        EQU 13
+R14        EQU 14
+R15        EQU 15
+* FIRST SEE IF THE FILE IS OPEN
+         USING *,R15
+         B     THERE                                             88036
+         DC    AL1(THERE-*),C'US39AA &SYSDATE &SYSTIME'          88036
+THERE    DS    0H                                                88036
+           STM 14,12,12(13)
+           LR  R3,R1           KEEP PARM FOR OPEN
+           L   R2,0(R1)    GET DCB ADDR
+           USING IHADCB,R2
+           TM  DCBOFLGS,X'10'  OPEN ?
+           BNO OPENIT
+           LM  14,12,12(13)
+           LA  R15,8
+           BR  14
+* HAVE TO OPEN FILE ETC
+OPENIT   DS    0H
+         LR    R11,R15
+         DROP  R15
+         USING US39AA,R11
+         CLM   R2,8,=X'8F'
+         BE    OUTPUT
+         CLM   R2,8,=X'8E'
+         BE    OUTPUT
+         SRL   R0,24
+         CH    R0,=H'143'
+         BE    OUTPUT
+           LA  R15,4
+RETN       RETURN (14,12),T,RC=(15)    DIDN'T GET A SAVE AREA,SO
+*                                      MERELY RETURN
+OUTPUT     DS    0H
+* NOW WE MUST EXAMINE THE DCB EXIT ADDRESS AND FOOL AROUND WITH IT
+           CLC DCBEXLST+1(3),=F'0'
+           BE  NOEXLST
+* HE HAS AN EXIT LIST,SO WHIZ DOWN IT AND SEE IF HE HAS A DCB EXIT
+*    OR NOT.
+           L   R5,DCBEXLST
+           L   R6,0(R5)        ADDR OF HIS EXIT
+FINDEXIT   CLI 0(R6),X'85'
+           BE  GOTEXIT
+           CLI 0(R6),X'05'
+           BE  GOTEXIT
+           TM  0(R6),X'80'
+           BO  ENDLIST
+           LA  R6,4(,R6)
+           B   FINDEXIT
+GOTEXIT    EQU *
+           L   R7,0(R6)        SAVE THE EXIT ADDRESS FOR THE MOMENT
+           MVC 1(3,R6),=AL3(DCBEXIT)
+           BAL R4,OPN
+           ST  R7,0(R6)        RESET THE EXIT ADDRESS
+           B   OPENED          NOW FIX UP OTHER ODDS AND ENDS
+           SPACE 5
+ENDLIST    EQU *
+*    HERE WE FOUND HE HAD AN EXIT,BUT IT DID NOT SPECIFY A DCB EXIT
+**** LATER,WILL FIX
+           LA  R15,12
+           B   RETN
+NOEXLST    MVC DCBEXLST+1(3),=AL3(MYEXIT)
+           BAL R4,OPN
+           XC  DCBEXLST+1(3),DCBEXLST+1        RESET TO 0
+OPENED     EQU *
+           SR  R15,R15
+           B   RETN
+           EJECT
+OPN      DS    0H
+* HERE WE FIRST CHECK IT IS A QSAM DCB
+         CLI   DCBMACR+1,X'50'     QSAM ?
+         BE CHANGE
+         LA R15,16
+         B     RETN
+         SPACE 1
+CHANGE   MVI   DCBMACR+1,X'24'  NOW BSAM
+* SET NCP TO 5
+         MVI   DCBNCP,5
+* NOW OPEN
+         LR    R1,R3
+         OPEN  MF=(E,(1))
+         TM    DCBOFLGS,X'10'
+         BO    OPENEDOK
+         LA    R15,4           OPEN FAILED
+         B     RETN
+OPENEDOK DS    0H
+* NOW WE HAVE TO SET UP THE DECBS ETC IN AN AREA
+*    CALCULATE HOW BIG AN AREA WE REQUIRE
+          LA  R9,24     20 FOR DECB LENGTH,+4 FOR POINTERS
+           SR  R10,R10
+           IC  R10,DCBBUFNO
+           MR  R8,R10
+* NOW ADD THE SIZE OF OUR SAVE AREA   72
+*    PLUS SIZE OF THIS CONTROL SECT    4
+*    PLUS A ZERO WORD AT END DECB LIST 4
+*    PLUS 2 FULL WORDS FOR
+*          POSNNOW AND AMNTLEFT        8
+*                                     88
+          LA R9,90(,R9)   +4 FOR ZERO WORD AT END DECB AADR LIST
+           LR  R0,R9
+           GETMAIN R,LV=(0)    GET THE AREA FOR THE CONTROL BLOCK
+           ST  R1,88(2)        UNUSED POSN IN QSAM DCB
+           LR  R8,R1
+           USING CNTRL,R8
+           ST  R9,LENGTH       CALCD LENGTH
+* NOW THE DECBS
+           LA  R9,CURRENT
+           SR  R10,R10
+           IC  R10,DCBBUFNO
+           SLL R10,2           *4
+           AR  R10,R9          R10=ADDR 1ST DECB
+          LA  R10,4(,R10)   SKIP THE ZERO WORD
+GETBUF     GETBUF (2),(1)
+           LTR R1,R1
+           BZ  ENDSETUP
+           ST  R10,0(R9)       DECB CURRENT
+           USING DECBOVLY,R10
+           XC  0(20,R10),0(R10) CLEAR DECB FIRST
+           ST  R1,DECAREA      SET BUFFER POSN IN DECB
+           MVI DECBDECB,X'7F'  SET COMPLETE
+           MVC DECLNGTH,=F'0'  ZERO THE LENGTH
+           ST  R2,DECDCBAD     STORE ADDR OF DCB IN DECB
+           LA  R10,20(,R10)    NEXT DECB ADDR
+           LA  R9,4(,R9)       NEXT POINTER
+           B   GETBUF
+ENDSETUP   EQU *
+* NOW CLEAR THE NEXT WORD AFTER THE DECB ADDRESS LIST.R9 POINTS TO IT
+           MVC 0(4,R9),=F'0'
+* SO THAT THE PUT MACRO GOES TO US39BA,WE HAVE TO ALTER THE
+*    ADDRESS IN THE DCB OF THE ROUTINE
+*    THEREFORE:-
+           MVC REALRTN,DCBPUT
+*    NOW THE #OPEN MACRO WILL PUT THE ADDRESS OF US39BA IN THE
+*          RIGHT AREA
+* AND THAT SHOULD BE THAT
+          XC  AMNTLEFT,AMNTLEFT         US39BA WILL GET NEW BUFFER
+           BR  R4
+* END OPN
+MYEXIT     DS  0F
+           DC  X'85'
+           DC  AL3(DCBEXIT)
+DCBEXIT    EQU *
+* R2 SHOULD STILL BE POINTING TO THE DCB
+           CLI DCBBUFNO,X'00'  ANY BUFFERS ?
+           BNE BUFSSET
+           MVI DCBBUFNO,X'01'  SET TO 1.
+BUFSSET    EQU *
+* END DCBEXIT
+           BR  R14
+DECBOVLY   DSECT
+DECBDECB   DS  1F              ECB
+DECTYPE    DS  CL2
+           ORG DECTYPE
+DECBPTR    DS  CL2
+           ORG
+DECLNGTH   DS  1H              LENGTH OF DATA
+DECDCBAD   DS  A
+DECAREA    DS  A               ADDRESS OF DATA
+DECIOBPT   DS  A
+DECNEXT    DS  A
+CNTRL      DSECT
+LENGTH     DS 1F
+POSNNOW    DS  1F              NEXT POSN IN BUFFER
+AMNTLEFT   DS  1F              AMOUNT LEFT IN BUFFER
+REALRTN    DS  1F              ADDR OF REAL 'WRITE' RTN
+SAVEAREA   DS  18F
+CURRENT    EQU *
+DECBFLG    DS  CL1             FLAGS FOR DECB
+DECBADDR   DS  AL3             ADDR OF DECB
+           DCBD DSORG=PS
+           END

@@ -1,0 +1,12 @@
+         MACRO                                                    88036
+&LABEL   PRPUT &L                                                 88036
+         LCLA  &A                                                 88036
+&A       SETA  1                                                  88036
+         AIF   (T'&L EQ 'O').E                                    88036
+&LABEL   IHBINNRA &L                                              88036
+         L     R15,S23PUT                                         88036
+         BALR  R14,R15                                            88036
+         MEXIT                                                    88036
+.E       ANOP                                                     88036
+         MNOTE 8,'PRPUT NEEDS  A LINE TO PRINT'                   88036
+         MEND                                                     88036

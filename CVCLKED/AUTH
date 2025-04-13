@@ -1,0 +1,6 @@
+          INCLUDE  OBJ($JOLSH35)
+          INCLUDE  OBJ(UJTNUM)
+          ENTRY  UJE00MN
+          NAME $SCHED35(R)
+          INCLUDE OBJ(UJEINIT)
+          NAME $JOLIN35(R)

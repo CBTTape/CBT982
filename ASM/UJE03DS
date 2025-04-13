@@ -1,0 +1,13 @@
+EXECUTE TITLE 'DYNAMICALLY ALLOCATE DSN ETC'                     76200
+* COPYRIGHT CCS-JOL P/L                   1986.
+*
+         GBLA   &JOLCOM
+         GBLC   &TYPE
+&TYPE    SETC   'SCHED'
+*        PRINT  OFF
+         COPY   JOLCOMM
+         PRINT  ON
+         PRINT  GEN
+         PRINT DATA                                               75128
+         COPY UJDALLOC
+         END

@@ -1,0 +1,72 @@
+         MACRO
+&NAME    CHECK &DECB,&DSORG=,&RPL=,&AE=NO
+.*       CHECK                          COPYRIGHT   FUJITSU   1984
+         AIF   ('&RPL' NE '').JES
+         AIF   ('&DECB' EQ '').E1
+         AIF   ('&DSORG' EQ '').A1
+         AIF   ('&DSORG' EQ 'IS').A2
+         AIF   ('&DSORG' EQ 'ALL').A3
+         SYSERMAC 180,DSORG,ALL
+         AGO   .A3
+.A1      ANOP
+&NAME    SYSINNRA &DECB
+         AIF   ('&AE' EQ 'YES').AE1                               MSP20
+         L     14,8(0,1)                PICK UP DCB ADDR
+         L     15,52(0,14)              LOAD CHECK ROUTINE ADDR
+         AGO   .AE12                                              MSP20
+.AE1     ANOP                                                     MSP20
+         SR    14,14                    CLEAR REGISTER 14         MSP20
+         ICM   14,7,9(1)                PICK UP DCB ADDR          MSP20
+         SR    15,15                    CLEAR REGISTER 15         MSP20
+         ICM   15,7,53(14)              LOAD CHECK ROUTINE ADDR   MSP20
+.AE12    ANOP                                                     MSP20
+         BALR  14,15                    LINK TO CHECK ROUTINE
+         MEXIT
+.A2      ANOP
+&NAME    SYSINNRA &DECB
+         L     14,8(0,1)                PICK UP DCB ADDR
+         L     15,76(0,14)              LOAD CHECK RTN ADDR FOR ISAM
+         BALR  14,15                    LINK TO CHECK ROUT ADDR
+         MEXIT
+.A3      ANOP
+&NAME    SYSINNRA &DECB
+         AIF   ('&AE' EQ 'YES').AECDAM
+         L     14,8(0,1)                PICK UP DCB ADDR
+         AGO   .AECDAM2
+.AECDAM  ANOP
+         SR    14,14                    CLEAR REGISTER 14         MSP20
+         ICM   14,7,9(1)                PICK UP DCB ADDR          MSP20
+.AECDAM2 ANOP
+         L     15,76(0,14)              LOAD CHECK RTN ADDR FOR ISAM
+         TM    26(14),X'80'             CHECK ISAM
+         AIF   ('&AE' EQ 'YES').AE3                               MSP20
+         BO    *+8
+         L     15,52(0,14)              LOAD CHECK ROUTINE
+         AGO   .AE32                                              MSP20
+.AE3     ANOP                                                     MSP20
+         BO    *+10                                               MSP20
+         SR    15,15                    CLEAR REGISTER 15         MSP20
+         ICM   15,7,53(14)              LOAD CHECK ROUTINE        MSP20
+.AE32    ANOP                                                     MSP20
+         BALR  14,15                    LINK TO CHECK ROUTINE ADDR
+         MEXIT
+.E1      SYSERMAC 7                     DECB OPERAND MISSING
+         MEXIT
+.JES     ANOP
+&NAME    DS    0H
+         AIF   ('&RPL'(1,1) EQ '(').RPLR
+         LA    1,&RPL                   LOAD RPL ADDR
+         AGO   .AREG
+.RPLR    LR    1,&RPL(1)                LOAD RPL ADDR VIA REG
+.AREG    LA    0,X'02'                  INDICATE CHECK IN REGISTER
+         AIF   ('&AE' EQ 'YES').AEJES1                            MSP20
+         L     15,24(1)                 LOAD ACB ADDR FROM RPL
+         L     15,8(15)                 LOAD JES INTERFACE MOD ADDR
+         AGO   .AEJES2                                            MSP20
+.AEJES1  ANOP                                                     MSP20
+         SR    15,15                    CLEAR REGISTER 15         MSP20
+         ICM   15,7,25(1)               LOAD ACB ADDR FROM RPL    MSP20
+         ICM   15,7,9(15)               LOAD JES INTERFACE MOD AD MSP20
+.AEJES2  ANOP                                                     MSP20
+         BALR  14,15                    BRANCH TO INTERFACE ROUTINE
+         MEND

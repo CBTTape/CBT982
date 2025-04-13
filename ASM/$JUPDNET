@@ -1,0 +1,146 @@
+           GENSAVE CSECT=$JUPDNET
+* JOL COPYRIGHT CCS-JOL P/L 1987.
+* UPDATE NETWORK STATUS DETAILS
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+           LR  R8,R1           SAVE INPUT PARM ADDRESS            75311
+           L   R9,0(R8)        LOOK AT PARM                       75311
+           CLC =H'0',0(R9)     IS THERE ONE?                      80290
+           BE   RETN           NO                                 80290
+           CLC =C'JOL',2(R9)   GOT 'JOL' ON PARM?                 75311
+           BNE  RETN                                              75311
+RETN      DS    0H                                                75311
+           GENRETN
+           DC   S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC   S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC   S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC   S(*,*,*,*,*,*,*,*,*,*,*,*)
+           END
+* THIS CSECT UPDATES THE JOLNET.STATUS DATA SET.
+*
+* PARAMETERS ARE:-
+* 1. NETWORK-NAME
+* 2. JOB-NAME
+* 3. 'ENDED' 'SUBMITTED' OR 'DELETE'.  IF DELETE, MEMBERS ARE DELETED.
+           OPEN (STATUS,UPDATE)
+           TM  STATUS+48,X'10'
+           BO  STATOPN
+           WTO    'JOL NETWORK STATUS UPDATE PROGRAM FAILED'
+           GENRETN RC=4000
+           TITLE 'TEST FIRST CARD TO BE VALID'
+STATOPN    EQU *
+* NOW CHECK THE PARAMETERS WE ARE SUPPLIED WITH.
+ISPO       EQU *
+           MVC DEFBLKSI,DCBBLKSI
+           MVC DEFLRECL,DCBLRECL
+NEWMEM     EQU *
+           SR R6,R6                       NO RECORDS OUTPUT
+           MVC STOWMEM,M3MEM   MOVE IN MEMBER NAME FOR STOW
+REALSTOW DS    0H
+           STOW SYSUT2,STOWBLK,A
+           LTR R15,R15
+           BZ  STOWOK
+           STH R15,DEFLRECL
+           #PRINT 'UJE9908 ERROR OCCURRED IN STOW,RETURNED ',DEFLRECL
+           WTO    'UJE9908 ERROR OCCURRED IN STOW'
+           B   BADRETN
+STOWOK     EQU  *
+            TM SYSIN+48,X'10'    SYSIN OPEN OR CLOSED ?
+           BO NEWMEM
+           L   R1,SYSUT2+88
+           L  R0,0(R1)
+           FREEMAIN R,LV=(0),A=(1)
+           FREEPOOL SYSUT2
+           CLOSE (SYSUT2)
+           L R2,=V(SYSPRINT)
+           CLOSE ((2))
+           FREEPOOL (2)
+           GENRETN
+EOFSYSIN    CLOSE (SYSIN)
+           FREEPOOL SYSIN
+           B STOW
+&C         SETC  (&X8)'AD'.(1-&X8)'OUTPUT'
+SYS2PARM OPEN  (SYSUT2,&C),MF=L     OPEN THE FILE
+           EXTRN US39BA
+           SPACE 3
+           LTORG
+           SPACE 3
+STOWBLK  DS    0D
+STOWMEM  DS    CL8
+TTR      DS    XL3
+C        DC    X'00'
+M3MEM      DS  CL8             CONTAINS THE MEMBER NAME
+M4JOL      DS  CL4             CONTAINS '##$$'
+           ORG
+SYSIN      DCB DDNAME=SYSIN,DSORG=PS,EODAD=EOFSYSIN,MACRF=GM,DEVD=DA
+SYSUT2     DCB DDNAME=SYSUT2,DSORG=PS,MACRF=PM,BUFL=2000
+           DCB DDNAME=SYSUT2,DSORG=PO,MACRF=W,BUFL=2000
+           ORG
+           ORG SYSUT2
+           PRINT NOGEN
+           DCBD DSORG=PS
+           EXTRN UJEINIT
+           PRINT   GEN
+UJE22UPD TITLE  'PROGRAM TO UPDATE INSTRUCTION MEMBER OF JOL PARM DS'
+         COPY  JOLGLOBL
+&TYPE    SETC  'XXXXX'
+         COPY  DDDSNDET
+         EJECT
+         GENSAVE CSECT=UJE22UPD,BASE=R12
+         L     R10,0(,R1)     ADDRESS PARAMETER INFO
+         USING PARMS,R10
+         SPACE
+*        OPEN   (JOLPP,OUTPUT)
+         OPEN   (INSTR,UPDAT)
+         LTR   R15,R15
+         BZ    E22OPND            BR IF FILE OPENED
+         ABEND 11,DUMP
+         SPACE
+E22OPND  DS    0H
+         GET   INSTR
+         LR    R11,R1
+         USING DDDSNDET,R11
+         CLI   DDDD1,C'D'
+         BNE   E22OPND
+         USING DDDSNDET,R11
+         CLC   PARMDSN,DDDSNAME
+         BE    E22VOLS           GO AND COPY VOLUME INFO
+         CLI   DDVOLUME,C'*'     VOLREF?
+         BNE   E22OPND           NO, GO AND READ THE NEXT
+         CLC   PARMDSN,DDVOLUME+1 THIS DATASET?
+         BNE   E22OPND           NO, GO AND READ THE NEXT
+E22VOLS  DS    0H
+         MVC   DDVOLUME,PARMVOLS COPY VOLUME INFO
+         PUTX  INSTR             WRITE THE UPDATED DATA
+         B     E22OPND           GO AND GET THE NEXT ONE
+         SPACE
+E22EOF   DS    0H
+         CLOSE INSTR
+*        CLOSE JOLPP
+         GENRETN RC=0
+         EJECT
+INSTR    DCB   DDNAME=JOLINSTA,DSORG=PS,MACRF=(GL),EODAD=E22EOF ,     .
+*              RECFM=U
+JOLPP    DCB   DDNAME=JOLPP,DSORG=PS,MACRF=(PM),RECFM=VB,LRECL=240,   ++
+               BLKSIZE=800
+PARMS    DSECT
+PARMDSN  DS    CL26
+PARMVOLS DS    CL256
+         END

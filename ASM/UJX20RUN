@@ -1,0 +1,127 @@
+         TITLE 'UJ20RUN:PERFORM A RUN INSTRUCTION'
+         JOLSAVE CSECT=UJE20RUN
+* HANDLE RUN STATEMENT
+           MVI ISRUN,C'1'
+           MVC RUNNAME,PGM
+           MVC TASKNAME,PGM
+           MVC TASKLABL,PGMLABEL
+* NOW LETS SEE IF WE EXECUTE IN THIS STEP,OR IN THE NEXT,
+*     AND IF A PARM IS USED IN THIS RUN
+* NOW BEFORE XCTL TO THE USER PROGRAM,WE MUST DETERMINE WHETHER
+*     OR NOT THERE ARE ANY DD-CARDS REFERRING TO THIS PROGRAM
+*     OR IF THERE IS A PARM FIELD OR NOT.
+* IF THERE ARE NO DD-CARDS,WE MAY XCTL NOW,OTHERWISE WE
+*     MUST CHECK THAT THIS IS THE CORRECT OS STEP OR NOT
+*          L  R2,TTR$INST      SAVE TTR OF NEXT INSTRUCTION
+*                              BECAUSE IF WE DECIDE NOT TO DO
+*                              THE USERS PROGRAM HERE WE WILL
+*                              HAVE TO RESET THE TTR SO THE
+*                              NEXT OS STEP THAT IS EXECUTED
+*                              WILL START AT THE CORRECT STEP
+*          CLC PGMNODDS,=A(0)    ARE THERE ANY DDCARDS?           75128
+*        BNE   E20AREDD        YES
+         CALL  UJE50RD        READ NEXT STATEMENT
+         LTR   R15,R15        EOF PERHAPS ?
+         BZ    E20TPARM
+* NO DD'S  AND NO PARM,RETURN A 0,SO WE WILL XCTL TO
+*     PROBLEM PROGRAM.
+         NOTE  INSTRUCT
+         ST    R1,TTR$INST
+         MVI   TTR$INST+3,0    SO WE RE-READ THE LAST STATEMENT
+E20RETN0 DS    0H
+         BLDL  0,RUNBLDL
+         B     RUNBLD(R15)
+RUNBLD   B     RUNBLD0
+         B     RUNBLD4
+         B     RUNBLD8
+RUNBLD4  DS    0H
+*        JOLERR 001,'PROGRAM ''',RUNNAME,''' ABSENT:- TRYING LPALIB'
+         MVC   TASKSSI,=X'00000000'         CLEAR THE SSI INFO
+         B     E20RETN
+RUNBLD8  JOLERR 402,'PERM I/O ERR FINDING ',RUNNAME
+E20806   DS    0H
+         MVI   ISRUN,C' '
+         JOLRETN RC=&RSVDRC
+         SPACE 3
+RUNBLD0  SR    R8,R8
+         IC    R8,RUNC1
+         LA    R9,X'1F'
+         NR    R8,R9
+         ALR   R8,R8
+         LA    R9,RUNUSDTA-4
+         AR    R9,R8
+         MVC   TASKSSI,0(R9)
+         AGO   .NTIOT
+         B     E20NTIOT     *************************             75002
+*  NOW SET PROGRAM NAME UP IN TIOT.
+         LA    R1,TASKNAME       LOAD THE ADRESS OF PGM NAME      75002
+         ST    R1,INST           STORE IN WORK AREA               75002
+         MVI   INST,8       SET LENGTH OF PARM TO 8               75002
+         LA    R1,INST      LOAD A(PARM)                          75002
+         L     R0,ATIOT    -> TIOT                                75002
+         AH    R0,=H'16'    ->PGM NAME SPOT                       75002
+         SVC   255          POP PGM NAME IN TIOT                  75002
+E20NTIOT DS    0H                                                 75002
+.NTIOT   ANOP
+E20RETN  JOLRETN RC=0
+E20TPARM DS    0H
+         NOTE  INSTRUCT      SAVE THIS ADDRESS, TO REPROCESS THE DDS
+         ST    R1,TTR$INST
+         MVI   TTR$INST+3,0       CONTINUE WITH THIS RECORD IF NOT PARM
+         CLC   =C'PARM ',ICOMMAND
+         BNE   E20TDD            NOT PARM, TRY DD
+         MVI   TTR$INST+3,1       CONTINUE WITH THE NEXT RECORD
+* FIX UP USER'S PARM FIELD
+         L     R1,ATASKPRM
+         L    R15,=A(#TKNSTRG)
+         USING  #TKNSTRG,R15
+         MVC   0(256,R1),#TKNSTRG
+         CLC   =X'00027D7D',0(R1)  FIX FOR BUG IN COMPILER
+         BNE   E20T10
+         XC    0(6,R1),0(R1)
+E20T10   DS    0H
+         DROP  R15
+         SPACE  3
+E20AREDD DS    0H
+* THE USER'S PROGRAM HAS DD-CARDS AND WE MUST DILIGENTLY
+         AIF   (&X8).X8340
+*     CHECK WHETHER OR NOT WE ARE IN THE CORRECT OS JOB-STEP
+*     (I.E DO WE HAVE THE DD-CARDS NECESSARY FOR THIS PROGRAM)
+           CLC  SCTSNAME(8),PGMSTEP RIGHT OS JOB STEP ?           75311
+           BE  E20TPM2         TEST IF THIS HAS A PARM NOW
+           BH  E20TOOHI        ERROR,GONE TOO FAR
+* RIGHTO,MUST CHANGE OS STEPS OLD BOY.
+E20CHNG    ST R2,TTR$INST
+           MVI TTR$INST+3,0    RESET 'Z' IN TTR
+           B  *+4
+           B  *+4
+           B  *+4
+           JOLRETN RC=4        TELL US TO GO TO ANOTHER OS STEP
+E20TPM2  DS    0H
+           CALL UJE50RD
+           LTR R15,R15
+           BNZ E20RETN0
+           B   E20TPARM
+E20TOOHI CLC   =C'$$',PGMSTEP                                     75311
+         B     E20CHNG  **********************LET MAIN FIX IT *** 75311
+         BNE   E20CHNG                                            75311
+         JOLERR 503,'CANNOT FIND STEP FOR ',PGMESTMT
+         AGO   .NX8340
+.X8340   ANOP
+*   ALLOCATE THEM
+         SPACE
+E20READD DS    0H
+         CALL  UJE50RD
+         LTR   R15,R15
+         BNZ   E20RETN0
+E20TDD   DS    0H           TEST FOR DD
+         CLI   DDDD1,C'D'
+         BNE   E20NOTDD
+         CALL  UJE21ALL     ALLOCATE THE DD
+         B     E20READD
+E20NOTDD DS    0H
+         POINT INSTRUCT,TTR$INST
+         B     E20RETN0        TO XCTL
+         SPACE 3
+.NX8340  ANOP
+         DC    80S(*)

@@ -1,0 +1,329 @@
+         PRINT  OFF                                               J51
+         COPY  JOLCOM                                             J51
+         PRINT ON,DATA                                            J51
+P04SWORK DSECT
+         DS    18F            REGISTER SAVE AREA FOR ROUTINE
+SYMFOUND DS    CL1
+PGMFOUND DS    CL1
+K        DS    H                                                  J51
+ENDIF    DS    H                                                  J51
+CNTR     DS    H                                                  J51
+I        DS    H                                                  J51
+P04SAVE9 EQU   *-P04SWORK     LENGTH OF SAVE + WORK AREA
+         SPACE 3
+UJP04IF2 JOLSAVE CSECT=UJP04IF2,SIZE=P04SAVE9 (char *name)
+         ORG   UJP04IF2                                           J50
+IF@TEST  EQU        *
+         ENTRY IF@TEST                                            J50
+         ORG
+         USING P04SWORK,R13                                       J51
+* Test an IF statement                                            J51
+*int         if_test()
+*
+*
+*{ int         k;
+*
+*byte        symfound;
+*byte        pgmfound;
+*int         Tkncurr;
+*
+*
+* /* Proper Parsing/Expression Handling added Jan 22 or so, 1988. */
+*
+* /* Heavily modified, particulary July 1985 to make the same
+*   as the Mainframe Version */
+*
+* As we  all know'if' statements are terribly easy to write.
+*
+*  Why then do we have to goto this terrible amount of
+*  trouble to decode them ?
+*
+*  This procedure handles the following type of ifstatement
+*  in the following way:-
+*
+*    IF (andA=1 OR andC='A' OR andD='C') and A=0 OR B=16
+*
+*  1) All symbolic parameters are replaced by their real
+*     values   (simple)
+*
+*  2) As many as possible comparisons are carried out
+*     ie IF andA=1 then if anda=1 then we end up with 'T' because
+*     obviously the expression is true
+*
+*  So for the above expression we will have in out little
+*  stack'x' the followingOR (combining a=0 to one x)
+*       (
+*       T
+*       OR
+*       F
+*       OR
+*       T
+*       )
+*       A=0
+*       OR
+*       B=16
+*/
+*
+*int         endif;
+*int         cntr;
+*int         i;
+*
+*
+*   endif = stackno;
+         MVC   ENDIF,TKNNO                                        J51
+*
+** Now I intend to put quotes around any symbolics so that the user
+*  doesn't have to code IF '%A'=10 but simply IF %A=10
+*/
+*
+*   this_is_an_if = true; /* Saves character testing later */
+         MVI   THISIF,1                                           J51
+*
+*/* NEW AUGUST 1988.
+*
+*   Check if execution IF, and issue message if combination of
+*   SYMBOLIC and EXECUTION time IF's.  PC Jol can't handle it
+*   at the moment !!! */
+*
+*   if (personal_jol) goto  persif; /* Skip these tests */
+*
+*   symfound = 0;
+*   pgmfound = 0;
+         MVC   SYMFOUND,ZERO                                      J51
+         MVC   PGMFOUND,ZERO                                      J51
+*
+*   Tkncurr = 1;
+         MVC   TKNCURR,=H'1'                                      J51
+*   if (gettkn(Tkncurr) == 0) ;
+P04LUP1  DS    0H                                                 J51
+         GETTKN TKNCURR                                           J51
+         CLI   TKN,C' '                                           J51
+         BE    P04TESTV                                           J51
+*
+*
+*   while (Tkn/(0/) != '\0')
+*   {
+*
+*   if (Tkn/(0/) == '%')
+*       symfound = 1;
+         CLI   TKN,C'%'                                           J51
+         BNE   P04NSYM1                                           J51
+         MVI   SYMFOUND,1                                         J51
+         B     P04DUN1                                            J51
+*   if (Tkn/(0/) == '\'')                     /*  Literal String ?  */
+*       symfound = 1;
+P04NSYM1 DS    0H                                                 J51
+         CLI   TKN,C''''                                          J51
+         BNE   P04NSYM2                                           J51
+         MVI   SYMFOUND,1                                         J51
+         B     P04DUN1                                            J51
+*   else
+*   if ((*Tkn > '@')                          /* Identifier ? */
+*      && ((*Tkn < 'Z')
+*      ?? (*Tkn < '$')))
+*   {
+P04NSYM2 DS    0H                                                 J51
+         CLI   TKN,C'$'                                           J51
+         BE    P04ISID1                                           J51
+         CLI   TKN,C'A'                                           J51
+         BL    P04DUN1                                            J51
+         CLI   TKN,C'Z'                                           J51
+         BH    P04DUN1                                            J51
+* An Identifier here                                              J51
+*      if ((strcmp(Tkn, "LASTCC") == 0)) pgmfound = 1;
+*      else if ((strcmp(Tkn, "MAXCC") == 0)) pgmfound = 1;
+P04ISID1 DS    0H                                                 J51
+         CLC   =C'LASTCC ',TKN                                    J51
+         BE    P04SETPM                                           J51
+         CLC   =C'MAXCC ',TKN                                     J51
+         BE    P04SETPM                                           J51
+         B     P04TSYM2                                           J51
+P04SETPM MVI   PGMFOUND,1                                         J51
+         B     P04DUN1                                            J51
+*      else if (getsymname(Tkn) > 0) symfound = 1;
+P04TSYM2 DS    0H                                                 J51
+         FINDSYM TKN                                              J51
+         LTR   R15,R15                                            J51
+         BNZ   P04TPGM2                                           J51
+         MVI   SYMFOUND,1                                         J51
+         B     P04DUN1                                            J51
+P04TPGM2 DS    0H                                                 J51
+*      else {
+*           strlwr(Tkn);
+*           if (getrcname(Tkn) > 0) pgmfound = 1;
+*        MEMLWR TKN                                              J51
+         MVC    #WORK(10),#TKN SAVE IN WORK
+*        MVI    #TKN+1,1       SET LENGTH TO 1
+*        MVI    TKN,C':'
+*        BAL    R14,CONCAT     CONCAT TKN TO WORK
+         SR    R0,R0                                              J52
+         IC    R0,WORK                                            J52
+         CLI   WORK,C'A'         $, _ OR @ ?                      J52
+         BH    P45ALF1           NO, 'A' THRU 'Z'                 J52
+TOLOW    EQU   C'A'-C'a'                                          J52
+AMPERS   EQU   C'&&'                                              J52
+         SH    R0,=AL2(AMPERS)                                    J52
+         B     LABCONV1                                           J52
+P45ALF1  SH    R0,=AL2(TOLOW)                                     J52
+LABCONV1 STC   R0,WORK                                            J52
+         FINDSYM WORK                                             J51
+         LTR   R15,R15                                            J51
+         BNZ   P04DUN1                                            J51
+         MVI   PGMFOUND,1                                         J51
+         B     P04DUN1                                            J51
+         FIX   'DO RC TEST'                                       J51
+*      }
+*   }
+P04DUN1  DS    0H                                                 J51
+*   Tkncurr = Tkncurr + 1;
+         LH    R1,TKNCURR                                         J51
+         LA    R1,1(R1)                                           J51
+         STH   R1,TKNCURR                                         J51
+*        GETTKN  TKNCURR                                          J51
+*        CLI   TKN,C' '                                           J51
+         B     P04LUP1                                            J51
+*   if (gettkn(Tkncurr) == 0) ;
+*}
+*
+P04TESTV DS    0H                                                 J51
+*if (pgmfound ^= 0) {
+         CLI   PGMFOUND,0                                         J51
+         BE    P04SYMS                                            J51
+*
+*    if (symfound == 0) {
+         CLI   SYMFOUND,0                                         J51
+         BNE   P04ERR1                                            J51
+*        stackno = stackno + 1;
+*        x/(stackno/)= "THEN";
+* NOW HERE WE WERE NOT ABLE TO DETERMINE IF THE IF WORKED OUT
+*     TO BE TRUE OR FALSE
+* WHAT WE HAVE TO DO NOW IS FORM UP THE TOKEN STRING AGAIN SO
+*     THAT THE MODULE THAT CALLED US CAN OUTPUT IT (IF IT WANTS
+*     TO) TO THE NEXT PHASE
+      SPACE
+           DROP R1
+         MVC #WORK,=H'3'
+           LA  R1,WORK                                          80290
+           USING  WORK,R1                                       80290
+           CLEAR WORK
+           DROP R1
+           MVC WORK(3),=C'IF '
+           MVC   WORK+3(256),TKNSTRG
+           MVC   WORK+3+256(256),TKNSTRG+256
+           MVC   WORK+3+512(256),TKNSTRG+512
+           MVC   WORK+3+768(232),TKNSTRG+768
+           LH    R14,#TKNSTRG    LENGTH OF 'IF'
+           LA    R14,3(R14)      Add 3 for the "IF"
+           LR    R15,R14         Keep length of #WORK             J52
+           LA    R14,WORK(R14) ADDRESS TO MOVE TOKEN TOO
+           LA    R15,6(R15)     (=L'=C' THEN '                    75128
+           CH    R15,=AL2(L'WORK) TOO LONG ?
+*          BH    P04ER421    YES,ERROR
+           STH    R15,#WORK  NO,STORE NEW LENGTH
+           MVC 0(6,R14),=C' THEN '                                75128
+           MVC #TKNSTRG(256),#WORK
+           MVC #TKNSTRG+256(256),#WORK+256
+           MVC #TKNSTRG+512(256),#WORK+512
+           MVC #TKNSTRG+768(232),#WORK+768
+         JOLRETN RC=8                                             J51
+P04RET0  JOLRETN RC=0                                             J51
+P04RET4  JOLRETN RC=4                                             J51
+*        return 8;
+*    }
+*}
+*else goto persif; /* Do symbolic Only */
+*
+*
+P04ERR1  DS    0H                                                 J51
+         JOLERR 321,                                                   *
+               'Implementation Restriction:'
+         JOLERR 322,                                                   *
+               'Because Jol now has full Arithmetic Parsing ',    J51  *
+               'You cannot mix Symbolic and Execute Tests'
+         JOLERR 323,                                                   *
+               'Rearrange Your Tests like this: '
+         JOLERR 324,                                                   *
+               ' ''IF SYMBOLIC test THEN IF PROGRAM Tests'''
+*
+*return 16;
+         JOLRETN RC=16                                            J51
+*
+*
+*persif:
+P04SYMS  DS    0H                                                 J51
+*        fix_parse_dsn();
+*        ujs20rep(); /* Replace values of symbolics, re-split tokens */
+*        CALL$ UJS20REP                                           J51
+          $CALL UJS20REP,(#TKNSTRG)                               74303
+           MVC #TKNSTRG(256),#WORK                                J51
+           MVC #TKNSTRG+256(256),#WORK+256                        J51
+           MVC #TKNSTRG+512(256),#WORK+512                        J51
+           MVC #TKNSTRG+768(232),#WORK+768                        J51
+           SPACE 2                                                J51
+          $CALL UJSPLIT        SPLIT INTO TOKENS                  J51
+         LTR   R15,R15        DID STMT SPLIT UP OK INTO TOKENS ?  J51
+         BZ    P85NOER                                            J51
+         JOLERR 407,'ERROR AFTER SYMBOLICS REPLACED ''',#TKNSTRG, J51  *
+               ''''                                               J51
+P85NOER  CALL$ UJP18PAR                                           J51
+*        parse();
+*
+*        this_is_an_if = false;
+         MVI   THISIF,0                                           J51
+*
+*        if (clc(op , "0", 2)) return 4;
+         CLC   =C'0',OP                                           J52
+         BE    P04RET4                                            J51
+*        if (clc(op , "-1", 3)) return 0;
+         CLC   =C'-1',OP                                          J52
+         BE    P04RET0                                            J51
+*        else if (length(op) == 0) return 4;
+         CLC   #OP,ZERO                                           J51
+         BE    P04RET4                                            J51
+*        else if ((strcmp(op, "''") == 0)) return 4;
+         CLC   =C'''',OP                                          J51
+         BE    P04RET4                                            J51
+*        else
+*        {
+** If we get here, we made it because some coded 'if x then' to see if
+*  it was defined.  We will see if it was, and take appropriate action.
+*           i = getsymname(op);
+         FINDSYM OP                                               J51
+*           if (!(i > 0))
+         LTR   R15,R15                                            J51
+         BNZ   P04RET4                                            J51
+*              return 4;
+*           else return 0;
+         B     P04RET0                                            J51
+*        }
+         B     P04RET0                                            J51
+*
+*#if 0
+*        if (parse() == 4)      /* do the if statement (4 = error */
+*        {
+** If we get here, we made it because some coded 'if x then' to see if
+*  it was defined.  We will see if it was, and take appropriate action.
+*           i = getsymname(op);
+*           if (!(i > 0))
+*              return 4;
+*           else return 0;
+*        }
+**       if (parse() == 0) ; / * do the if statement
+*        if (strcmp(op , "0")==0) return 4;
+*        else if (length(op) == 0) return 4;
+*        else if ((strcmp(op, "''") == 0)) return 4;
+*        else return 0;
+*endif
+*
+*
+*
+*
+*
+*int         ujp04if()
+*{ int         i;
+*
+*   i = if_test();
+*   return i;
+*}
+*
+         END

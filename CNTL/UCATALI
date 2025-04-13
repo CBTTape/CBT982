@@ -1,0 +1,20 @@
+//CLARKEU JOB  (SETUP),
+//             'BUILD A USERCAT',
+//             MSGCLASS=X,
+//             MSGLEVEL=(1,1),
+//             CLASS=A,
+//             REGION=1024K
+//*********************************************************************
+//*
+//* TAKEN FROM MVS0150 OF HERCULES SETUP - JAN 2010 - CLEM CLARKE
+//*
+//* NAME: SYS1.SETUP.CNTL(MVS0140)
+//*
+//* DESC: CONNECT USER CATALOG
+//*
+//*********************************************************************
+//*
+//ALIAS   EXEC PGM=IDCAMS
+//SYSPRINT DD  SYSOUT=*
+//SYSIN    DD  *
+ DEFINE ALIAS ( NAME(CLARKE) RELATE(JOLCATLG.UCAT.MVS))

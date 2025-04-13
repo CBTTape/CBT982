@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Enque</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>ENQ/DEQ</u></font><font size="5"><u><span
+ style="font-weight: normal;"> </span></u></font><u>- </u><font
+ size="5"><i><u><span style="font-weight: normal;">Immediate Instruction</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">ENQ</span> and <span
+ style="font-weight: bold;">DEQ</span> instructions enque and dequeue
+system resources.&nbsp; These instruction should be used with caution,
+otherwise system interlocks could occur.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; </b><br>
+      </p>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">ENQ
+
+
+      </span><span style="font-style: italic;">qname/'minor-name'</span><span
+ style="font-weight: bold;"> [ WAIT | NOWAIT ] ;<br>
+      </span></div>
+      <div style="margin-left: 40px;">and<br>
+      </div>
+      <div style="margin-left: 80px;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;"></span></div>
+      <span style="font-weight: bold;">DEQ </span><span
+ style="font-style: italic;">qname/'minor-name'</span><span
+ style="font-weight: bold;"> ;<br>
+      <br>
+      </span></div>
+      <div style="margin-left: 80px;">
+      <div style="margin-left: 80px;"><br>
+      </div>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <span style="font-weight: bold;">Enquing
+on
+Resources</span><br>
+      </td>
+      <td align="left" valign="top">
+      <p>You can use the <span style="font-weight: bold;">ENQ</span>
+instruction to stop another user updating a data set that you have
+allocated as <span style="font-weight: bold;">SHR</span> by enquing on
+it when you need to update it.&nbsp; When you have updated the data
+set, you can then free it so that other users can update it.<br>
+      <br>
+As long as everyone using the data set uses the same enque names, you
+can gain control of the data set for the short time you require it, and
+then allow others to have access to it.&nbsp; The Jol <span
+ style="font-weight: bold;">SAVESYMS</span> command uses this technique
+to control access to data sets.<br>
+      <br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol style="font-weight: normal;">
+      </ol>
+      <ol>
+        <li><span style="font-weight: normal;">When Jol is running in a
+background region,<span style="font-weight: bold;"> WAIT</span> is the
+default.&nbsp; Your job will wait until the resource is available, and
+the Operator will be notified that your job is waiting.</span></li>
+        <li><span style="font-weight: normal;">When Jol is running
+under <span style="font-weight: bold;">TSO, NOWAIT </span>is the
+default.&nbsp; You will be notified if the resource is not available,
+and can request that Jol trys again, or ignores the request.</span></li>
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">%LASTCC</span> is set to 0 if the request
+was successful, otherwise a non-zero result is set.&nbsp; You can use
+the <span style="font-weight: bold;">IF</span> statement to determine
+if you gained access to the resource.</span></li>
+        <li><span style="font-weight: normal;">You must <span
+ style="font-weight: bold;">DEQ</span> the resource after you have
+finished with it.&nbsp; Jol will not automatically <span
+ style="font-weight: bold;">DEQ</span> resources you have enqued.</span></li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">1.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ENQ
+SPFDSN/'%SYSUID.SAVESYMS';<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+data
+set
+      <span style="font-weight: bold;">%SYSUID.SAVESYMS</span> will
+be made available to you if it is not already enqued under that
+name.&nbsp; This could occur if another Jol user enqued on that data
+set, or if SPF was saving data into that data set when you requested
+control.</span><br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

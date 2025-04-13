@@ -1,0 +1,15 @@
+//CLARKE2 JOB (0000,0000),NAME,NOTIFY=CLARKE,REGION=1024K,
+// MSGCLASS=X TYPRUN=SCAN
+//COPYSYS  EXEC PGM=IEBCOPY
+//SYSPRINT DD  SYSOUT=X
+//LOADIN   DD  DSN=JOLDIST.JOL60.LOAD,DISP=SHR
+//LOADOUT  DD  DSN=ADCD.ZOSV14S.LINKLIB,DISP=SHR
+//*********                                           ***********
+//*********   COPY LOAD MODULES TO AUTHORISED LIBRARY ***********
+//*********                                           ***********
+//*********   DO MODIFY LLA,REFRESH ON CONSOLE, TOO   ***********
+//*********                                           ***********
+//SYSIN DD *
+   COPY INDD=LOADIN,OUTDD=LOADOUT
+   SELECT MEMBER=(($JOLX860,,R))          DYNAMIC MODULE
+//

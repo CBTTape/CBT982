@@ -1,0 +1,19 @@
+         PRINT OFF
+         COPY  JOLCOM
+         PRINT DATA
+         JOLSAVE CSECT=UJP61WRI
+         USING TKNX,R3
+* THIS ROUTINE WRITES A CHARACTER STRING ONTO A TSO SCREEN.
+         MVC      ICOMMAND,=CL8'MACRO' MAKE ASSIGN BETTER.
+         GETTKN   3                    CHECK FOR ERRORS.
+         CLI      TKN,C' '             ANY MORE TOKENS??
+         BE       P61OK1
+         JOLERR   301,'TOO MANY TOKENS ON WRITE STATEMENT'
+P61OK1   GETTKN   2                    GET MESSAGE TO BE WRITTEN.
+         BAL      R14,DROPQUOT         DROP QUOTES FROM THE MESSAGE
+         LA       R1,TKN               GET MESSAGE AREA ADDRESS.
+         LH       R0,#TKN              GET LENGTH TO GO TO SCREEN.
+         SVC      93                   GET VALUE FROM THE SCREEN.
+         JOLRETN
+         DC    20S(*)                  ZAP SPACE IF REQUIRED
+         END

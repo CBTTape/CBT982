@@ -1,0 +1,27 @@
+         MACRO                                                    88036
+&L       UJE21DMP &FROM,&SIZE,&TITLE=,                            88036.
+               &SA=,&DBUG=YES                                     J40B
+         COPY  JOLGLOBL                                           J40B
+         LCLC  &C                                                 88036
+         AIF   ('&DBUG' EQ 'NO').EXP
+         AIF   (&DEBUG).EXP                                       88036
+         MEXIT                                                    J40B
+.EXP     ANOP                                                     88036
+         AIF   (T'&L EQ 'O').N                                    88036
+&L       DS    0H                                                 88036
+.N       ANOP                                                     88036
+         AIF   (T'&SA EQ 'O').NS1                                 J40B
+         STM   R0,R15,&SA                                         J40B
+.NS1     ANOP                                                     J40B
+         AIF   (K'&TITLE EQ 0).NOTITLE                            88036
+&C       SETC  'KCP'.'&SYSNDX'                                    88036
+         BAL   R1,&C           BRANCH AROUND THE MESSAGE          88036
+         DC    Y(&C-*,0),Y(&C-*,0),C&TITLE                        88036
+&C       PRPUT (1)                                                88036
+.NOTITLE ANOP                                                     88036
+         IHBINNRA &FROM,&SIZE                                     88036
+         $CALL UJE21DMP                                           88036
+         AIF   (T'&SA EQ 'O').NS2                                 J40B
+         LM    R0,R15,&SA                                         J40B
+.NS2     ANOP                                                     J40B
+         MEND                                                     88036

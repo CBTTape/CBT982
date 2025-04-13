@@ -1,0 +1,287 @@
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974,1975
+* JOL COPYRIGHT CCS-JOL 1986.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+         PRINT OFF
+         COPY JOLCOM
+        PRINT ON,DATA
+           TITLE 'AUTOMATIC RESET OF GENERATIONS-INPUT AND OUTPUT'
+*
+* THIS IS NEW CODE FOR VERSION 3.0 (DEC 26, 1975)
+*
+CALLOVLY   DSECT
+CHARWORK   DS  CL4
+O39SAVE    DSECT
+           DS  18F             NORMAL SAVE
+O39GDG1I   DS  CL1 '('
+O39RELIN   DS  CL1             '+' | '-' | ' '
+O39RELNO   DS  CL4 REL NUMBER
+O39VERS    DS  CL2             VERSION NUMBER
+GDGINPUT   DS  CL4             LOWEST INPUT RELATIVE NUMBER
+GDGINTYP   DS  CL1             '-' | ' '
+O39BIAS    DS  P'000'          BIAS FOR GDG'S
+O39PACKR   DS  P'0000'         PACKED REL GDG GOES HERE
+O39SAVEL   EQU *-O39SAVE
+* SOME NEW CODE NOW FOR GENERATION DATA SETS.
+*
+* WHAT WE WANT TO DO IS TO RE-ADJUST THE RELATIVE GENERATION
+*  NUMBERS TO ASSIST IN RE-START SITUATIONS.
+*
+* I CAN'T REALLY WORK OUT WHETHER THIS SHOULD BE DONE ONLY WHEN
+*    'STARTAT' IS USED, OR ALWAYS, SO I'LL DO IT ALWAYS FOR NOW.
+*
+*** THIS IS THE GDG PROBLEM ***
+* A JOB STARTS OFF AND IT READ (0) AND CREATES (+1), THEN
+*    READS (+1) AND MAYBE CREATES (+2).
+* WHEN (IF) IT CRASHES IN THE MIDDLE OF A JOB, THE CODER MUST
+*    RESET THE GENERATION NUMBERS BEFORE RE-SUBMITTING THE JOB.
+* THIS IS A LITTLE (?) ANNOYING, SO WHAT WE WILL DO IS THIS:-
+*
+*    1. SCAN THE GDG DATA-SETS TILL WE FIND A + GDG.
+*    2. IF IT IS +1, ALL IS WELL, AND WE CAN IGNORE THIS DATASET
+*          ENTIRELY.
+*    3. IF IT IS +2 (OR HIGHER), WE WILL RE-ADJUST ALL THE
+*          RELATIVE NUMBERS FOR THAT GENERATION DATA SET SO THAT
+*          THEY USE +1 AS A BASE.
+*
+* FOR EXAMPLE:-
+*
+*    //STEP1 EXEC
+*    //DD1 DD DSN=GDG(0),DISP
+*    //DD2 DD DSN=GDG(+1)
+*    //*
+*    //STEP2 EXEC
+*    //DD3 DD DSN=GDG(+1)
+*    //DD4 DD DSN=GDG(+2)
+*
+* NOW, IF WE ARE STARTING AT STEP2, WE WILL RE-ADJUST THE
+*    RELATIVE NUMBERS BACKWARD BY 1, SO WE END UP WITH :-
+*
+*    //STEP2 EXEC
+*    //DD3 DD DSN=GDG(0)
+*    //DD4 DD DSN=GDG(+1)
+*
+*
+*
+* THIS CSECT COULD (PERHAPS) HAVE BEEN PART OF UJO40DD, BUT
+*    A NEW MODULE HAS BEEN WRITTEN SO THAT IS CAN BE EASILY
+*    REPLACED AFTER EXPERIENCE HAS BEEN GAINED WITH IT.
+*
+*
+           JOLSAVE CSECT=UJO39GDG,SIZE=O39SAVEL
+         JOLRETN RC=0    ********
+         ORG   *-4
+         B     *+4
+           USING O39SAVE,R13
+           LA   R8,CALLAREA
+           USING CALLOVLY,R8
+            PRINT DATA
+           L   R3,AVTBLE       GET ADDRESS OF THE MAIN TABLE.
+           USING DDDSNDET,R3   SET UP A USING STATEMENT.
+O39TDD1    CLI DDDD1,C'D'      DD-CARD ENTRY ?
+           BE  O39DD1          YES, TEST IF GDG DATA SET NOW
+           CLI DDDD1,C'E'      EXEC CARD ?
+           BNE O39STEP1        NOPE, STEP ON TO NEXT TABLE ENTRY.
+           MVC STMT,PGMESTMT-PGMDETS(R3) SAVE 'RUN' STATEMENT NUMBER
+O39STEP1   AH  R3,0(R3)        POINT TO NEXT RECORD
+           CLC DDOSVB,=H'0'    END TABLE ?
+           BNE O39TDD1         NOPE, TEST RECORD TYPE.
+           JOLRETN
+           SPACE 3
+O39DD1     EQU *
+* HERE WE HAVE A 'DD-CARD'
+           CLI DDMBR,C'('      GDG OF SOME SORT ?
+           BNE O39STEP1        NO SO IGNORE IT.
+           CLI DDMBR+6,C'1'    HAVE WE ALREADY DONE THIS GDG ?
+           BE  O39STEP1        YES, IGNORE IT THEN.
+           SPACE 3
+* MARK IT SO WE WON'T REFERENCE IT AGAIN
+           MVI DDMBR+6,C'1'    MARK IT .
+           LR  R4,R3           SET R4 TO POINT TO CURRENT DSID
+           LR  R5,R4           SET R5 TO POINT TO CURRENT DSID TOO
+           CLEAR O39GDG1I,O39RELNO,GDGINPUT,GDGINTYP
+           DROP R3
+           USING DDDSNDET,R4
+* SO WE HAVE A GENERATION DATA SET OF SOME DESCRIPTION.
+O39TPLUS   CLI DDMBR+1,C'+'      SEE IF PLUS
+           BNE O39INPGD        NOT +, MUST BE 0 OR -VE
+           BNE O39STP2         NOPE
+* OK, WE HAVE A PLUS GDG.
+           TM DDUSE,B'11000000' INPUT AS WELL?
+           BZ  O39INPGD        YES,GO FIX INPUT GDG NUMBER.
+           IFNULL O39RELNO,O39MVCRE
+* NOW CHECK IF THIS RELATIVE NUMBER IS LOWER THAN THE ONE IN
+*    O39RELNO
+           CLC O39RELNO,DDMBR+2 LAST ONE <= NEW GDG REL NUMBER.
+           BNH O39STP2
+O39MVCRE   MVC O39RELNO,DDMBR+2
+           B   O39STP2
+           SPACE 3
+O39INPGD   EQU *
+           IFNULL GDGINPUT,O39MVCIN SET UP FIRST THEN
+           CLI DDMBR+1,C'-'    IS THIS A NEGATIVE REL NUMBER ?
+           BE  O39INING        YES
+           CLI GDGINTYP,C'-'   OLDEST -VE ?
+           BE  O39STP2         LAST -VE GDG,THIS NOT, IGNORE THIS
+* HERE NEITHER NEGATIVE GDG'S
+           CLC GDGINPUT,=C'0000' IS FIRST ZERO ?
+           BH  O39MVCIN        YES, SO SWAP NUMBERS
+           CLC GDGINPUT,DDMBR+2 LAST STORED > THIS ONE
+           BH  O39MVCIN        YES, SO SWAP NUMBERS
+           B   O39STP2         NO, IGNORE THIS ONE
+           SPACE 2
+O39INING   EQU *               INPUT (LAST WE ARE LOOKING AT) -VE GDG
+           CLI GDGINTYP,C'-'   IS THIS -VE TOO ?
+           BNE O39MVCIN        NOPE, SO TAKE LOWEST (THIS ONE)
+           SPACE 1
+* BOTH -VE, TAKE LOWEST (THERE IS REALLY NO NEED TO DO THIS - ANY
+*          -VE MEANS WE WON'T BE ADJUSTING ANYTHING ANYWAY).
+           MVC GDGINPUT,DDMBR+1 CHANGE
+           B   O39STP2         EXAMINE NEXT DD ENTRY
+           SPACE 3
+O39MVCIN   CLI DDMBR+1,C'-'    -VE ?
+           BNE *+8
+           MVI GDGINTYP,C'-'   SHIFT -VE NOW
+           MVC GDGINPUT,DDMBR+2 SWAP | MOVE REL INPUT NUMBERS
+O39STP2    AH  R4,DDOSVB       STEP TO NEXT RECORD
+           CLC DDOSVB,ZERO     REACHED END ?
+           BE  O39END1
+           CLI DDDD1,C'D'      DDCARD ?
+           BNE O39STP2         NO, SKIP IT.
+           CLC DDDSNAME,DDDSNAME-DDDSNDET(R3)  DSN'S EQUAL ?
+           BNE O39STP2
+           CLI DDMBR,C'('      IS IT A GDG AT ALL (COULD BE ALL)
+           BNE O39STP2         NO, SKIP IT (MUST BE ALL)
+           LR  R5,R4           SAVE LAST POSITION OF DSNAME IN
+*                              TABLE SO WE CAN SAVE CPU TIME WHEN
+*                              WE GO ROUND AGAIN
+           MVI DDMBR+6,C'1'    TURN ON 'USED' BIT
+           B   O39TPLUS        TEST IF + ETC
+           SPACE 3
+O39END1    EQU *
+* OK, NOW SEE IF WE HAVE TO ADJUST THE 'BIAS' TABLE ...
+           LR  R4,R3           SET R4 TO ORIGINAL DSNAME DSID.
+           SPACE 2
+* WE MUST CHECK FOR INPUT AND OUTPUT GDGS.
+* IF WE HAVE AN INPUT NUMBER (0) | (-XX) WE WON'T DO ANYTHING.
+* IF WE HAVE AN OUTPUT OF +1, WE WON'T DO ANYTHING UNLESS THERE
+* IS AN INPUT OF (+NN), IN WHICH CASE WE WILL ADJUST TO THE LOWEST.
+           SPACE 2
+           CLI GDGINTYP,C'-'   -VE INPUT GDG FOUND ?
+           BE  O39STEP1        YES, AWAY,AWAY
+           CLC GDGINPUT,BLANKS DID WE FIND ANY INPUT GDG'S ?
+           BE  O39ONLYP        NO, ONLY +GDG'S
+           SPACE 2
+* OK,INPUT GDG, AND OUTPUT'S FOUND
+           CLC GDGINPUT,=CL4'0000' INPUT WAS (0) ?
+           BE  O39STEP1        YES, SO DON'T DO ANYTHING EITHER.
+* NOW WE HAVE A + INPUT GDG (LOWEST DETECTED) AND MAYBE A +GDG TOO.
+           CLC O39RELNO,BLANKS IS THERE AN OUTPUT GDG OR NOT ?
+           BE  O39ONLYI        ONLY INPUT, SO NOW CHECK AND RE-CALC
+*                              GDG NUMBERS.
+           SPACE 1
+           CLC O39RELNO,GDGINPUT ARE INPUT AND OUTPUT THE SAME?
+           BE  O39ONLYP              YES, CHECK AND RE-CALG BIAS.
+           SPACE 1
+* ONLY INPUT
+O39ONLYI   MVC CALLAREA,GDGINPUT
+           CLC GDGINPUT,=CL4'0000' LOWEST INPUT (0)
+           BE  O39STEP1        YES. DON'T DO ANYTHING TO THIS
+*                              SET OF GDG'S THEN
+           SPACE 1
+* SHALL WE ADJUST TO THE INPUT | OUTPUT ?
+* I MEAN, INPUT MAY BE +2, AND OUTPUT +1, WHICH IS OK ANYWAY,COS
+* THERE SHOULD BE A +2 OUTPUT SOMEWHERE (IF NOT,ERROR DETECTED
+* NEXT PHASE).
+         IFNULL O39RELNO,RESETIN
+           CLC O39RELNO,GDGINPUT
+           BL  O39ONLYP        + IS LOWER THAN INPUT, CALC NEW THINGS
+*                              BASED ON THE OUTPUT DATA SET.
+           SPACE 2
+* HERE WE MUST ADJUST THINGS ON THE LOWEST INPUT DATA SET
+*39ONLYI   EQU *                                                   SOCO
+RESETIN    MVC CALLAREA,GDGINPUT
+* DROP BLANKS FROM END OF DATA SET NAME
+         MVC   #WORK,=H'44'
+         MVC   WORK(44),DDDSNAME
+         BAL   R14,DRPBWORK
+           JOLERR 102,'LOWEST RELATIVE GENERATION NUMBER FOUND FOR INPU*
+               T DATA SET ''',#WORK,''' WAS ',CHARWORK,':- ','ALL RESET*
+                SO THAT LOWEST ','INPUT DATA SET IS (0)'
+           PACK O39BIAS,GDGINPUT
+           B   O39RESET        RESET ALL GENERATIONS
+           SPACE 3
+O39ONLYP   EQU *
+           IFNULL O39RELNO,O39STEP1  FOUND NO '+' GDGS.
+           CLC O39RELNO,=C'0001'  LOWEST WE FOUND '+1' ?
+           BE  O39STEP1        YES, SO NO ADJUSTING TO DO.
+           CLC O39RELNO,=C'0000' +0 MAY HAVE COME THROUGH TOO
+           BE  O39STEP1        IGNORE IT TOO
+           SPACE 1
+         MVC CALLAREA,O39RELNO  JOLERR WON'T WORK ON BASE REG 13
+* DROP BLANKS FROM END OF DATA SET NAME
+         MVC   #WORK,=H'44'
+         MVC   WORK(44),DDDSNAME
+         BAL   R14,DRPBWORK
+           JOLERR 101,'LOWEST RELATIVE GENERATION NUMBER FOUND FOR OUTP*
+               UT DATA SET ''',#WORK,''' WAS ',CHARWORK,':- ','ALL RESE*
+               T SO THAT LOWEST ','OUTPUT DATA SET IS (+1)'
+* NOW CALCULATE THE 'BIAS' WE HAVE TO APPLY
+           PACK O39BIAS,O39RELNO  PACK IT
+           SP  O39BIAS,=P'1'   CORRECT BIAS NOW
+* NOW START AT DD CARD AT 0(R3) AND APPLY CORRECT GDG NUMBERS.
+O39RESET   EQU *
+O39STEP3   CR  R4,R5           REACHED END ?
+           BH  O39STEP1
+           CLI DDMBR,C'('      GDG ?
+           BE  O39GDG3
+O39STP3    AH  R4,DDOSVB       STEP ON
+           CLC DDOSVB,ZERO     REACHED END?
+           BE  O39STEP1
+           B   O39STEP3
+O39GDG3    CLI DDMBR+1,C'-'    -N ?
+           BE  O39REL
+           CLI DDMBR+1,C'+'    +N ?
+           BE  O39REL
+           CLC DDMBR+2,=C'0000' +0
+           BNE O39STP3         IGNORE ABSOLUTE GENERATION THEN
+O39REL     PACK O39PACKR,DDMBR+2(4) PACK REL GDG NUMBER
+           SP  O39PACKR,O39BIAS    SUBTRACT THE 'BIAS'
+           CP  O39PACKR,=P'0'      COMPARE TO 0
+           BE  O39RZERO            =0 ->
+           BH  O39UNPK             > 0
+           MVI DDMBR+1,C'-'        < 0
+           AP  O39PACKR,=P'10000'  MAKE POSITIVE
+           B   O39UNPK
+O39RZERO   MVI DDMBR+1,C' '        BLANK '+' | '-' FOR REL (0)
+O39UNPK    UNPK DDMBR+2(4),O39PACKR UNPACK NEW REL NUMBER
+           OI  DDMBR+5,C'0'        FIX LAST BYTE
+           B   O39STP3             STEP ON NOW
+           LTORG
+          DC S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC S(*,*,*,*,*,*,*,*,*,*,*,*)
+          DC S(*,*,*,*,*,*,*,*,*,*,*,*)
+           END

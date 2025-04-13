@@ -1,0 +1,15 @@
+         COPY  JOLGLOBL
+         $UJEPARM
+&TYPE    SETC  'SCHED'                                           88036
+         PRINT ON,DATA
+         AIF   (&X8).X                                           88036
+         IEFZB4D0
+         IEFZB4D2
+         AGO   .E                                                88036
+.X       ANOP                                                    88036
+         KDJZB4D0
+         KDJZB4D2
+.E       ANOP                                                    88036
+DYNCON   CSECT
+         COPY DYNAREAS
+         END

@@ -1,0 +1,104 @@
+         MACRO
+         DYNERR &DEBUG,&MSG,&ID,&CPPL
+.*  SETTLE CODE FOR ERROR MESSAGE AND DEBUG OUTPUT
+.*     REVISED OCT 77 TO PROVIDE FOR TERMINAL MESSAGES (CPPL PARM)
+.*
+.*  IF DEBUG=NO THEN NO FORMATTED DUMPS (DEFAULT)
+.*     DEBUG=ERR DUMPS IF ANY ERROR CODE NON-ZERO
+.*     DEBUG=ANYTHING ELSE THEN DUMP EVERY TIME.
+.*  IF MSG NOT = YES THEN NO MESSAGES
+.*     MSG=YES (DEFAULT) THEN MESSAGES ON ERROR, AND
+.*     IF CPPL NOT = NULL THEN MESSAGES PUT TO TERMINAL.
+         GBLA  &S
+         GBLC  &R
+         GBLC  &DFAIL
+         LCLA  &I
+         LCLC  &C
+         AIF   (K'&DFAIL NE 0).DFSET                              88036
+&DFAIL   SETC  'IKJEFF18'                                         88036
+.DFSET   ANOP                                                     88036
+         AIF   ('&DEBUG'EQ'NO').Z4
+         AIF   ('&DEBUG'NE'ERR').Z10
+&S       SETA  &S+1
+         LTR   15,15
+         BNZ   D&R&S                 RETURN CODE ZERO
+         CLC   RB&R+4(4),=XL4'00'  TEST ERR AND INFO CODE
+&I       SETA  &S+1
+         BE    D&R&I
+D&R&S    EQU   *
+&S       SETA  &I
+.Z10     ST    15,DCR&R                SAVE DYNALLOC RETURN CODE
+         LOAD  EP=DYNDUMP              GET DUMP ROUTINE
+         LR    15,0                    TRANSFER ADDRESS TO 15
+         L     1,RBPT&R                REQUEST BLOCK POINTER
+         BALR  14,15                   GO TO IT
+         L     15,DCR&R                RESTORE RETURN CODE
+         AIF   ('&DEBUG'NE'ERR').Z4
+         AIF   ('&MSG'EQ'NO').ZX
+         AGO   .ZB
+.Z4      AIF   ('&MSG'NE'NO').Z3
+.Z5      LA    1,RB&R+4               ADDR OF ERROR AND INFO CODES
+         AGO   .ZZ
+.Z3      LTR   1,15                   TEST RETURN CODE
+&S       SETA  &S+1
+         BNZ   D&R&S               MESSAGE REQUIRED
+         L     0,RB&R+4
+         LTR   0,0                 TEST ERROR AND INFO CODES
+&I       SETA  &S+1
+         BZ    D&R&I               NO MESSAGE
+         AIF   ('&DEBUG'EQ'YES').ZC
+D&R&S    ST    15,DCR&R            SAVE SVC99 RETURN CODE
+         AGO   .ZB1
+.ZB      LR    1,15
+.ZB1     O     1,=XL4'40F0'        (CONVERT
+         AGO   .ZD
+.ZC      ANOP
+D&R&S    O     1,=XL4'40F0'        (CONVERT
+.ZD      ANOP
+         C     15,=F'12'            CODES
+         BNE   *+8                   TO
+         LH    1,=X'F1F2'                EBCDIC
+         STH   1,MSGC&R                    FOR
+&C       SETC  'MSGE'.'&R'.'(9)'
+         UNPK  &C,RB&R+4(5)                    THE
+&C       SETC  '&C'(1,9).'8)'
+         NC    &C,=8X'0F'                         ERROR
+         TR    &C,=C'0123456789ABCDEF'                MESSAGE)
+&C       SETC  ''
+         AIF   ('&CPPL' NE '').RT      TEST FOR CP
+         LA    1,MSG&R
+         SVC   35               WTO, ROUTCDE=11
+         LINK  EP=&DFAIL,PARAM=(RB&R,DCR&R,ADR&R,ADR&R+4)
+&C       SETC  '80'
+         AGO   .RT2
+.RT      LA    0,MSGL&R
+         LA    1,MSG&R
+         SVC   93               TPUT MESSAGE
+&C       SETC  '&CPPL'
+         AIF   ('&CPPL'(1,1) EQ '(').RT1   TEST FOR REG
+&C       SETC  '(1)'
+         L     1,&CPPL          GET CPPL ADDRESS
+.* NOW LINK TO TSO ERROR MESSAGE ROUTINE
+.RT1     LINK  EP=&DFAIL,PARAM=(RB&R,DCR&R,ADR&R,ADR&R+4,&C)
+&C       SETC  '00'
+.RT2     L     15,DCR&R            RESTORE DYNALLOC RETURN CODE
+         B     D&R&I
+MSG&R    EQU   *
+         AIF   ('&CPPL' NE '').RT4
+         DC    AL2(MSGL&R),X'8000'     LENGTH AND FLAGS
+.RT4     DC    C'ID=',CL8'&ID'
+         DC    C' DYNALLOC RETURN CODE '
+MSGC&R   DS    H
+         DC    C', ERROR AND INFO CODE '
+MSGE&R   DS    XL8                 SPACE FOR ERROR AND INFO CODES
+MSGL&R   EQU   *-MSG&R             LENGTH OF MESSAGE
+         AIF   ('&CPPL' NE '').RT5
+         DC    XL4'20'      ROUTING CODE
+.RT5     ANOP
+ADR&R    DC    F'0'                DON'T KNOW ADDR OF IKJEFF02
+         DC    X'&C'      '80' WANT WTO, '00' WANT PUTLINE
+         DC    X'32'      '32' IF SVC99 USED, '01' IF DAIR USED
+.ZX      ANOP
+D&R&I    LA    1,RB&R+4            ADDRESS OF ERROR AND INFO CODES
+         LA    0,MSG&R         ADDRESS OF ERROR MESSAGE           J40B
+.ZZ      MEND

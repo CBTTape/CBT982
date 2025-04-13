@@ -1,0 +1,44 @@
+         LCLA  &N
+UJU03CTS CSECT
+.LP      ANOP
+R&N      EQU   &N
+&N       SETA  &N+1
+         AIF   (&N LT 16).LP
+         STM   R14,R12,12(R13)    SAVE REGISTERS
+         USING UJU03CTS,R15       DECLARE MY BASE REGISTER
+         USING VOLINFO,R1
+         CLC   =C'AMI',CATVOL                                    88036
+         BE    DISK                                              88036
+         CLC   =C'DEV',CATVOL                                    88036
+         BE    DISK                                              88036
+         CLI   CATVOL,C'0'                                       88036
+         BL    DISK                                              88036
+         CLI   CATVOL,C'9'                                       88036
+         BNH   DISK                                              88036
+         CLI   CATVOL+1,C'0'                                     88036
+         BL    DISK                                              88036
+         CLI   CATVOL+1,C'9'                                     88036
+         BNH   DISK                                              88036
+         B     DUNNO
+TAPE     MVC   CATDEV,=X'32108003'      3420 6250 DUAL DENSITY
+*        MVC   DDUNIT,=CL8'MT'          SET TO MT FOR GETFILE
+*        MVI   DDUNITYP,B'00001001'     SET TO MT FOR JOL
+         B     EXTEND
+DISK     MVC   CATDEV,=X'3050200B'      3350/F493
+*        MVC   DDUNIT,=CL8'DA'          SET TO DA FOR GETFILE
+*        MVI   DDUNITYP,B'10001011'     SET TO DA FOR JOL
+EXTEND   MVC   CATDEV+12,CATDEV
+         MVC   CATDEV+24,CATDEV
+         MVC   CATDEV+36,CATDEV
+         MVC   CATDEV+48,CATDEV
+         MVC   CATDEV+60,CATDEV
+DUNNO    DS    0H
+         LM    R14,R12,12(R13)     RESTORE REGISTERS
+         SLR   R15,R15
+         BR    R14
+VOLINFO  DSECT
+NOVOLS   DS  H
+CATDEV   DS  XL4
+CATVOL   DS  CL6
+CATLABEL DS  H
+         END

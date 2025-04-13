@@ -1,0 +1,1452 @@
+           TITLE 'UJP02DCL:PREPROCESSOR DECLARE AND SYSIN HANDLER'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+P02SAVE    DSECT
+           DS    18F                                              82300
+P02TBLPS   DS    H        TABLE POSITION TO INSERT AT OR OVERRIDE 87150
+P02WASFN   DS    H        SET TO 0 IF FOUND, ELSE 4               87150
+P02DCLTP   DS    H        DECLARE TYPE (SPLIT,NOSPLIT,JOL ETC)    82300
+* ABOVE NOT YET IMPLEMENETED
+P02SAVEL EQU *-P02SAVE                                            82300
+           SPACE 3
+           JOLSAVE CSECT=UJP02DCL,SIZE=P02SAVEL
+* THIS ROUTINE GETS CONTROL WHEN A DECLARE (OR DEFINE) HAS BEEN FOUND
+           USING JOLCOM,R2
+           USING TKNX,R3
+           USING P02SAVE,R13
+          CLC =CL8'MACRO',ICOMMAND WERE WE CALLED BY THE MACRO
+*                              PROCESSOR TO STORE MACRO PROTO-TYPE
+*                              SYMBOLIC ENTRIES ?
+           BE  P02MACRO        YES,SO VALUE AND NAME ALREADY SET
+*                              UP FOR US AND ALL WE HAVE TO DO IS
+*                              STORE THE NAME AND VALUE
+* NOW WE HAVE TO DETERMINE WHETHER OR NOT THIS IS A PREPROCESSOR
+*    DCL OR ONE FOR THE NEXT MODULE.
+         GETTKN NO=2
+         CLI TKN,C'%'          PREPROCESSOR DECLARE ?
+         BE    P02PDCL         YES,GO TO P02PDCL
+         FINDTKN 'INITIAL ',NRETURN=P02PDCL
+         FINDTKN 'INIT ',NRETURN=P02PDCL
+* HERE IT IS NOT A PREPROCESSOR DECLARE
+*    MERELY REPLACE THE SYMBOLIC PARAMETERS AND OUTPUT IT
+         GETTKN NO=3           SEE IF SYSIN
+         CLI TKN,C'*'          IS IT ?
+         BNE P02OPDCL          NO,OUTPUT TO NEXT PHASE
+* WELL A SYSIN DECLARE BY GEORGE.
+         CLEAR DATAMEM
+         CLEAR DATAMEM4
+         L   R1,AJOLGEN
+         USING GENDETS,R1
+         LH    R1,PARMSYSB    DEFAULT SYSIN BLOCK SIZE
+         CVD R1,DBL           DEFAULT SYSIN BLOCK SIZE
+         UNPK DATAMEM5,DBL
+         OI     DATAMEM5+L'DATAMEM5-1,C'0'
+         DROP   R1
+         MVC DATAMEM4,=C'FB' SET DEFAULT RECFM                    74214
+         CLEAR DATAMEM6
+         MVC DATAMEM6,=C'   80' SET DEFAULT LRECL                 74214
+         MVC DATAMEM(2),=C'$$'    FIX UP
+         MVC DATAMEM+2(4),STMT        MEMBER NAME
+         OC DATAMEM+2(4),=C'0000'
+         SR R5,R5             REPLACE OPTION / NOSPLIT OPTION INDC DASD
+* IF NEITHER 'REPLACE' NOR 'NOSPLIT'             THEN R5 IS 0      DASD
+* IF 'REPLACE' BUT NOT 'NOSPLIT'                 THEN R5 IS 1      DASD
+* IF 'NOSPLIT' ONLY .. (WHICH IS WRONG)          THEN R5 IS 20     DASD
+* IF 'REPLACE' AND 'NOSPLIT'                     THEN R5 IS 21     DASD
+         SR    R6,R6            NOPRINT OPTION INDICATOR          74303
+         SR    R7,R7            CARD COUNTER (NO. CARDS)          74303
+         CLC TKNNO,=H'3'       ARE THERE ANY QUALIFIERS ?
+         BNH P02MEMRC          NO,OUTPUT MEMBER HEADING RECORD
+         GETTKN NO=4
+         STH R1,TKNCURR
+P02TRPL  EQU *                                                    74214
+         CLC =C'VB ',TKN       RECFM ?
+         BE    P02SYSRC
+         CLC =C'FB ',TKN       RECFM ?
+         BE    P02SYSRC
+         CLC =C'REPLACE ',TKN                                     74214
+         BE    P02REPSY
+         CLC =C'JOL ',TKN                                         82300
+         BE    P02JOLIN
+         CLI TKN,C' '          END ?
+         BE    P02MEMRC        YES,OUTPUT MEMBER STOW RECORD
+         CLC =C'PRINTNONE ',TKN PRINT NO CARDS ?                  75311
+         BNE P02TPALL           NO -> TEST IF PRINTALL            74303
+         LA    R6,1             SET 'NOPRINT' ON                  74303
+         B     P02NXTTK         CONTINUE,GET NEXT TOKEN           74303
+P02TPALL CLC =C'PRINTALL ',TKN 'PRINTALL' OPTION SPECIFIED        74303
+******** BNE P02ERR08           ERROR                      C77287  DASD
+       BNE     P02TNSPL                 GO TEST IF NOSPLIT         DASD
+         SH    R6,=H'20'        SET R6 NEGATIVE(ALREADY LITERAL   74303
+*                             FOR H'20' SO RE-USE IT)             74303
+         B     P02NXTTK         GET NEXT TOKEN                    74303
+P02TNSPL CLC   =C'NOSPLIT',TKN         IS TKN 'NOSPLIT' ?          DASD
+         BNE   P02ERR08                IF NOT GO TO ERR08          DASD
+         LA    R5,20(R5)               ADD 20 TO R5 FOR NOSPLIT    DASD
+         B     P02NXTTK                GET NEXT TOKEN              DASD
+P02JOLIN   DS  0H
+         LA    R5,30(R5)               ADD 30 TO R5 FOR JOL IN    82300
+         B     P02NXTTK                GET NEXT TOKEN             82300
+P02ERR08   EQU *                                                  74303
+           B   P02NXTTK         GET NEXT TOKEN(MORE VETTING)      74303
+P02SYSRC   MVC DATAMEM4,TKN
+           GETTKN LOCN=TKNCURR SEE IF BLKSIZE
+           STH R1,TKNCURR
+           CLI TKNTYPE,0       NUMERIC ?
+           BNE P02TRPL
+           MVC DATAMEM6,TKN    MOVE IN RECORD LENGTH ?            74214
+           GETTKN LOCN=TKNCURR GET NEXT TOKEN                     74214
+           STH  R1,TKNCURR                                        74214
+           CLI  TKN,C','                                          74214
+           BNE  P02TRPL                                           74214
+           GETTKN LOCN=TKNCURR                                    74214
+           STH  R1,TKNCURR                                        74214
+           CLI  TKNTYPE,0                                         74214
+           BNE  P02TRPL                                           74214
+           MVC DATAMEM5,TKN    MOVE IN BLKSIZE
+P02NXTTK   GETTKN LOCN=TKNCURR GET NEXT SYMBOL
+           B   P02TRPL-4       **** NOTE -4 ****                  74214
+           SPACE
+P02REPSY   LA  R5,1(R5)                ADD 1 TO R5 FOR REPLACE   C DASD
+           B   P02NXTTK
+P02MEMRC   EQU *                                                  74214
+           MVC TKN(5),DATAMEM6                                    74214
+           MVC #TKN(2),=H'5'   SET LENGTH=5                       74214
+           TNUM #TKN           CONVERT TO NUMERIC                 74214
+         LR    R9,R1          SAVE IN R9                          75128
+           MVC TKN(5),DATAMEM5                                    74214
+           TNUM #TKN                                              74214
+         CR    R9,R1                                              75128
+           BL  P02LRECL                                           74214
+           MVC DATAMEM5,DATAMEM6 SWAP AROUND SO BIGGEST IS BLOCK  74214
+           MVC DATAMEM6,TKN                                       74214
+P02LRECL   EQU *                                                  74214
+         SPACE 2                                            FIX-X 76200
+* NEW CODE FOR 3.1.                                         FIX-X 76200
+* WHEN CERTAIN OPTIONS ARE SPECIFIED, REAL JCL IS TO BE     FIX-X 76200
+* GENERATED.                                                FIX-X 76200
+* THIS MEANS USING IEBUPDTE TO CREATE THE PDS FOR CARD      FIX-X 76200
+* FILES.                                                    FIX-X 76200
+         L     R1,AJOLGEN                                   FIX-X 76200
+         USING GENDETS,R1                                   FIX-X 76200
+         TM    MODEOUT,PROCJCL+REALJCL                      FIX-X 76200
+         BZ    P02JOLSY       NORMAL JOL                    FIX-X 76200
+* OK, CREATE IEBUPDTE CONTROL STATEMENT.                    FIX-X 76200
+         MVC   WORK(12),=C'./ ADD NAME='                    FIX-X 76200
+         MVC   WORK+12(6),DATAMEM                           FIX-X 76200
+         MVC   WORK+18(81-18),BLANKS                        FIX-X 76200
+         L     R1,ADCBS                                     FIX-X 76200
+         USING DCBS,R1                                      FIX-X 76200
+         PUT   DATA,WORK                                    FIX-X 76200
+         B     P0290OP                                      FIX-X 76200
+P02JOLSY EQU   *                                            FIX-X 76200
+         L     R1,ADCBS                                           75128
+         USING DCBS,R1                                            75128
+           PUT DATA,DATAMEM1                                      74214
+         DROP  R1                                                 75128
+P0290OP  EQU   *
+          $CALL UJP90OP
+           SPACE 1                                                74303
+P02GETS   $CALL UJP52CRD
+           CH  R15,=H'4'       SYSIN STILL ?
+           BNE P02SYSE         END SYSIN DATA.
+           LA  R7,1(R7)         ADD TO CARD-COUNTER               74303
+           LTR R6,R6            TEST PRINT INDICATOR              74303
+           BM  P02PRINT         PRINTALL SPECIFIED                74303
+           BP  P02NPRNT         NOPRINT SPECIFIED,SO DON'T PRINT  74303
+           CH  R7,=H'20'        PRINTED 20 CARDS YET ?            74303
+           BH  P02NPRNT
+           CLI ISMACRO,C' '    ARE WE PROCESSING A MACRO ?
+           BNE P02NPRNT        YES,SO DON'T PRINT SYSIN CARDS EITHER
+* THERE IS A SMALL ERROR STILL HERE: IF NPI (IE DON'T PRINT       74303
+*       INCLUDES) IS SPECIFIED,AND THIS CARD FILE IS PART OF      74303
+*       AN INCLUDED MEMBER,THEN THE CARDS WILL BE PRINTED. WE     74303
+*       SHOULD LOOK TO SEE WHAT THE CURRENT DCB IS,AND IF NPI     74303
+*       IS SPECIFIED,BUT THIS IS AWKWARD BECAUSE THE CURRENT      74303
+*       DCB IS HELD IN A NON-ADDRESSABLE CSECT AT THIS TIME.      74303
+P02PRINT EQU   *                                                  74303
+           L   R1,AJOLGEN                                         75311
+           USING GENDETS,R1                                       75311
+           TM  PARMPRNT,B'00000010' NOPRINT ?                     75311
+           BO  P02NPRNT                                           75311
+           DROP R1                                                75311
+         L     R1,APRINTLN                                        75128
+         MVC   19(80,R1),CARD                                     75128
+         MVI   1(R1),19+80                                        75128
+         JOLPRINT                                                 75128
+P02NPRNT   EQU *
+*******    LTR R5,R5           SEE IF WE HAVE TO REPLACE SYM PARMC DASD
+*******    BZ  P02OP1                                            C DASD
+         CH    R5,=H'1'                'REPLACE' & NOT 'NOSPLIT'?  DASD
+         BE    P02REPLC                                            DASD
+         CH    R5,=H'31'               'REPLACE' & 'JOL' CODE     82300
+         BE    P02REPLC                                           82300
+         CH    R5,=H'21'               'REPLACE' & 'NOSPLIT' ?     DASD
+         BNE   P02OP1                                              DASD
+P02REPLC DS    0H                      REPLACE THE SYMBOLIC PARMS  DASD
+         L     R1,AJOLGEN                                         75128
+         USING GENDETS,R1                                         75128
+           MVC #TKN,SM2
+         DROP  R1                                                 75128
+           MVC TKN(80),CARD
+          $CALL UJS20REP,#TKN                 REPLACE SYM PARMS   74303
+* NOW WE MUST REDUCE THE LENGTH OF THE STRING,IE DROP OFF TRAILING
+*   BLANKS,AND,IF IT IS ALL BLANK,DON'T OUTPUT THE CARD
+           LH R1,#WORK         LOAD LENGTH OF THE STRING NOW
+P02FNB     EQU  *
+           LA  R14,WORK-1(R1)  ABSOLUTE ADDR OF BYTE TO LOOK AT
+           CLI 0(R14),C' '
+           BNE P02GOTNB        GOT NON-BLANK CHARACTER
+           BCT R1,P02FNB       GO FIND A BLANK
+           B  P02GETS          CARD ALL BLAMK,SO DON'T OUTPUT
+P02GOTNB   EQU  *
+           STH R1,#WORK        SET LENGTH AGAIN
+         CH    R5,=H'31'               REPLACE AND JOL CODE ?     82300
+         BE    P02JOLOP         YES => THEN DO SPECIAL SPLIT FOR JOL300
+         CH    R5,=H'21'               IF NOSPLIT SPECIFIED        DASD
+         BNE   P02DOSPL                THEN CHECK THE CARD LENGTH  DASD
+         CH    R1,=H'80'               FOR GREATER THAN 80         DASD
+         BNH   P02DOMUV                IF IT IS GREATER THAN 80    DASD
+         LA    R1,80                   SET IT TO 80, PRINT WARNING DASD
+         JOLERR 108,'THE DECLARE DSID * AT ',STMT,' HAS A CARD THAT,', *
+               ' WITH SYMBOLICS REPLACED, IS LONGER THAN 80 BYTES ',   *
+               'AND THEREFORE WILL BE TRUNCATED'                   DASD
+P02DOMUV MVC   CARD(80),BLANKS         CLEAR CARD BUFFER           DASD
+         BCTR  R1,0                    AND SHIFT THE CARD          DASD
+         EX    R1,P02MUV2              IMAGE INTO IT               DASD
+         B     P02OP1                  GO OUTPUT THE CARD          DASD
+P02MUV2  MVC   CARD(*-*),WORK                                      DASD
+P02MUV3  MVC   CARD(*-*),0(R8)  EXECUTED IN JOL CARD OUTPUT       82300
+P02DOSPL L     R1,ADCBS       ADDRESS DCB AREA             C77287  DASD
+         USING DCBS,R1                                            75128
+          $CALL UJS02OP,(DATA,#WORK)                 OP RECORD
+         DROP  R1                                                 75128
+           B  P02GETS
+           SPACE
+P02JOLOP DS    0H
+* SPECIAL OUTPUT FOR JOL CODE. THE JOL CODE GETS SPLIT OVER SEVERAL
+*  CARDS IF NECESSARY.
+           SPACE
+         LH    R9,#WORK       GET LENGTH OF DATA TO GO OUT.
+         LA    R8,WORK        GET ADDRESS OF DATA TO GO OUT.
+P02OP4   LR    R1,R9          SET R1 TO NUMBER OF CHARACTERS TO GO82300
+*                           (THIS MAY BE REDUCED IN A SECOND)     82300
+         CH    R9,=H'72'      IF > 72, THEN SPLIT IT.
+         BNH   P02OP3     NO... SEND IT OUT NOW                   82300
+         LA    R1,72          SET LENGTH TO 72                    82300
+P02OP3   DS    0H             R1 IS NOW NUMBER OF CHARACTERS TO GO82300
+         MVC   CARD(80),BLANKS         CLEAR CARD BUFFER          82300
+         BCTR  R1,0                    AND SHIFT THE CARD         82300
+         EX    R1,P02MUV3              IMAGE INTO IT              82300
+         L     R1,ADCBS                                           82300
+         USING DCBS,R1                                            82300
+         PUT   DATA,CARD                                          82300
+         CH    R9,=H'72'      IF > 72, THEN SPLIT IT.             82300
+         BNH   P02GETS        ENDED THIS JOL CARD, GET NEXT       82300
+* OK, GOT TO SPLIT THE CARD (MAYBE AGAIN).                        82300
+         LA    R8,72(R8)      POINT 73 CHARACTERS ON              82300
+         SH    R9,=H'72'      REDUCE LENGTH OF STRING BY 73       82300
+         BP    P02OP4         GO AGAIN                            82300
+         JOLERR 509,'ERROR IN WORK',#WORK
+           B  P02GETS
+           SPACE
+P02OP1   L     R1,ADCBS                                           75128
+         USING DCBS,R1                                            75128
+         PUT   DATA,CARD                                          75128
+           B  P02GETS
+         DROP  R1                                                 75128
+P02SYSE    A   R7,TOTCRDS       ADD TO TOTAL                      74303
+           ST  R7,TOTCRDS                                         74303
+*                                                                 74303
+           JOLRETN
+P02OPDCL   EQU  *
+* We must store the names of any programs for later testing       J52
+         GETTKN  3                                                J52
+         CLC   =C'PROG ',TKN                                      J52
+         BE    P02ISPGM                                           J52
+         CLC   =C'PROGRAM ',TKN                                   J52
+         BNE   P02NPROG                                           J52
+P02ISPGM EQU    *
+         MVI   ISPGMDCL,1                                         J52
+         CLC   LABEL,BLANKS      Has declare got a label?         J52
+         BNE   CALLP45                                            J52
+         GETTKN  2                                                J52
+         MVC   LABEL,TKN                                          J52
+CALLP45  DS    0H                                                 J52
+         MVC   WORK(8),LABEL                                      J52
+         MVC   #WORK,=H'8'                                        J52
+         CALL  UJP45LAB                                           J52
+         GETTKN  2                                                J52
+         CLC   LABEL,TKN         Did DCL have a label?            J52
+         BNE   SETP0                                              J52
+         MVC   LABEL,BLANKS                                       J52
+SETP0    MVI   ISPGMDCL,0                                         J52
+P02NPROG DS    0H                                                 J52
+          $CALL UJP90OP
+           JOLRETN
+           SPACE 3                                                74303
+* THIS SECTION EXAMINES A PREPROCESSOR DECLARE AND EITHER STORES  74303
+* THE VALUES IN THE SYMBOLIC TABLE,OR OUTPUTS THE DCL TO THE NEXT 74303
+* PHASE.                                                          74303
+* THE FOLLOWING TYPES OF STATEMENTS ARE ACCEPTABLE:-              74303
+*  1.DCL NAMES INIT VALUE         *NAMES CAN BE %A OR %A,%B ETC * 74303
+*                                NEED NOT HAVE % NOW              J50
+*  2.DCL NAMES INIT ( VALUE )     *IE MULTIPLE NAMES NOW        * 74303
+*  3.DCL NAMES EXT INIT VALUE     *ALLOWED                      * 74303
+*  4.DCL NAMES EXT INIT ( VALUE )                                 74303
+*  5.DCL NAMES INIT VALUE EXT                                     74303
+*  6.DCL NAMES INIT ( VALUE ) EXT                                 74303
+*  OF THE ABOVE,1 IS BY FAR THE MOST COMMON,FOLLOWED BY 2.        74303
+*  TYPES  3,4,5,6 ARE VERY RARE.                                  74303
+           SPACE 2                                                74303
+P02PDCL  DS    0H                                                 74303
+         SR    R12,R12         'EXTERNAL' INDICATOR=0 FIRST
+         LH    R5,TKNNO        GET NUMBER OF TOKENS ALTOGETHER    74303
+         CH    R5,=H'4'        IF PREPROCESS DCL,MUST BE >4 TOKEN 74303
+         BL    P02OPDCL        <4,NOT PRE-PROCESSOR,OP TO COMPILER74303
+         BCTR R5,0             SUBTRACT 1 FROM R5 SO WE CAN GET   74303
+P02FINDI GETTKN (R5)           SECOND LAST TOKEN
+         CLC  =C'INITIAL ',TKN                                   74303
+         BE    P02ISIN1                                           74303
+         CLC   =C'INIT ',TKN                                      74303
+         BNE   P02TINI2        TRY  INITIAL                       74303
+* OK,SECOND LAST TOKEN IS'INIT' OR 'INITIAL'                      74303
+P02ISIN1 LR    R4,R1           BET R4 TO NEXT TOKEN               74303
+P02TEXT3 BCTR  R5,0            GO BACK 1 MORE TOKEN (BEFORE INIT) 74303
+         GETTKN (R5)           GET THE TOKEN                      74303
+         CLC  =C'EXTERNAL ',TKN                                  74303
+         BE    P02ISEX1                                           74303
+         CLC   =C'EXT ',TKN                                       74303
+         BNE   P02NEXT         NOT 'EXTERNAL'                     74303
+P02ISEX1 LA    R12,X'FF'       SET EXTERNAL                       74303
+P02NEXT  BCTR R5,0             SET R5=ITSELF-1 SO WHEN WE GO      74303
+*                              LOOKING FOR NAMES,WE CAN STOP AT   74303
+*                              VALUE IN R5 (LOOP CONTROLLER)      74303
+         B     P02OKSYM
+P02TINI2 DS    0H
+* NOW HERE,THE 2ND LAST TOKEN WAS NOT 'INIT' OR INITIAL           74303
+* SO WE WILL GO BACK 2 TOKENS (IE -3) TO SEE IF IT IS INIT        74303
+* WITH BRACKETS AROUND IT.                                        74303
+         SH    R5,=H'2'        BACK TWO TOKENS                    74303
+         GETTKN (R5)           GET IT                             74303
+         CLC =C'INITIAL ',TKN
+         BE    P02ISIN2
+         CLC =C'INIT ',TKN
+         BNE P02TINI3
+P02ISIN2 GETTKN (R1)            GET NEXT TOKEN
+         CLI TKN,C'('           '('
+         BNE P02OPDCL           ERROR,SHOVE OUT TO COMPILER
+*                             (MAY NOT BE A REAL ERROR,BUT A
+*                             FUNNY TYPE OF DECLARE)
+         LR    R4,R1            SET R4=NUMBER OF THE TOKEN
+*                             WITH THE VALUE
+         LA     R1,1(R1)       POINT TO THE TOKEN AFTER THE BRAC  74303
+         GETTKN (R1)            GET NEXT TOKEN
+         CLI TKN,C')'           ')'
+         BNE P02OPDCL           -> TOSS OUT TO COMPILER
+         B     P02TEXT3         TEST IF EXTERNAL SET
+P02TINI3 DS    0H
+           LTR  R12,R12        ALREADY COME THIS WAY ONCE ?       74303
+           BNZ  P02OPDCL       YES 50 MUST BE SOMETHING NOT RIGHT 74303
+* OK,HERE IS NOT TYPE 1,2,3 OR 4, SO THAT LEAVES ONLY 5,6 TO TEST
+           GETTKN TKNNO         GET LAST TOKEN
+           CLC =C'EXT ',TKN
+           BE  P02ISEX4
+           CLC =C'EXTERNAL ',TKN
+           BNE P02OPDCL        WELL,ITS NOT ONE OF THEM,SO TOSS
+*                              THE STATEMENT OUT TO THE COMPILER
+* NOTE *** IF USER SAYS 'DCL %X INIT '' EXV' INSTEAD OF 'EXT',
+*        IT WILL GET TOSSED OUT. TOUGH LUCK.....
+P02ISEX4   EQU *
+           LA  R12,X'FF'       SET 'EXTERNAL'
+* NOW THE EASIEST METHOD TO FIND 'INIT' ETC IS TO SET R5 TO
+*        TKNNO-2 AND BRANCH BACK TO FIND 'INIT'
+           LH  R5,TKNNO
+           SH  R5,=H'2'
+           B   P02FINDI
+P02OKSYM   GETTKN (R4)         GET THE INITIAL VALUE              74303
+* GREAT,TKN HOLDS THE INITIAL VALUE
+*    THIS INITIAL VALUE MAY OF COURSE HAVE SYMBOLIC PARAMETERS
+*    IN IT SO WE MAY HAVE TO REPLACE THEM
+           CLI TKNTYPE,0       NUMERIC ?
+           BE  P02VALOK         YES,OK
+           CLI TKNTYPE,3       LITERAL STRING ?
+           BE  P02CALRP        YES,REPLACE SYMBOLICS AND STORE    74303
+*                              SYMBOLIC PARAMETERS
+           CLI TKNTYPE,1       SPECIAL?
+           BE  P02VALSP         YES,NOT SO GOOD,ISSUE A MESSAGE
+           CLI TKNTYPE,2       IDENTIFIER ?
+           BE  P02VALID         YES,OK BUT ISSUE A MESSAGE AND THEN
+*                             $CALL THE REPLACE SYMBOLIC PARAMETERS
+*                              AND GET ON WITH STORING THE VALUE
+         JOLERR 401,'INVALID SYMBOL ''',#TKN,''' IGNORED'
+P02RETNF   JOLRETN RC=16
+           SPACE 3
+P02VALID JOLERR 102,'SYMBOL ''',#TKN,''' SHOULD BE IN QUOTES'
+           B   P02CALRP
+           SPACE 3
+P02VALSP JOLERR 103,'SYMBOL ''',#TKN,''' ACCEPTED'
+P02VALOK   EQU *
+           MVC  #WORK(L'TKN+2),#TKN
+           B   P02TEXT         GO TEST NOW IF THIS IS AN EXTERNAL
+*                              DECLARATION.
+P02CALRP   EQU *
+          $CALL UJS20REP,#TKN                                     74303
+P02TEXT    EQU *
+           LA   R8,2           GET TKN(2) AS 1ST SYMBOLIC NAME    74303
+           LTR  R12,R12        TEST IF 'EXTERNAL' INDICATOR ON    74303
+           BNZ  P02ISEXT       NON ZERO MEANS YES,EXTERNAL FOUND  74303
+           B    P02SETLV                                          74303
+P02MACRO   SR   R5,R5          R5 CONTAINS THE STOP NUMBER FOR A  74303
+           SR   R8,R8          LOOP PICKING UP THE SYMBOLIC NAMES 74303
+*                              TO BE STORED. HOWEVER,THIS MODULE  74303
+*                              IS ALSO CALLED FROM THE MACRO      74303
+*                              PROCESSOR,AND 'SYMBOLIC' ALREADY HAS5128
+*                              THE NAME TO BE STORED. R5 IS       74303
+*                              TESTED LATER TO BE 0               74303
+P02SETLV   LH   R12,LEVEL      SET LEVEL NUMBER IN R12            74303
+P02ISEXT   EQU  *                                                 74303
+           SPACE 2                                                74303
+* NOW WE CAN FINALLY GET GOING AND SEE IF THE NAME IS ALREADY IN THE
+*    TABLE
+           SPACE
+* IF WE WERE CALLED BY THE MACRO-PROCESSOR,SYMBOLIC CONTAINS THE NAME
+*  OF THE SYMBOLIC PARAMETER TO BE STORED.OTHERWISE,WE HAVE TO    74303
+*  GET IT.                                                        74303
+* R8 POINTS TO TKN(2),OR,IF WE WERE STORING NAMES AND WE HAD TO   74303
+*  RE-ORGANISE THE TABLE IN THE MIDDLE,OR IF THIS IS THE SECOND   74303
+*  NAME,R8=THE TOKEN NUMBER WE HAVE TO GET                        74303
+         LTR R5,R5              CALLED BY MACRO?                  74303
+         BZ    P02MACR2         YES,SYMBOLIC HAS NAME ALREADY     75128
+P02SKIPC GETTKN (R8)            GET THE NAME                      74303
+         CLI TKN,C','           ','                               74303
+         BNE    P02GOTNM        NO                                74303
+         LR     R8,R1           SET R8 HIGHER BY 1                74303
+         B      P02SKIPC        GET A NEW ONE THEN                74303
+P02GOTNM MVC SYMBOLIC,TKN+1          MOVE TO SYMBOLIC FOR NOW     75128
+         CLI TKN,C'%'           '%'                               74303
+         BE    *+10             YES                               74303
+         MVC SYMBOLIC,TKN            MOVE TO SYMBOLIC FOR NOW     75128
+         LR    R8,R1           SET R8 TO NEXT TOKEN               74303
+* WHILE SEARCHING FOR THE NAME AND SEEING IF WE ARE GOING TO STORE IT
+*    THE FOLLOWING MUST BE TAKEN INTO CONSIDERATION
+*    1.    IF THIS DECLARE IS 'EXTERNAL' AND ONE WE FIND IN THE STACK
+*          ALREADY IS NOT,THEN THIS ONE IS ENTERED
+*    2.    IF ONE IS ALREADY IN THE STACK,BUT IS OF A HIGHER LEVEL
+*          THEN THIS ONE IS ALSO STORED
+*    3.    IF THE NAME ALREADY EXISTS AND THE LEVELS ARE EQUAL,THEN
+*          THIS NAME IS NOT STORED
+* THE ABOVE CAN BE BROKEN DOWN TO SAYING THAT IF THIS LEVEL IS HIGHER
+*    THAN ONE ALREADY STORED THEN IT SHOULD BE STORED,UNLESS THIS
+*    ONE IS OF A LEVEL<X'FF' AND THE ONE IN THERE IS =X'FF'
+P02MACR2   FINDSYM SYMBOLIC    FIND THE SYMBOLIC (BIN SEARCH)     87150
+           LR  R7,R0           SYMNAME POINTER
+           STH R1,P02TBLPS     SAVE POSITION FOR BINARY LOOKUP TABLE
+           STH R15,P02WASFN    SAVE THE RETURN CODE FOR INSERT.   87150
+           LTR R15,15          DID WE FIND IT?
+           BNZ P02STRIT
+           B   P02GOT1         ALREADY HAVE IT                    87150
+* NOT EX ECUTE D
+*02MACR2   L  R15,ASYMTBL      LOAD START ADDRESS OF SYM TABLE    75049
+           LH  R7,NOSYMS      CURRENT NUMBER OF SYMBOLIC NAMES   75049
+           MH  R7,=H'12'      LENGTH OF EACH ENTRY               75049
+           AR  R7,R15          R15=HIGH ADDRESS IN THE TABLE      74303
+*                              AND R7=LOW (OR START) OF TABLE     74303
+           LH  R14,=H'-12'
+           USING SYMOVLY,R7                                       74303
+P02LUP1    CLC SYMNAME,SYMBOLIC                                   75128
+           BE  P02GOT1
+           BXH  R7,R14,P02LUP1 ROUND AGAIN                        74303
+* HERE,WE DID NOT FIND IT SO ENTER IT INTO THE STACK
+*    AFTER CHECKING THAT THERE IS
+*          1.ROOM IN THE ID-TABLE
+*          2.ROOM IN THE SYMBOLIC VALUE TABLE
+P02STRIT   LH  R1,NOSYMS
+           LA  R1,1(R1)
+           CH  R1,MAXSYMS
+           BL  P02NOOK
+         JOLERR 405,'SYMBOLIC PARAMETER TABLE IS FULL'
+* WELL,IF THE NAME WON'T FIT IN THE TABLE,NO AMOUNT OF RE-ORGING  74303
+*        IT WILL HELP. USER WILL HAVE TO DELETE SOME UN-USED      74303
+*        NAMES,OR GET CCS TO DO SOMETHING QUICKLY                 74303
+           B   P02RETNF
+P02NOOK    EQU *
+*                                                                 74303
+* LAST YEAR (74) A CONSIDERABLE AMOUNT OF EFFORT WAS EXPENDED     75128
+*  IN MAKING IT POSSIBLE TO ONLY STORE A SYMBOLIC VALUE ONCE IN   75128
+*  THE CASE OF 'DCL %A,%B,%C INIT 'ABC';';                        75128
+* HOWEVER, THIS COMPLICATES THE RE-ORGANISATION PROCESS SO        75128
+*  MUCH, IT HAS BEEN DECIDED TO STORE THE VALUE PART A NUMBER OF  75128
+*  TIMES. IN ANY CASE,USUALLY THIS WILL BE USED TO SET UP ''(NULL)75128
+*  VALUES SO ....                                                 75128
+         SPACE 3
+* #WORK CONTAINS THE THING TO BE STORED
+         SR    R4,R4          RE-ORG INDICATOR                    75128
+P02TFIT  L     R6,ANEXTSYM    LOAD ADDRESS OF NEXT AVAILABLE POSN 75128
+         LR    R9,R6          SAVE AS IT WILL BE 'SYMADDR' LATER  75128
+         LH    R15,#WORK      LOAD LENGTH OF STRING TO BE STORED  75128
+         SPACE 2                                                  75128
+         L     R1,ASYMTBL     LOAD ADDRESS OF THE TABLE ITSELF    75128
+         AH    R1,SYMLEN      ADD LENGTH OF TABLE                 75128
+         LA    R6,2(R6,R15)   R6=2+R6+R15,IE END ADDRESS IF VALUE 75128
+*                             IS STORED                           75128
+         CR    R1,R6          WILL VALUE FIT ?                    75128
+         BL    P02REORG       NO -> GO RE-ORG TABLE               75128
+         SPACE 2                                                  75128
+* NOW R15 CONTAINS THE LENGTH OF THE STRING TO MOVE CEPT WE HAVE  75128
+*  TO ADD 2 FOR #WORK  -1 FOR MVC EXECUTE                         75128
+         LA    R15,2-1(R15)                                       75128
+         L     R1,ANEXTSYM    LOAD POSN IN TABLE ITS GOING TO     75128
+         EX    R15,P02MUV1    SHIFT IT MY FRIEND                  75128
+         LH    R1,NOSYMS      LOAD CURRENT NO. OF SYMS            75128
+         LA    R1,1(R1)       ADD 1 TO IT                         75128
+         STH   R1,NOSYMS
+         BCTR  R1,0            -1 (WE ARE TOO FAR NOW)
+         MH    R1,=H'12'      MULT BY LENGTH OF TABLE
+         A     R1,ASYMTBL     ADD ADDRESS OF TABLE
+         LR    R7,R1          SAVES DROPS AND REUSING
+         MVC   SYMNAME,SYMBOLIC                                   75128
+         ST    R9,SYMADDR      R6 CONTAINS ADDRESS(SET EARLIER)   74303
+         STC   R12,SYMLEVEL
+         CLI   SYMLEVEL,X'FF' EXTERNAL ?                          75128
+         BNE   *+8                                                75128
+         MVI   SYMLEVEL,0     CHANGE TO LEVEL 0                   75128
+         ST    R6,ANEXTSYM     RESET NEXT SYM VALUE ADDRESS       74303
+* STORE THE OFFSET IN THE BINARY LOOKUP TABLE
+* NOTE, IF THE SYMBOL WAS FOUND, WE WANT TO REPLACE IT RATHER THAN
+*       INSERTING IT SO THAT WE ONLY HAVE THE NAME IN THE TABLE ONCE.
+         CLC   P02WASFN,ZERO   IF ZERO, THE NAME WAS FOUND        87150
+         BNE   P02INS
+         L     R15,ATBLCNTL
+         USING TABLCNTL,R15
+         LH    R1,P02TBLPS     GET TABLE POSITION
+         BCTR  R1,0
+         AR    R1,R1           DOUBLE IT
+         A     R1,ACUROFFS     POINT TO POSITION IN OFFSET TABLE
+         LH    R14,NOSYMS
+         BCTR  R14,0
+         MH    R14,=H'12'
+         STH   R14,0(R1)
+         B     P02NEXTS
+         DROP  R15
+P02INS   $CALL UJP02INS,P02TBLPS                                  87150
+*
+* NOW,IF WE WERE NOT CALLED BY THE MACRO PROCESSOR,AND IF THERE   74303
+*  ARE MORE TOKENS TO GET,GO GET THEM,OTHERWISE RETURN            74303
+P02NEXTS   LTR R8,R8            CALLED BY MACRO ?                 74303
+           BNZ P02NOTM1         NO                                74303
+           JOLRETN RC=0         YES,RETURN                        74303
+P02NOTM1   CR  R8,R5            DONE ALL NAMES ?                  74303
+           BNH P02SKIPC        BACK AND GET NEXT NAME             75311
+P02RETN0   JOLRETN
+* WELL THAT WAS HEAVY GOING EH ?
+P02MUV1    MVC 0(*-*,R1),#WORK
+           SPACE 3
+P02GOT1    EQU *
+* NOW WE HAVE FOUND ANOTHER SYMBOLIC PARAMETER AND UNFORTUNATELY ITS
+*    NAME HAPPENS TO BE THE SAME AS THIS ONE.
+         SPACE 1                                                  75128
+* THIS NEXT BIT OF CODE HANDLES EXTERNAL                          75128
+*                                                                 75128
+* BASICALLY, IF THIS IS EXTERNAL, AND THE ONE IN THE TABLE        75128
+*  IS LEVEL0,NO ERROR MESSAGE,AND DON'T STORE NEW VALUE.          75128
+* HOWEVER, WE MAY HAVE THE NAME 2 TIMES IN THE TABLE, ONCE AT     75128
+*  LEVEL 0 (EXT) AND ONCE AT > LEVEL 0. IN THIS CASE WE WILL      75128
+*  GIVE AN ERROR MESSAGE SAYING THAT WE JUST CAN'T HANDLE         75128
+*  THAT TYPE OF SITUATION.                                        75128
+         CH    R12,=X'00FF'   IS THE NEW ONE 'EXTERNAL'           75128
+         BNE   P02COMPL       NO,SO GO COMPARE LEVELS AS USUAL    75128
+         CLI   SYMLEVEL,0     IS OLD LEVEL=0 ?                    75128
+         BE    P02NEXTS       YES,TWO EXTNS,SKIP,NO MESSAGE        CVC
+         BE    P02DUPLI       YES, LET THE GUY KNOW ABOUT IT OK ?  DASD
+         JOLERR 404,'SYMBOLIC NAME %',SYMBOLIC,' HAS BEEN DECLARED AS',*
+               ' EXTERNAL AND ALSO IN A MACRO,THEN EXTERNAL AGAIN' 5128
+         B     P02NEXTS       SKIP IT                             75128
+         SPACE 3
+P02COMPL EQU   *
+         SR    R1,R1
+         IC    R1,SYMLEVEL     R1=SYM LEVEL OF THE ONE ALREADY IN THERE
+         CR    R1,R12          COMPARE THEM
+         BL    P02STRIT        STORE IT AGAIN
+* HERE THE ONE IN THE STACK IS OF A HIGHER VALUE,SO AGAIN WE
+*    WON'T STORE IT
+P02DUPLI JOLERR 107,'DEFINITION OF ''%',SYMBOLIC,''' IGNORED:-PREVIOUSL*
+               Y DEFINED'                                         75128
+           B   P02NEXTS         TEST IF MORE NAMES                74303
+           SPACE 3                                                74303
+P02REORG   EQU *                                                  74303
+* THE VALUE PART OF THE SYMBOLIC DECLARE WON'T FIT IN THE TABLE   74303
+*  SO WE WILL$CALL THE REORGANISER TO MAKE MORE SPACE AVAILABLE   74303
+*  IN THE TABLE,UNLESS WE HAVE ALREADY JUST DONE THAT.            74303
+           LTR R4,R4           DID WE JUST RE-ORG THE TABLE?      74303
+           BZ  P02CALLR        NO,REORG IT                        74303
+         JOLERR 406,'SYMBOLIC PARAMETER TABLE IS FULL'
+             JOLRETN RC=16     ERROR                              74303
+P02CALLR  $CALL UJS19RSM       RE-ORG SYMBOLIC TABLE              74303
+           LA  R4,1            SET RE-ORGED INDIC                 74303
+           B   P02TFIT         TRY IT AGAIN                       74303
+           DROP R7                                                74303
+           LTORG                                                  74303
+           DC   80S(*)
+      TITLE 'PREPROCESSOR SIGNAL ERROR'
+           JOLSAVE CSECT=UJP12SIG
+* THIS CSECT SIGNALS AN ERROR.
+           USING JOLCOM,R2
+           USING TKNX,R3
+           GETTKN NO=2         SKIP SIGNAL
+           CLC =C'ERROR ',TKN  DID HE JUST SAY SIGNAL ?
+           BNE P12TBRAC
+           GETTKN NO=3         SKIP ERROR
+P12TBRAC   CLI TKN,C'('        DID USER CODE A BRACKET ?
+           BNE P12TSEV         NO
+           GETTKN REG=R1       SKIP BRACKET
+P12TSEV    STH R1,TKNCURR
+           TNUM #TKN           CONVERT TO NUMERIC
+           LTR R15,R15          LOAD AND TEST R5 WITH R15
+           BNZ  P12SIGER        DID IT CONVERT TO NUMERIC,NO
+           LTR  R5,R1           LOAD 5 WITH NUMBER
+           BZ  P12SIGER        OR IS IT 0,IF SO TIS AN ERROR IN ITSELF
+           CH  R5,=H'4'       >4 ?                                75311
+           BH  P12SIGER        TOO HIGH
+           GETTKN LOCN=TKNCURR
+           CLI TKN,C','        ','
+           BNE P12GOTMS        GOT THE MESSAGE
+           GETTKN REG=R1       THIS HAD BETTER BE THE MESSAGE
+P12GOTMS   LR  R4,R1           SAVE NUMBER OF NEXT TOKEN FOR NOW  74303
+P12MULT    SLL R5,2            MULT X4                            74303
+           B   P12R5-4(R5)
+P12R5      B   P12SIG1         MINOR ERROR
+           B   P12SIG2         BIT HIGHER ERROR
+           B   P12SIG3         HOLD QUEUE TYPE ERROR
+           B   P12SIG4         TERMINAL STOP TYPE ERROR
+P12SIG1  JOLERR 101,#TKN,' SIGNALLED'
+P12RETN    EQU *                                                  74303
+* TEST IF THE NEXT SYMBOL AFTER THE MESSAGE IS A ')' OR BLANK.    74303
+*  IF ITS NOT, FLAG THE SYMBOL AS AN ERROR                        74303
+           GETTKN (R4)         GET NEXT SYMBOL                    74303
+           CLI TKN,C' '        BLANK?                             74303
+           BE  P12RETNO        RETURN 0                           74303
+           CLI TKN,C')'        ')'                                74303
+           BE  P12NEXT1        GET NEXT                           74303
+P12ERR06 JOLERR 306,'INVALID SYMBOL ''',#TKN,''' IGNORED'
+           JOLRETN RC=16       BAD RETURN                         74303
+P12NEXT1   GETTKN (R1)          GET NEXT TOKEN                    74303
+           CLI TKN,C' '         BLANK?                            74303
+           BNE P12ERR06         NO,ERROR                          74303
+P12RETNO   JOLRETN RC=0         YES,GO BACK                       74303
+P12SIG2  JOLERR 202,#TKN,' SIGNALLED'
+           B   P12RETN
+P12SIG3  JOLERR 303,#TKN,' SIGNALLED'
+           B   P12RETN
+P12SIG4  JOLERR 404,#TKN,' SIGNALLED'
+           B   P12RETN
+P12SIGER JOLERR 205,'INCORRECT SEVERITY NUMBER',#TKN
+           B   P12RETN
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           SPACE 3
+      TITLE 'PREPROCESSOR STOP'
+           JOLSAVE CSECT=UJP13STP
+* STOP PROCESSOR
+           GETTKN NO=2
+* WE MUST SEE IF THIS IS A STOP WHEN TYPE COMMAND, AND IF SO      75128
+*  KICK IT OUT TO THE NEXT PHASE                                  75128
+         LM    R5,R7,P13WHEN                                      75128
+         CLC   TKN(8),0(R5)                                       75128
+         BE    P13OPIT                                            75128
+         BXLE  R5,R6,*-10                                         75128
+           CLI TKN,C'('
+           BNE P13GOTMS
+           GETTKN REG=R1
+P13GOTMS   LR  R4,R1            SAVE TKNNO OF MESSAGE             74303
+P13SIGST JOLERR 401,'STOP:-',#TKN,' EXECUTED'
+* NOW GET THE NEXT SYMBOL,AND TEST IF ' ' | ')'.ANY OTHER         74303
+*  SYMBOLS ARE ERRORS,PRESUMABLY BECAUSE SOMEBODY LEFT OFF A ';'  74303
+           GETTKN (R4)          GET NEXT SYMBOL                   74303
+           CLI TKN,C')'                                           74303
+           BE  P13GETNT         OK,GET NEXT AND SEE IF A ' '      74303
+           CLI TKN,C' '        IS IT A ' '                        74303
+           BE  P13RETNO         YEP,OK                            74303
+P13ERR02 JOLERR 302,'EXCESS INFORMATION IGNORED'
+           JOLRETN RC=16        RETURN ERROR CODE                 74303
+P13GETNT   GETTKN (R1)          GET NEXT AFTER THE ')'            74303
+           CLI TKN,C' '         BLANK ?                           74303
+           BNE P13ERR02         NO,SIGNAL THE ERROR,INVALID SYMBL 74303
+P13RETNO   JOLRETN RC=0         OK,GO BACK                        74303
+P13OPIT  $CALL UJP90OP        OUTPUT TO NEXT                      75128
+         JOLRETN RC=0                                             75128
+P13WHEN  DC    A(*+12,8,P13WHENE-8)                               75128
+         DC    CL8'WHEN',CL8'BEFORE',CL8'AFTER'                   75128
+P13WHENE DS    0H                                                 75128
+         DC     S(*),S(*),S(*),S(*)
+         DC     S(*),S(*),S(*),S(*)
+         DC     S(*),S(*),S(*),S(*)
+         DC     S(*),S(*),S(*),S(*)
+           SPACE 3
+         LTORG                                                    J40B
+         TITLE 'PREPROCESSOR ASSIGNMENT STATEMENT'
+P85SAVE  DSECT
+         DS      18F                                              82300
+P86WASFN DS      H        SET TO 0 IF FOUND, ELSE 4               87150
+P86TBLPS DS      H        TABLE POSITION TO INSERT AT OR OVERRIDE 87150
+P85SAVEL EQU *-P85SAVE                                            82300
+         SPACE 3
+           JOLSAVE CSECT=UJP85ASN,SIZE=P85SAVEL
+           ORG     UJP85ASN
+UJP98SET   EQU  *
+           ENTRY   UJP98SET
+           ORG
+* THIS CSECT GETS CONTROL WHEN AN ASSIGNMENT HAS BEEN FOUND.
+           USING JOLCOM,R2
+           USING TKNX,R3
+           USING P85SAVE,R13
+           CLC =C'MACRO ',ICOMMAND WERE WE CALLED BY THE MACRO
+*                              PROCESSOR
+           BE  P85MACRO        MACRO PROCESSOR CALLED US,SO MERELY74303
+*                              STORE WHATS IN #WORK               74303
+* INITIALLY GET THE NAME TO WHICH EVERYTHING IS GOING
+           GETTKN NO=1
+           CLC  =C'SET ',TKN
+           BE   P85REPS
+         MVC   SYMBOLIC,TKN+1     THERE,THAT'S THE SYMBOLIC NAME SAVED
+         CLI   TKN,C'%'                                           J40B
+*        BNE   *+10                                               J40B
+         BE    *+10                                               J40B
+         MVC   SYMBOLIC,TKN+0    THERE,THAT'S THE SYMBOLIC NAME SAJ40B
+* See if this  is a sample SET   or a complex one                 J50
+*LATER                                                            J50
+         MVI   THISIF,0          Not an IF                        J50
+         GETTKN NO=1                                              J50
+         CLC   =C'SET ',TKN      Check if SET by itself           J50
+         BNE   P85PARS                                            J50
+         GETTKN NO=2             CHECK IF NULL                    J50
+         CLC   TKN,C' '                                           J50
+         BNE   P85PARS           NO, GO AND DO THE PARSING        J50
+         CALL  UJP31LST          Listsyms                         J50
+         JOLRETN  RC=0                                            J50
+P85PARS  DS    0H                                                 J50
+         GETTKN NO=1             CHECK IF NULL                    J50
+         CLI   TKN,C'%'                                           J50
+         BNE   P85P2                                              J50
+         MVI   TKNSTRG,C' '      BLANK %                          J50
+         LH    R1,TKNDESC+2      Add 1 to Offset start            J51
+         LA    R1,1(R1)                                           J51
+         STH   R1,TKNDESC+2      Store Result                     J51
+P85P2    DS    0H                                                 J50
+         CALL  UJP04FXP          Fix Parameters for PARSE         J52
+         CALL  UJP18PAR          Call the parsing routine         J50
+         MVC   #WORK(L'OP+2),#OP                                  J50
+         B     P85MACRO                                           J50
+         JOLRETN  RC=0                                            J50
+* RIGHT,THATS GONE AND SAVED
+* NOW SHIFT THE TKNSTRG ALONG TO THE LEFT DROPPING THE EQUAL SIGN AND
+*    THE NAME OF THE RECEIVING VARIABLE
+           LH  R1,TKNDESC+10   GET OFFSET TO START OF THE 3RD TOKEN
+* NOW R1=THE OFFSET TO THE 3RD TOKEN,OR THE LENGTH OF THE         74303
+*  FIELD FROM THE BEGINNING OF THE STRING TO BE CLEARED TO BLANK  74303
+           BCTR R1,0           SUBTRACT 1 FOR MOVE BLANKS EXECUTE 74303
+           EX  R1,P85CLRTK     CLEAR THE BITS UP TO THE 3RD TKN   74303
+P85REPS   $CALL UJS20REP,#TKNSTRG                 REPLACE SYMBOLIC74303
+*                                                 PARAMETERS      74303
+           MVC #TKNSTRG(256),#WORK
+           MVC #TKNSTRG+256(256),#WORK+256
+           MVC #TKNSTRG+512(256),#WORK+512
+           MVC #TKNSTRG+768(232),#WORK+768
+           SPACE 2
+          $CALL UJSPLIT        SPLIT INTO TOKENS                  74303
+         LTR   R15,R15        DID STMT SPLIT UP OK INTO TOKENS ?  75128
+         BZ    P85NOER                                            75128
+         JOLERR 407,'ERROR AFTER SYMBOLICS REPLACED ''',#TKNSTRG, 75128*
+               ''''                                               75128
+           B    P85MACRO        STORE ANSWER ANYWAY AS IS         74214
+           SPACE 2                                                74214
+P85NOER   EQU  *                                                  74214
+* NOW SCAN DOWN AND FIND ANY BUILTIN FUNCTIONS.
+*    THIS IMPLEMENTATION SUPPORTS:-
+*    1.    SUBSTR
+*    2.    LENGTH
+* NOW THIS SECTION OF CODE IS CALLED THE SYMBOLIC PARAMETERS HAVE
+*    BEEN REPLACED
+         MVI   DBL,C' '       SET WORK AREA 'DBL' TO ' ', 1ST     75128
+*                             BYTE WILL CONTAIN A SIGN            75128
+           GETTKN NO=1         GET FIRST VALUE
+           CLC  =C'SET ',TKN
+           BNE  P85ASS
+           GETTKN (R1)        GET NAME
+           MVC  SYMBOLIC,TKN  SAVE
+        GETTKN (R1)        GET '='?
+          CLI TKN,C'='
+          BNE P85ASS
+          GETTKN (R1)      SKIP '='
+P85ASS     CLI TKNTYPE,0       <NUMBER> ?
+         BE    P85NUM1        FIRST TOKEN IS A NUMBER ? YES ->    75128
+         CLI   TKN,C'+'       IS IT A '+' ?                       75128
+         BE    P85GETN1       YES, IGNORE IT, GET NEXT TOKEN      75128
+         CLI   TKN,C'-'       IS 1ST TOKEN -?                     75128
+         BNE   P85CHARA       NOPE, THIS IS NOT AN ARITHMETIC ASSGN5128
+         MVI   DBL,C'-'       SET DBL - SO WE CAN CHANGE LATER    75128
+*                             TO A NEGATIVE NUMBER
+P85GETN1 GETTKN (R1)          GET NOW WHAT SHOULD BE THE NUMBER   75128
+         CLI   TKNTYPE,0      <NUMBER> ?
+         BNE   P85CHARA       NOPE, CHAR ASSIGN ASSUME
+P85NUM1  EQU   *                                                  75128
+           CLI #TKN+1,15       NUMBER TOO LONG ?                  74303
+         BH    P85CHARA       GO DO CHAR ASSIGN ONLY              75128
+         SPACE 1                                                  75128
+* LETS MAKE THE SIGN -VE IF WE HAVE TO, BEFORE WE PACK IT         75128
+         CLI   DBL,C'-'       -VE ?                               75128
+         BNE   P85PKN1        NOPE, JUST PACK IT                  75128
+         LH    R15,#TKN       GET LENGTH OF STRING                75128
+         LA    R15,TKN-1(R15) ADDRESS LAST BYTE                   75128
+         NI    0(R15),X'0F'                                       75128
+         OI    0(R15),B'11010000'  PUT -VE SIGN IN                75128
+         SPACE 1                                                  75128
+P85PKN1  EQU   *                                                  75128
+         LH    R15,#TKN                                           75128
+         BCTR  R15,0                                              75128
+         EX    R15,P85PACK1                                       75128
+*                                                                 75128
+           MVC #WORK(L'TKN+2),#TKN                                74303
+         GETTKN (R1)          GET NEXT TOKEN (S/B OPERATOR)       75128
+         CLI  TKN,C' '
+         BNE  P85001
+         MVI  DBL,C'+'
+         ZAP  P85NO2,=P'0'
+         B    P85ARITH
+P85001   EQU  *
+           MVC DBL,TKN
+         GETTKN (R1)          THIS S/B NXT PART - NUMBER | SIGN   75128
+           CLI TKNTYPE,0       <NUMBER> ?
+         BE    P85NUM2        YES, GOT SECOND NUMBER NOW          75128
+         CLI   TKN,C'-'       -VE SIGN ?                          75128
+         BNE   P85CHARA       NOPE -> MAKE A CHARACTER ASSIGN     75128
+         CLI   DBL,C'-'       IS OPERATOR ALREADY '-' ?           75128
+         BE    P85MAKEP       YES, MAKE IT +VE                    75128
+         MVI   DBL,C'-'       SET OPERATOR TO -VE                 75128
+         B     P85GETN2       GO GET NEXT NUMBER                  75128
+P85MAKEP MVI   DBL,C'+'       MAKE +VE                            75128
+P85GETN2 GETTKN (R1)          GET WHAT SHOULD BE THE NUMBER       75128
+         CLI   TKNTYPE,0      <NUMBER> ?                          75128
+         BNE   P85CHARA       NOPE -> CHARACTER ASSIGN            75128
+P85NUM2    CLI #TKN+1,15       NUMBER TOO LONG ?                 C DASD
+           BH P85TQUOT
+           LH R1,#TKN          GET THE LENGTH OF THE NUMBER
+           LTR R1,R1           =0
+           BZ P85TQUOT         NO GOOD,DON'T ATTEMPT TOO PACK
+           BCTR R1,0
+           EX R1,P85PACK2
+         B     P85ARITH       GO DO THE ARITHMETIC NOW            75128
+         SPACE 2                                                  75128
+P85CHARA GETTKN 1             GET FIRST ITEM                      75128
+         CLC   =C'SET ',TKN     SET COMMAND?
+         BNE  P85NSET2
+         LA   R1,1(R1)       SKIP NAME
+         GETTKN (R1)          GET NEXT ONE, SEE IF =
+         CLI   TKN,C'='   EQUAL?
+         BNE   P85NSET2       NO, TKN CONTAINS VALUE NOW JOL30035 76200
+         GETTKN (R1)                                              75311
+         MVC   #WORK(L'TKN),#TKN SHIFT 1ST VALUE         JOL30035 76200
+         GETTKN (R1)                                              75128
+         MVC   DBL,TKN                                            75128
+         GETTKN (R1)                                              75128
+         B      P85TQUOT
+P85NSET2 EQU  *
+         MVC   #WORK(L'TKN+2),#TKN                                75128
+         GETTKN (R1)           S/B '||'                           75311
+         MVC   DBL(2),TKN     SAVE IT                             75128
+         GETTKN (R1)           GET 3RD ITEM (IF BLANK, DBL        75311
+*                             MIGHT ALSO BE BLANK, BECAUSE        75128
+*                             THERE MAY NOT BE AN OPERATOR        75128
+P85TQUOT EQU    *
+         SPACE 2                                         CHG30011 76200
+* TEST IF A FUNCTION, AND IF SO DO IT.                   CHG30011 76200
+*                                                        CHG30011 76200
+* AT THIS STAGE, #WORK WILL CONTAIN OPERATOR 1,          CHG30011 76200
+*  AND DBL THE '||' SYMBOL, AND #TKN THE 2ND OPERAND,    CHG30011 76200
+** OR **                                                 CHG30011 76200
+* #WORK WILL CONTAIN:-                                   CHG30011 76200
+*        SUBSTR                                          CHG30011 76200
+*        TYPE                                            CHG30011 76200
+*        LENGTH                                          CHG30011 76200
+*    OR  INDEX                                           CHG30011 76200
+* AND DBL A '('                                          CHG30011 76200
+* AND #TKN ANOTHER PART OF THE FUNCTION                  CHG30011 76200
+*                                                        CHG30011 76200
+         CLI   DBL,C'('       2ND PART A '('             CHG30011 76200
+         BNE   P85NFUNC       NO, NOT A FUNCTION THEN -> CHG30011 76200
+         CLC   =C'INDEX ',WORK INDEX                     CHG30011 76200
+         BE    P85IND          ->                        CHG30011 76200
+         CLC   =C'SUBSTR ',WORK SUBSTR->                 CHG30011 76200
+         BE    P85SUBST                                  CHG30011 76200
+         CLC   =C'TYPE ',WORK   TYPE ->                  CHG30011 76200
+         BE    P85TYPE                                   CHG30011 76200
+         CLC   =C'CAPS ',WORK   TYPE ->                           J40B
+         BE    P85CAPS                                            J40B
+         CLC   =C'LENGTH ',WORK LENGTH ->                CHG30011 76200
+         BNE   P85NFUNC                                  CHG30011 76200
+* DO LENGTH FUNCTION HERE.                               CHG30011 76200
+         BAL   R6,P85GETNM    GET THE NAME               CHG30011 76200
+         LTR   R15,R15        DID WE ?                   CHG30011 76200
+         BNZ   P85RZERO       NO, RETURN 0 THEN          CHG30011 76200
+         USING SYMOVLY,R5                                CHG30011 76200
+* ON RETURN, R5 -> SYMOVLY                               CHG30011 76200
+*            R7 -> SYMBOLIC                              CHG30011 76200
+*            R8 CONTAINS LENGTH                          CHG30011 76200
+         LTR   R8,R8          TEST 0 LENGTH              CHG30011 76200
+         BZ    P85STLEN       LENGTH IS 0, STORE IT      CHG30011 76200
+         CLI   2(R7),C''''    GOT QUOTES ?               CHG30011 76200
+         BNE   P85STLEN       NO,SO LENGTH IS OK NOW     CHG30011 76200
+         SH    R8,=H'2'       YES, -2 FOR QUOTES.        CHG30011 76200
+P85STLEN CVD   R8,DBL         CONVERT TO DEC PACKED      CHG30011 76200
+         ZAP   P85NO1,DBL     MOVE TO P85NO1             CHG30011 76200
+         B     P85SANS        STORE ANSWER               CHG30011 76200
+         SPACE 2                                         CHG30011 76200
+P85CAPS  DS    0H                                                 J40B
+         BAL   R6,P85GETNM    GET THE NAME                        J40B
+         LTR   R15,R15        DID WE ?                            J40B
+         BNZ   P85CAP90       NO, FORGET IT                       J40B
+         USING SYMOVLY,R5                                         J40B
+* ON RETURN, R5 -> SYMOVLY                                        J40B
+*            R7 -> SYMBOLIC                                       J40B
+*            R8 CONTAINS LENGTH                                   J40B
+         LTR   R8,R8          TEST 0 LENGTH                       J40B
+         BZ    P85CAP90       LENGTH IS 0, IGNORE IT              J40B
+         BCTR  R8,0                                               J40B
+         OC    2(0,R7),BLANKS                                     J40B
+         EX    R8,*-6                                             J40B
+         FIX   'IT ALSO HAS TO DO SOME OTHER THINGS: SEE SUBSTR'  J40B
+P85CAP90 DS    0H             STORE ANSWER               CHG30011 76200
+         JOLRETN
+P85TYPE  BAL   R6,P85GETNM    GET NAME                   CHG30011 76200
+         LTR   R15,R15        DID WE GET IT              CHG30011 76200
+         BZ    P85TYPE2                                  CHG30011 76200
+P85NULLX MVC   #WORK,ZERO                                CHG30011 76200
+         B     P85NCALC       STORE BLANK AS RETURN      CHG30011C DASD
+P85TYPE2 EQU   *                                         CHG30011 76200
+         MVC   #WORK(L'TKN+2),0(R7) SHIFT SYMBOLIC VALUE JOL30011 76200
+         TNUM  #WORK          TEST NUMERIC               JOL30011 76200
+         LTR   R15,R15         IS IT ?                   JOL30011 76200
+         BNZ   P85TYPNN       NOT NUMERIC                JOL30011 76200
+         MVC   WORK(3),=C'NUM'                           JOL30011 76200
+P85SET3  MVC   #WORK,=H'3'                               JOL30011 76200
+         B     P85NCALC       GO STORE                   JOL30011 76200
+P85TYPNN CLI   2(R7),C''''    IS IT LITERAL ?            JOL30011 76200
+         BNE   P85NTLIT       NOT A LITERAL              JOL30011 76200
+         MVC   WORK(3),=C'LIT' SET 'LIT'                 JOL30011 76200
+         B     P85SET3        SET LENGTH TO 3, GO TO STR JOL30011 76200
+P85NTLIT EQU   *                                         JOL30011 76200
+* MUST BE CHAR                                           JOL30011 76200
+         MVC   #WORK,=H'4'                               JOL30011 76200
+         MVC   WORK(4),=C'CHAR'                          JOL30011 76200
+         B     P85NCALC                                  JOL30011 76200
+         SPACE 3                                         JOL30011 76200
+P85IND   EQU   *              INDEX *****                JOL30011 76200
+         BAL   R6,P85GETNM    FIND NAME                  JOL30011 76200
+         LTR   R15,R15        DID WE ? - NO -            JOL30011 76200
+         BNZ   P85RZERO       RETURN ZERO                JOL30011 76200
+         MVC   #TKN(L'TKN+2),0(R7)     SHIFT STRING TO TKN       A DASD
+         BAL   R14,DROPQUOT               AND DROP QUOTES        A DASD
+         MVC   #WORK(L'TKN+2),#TKN     SHIFT STRING TO WORK      A DASD
+         LH    R8,#WORK                RELOAD LENGTH AND         A DASD
+         LA    R7,#WORK                   ADDRESS                A DASD
+* AS USUAL, R7 -> SYMBOLIC                               CHG30011 76200
+*           R8 CONTAINS LENGTH.                          CHG30011 76200
+         GETTKN (R1)                                     CHG30011 76200
+         CLI   TKN,C','       ','                        CHG30011 76200
+         BNE   P85NFUNC                                  CHG30011 76200
+         GETTKN (R1)          GET STRING WE ARE FINDING  CHG30011 76200
+         BAL   R14,DROPQUOT   DROP QUOTES(IF ANY)        CHG30011 76200
+* NOW SET UP A BXLE LOOP FOR THE INDEX LOOP.             CHG30011 76200
+         LTR   R8,R8          IS R8=0                    CHG30011 76200
+         BE    P85RZERO       YES, THEREFORE LOOP IMPOSS CHG30011 76200
+         CLC   #TKN,ZERO      CHECK STRING TOO           CHG30011 76200
+         BE    P85RZERO       EMPTY, -> RETURN ZERO.     CHG30011 76200
+         SPACE 1                                         CHG30011 76200
+         LA    R14,1          SET INCREMENT              CHG30011 76200
+         LA    R15,2(R7,R8)   AND END ADDRESS            CHG30011C DASD
+         BCTR  R15,0          -1                         CHG30011 76200
+         LA R7,2(R7)                                     CHG30011 76200
+         LR    R0,R7          SAVE START ADDRESS         CHG30011 76200
+         LH    R5,#TKN        GET LENGTH OF INDEX STRING CHG30011 76200
+         BCTR  R5,0           -1                         CHG30011 76200
+P85INDLP EX    R5,P85CLC                                 CHG30011 76200
+         BE    P85GOTIN                                  CHG30011 76200
+         BXLE  R7,R14,P85INDLP LOOP                      CHG30011 76200
+         B     P85RZERO       NOT FOUND, RETURN 0        CHG30011 76200
+         SPACE 1                                         CHG30011 76200
+P85GOTIN EQU   *                                         CHG30011 76200
+* R7 CONTAINS START ADDR OF STRING FOUND, WHILE R0       CHG30011 76200
+*  CONTAINS THE ACTUAL START OF THE STRING PROPER        CHG30011 76200
+         LR    R5,R0          NEED FOR CLI               CHG30011 76200
+         SR    R7,R5                                     CHG30011 76200
+* R7 = START ADDR OFFSET OF FOUND STRING.                CHG30011 76200
+* WE MUST SEE IF STRING HAS QUOTES, BECAUSE IF SO WE     CHG30011 76200
+*  MUST BUMP THE OFFSET BY 1 BECAUSE ANY ATTEMPTED USAGE CHG30011 76200
+*  OF THE STRING WILL REQUIRE THE OFFSET-1               CHG30011 76200
+         CLI   0(R5),C''''                               CHG30011 76200
+         BNE   *+4                                       CHG30011 76200
+         LA    R7,1(R7)                                  CHG30011 76200
+         LR    R8,R7                                     CHG30011 76200
+         B     P85STLEN                                  CHG30011 76200
+         SPACE 3                                         CHG30011 76200
+P85SUBST EQU   *              SUBSTR ***                 CHG30011 76200
+         BAL   R6,P85GETNM    GET THE NAME               CHG30011 76200
+         LTR   R15,R15                                   CHG30011 76200
+         BNZ   P85NULLX       RETURN NULL STRING, NO-NAMECHG30011 76200
+         MVC   #TKN(L'TKN+2),0(R7) SHIFT STRING TO TKN   CHG30011 76200
+         BAL   R14,DROPQUOT        AND DROP QUOTES       CHG30011 76200
+         MVC   #WORK(L'TKN+2),#TKN SHIFT TO WORK.        CHG30011 76200
+         SPACE 1                                         CHG30011 76200
+         GETTKN (R1)          GET TOKEN AFTER NAME       CHG30011 76200
+         CLI   TKN,C','       IS IT A ','                CHG30011 76200
+         BNE   P85SUBER       NO                         CHG30011 76200
+         GETTKN (R1)          YES, GET START POSN        CHG30011 76200
+         STH   R1,TKNCURR     SAVE TOKEN POINTER         CHG30011 76200
+         TNUM  #TKN           CONVERT TO NUMERIC         CHG30011 76200
+         LTR   R15,R15                                   CHG30011 76200
+         BNZ   P85SUBER       ERROR IN CONVERSION        CHG30011 76200
+         LR    R8,R1          SAVE START                 CHG30011 76200
+         LA    R9,2000   **** SET OPTIONAL LENGTH HIGH   CHG30011 76200
+         GETTKN TKNCURR       GET NEXT TOKEN             CHG30011 76200
+         CLI   TKN,C','        ','                       CHG30011 76200
+         BNE   P85SUBE1       NOPE, END PART(1) SUBSTR   CHG30011 76200
+         GETTKN (R1)          GET OPTIONAL LENGTH        CHG30011 76200
+         TNUM  #TKN           CONVERT TO NUMERIC         CHG30011 76200
+         LTR   R15,R15                                   CHG30011 76200
+         BNZ   P85SUBER                                  CHG30011 76200
+         LR    R9,R1                                     CHG30011 76200
+P85SUBE1 EQU   *                                         CHG30011 76200
+         SPACE 2                                         CHG30011 76200
+* WORK CONTAINS STRING                                   CHG30011 76200
+* R8 CONTAINS START OF STRING                            CHG30011 76200
+* R9 CONTAINS LENGTH TO MOVE OR A VERY HIGH NUMBER       CHG30011 76200
+         SPACE 1                                         CHG30011 76200
+* CALCULATE LENGTH TO MOVE (IE NEW LENGTH AFTER          CHG30011 76200
+*   SUBSTR FUNCTION).                                    CHG30011 76200
+         LH    R1,#WORK       GET CURRENT LENGTH         CHG30011 76200
+         SR    R1,R8          -START POSN OF SUBSTR      CHG30011 76200
+         A     R1,ONE         +1 COS SUBSTR STARTS AT 1 ^0 C77263  DASD
+         BNP   P85NULLX       <=0, RETURN NULL           CHG30011 76200
+         CR    R1,R9          IS CURRENT LENGTH>L'REQD   CHG30011 76200
+         BL    P85NSWP        YES                        CHG30011 76200
+         LR    R1,R9          NO, SET TO LESSER LENGTH   CHG30011 76200
+P85NSWP  STH   R1,#WORK       STORE IT                   CHG30011 76200
+         LTR   R1,R1          IS LENGTH=0 <0             CHG30011 76200
+         BNP   P85NULLX       YES, STORE NULL            CHG30011 76200
+         BCTR  R1,0           -1 FROM R1                 CHG30011 76200
+         LA    R8,WORK-1(R8)  POINT TO FIRST PART OF SUBSTR       76200
+         EX    R1,P85MVCSU    MOVE                       CHG30011 76200
+         B     P85NCALC        STORE SUBSTR REQUESTED    CHG30011 76200
+         SPACE 3
+P85NFUNC EQU   *
+* NOW REMOVE QUOTES IF THEY ARE ON EITHER STRING
+           SPACE 1                                                74303
+* THIS NEXT BIT OF CODE PERFORMS THE FOLLOWING:-                  74303
+*  IF WE ARE CONCATENATING 2 STRINGS LIKE 'A'||'B' WE WANT        74303
+*  THE RESULT TO BE STORED WITH QUOTES STILL AROUND THE RESULTANT 74303
+*  STRING. HOWEVER,IN ANY OTHER CASE,WE DON'T CARE.               74303
+* THE REASON FOR THIS IS SO THAT THE TYPE FUNCTION CAN BE USED    74303
+*  TO TEST IF THE STRING IS A LITERAL STRING, EG IF TYPE(%A)='LIT'74303
+*  WILL WORK CORRECTLY.                                           74303
+         CLC   DBL(2),BLANKS NO SECOND PART??                     76200
+         BE    P85NCALC                                           76200
+         CLC   DBL(2),=C'||'    CONCATENATION ?                   74303
+         BNE   P85NOTC1         NO,->                             74303
+         CLI   WORK,C''''                                         74303
+         BNE   P85NOTC1                                           74303
+         CLC   #TKN,ZERO      ANY 2ND ITEM?                 FIX-X 76200
+         BE    P85NCALC                                           76200
+         CLI   TKN,C''''                                          74303
+         BNE   P85NOTC1                                           74303
+* WELL,DROP THE END QUOTE OF THE WORK AREA,AND THE BEGINNING      74303
+*  QUOTE OFF TKN                                                  74303
+         LH    R1,#WORK                                           74303
+         BCTR  R1,0                                               74303
+         STH   R1,#WORK                                           74303
+         LH    R1,#TKN                                            74303
+         BCTR  R1,0                                               74303
+         STH   R1,#TKN                                            74303
+         MVC   TKN(L'TKN-1),TKN+1                                 74303
+         B     P85CONCT        GO DO CONCATENATION                74303
+         SPACE 2                                                  74303
+P85NOTC1 EQU   *                                                  74303
+         CLI   WORK,C''''
+         BNE   P85NQU1
+         MVC   WORK(L'TKN),WORK+1 DROP 1ST QUOTE         JOL30035 76200
+         LH    R1,#WORK
+         SH    R1,=H'2'
+         STH   R1,#WORK
+P85NQU1  EQU    *
+         CLI   TKN,C''''
+         BNE   P85NQU2
+         MVC   TKN(L'TKN),TKN+1   DROP 1ST QUOTE         JOL30035 76200
+         LH    R1,#TKN
+         SH    R1,=H'2'
+         STH   R1,#TKN
+P85NQU2  EQU    *
+         CLC   DBL(2),BLANKS
+         BE    P85NCALC        A STRAIGHT ASSIGNMENT IS REQUIRD
+         CLC   DBL(2),=C'||'   CONCATENATE
+         BE    P85CONCT        YES,GO DO CONCAT
+         JOLERR 308,'INVALID ASSIGN:-STRING IS ''',#TKNSTRG,''''  75128
+         B     P85SET0        SET ANSWER TO 0                     75128
+         SPACE 2                                                  75128
+P85ARITH EQU   *                                                  75128
+* HERE THE OPERATOR MUST BE A NUMERIC ONE
+* NOW LOOK AT THE OPERATOR AND PERFORM THE DESIRED ACTION
+         CLI   DBL,C'+'
+         BE    P85PLUS
+         CLI   DBL,C'-'
+         BE    P85MINUS
+         CLI   DBL,C'*'
+         BE    P85MULT
+         CLI   DBL,C'/'
+         BE    P85DIV
+         MVC   TKN(2),DBL      SHIFT OFFENDING <OPERATOR> IN      74303
+         MVI   #TKN+1,2        AND SET LENGTH=2
+         JOLERR 301,'''',#TKN,''' IS AN INVALID ARITHMETIC OPERATOR'
+P85SET0  EQU   *                                                  75128
+         ZAP   P85NO1,=P'0'    SET ANSWER TO ZERO
+         B     P85SANS         STORE THE ANSWER
+P85CONV1 MVC   #TKN(L'TKN+2),#WORK                                74303
+P85CONV2 JOLERR 302,'ERROR CONVERTING ''',#TKN,''' TO ARITHMETIC'
+         ZAP   P85NO1,=P'0'    SET ANSWER TO ZERO
+         B     P85SANS         STORE THE ANSWER
+P85ZEDIV JOLERR 304,'ZERO DIVIDE CONDITION'
+P85RZERO EQU   *                                                  76200
+         ZAP   P85NO1,=P'0'    SET ANSWER TO ZERO
+         B     P85CONVA
+         SPACE 3
+P85CONCT BAL   R14,CONCAT     CONCATENATE ITEMS TO WORK           75128
+         LTR   R15,R15        DID CONCAT WORK ?                   75128
+         BZ    P85MACRO       GO STORE RESULT NOW                 75128
+         JOLERR 403,'LENGTH ERROR CONCATENATING ''',#TKN,''''
+         B     P85STOR
+P85PLUS  AP    P85NO1,P85NO2   ADD THE NUMBERS
+         B     P85CONVA        CONVERT ANSWER
+P85MINUS SP    P85NO1,P85NO2   SUBTRACT THE NUMBERS
+         B     P85CONVA
+P85MULT  EQU    *                                                  DASD
+         ZAP   WORK(15),P85NO1    LETS NOT 0C7 OK                  DASD
+         MP    WORK(15),P85NO2    MULTIPLY THE NUMBERS             DASD
+         MVC   P85NO1,WORK+5      MOVE BACK THE ANSWER             DASD
+         B     P85SANS
+P85DIV   CP    P85NO2,=P'0'
+         BZ    P85ZEDIV
+         DP P85NO1,P85NO2      DO THE DIVIDE
+*******************IGNORE THE REMAINDER FOR NOW
+* LATER WE MAY LET THE GUY SAY %X=%Y/100 AND %Z = REMAINDER (OR SOME
+*     SUCH RUBISH).
+         SPACE
+* NOW SHIFT THE ANSWER BACK DOWN TO THE RIGHT SPOT
+         ZAP   P85NO1,P85NO1(L'P85NO1-L'P85NO2)
+P85SANS  EQU   *
+P85CONVA EQU    *
+         MVC   WORK(30),BLANKS CLEAR A FEW BYTES OF WORK          75128
+         UNPK WORK(13),P85NO1
+         OI    WORK+12,X'F0'
+         LA    R1,WORK
+         LA    R15,WORK+12
+         LA    R14,1
+P85FINDN CLI   0(R1),C'0'
+         BNE   P85ASTRT
+         BXLE  R1,R14,P85FINDN
+         MVI   TKN,C'0'                                          75049
+         MVI   #TKN+1,1         SET LENGTH TO 1                   74303
+         B     P85STOR
+P85ASTRT MVC   #TKN+2(13),0(R1)
+         SR    R15,R1
+         LA    R15,1(R15)
+         STH   R15,#TKN
+         SPACE 1                                                  75128
+* NOW, IF THE ANSWER IS -VE, WE MUST PUT A '-' IN THE ANSWER      75128
+*  BEFORE WE STORE IT.                                            75128
+         CP    P85NO1,=P'0'                                       75128
+         BNM   P85STOR                                            75128
+         LA    R15,1(R15)     ADD 1 TO LENGTH                     75128
+         STH   R15,#WORK      STORE IN #WORK                      75128
+         MVI   WORK+0,C'-'    SHIFT IN - SIGN                     75128
+         MVC   WORK+1(30),TKN SHIFT IN NUMBER                     75128
+         B     P85MACRO       NOW STORE THE ANSWER                75128
+* STORE THE ANSWER.
+P85STOR  EQU   *
+         MVC   #WORK(L'TKN+2),#TKN
+P85MACRO EQU   *
+P85NCALC EQU    *
+* NOW TO STORE THE ANSWER
+* NOW,INITIALLY,SHIFT THE VALUE IN IF IT WILL FIT.HOWEVER,WE      74303
+*  WON'T SET ANY OF THE POINTERS TILL WE POP THE NAME IN THE      74303
+*  STACK,SO IF WE DON'T PUT THE NAME IN FOR SOME REASON,WE WILL   74303
+*  ONLY HAVE WASTED A MOVE.                                       74303
+         SR    R8,R8            R8=REORG INDICATOR IF VALUE WON'T
+*                               FIT,CALL REORG AND TRY AGAIN IT IT
+*                               STILL WON'T FIT -> ERROR
+P85TVFIT L     R1,ASYMTBL      LOAD THE ADDRESS OF THE TABLE      74303
+         AH    R1,SYMLEN       +LENGTH =LAST USEABLE ADDRESS      74303
+*                              IN THE TABLE                       74303
+         L     R6,ANEXTSYM     LOAD A(NEXTSYM)                    74303
+         LR    R7,R6           SAVE IT FOR A MINUTE               74303
+         LH    R15,#WORK       LOAD LENGTH OF STRING TO GO IN     74303
+         LA    R15,1(R15)      ADD 2-1 (#WORK=2,-1 FOR EXECUTE)   75128
+         AR    R6,R15          ADD IT TO R6                       74303
+         CR    R6,R1           WILL IT FIT ?                      74303
+         BNL   P85REORG        NO,REORG TABLE                     74303
+         EX    R15,P85MVCVA    SHIFT VALUE INTO TABLE             74303
+         LA    R6,1(R7,R15)    SET R6 TO NEXT AVAILABLE SPOT      74303
+*                              WHICH IS (ANEXTSYM+L'VALUE)        74303
+* FIRST LETS SEE IF THE NAME IS ALREADY IN THE STACK.
+         FINDSYM SYMBOLIC      FIND THE SYMBOLIC (BIN SEARCH)     87150
+         STH   R1,P86TBLPS     SAVE POSITION FOR BINARY LOOKUP TABLE
+         STH   R15,P86WASFN    WAS FOUND INDICATOR
+         LR    R5,R0           SYMNAME POINTER
+         LTR   R15,15          DID WE FIND IT?
+         BNZ   P85NOTFN
+         B     P85GOTNM        WE HAVE IT                         87150
+         L     R5,ASYMTBL      ADDRESS SYMBOLIC TABLE
+         LH    R1,NOSYMS       NO USED SO FAR.
+         MH    R1,=H'12'       LENGTH TABLE ENTRIES
+         LR    R15,R5
+         AR    R5,R1
+         LH    R14,=H'-12'
+         USING SYMOVLY,R5
+P85FNAME CLC   SYMBOLIC(8),SYMNAME
+         BE    P85GOTNM
+         BXH   R5,R14,P85FNAME
+* NAME NOT HERE SO ENTER IT INTO THE STACK PROVIDED THAT
+*     THERE IS ROOM TO ENTER THE SYMBOLIC NAME IN THE TABLE       74303
+*     OF SYMBOLIC NAMES.                                          74303
+P85NOTFN EQU   *                                                  74303
+P85STRIT LH    R1,NOSYMS
+         LR    R5,R1           PUT NON-INCREMENTED VALUE IN R5    87150
+         LA    R1,1(R1)
+         CH    R1,MAXSYMS
+         BH    P85ERR05        CANNOT ENTER NAME IN STACK,TOO MANY74303
+*                              AND NO AMOUNT OF RE-ORGANING WILL  74303
+*                              DROP THE NUMBER OF NAMES (ONLY THE 74303
+*                              PART FOR THE VALUE,AS THE NAMES    74303
+*                              ARE DROPPED AT THE END OF EACH     74303
+*                              MACRO).                            74303
+         STH   R1,NOSYMS       RESET NUMBER OF SYMBOLIC NAMES     74303
+         SPACE
+         MH    R5,=H'12'
+         A     R5,ASYMTBL
+         MVC   SYMNAME,SYMBOLIC      * NAME STORED
+         ST    R7,SYMADDR      R7=ANEXTSYM,IE ADDR VALUE WHICH    74303
+*                              HAS ALREADY BEEN MOVED IN          74303
+         MVC   SYMLEVEL(1),LEVEL+1
+         ST    R6,ANEXTSYM     RESET ANEXTSYM                     74303
+* STORE THE OFFSET IN THE BINARY LOOKUP TABLE
+* NOTE, IF THE SYMBOL WAS FOUND, WE WANT TO REPLACE IT RATHER THAN
+*       INSERTING IT SO THAT WE ONLY HAVE THE NAME IN THE TABLE ONCE.
+         CLC   P86WASFN,ZERO   IF ZERO, THE NAME WAS FOUND        87150
+         BNE   P85INS
+         L     R15,ATBLCNTL
+         USING TABLCNTL,R15
+         LH    R1,P86TBLPS     GET TABLE POSITION
+         BCTR  R1,0
+         AR    R1,R1           DOUBLE IT
+         A     R1,ACUROFFS     POINT TO POSITION IN OFFSET TABLE
+         LH    R14,NOSYMS
+         BCTR  R14,0
+         MH    R14,=H'12'
+         STH   R14,0(R1)
+TSETRACE DS    0H                                                 J52
+**  if (trace ?? pmacros)                                         J52
+**  {   cpylit(printline,"TRACE: Symbolic '");                    J52
+**      catstr(printline,store_sym);                              J52
+**      catlit(printline,"' Set to '");                           J52
+**      catstr(printline,value);                                  J52
+**      catchar(printline,'\'');                                  J52
+**      ujsprnt();                                                J52
+**  }                                                             J52
+* IF 'THISPRNT' OR 'TRACE' ON, THEN TELL USER "SET STATUS"        J52
+         CLI   THISPRNT,C' '     PRINTING STATEMENT ANYWAY ?      J52
+         BNE   P85STATT          YES, SO SAY STATUS               J52
+         CLI   TRACEIND,X'00'    TRACE IND ON?                    J52
+         BNE   P85STATT          YES, SO SAY STATUS               J52
+         JOLRETN RC=0           Back to Caller                    J52
+SETMSG1  DC    AL2(LSETM1,0),C'  TRACE: Symbolic '''              J52
+SETMSYM  DC    CL8' '            For <Symbolic Name>              J52
+         DC    C''' Set to <'                                     J52
+SETMVAL  DC    CL90' '           For <Symbolic Value>             J52
+         DC    C' '                                               J52
+LSETM1   EQU   *-SETMSG1                                          J52
+P85STATT DS    0H                                                 J52
+         L     R1,APRINTLN      Load address of print line area   J52
+         MVC   0(LSETM1,R1),SETMSG1  COPY MESSAGE TO PRINTLINE    J52
+         LR    R15,R1                                             J52
+         AH    R15,=AL2(SETMSYM-SETMSG1)                          J52
+         MVC   0(8,R15),SYMBOLIC Symbolic name in                 J52
+* Do Value                                                        J52
+         AH    R1,=AL2(SETMVAL-SETMSG1) point to 'setmval'        J52
+         LH    R15,#WORK         get length of rvalue             J52
+         CH    R15,=AL2(L'SETMVAL) Too Big?                       J52
+         BL    SETMSGOK                                           J52
+         LA    R15,L'SETMVAL                                      J52
+SETMSGOK DS    0H                                                 J52
+         EX    R15,MUVSVAL       Shift Value                      J52
+MUVSVAL  MVC   0(*-*,R1),WORK                                     J52
+         AR    R1,R15            point to end of string           J52
+         MVI   0(R1),C'>'                                         J52
+         L     R1,APRINTLN                                        J52
+*        AH    R15,0(R1)         Add Current record length        J52
+         AH    R15,=AL2(SETMVAL-SETMSG1+4)                        J52
+         STH   R15,0(R1)         Set LRECL to shorten printfile   J52
+         JOLPRINT ,             OUTPUT THE LINE                   J52
+         JOLRETN
+         DROP  R15
+P85INS   $CALL UJP02INS,P86TBLPS                                  87150
+         B     TSETRACE                                           J52
+         JOLRETN
+         SPACE 3
+P85GOTNM EQU   *
+* NOW THE NAME IS ALREADY IN THE SYMBOLIC PARAMETER TABLE ENTRIES.
+*    IF THE LEVEL IN THE STACK IS EXTERNAL OR EQUAL TO THE CURRENT
+*    LEVEL,WE WILL OVERWRITE IT.
+*    IF THE CURRENT LEVEL IS > THAN THE LEVEL NOW,WE SHALL CREATE
+*    A NEW ENTRY.
+         CLI   SYMLEVEL,X'FF'  EXTERAL ?
+         BE    P85USENM        YES,SO DO THE ASSIGN
+         CLC   SYMLEVEL,LEVEL+1
+         BH    P85NOTFN        ENTER SAME NAME AT DIFFERENT LEVEL
+* NAME IS HERE SO WE MUST OVER-WRITE THE INFORMATION (IF THERE IS ROOM)
+P85USENM EQU   *                                                  74303
+* SET UP NEW ADDRESS IN SYMADDR
+         MVC   SYMADDR+1(3),ANEXTSYM+1
+         ST    R6,ANEXTSYM     RESET NEXT VARIABLE ADDRESS        74303
+         B     TSETRACE                                           J52
+*        JOLRETN RC=0                                             74303
+P85ERR05 JOLERR 405,'SYMBOLIC NAME ''',SYMBOLIC,''' CANNOT BE STORED'
+P85RETNF JOLRETN RC=16
+P85REORG LTR   R8,R8           HAS REORG ALREADY BEEN CALLED ?    74303
+         BZ    P85RORG2        NO,SO DO IT,AND TEST FIT AGAIN     74303
+P85ERR07 JOLERR 406,'CANNOT STORE VALUE OF ''',SYMBOLIC,''''
+         JOLRETN RC=16                                            74303
+P85RORG2 LA    R8,1            SET R8 NON-ZERO                    74303
+         $CALL UJS19RSM        RE-ORG THE TABLE NOW               74303
+         B     P85TVFIT        GO TEST IF IT WILL FIT NOW.        74303
+P85PACK1 PACK P85NO1,TKN(*-*) PACK 1ST NUMBER,EX SETS 2ND LENGTH
+P85PACK2 PACK P85NO2,TKN(*-*) PACK 2ND NUMBER,EX SETS 2ND LENGTH
+P85CLRTK MVC   TKNSTRG(*-*),BLANKS  CLEAR A BIT OF TKNSTRG        74303
+P85MVCVA MVC   0(*-*,R7),#WORK SHIFT VALUE OF ASSIGN -> TABLE     74303
+P85CLC   CLC   0(*-*,R7),TKN  EXECUTED FOR 'INDEX' FUNC  CHG30011 76200
+P85MVCSU MVC   WORK(*-*),0(R8) EXECUTED FOR SUBSTR FUNC  CHG30011 76200
+           DROP R5                                                74303
+         SPACE 3                                         CHG30011 76200
+P85SUBER JOLERR 409,'SUBSTR IN ERROR :-',#TKNSTRG        CHG30011 76200
+         B     P85NULLX                                  CHG30011 76200
+         SPACE 2                                         CHG30011 76200
+P85GETNM EQU   *                                         CHG30011 76200
+* BAL'D ON R6 FOR INDEX ETC FUNCTIONS                    CHG30011 76200
+         LR    R8,R1           SAVE THE VALUE FOR THE ROUTINES    87150
+         FINDSYM TKN           FIND THE SYMBOLIC (BIN SEARCH)     87150
+         LTR   R15,15          DID WE FIND IT?
+         BZ    P85GETDT        WE HAVE IT, GET IT'S DETAILS       87150
+         LR    R5,R0           SYMNAME POINTER
+         USING SYMOVLY,R5                                CHG30011 76200
+* NAME NOT THERE                                         CHG30011 76200
+         JOLERR 410,'%',#TKN,' NOT FOUND FOR ',#WORK     CHG30011 76200
+         LR    R15,R6         SOME NON-ZERO VALUE        CHG30011 76200
+         BR    R6                                        CHG30011 76200
+         SPACE 3                                         CHG30011 76200
+P85GETDT DS    0H
+         LR    R5,R0          GET ADDRESS OF SYMBOLIC TABLE       87150
+         L     R7,SYMADDR     GET ADDRESS SYMBOLIC       CHG30011 76200
+         MVC   DBL(2),0(R7)   SHIFT LENGTH SO NO 0C6     CHG30011 76200
+         LR    R1,R8           RESTORE THE ORIGINAL R1 VALUE      87150
+         LH    R8,DBL         LOAD R8 WITH THE LENGTH    CHG30011 76200
+         BR    R6             RETURN TO CALLER           CHG30011 76200
+         SPACE 3                                         CHG30011 76200
+           LTORG
+           DC  40S(*)
+           JOLSAVE CSECT=UJP90OP
+           USING JOLCOM,R2
+           USING TKNX,R3
+          $CALL UJS20REP,#TKNSTRG                                 74303
+           IFNULL LABEL,P90OPTKN
+           MVC TKNSTRG(8),LABEL
+           MVI TKNSTRG+8,C':'
+           MVC #TKNSTRG(2),=H'9'
+           LH  R1,#TKNSTRG
+           B  P90OPLAB
+P90OPTKN DS    0H
+*        MVC   #TKNSTRG(256),#WORK                               88036
+*        MVC   #TKNSTRG+256(256),#WORK+256                       88036
+*        MVC   #TKNSTRG+512(256),#WORK+512                       88036
+*        MVC   #TKNSTRG+768(234),#WORK+768                       88036
+         LA    R0,#TKNSTRG                                       88036
+         LA    R1,L'TKNSTRG+2                                    88036
+         LA    R14,#WORK                                         88036
+         LH    R15,0(,R14)                                       88036
+         LA    R15,2(,R15)                                       88036
+         CLR   R1,R15                                            88036
+         BH    P90LENOK                                          88036
+         JOLERR 500,'#WORK HAS BEEN CORRUPTED'                   88036
+P90LENOK LR    R1,R15                                            88036
+         ICM   R15,8,BLANKS                                      88036
+         MVCL  R0,R14          MOVE WITH LOTS OF BLANK FILL      88036
+         LH    R1,#TKNSTRG
+         CLC   =C'IF ',ICOMMAND
+         BE    P90NOSEM   DON'T PUT IN A SEMI-COLON
+         CLC   =C'ELSE ',ICOMMAND ELSE ?                 JOL30021 76200
+         BE    P90NOSEM       NO SEMI-COLON EITHER       JOL30021 76200
+         LA    R15,TKNSTRG(R1)  ********
+         MVI   0(R15),C';' ***********
+         LA    R1,1(R1) *********
+P90OPLAB EQU    *
+P90NOSEM EQU    *
+         LA R1,14(R1)
+           STH R1,#TKNSTRG-12
+           MVC #TKNSTRG-10(2),=H'0'
+           MVC #TKNSTRG-8(4),STMT
+           MVC #TKNSTRG-4(4),INLINENO
+           MVC #TKNSTRG-0(1),PRINTIND
+           MVC #TKNSTRG+1(1),ISMACRO
+         LA    R1,#TKNSTRG-12
+         L     R0,APRCNTL
+         L     R15,AUJS30OP
+         BALR  R14,R15
+           IFNULL LABEL,P90RETN0
+           CLEAR LABEL
+           B   P90OPTKN
+P90RETN0   EQU  *
+           JOLRETN
+           LTORG
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           LTORG

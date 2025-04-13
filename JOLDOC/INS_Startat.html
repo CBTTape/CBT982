@@ -1,0 +1,339 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Mozilla SeaMonkey">
+  <title>Startat</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=ISO-8859-1">
+  <title></title>
+  <meta name="GENERATOR" content="OpenOffice.org 3.1  (Win32)">
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=ISO-8859-1">
+  <title></title>
+  <meta name="GENERATOR" content="OpenOffice.org 3.1  (Win32)">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="RIGHT" valign="TOP" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="RIGHT">
+      <style type="text/css">
+	<!--
+		@page { margin: 2cm }
+		H1 { margin-bottom: 0.11cm }
+		H1.western { font-family: "Arial", sans-serif; font-size: 16pt }
+		H1.cjk { font-family: "Arial Unicode MS"; font-size: 16pt }
+		H1.ctl { font-family: "Tahoma"; font-size: 12pt; font-weight: normal }
+		P { margin-bottom: 0.21cm }
+	-->
+	</style>
+      </h1>
+      <h1 class="western" align="RIGHT"><font size="5"><u>STARTAT</u></font><font
+ size="5"> - </font><font size="5"><i><span
+ style="font-weight: normal;">Execute Instruction</span></i></font></h1>
+      <font size="5"><i><u><span style="font-weight: normal;"></span></u></i></font>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Purpose</h4>
+      </td>
+      <td align="LEFT" valign="TOP">The <span
+ style="font-weight: bold;">STARTAT</span> instruction causes all
+executable instructions to be skipped from that point until an
+executable instruction with the named label is found. It is similar to
+a <span style="font-weight: bold;">GOTO</span>. <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <div style="margin-left: 40px;">&nbsp;&nbsp; </div>
+      <div style="font-weight: bold;">
+      <div style="margin-left: 40px;">STARTAT&nbsp; &nbsp;&nbsp;&nbsp;<span
+ style="font-style: italic; font-weight: normal;"> label</span> ; <br>
+      <br>
+      <span style="font-weight: normal; font-style: italic;">where </span><br>
+&nbsp;&nbsp;&nbsp; <br>
+      <div style="margin-left: 40px;"><span
+ style="font-style: italic; font-weight: normal;">label </span>&nbsp;&nbsp;&nbsp;
+is
+the
+name of an executable instruction <br style="font-weight: normal;">
+      </div>
+      <div style="margin-left: 80px;"><span style="font-weight: normal;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+where
+execution is to recommence. </span><br>
+      </div>
+      </div>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+You may wish to skip steps in a job because: <br>
+      <ul>
+        <li>You are restarting the job at some point other than the
+beginning. </li>
+        <li>You have a long job containing steps that are normally run
+monthly (for example), and you do not want to run all the program steps
+on a daily basis. </li>
+        <li>You may be testing an individual program in a job, and the <span
+ style="font-weight: bold;">STARTAT</span> and <span
+ style="font-weight: bold;">STOPAT</span> instructions will allow you
+to execute an isolated segment of your Jol program. The <span
+ style="font-weight: bold;">STARTAT</span> instruction can be used to
+skip over all the steps you do not want to execute. </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP">
+      <style type="text/css">
+	<!--
+		@page { margin: 2cm }
+		P { margin-bottom: 0.21cm }
+	-->
+	</style>
+      <p
+ style="margin-top: 0.25cm; margin-bottom: 0cm; font-weight: normal;"> </p>
+      <p
+ style="margin-top: 0.21cm; margin-bottom: 0cm; widows: 0; orphans: 0; page-break-after: avoid;">
+      </p>
+      <ol>
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">STARTAT</span> instruction assists <span
+ style="font-weight: bold;">RESTART</span> situations. </span></li>
+        <li><span style="font-weight: normal;">Only <span
+ style="font-weight: bold;">IF, DO, END</span>, and <span
+ style="font-weight: bold;">DECLARE</span> statements are actioned
+after a <span style="font-weight: bold;">STARTAT</span> instruction;
+however all other instructions are checked for syntax. </span></li>
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">STARTAT</span> applies to the Compiler
+Phase and Execute Phase - all Preprocessor Statements are executed as
+usual. </span></li>
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">STARTAT</span> instruction need not be the
+first instruction in a Jol program. You may run programs, then issue a <span
+ style="font-weight: bold;">STARTAT</span> to skip steps, and continue
+processing later. If you do this the <span style="font-weight: bold;">STARTAT</span>
+is more like a <span style="font-weight: bold;">GO TO</span>
+instruction. </span></li>
+        <li><span style="font-weight: normal;">Multiple <span
+ style="font-weight: bold;">STARTATS</span> may be issued, but each
+must be satisfied before any subsequent ones are issued. </span></li>
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">STOPAT</span> instruction can also be used
+in combination with the <span style="font-weight: bold;">STARTAT</span>
+to execute a small segment of your program. </span></li>
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">STARTAT</span> instruction is a directive
+to the Compiler to start processing Jol instructions when the statement
+with the label is found. Because it is a compiler directive, you cannot
+issue a <span style="font-weight: bold;">STARTAT</span> after an
+execution oriented <span style="font-weight: bold;">IF</span>
+statement. If you do so the <span style="font-weight: bold;">STARTAT</span>
+will be actioned as though no <span style="font-weight: bold;">IF</span>
+had been coded. </span></li>
+      </ol>
+      <p
+ style="margin-top: 0.21cm; margin-bottom: 0cm; widows: 0; orphans: 0; page-break-after: avoid;"><br>
+      </p>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;"><br>
+      </span></span></div>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Example</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP"><span
+ style="font-weight: bold;">1.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; STARTAT
+STEP9; </span><br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">. . .&nbsp; </span></span><span
+ style="font-weight: normal;"><br>
+      <span style="font-weight: bold;">STEP9: RUN SALES; </span></span><br>
+      </div>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">All
+steps
+after
+the <span style="font-weight: bold;">STARTAT</span>
+instruction are skipped until the labeled instruction with <span
+ style="font-weight: bold;">STEP9</span> as the label is found. </span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">2.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+IF
+%RESTART
+= 'REPORT' </span><br style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">THEN
+DO;
+
+      </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+DCL
+MASTER DS SALES.MASTER(0); </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+STARTAT
+REPORT; </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;END;<br>
+&nbsp;</span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;ELSE
+DCL
+MASTER
+DS SALES.MASTER(+1) </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+VB
+200,7294 </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+3380
+      </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+10
+CYLS; </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;
+.
+.
+. </span><br>
+      <br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">UPDATE:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+RUN
+UPDATE;
+      </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 120px;"><span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;
+CATLG
+MASTER;
+      </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">REPORT:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+RUN
+REPORT;
+      </span><br style="font-weight: normal;">
+      </div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+above
+example
+shows that if <span style="font-weight: bold;">%RESTART</span>
+contains <span style="font-weight: bold;">'REPORT'</span> then the <span
+ style="font-weight: bold;">MASTER DSID</span> is to be declared, and
+it is to use the latest (0) generation of the group of data sets called
+      <span style="font-weight: bold;">SALES.MASTER</span>.
+Additionally, the <span style="font-weight: bold;">STARTAT REPORT </span>instruction
+is
+issued,
+and so processing will then be skipped until the label <span
+ style="font-weight: bold;">REPORT</span> is found. </span><br>
+      <span style="font-weight: normal;"><br>
+If <span style="font-weight: bold;">%RESTART</span> is not <span
+ style="font-weight: bold;">REPORT</span>, then the <span
+ style="font-weight: bold;">MASTER DSID</span> is declared as a new
+generation. Because the <span style="font-weight: bold;">STARTAT</span>
+instruction will not be executed, the <span style="font-weight: bold;">RUN
+UPDATE</span> and <span style="font-weight: bold;">CATALOG MASTER</span>
+instructions will be executed. </span><br style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">3.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+%RESTART
+=
+'STEP10'; </span><br style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;
+...
+
+      </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+%RESTART
+=
+'STEP10' </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">THEN
+DO;
+
+      </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+RUN
+RESTORE; `/* RESTORE DATA SET */ </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+STARTAT
+%RESTART; </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">END;<br>
+&nbsp;</span><br style="font-weight: normal;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">In
+the
+example
+above the symbolic <span style="font-weight: bold;">%RESTART</span>
+is set to <span style="font-weight: bold;">STEP10.</span> Later, an <span
+ style="font-weight: bold;">IF</span> statement is used to test the
+value of the symbolic variable. In this case, if it is <span
+ style="font-weight: bold;">STEP10</span> then the program <span
+ style="font-weight: bold;">RESTORE</span> will be run to restore data
+set, and then the <span style="font-weight: bold;">STARTAT</span> is
+issued with the symbolic variable <span style="font-weight: bold;">%RESTART</span>
+as its subject. The <span style="font-weight: bold;">%RESTART</span>
+is replaced by the current contents of <span style="font-weight: bold;">%RESTART</span>,
+and
+so
+the <span style="font-weight: bold;">STARTAT %RESTART </span>becomes <span
+ style="font-weight: bold;">STARTAT STEP10</span>.</span><br>
+      </div>
+      <div style="margin-left: 80px;">&nbsp;<br>
+      </div>
+      <div style="text-align: center;">---000---<br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

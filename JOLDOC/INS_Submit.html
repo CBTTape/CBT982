@@ -1,0 +1,350 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Mozilla SeaMonkey">
+  <title>Submit</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=ISO-8859-1">
+  <title></title>
+  <meta name="GENERATOR" content="OpenOffice.org 3.1  (Win32)">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="RIGHT" valign="TOP" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="RIGHT">
+      <style type="text/css">
+	<!--
+		@page { margin: 2cm }
+		H1 { margin-bottom: 0.11cm }
+		H1.western { font-family: "Arial", sans-serif; font-size: 16pt }
+		H1.cjk { font-family: "Arial Unicode MS"; font-size: 16pt }
+		H1.ctl { font-family: "Tahoma"; font-size: 12pt; font-weight: normal }
+		P { margin-bottom: 0.21cm }
+	-->
+	</style>
+      </h1>
+      <h1 class="western" align="RIGHT"><font size="5"><u>SUBMIT </u></font><font
+ size="5">- </font><font size="5"><i><span style="font-weight: normal;">Execute
+Command</span></i></font></h1>
+      <font size="5"><i><u><span style="font-weight: normal;"></span></u></i></font>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Purpose</h4>
+      </td>
+      <td align="LEFT" valign="TOP">The <span
+ style="font-weight: bold;">SUBMIT</span> command allows the compiling
+of subsequent jobs at any point within the currently executing job.
+This provides the facility to effectively schedule dependent job
+streams. That is, the dependent job is not compiled or placed on the
+system job queue until the current job has reached a point where it is
+desirable or safe to run the dependent job. <br>
+      <br>
+By using this technique, a linkage can be created which controls the
+sequence of running a number of jobs. <br>
+      <br>
+      <span style="font-weight: bold;">Note:</span> Symbolic Parameters
+may be passed from job to job. <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP"><br>
+      <div style="margin-left: 40px;">&nbsp;&nbsp; &nbsp;<span
+ style="font-weight: bold;">SUBMIT&nbsp; </span><span
+ style="font-style: italic;">member-name [ , member-name ...] </span><br>
+      </div>
+      <div style="margin-left: 40px;">&nbsp;&nbsp; &nbsp;Or<span
+ style="font-weight: bold;">&nbsp; SUBMIT&nbsp; USING </span>{ <span
+ style="font-style: italic;">dsid | data-set</span> } <br>
+      <br>
+      </div>
+      <div style="margin-left: 80px;">[<span style="font-weight: bold;">SYMS</span>
+= <span style="font-style: italic;">'symbolic-variable-name-list'</span>]
+
+
+
+
+      <br>
+      </div>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">LC
+|&nbsp;
+LINECOUNT</span> [=] <span style="font-style: italic;">line-count </span><br>
+      </div>
+      <br>
+      <div style="margin-left: 80px; font-weight: bold;">[PI]&nbsp;&nbsp;&nbsp;&nbsp;
+[NPI]
+&nbsp;<br>
+[PM]&nbsp;&nbsp; [NPM] <br>
+[PE]&nbsp;&nbsp; [NPE] <br>
+[PJ]&nbsp;&nbsp;&nbsp; [NPJ] <br>
+[LET] [NOLET] <br>
+[PO]&nbsp;&nbsp; [NPO] <br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;">;<br>
+      </div>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+The <span style="font-weight: bold;">SUBMIT</span> command may also be
+used to submit <span style="font-weight: bold;">JCL</span> code direct
+to the system by including the desired JCL code within quotes. <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">
+      <div style="margin-left: 40px;"><br>
+SUBMIT 'JCL code ....';<br>
+      <br>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><br>
+The <span style="font-weight: bold;">SUBMIT</span> command is used to
+transmit a new job to the Operating System, ready for execution.&nbsp; <br>
+      <br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP">
+      <ol>
+        <li><span style="font-weight: normal;">The job may be a <span
+ style="font-weight: bold;">Jol</span> job, or a <span
+ style="font-weight: bold;">JCL</span> job. If the job is a <span
+ style="font-weight: bold;">Jol</span> job, the Jol compiler is called
+to convert the program to instructions ready for the machine to
+execute. If the job is a <span style="font-weight: bold;">JCL</span>
+job, the card images are passed through to the Operating System
+unchanged, apart from the replacement of <span
+ style="font-weight: bold; font-style: italic;">Jol</span> <span
+ style="font-weight: bold;">symbolic variables</span>.</span></li>
+        <li><span style="font-weight: normal;">The <span
+ style="font-style: italic; font-weight: bold;">member-name-list</span>
+must consist of one or more members separated by blanks or commas. This
+member (or members) is directed to be <span style="font-weight: bold;">INCLUDED</span>
+as part of the compiler input. Up to five (5) members may be specified.
+Each member must contain its own <span style="font-weight: bold;">JOB</span>
+Definition statements.</span></li>
+      </ol>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+users
+
+
+      <span style="font-weight: bold;">%SYSUID.JOL</span> data set is
+automatically concatenated to the Jol input data sets.</span></div>
+      <ol start="3">
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">USING</span> parameter allows a section <span
+ style="font-weight: bold; font-style: italic;">data-set-identifier</span>
+to be specified that contains the Jol program code to be input into the
+Jol compiler. The Jol program in the data set may be generated by an
+earlier program in the job stream, or it may be any other card image
+data set containing Jol statements.</span></li>
+        <li><span style="font-weight: normal;">If neither the <span
+ style="font-weight: bold;">USING</span> parameter or the
+member-name-list is specified, the input is assumed to be a
+data-set-identifier named <span style="font-weight: bold;">JOLIN</span>.</span></li>
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">SYMS</span> parameters allows the passing
+of Symbolic Variables from job to job. Initial values are assigned to
+Symbolic Variables, in the same manner as the <span
+ style="font-weight: bold;">* JOL card</span>, or by using the
+parameter to the Jol compiler as described in the section dealing with <span
+ style="font-weight: bold;">Compiler Options</span>.</span></li>
+      </ol>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">Thus
+the
+
+
+      <span style="font-weight: bold;">first</span> job in a network
+may
+have values assigned to Symbolic Variables, and these values may then
+be passed to all the other jobs in the network without Operator or
+Programmer intervention.</span></div>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><br>
+For example:</span></div>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><br>
+      <span style="font-weight: bold;">JOB1 </span>contains a <span
+ style="font-weight: bold;">SUBMIT</span> command requesting <span
+ style="font-weight: bold;">JOB2</span> to be compiled and placed on
+the system queue ready to execute. <span style="font-weight: bold;">JOB1</span>
+had a symbolic variable initialised and <span
+ style="font-weight: bold;">JOB2</span> also requires that the same
+symbolic variable be initialised to the value contained in <span
+ style="font-weight: bold;">JOB1</span>.</span></div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 80px; font-weight: bold;"><span
+ style="font-weight: bold;">%SYM='VALUE';</span><br>
+      <span style="font-weight: bold;">SUBMIT JOB2 SYMS='SYM=%SYM';</span></div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+current
+value
+of
+      <span style="font-weight: bold;">%SYM</span> will be passed
+to <span style="font-weight: bold;">JOB2</span> when the <span
+ style="font-weight: bold;">SUBMIT</span> command is
+executed.</span></div>
+      <ol start="6">
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">PRINTOPT, LINECNT</span> and following
+parameters may be used to set conditions for the Jol compiler. They are
+described under the section on Compiler Options.</span></li>
+        <li><span style="font-weight: normal;">Symbolic Variables or
+Parameters may also be coded in the JCL submitted when the JCL format
+of the command is used.</span></li>
+      </ol>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">These
+will
+be
+resolved
+before the job is submitted.</span><br>
+      <br>
+      <span style="font-weight: normal;">In fact, the entire JCL
+statement itself may be a symbolic parameter, thus enabling the
+generation of highly tailored JCL.</span><br>
+      <span style="font-weight: normal;"><br>
+Up to ten JCL statements may be submitted with one <span
+ style="font-weight: bold;">SUBMIT</span> command. Multiple <span
+ style="font-weight: bold;">SUBMIT</span> commands are possible.</span><br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP">
+      <ol style="font-weight: bold;">
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">SUBMIT</span> <span
+ style="font-weight: bold;">JOB1, JOB2</span>; /*
+PUT JOBS ON SYSTEM QUEUE */</span></li>
+      </ol>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">Members
+
+
+      <span style="font-weight: bold;">JOB1</span> and <span
+ style="font-weight: bold;">JOB2 </span>are
+translated by Jol into executable instructions, and submitted to the
+Operating System for execution.</span><br style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <ol style="font-weight: bold;" start="2">
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">IF MAXCC&lt;8</span></span></li>
+      </ol>
+      <div style="margin-left: 40px; font-weight: bold;"><span
+ style="font-weight: bold;">THEN SUBMIT JOB10;</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: bold;">
+      <div style="margin-left: 40px; font-weight: bold;"><span
+ style="font-weight: bold;">ELSE SIGNAL ERROR 3, 'JOB10
+NOT ON QUEUE,</span><br style="font-weight: normal;">
+      </div>
+      <br style="font-weight: bold;">
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">CRITICAL
+ERROR
+DETECTED';</span><br style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">This
+example
+describes
+a
+typical SUBMIT command.</span><br style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">If
+the
+maximum
+completion code
+from all the programs that have executed in the jobs is less than 8,
+then <span style="font-weight: bold;">SUBMIT JOB10</span>, otherwise
+display a message on the Operator's
+Console for information.</span><br style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <ol style="font-weight: bold;" start="3">
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">%DATASET1='%SYSUID.INPUT';</span></span></li>
+      </ol>
+      <div style="margin-left: 40px; font-weight: bold;"><span
+ style="font-weight: bold;">%DATASET2='%SYSUID.OUTPUT';</span><br
+ style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">. . .</span><br
+ style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">SUBMIT `'//JOB1 JOB (account
+etc)'</span><br style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">'// EXEC PGM=IEBCOPY'</span><br
+ style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">'//IN1 DD
+DSN=%DATASET1,DISP=SHR'</span><br style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">'//OUT DD
+DSN=%DATASET2,DISP=(,CATLG),'</span><br style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">' etc ...';</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+Symbolic
+Parameters
+are
+replaced before the job is submitted. </span><br>
+      </div>
+      <div style="margin-left: 80px;">&nbsp;<br>
+      </div>
+      <br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

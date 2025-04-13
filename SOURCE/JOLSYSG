@@ -1,0 +1,1114 @@
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1975,1976.
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1980.
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1981.
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1982.
+* JOL COPYRIGHT CCS-JOL 1983.
+* JOL COPYRIGHT CCS-JOL 1984.
+* THIS MEMBER IS JOLSYSG
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+*        PRINT OFF
+           MACRO
+      JOLDEF   &CARD1=,             UP TO 3 DD CARDS MAY BE SPECIFIED. *
+               &CARD2=,             THESE WILL BE OUTPUT EACH TIME JOL *
+               &CARD3=,             GENERATES A NEW OS JOB STEP.       *
+               &CLASS=,             DEFAULT CLASS PARA IN JOB CARD     *
+               &CPU=,               DEFAULT CPU TIME IN JOB CARD       *
+               &CPUID=000000,       CENTRAL PROCESSOR ID. NUMBER       *
+               &CPUTYPE=3033,       TYPE OF CPU JOL WILL RUN ON        *
+               &DEFDISK=SYSDA,      DEF UNIT FOR NON-SEQ O/P DATASETS  *
+               &DEFTAPE=SYSDA,      DEF UNIT FOR NON-TEMP SEQ O/P DATA *
+               &DUMP=,              ANY VALID SYSUDUMP DD STATEMENT    *
+               &ELAP=,              DEFAULT ELAPSE TIME ON JOB CARD    *
+               &ERRSEV=0,           LEVEL OF ERROR MESS. PRINTED (0-5) *
+               &FLAG=0,             END OF COL. FOR SOURCE CODE (0-73) *
+               &GDGDCB=JOLDCB,      CATALOG'D DATASET FOR DSET CREATION*
+               &JOBREGN=,           DEFAULT JOB REGION SIZE            *
+               &JOLCARD='  ',                                          *
+               &LINECNT=57,         MAX NUM LINES PER PAGE OF COMP LIST*
+               &MON=BATCH,                                             *
+               &MAXNAME=400,        MAX NUM OF DSID/PGM/MACRO NAMES.   *
+               &MAXSYM=500,         MAX NUM OF SYMBOLICS.              *
+               &MAXSYMV=9000,       AMOUNT OF VIRT STOR ALLOC FOR SYMS.*
+               &OUTDEFS=(,,,5,2,T),                                    *
+               &TITLE='        * * *    J O L    * * *    D E M O N S T*
+                R A T I O N   S Y S T E M',                            *
+               &PE=NO,              PRINT EXPANDED MACRO INSTRUCTIONS  *
+               &PI=YES,             PRINT INCLUDED JOL STATEMENTS      *
+               &PJ=NO,                                                 *
+               &PM=NO,                                                 *
+               &PO=NO,                                                 *
+               &PRINT=YES,                                             *
+               &PRNTALL=YES,                                           *
+               &PRNTJCL=YES,                                           *
+               &PRTY=,                                                 *
+               &PUNCHCL=B,                                             *
+               &REALJCL=NO,                                            *
+               &REL=03.8,                                              *
+               &SCHED=$JOLMN60,                                        *
+               &SM=(1,72,00),                                          *
+               &SPCFORM=S,          SPECIAL FORMS (1 ALPHA CHAR)       *
+               &SPOOL=2,            SPEC. WHAT SYSTEM WILL DO SPOOLING *
+               &SRDR=NO,                                               *
+               &SVC=13,                                                *
+               &SYSBLK=800,         DEFAULT BLOCK SIZE ON O/P DSID'S   *
+               &SYSCLAS=A,          DEFAULT SYSOUT CLASS FOR NON TSS   *
+               &SYSDEFS=,           DEFAULTS FOR PRINT FILES           *
+               &SYSTEM=MVS,         O/SYSTEM UNDER WHICH JOL WILL RUN  *
+               &TSOCLAS=X,          DEFAULT MSGCLASS FOR TSO JOBS      *
+               &TSSCLAS=,           DEFAULT MSGCLASS FOR TSS JOBS      *
+               &TYPE=CSECT                                        75128
+         GBLA  &JOLDEF                                            75128
+         GBLC  &TYPEGEN                                           75128
+         LCLC  &DEFPI
+         LCLC  &DEFSPEC
+         LCLC  &DEFP1,&DEFPM,&DEFPE,&DEFPJ,&DEFPO
+         LCLB  &THISSYS(8)
+         LCLB  &MIN(8)
+         LCLB  &MOUT(8)
+         LCLC  &PROPT
+         LCLA  &SM1,&SM2,&SM3,&FLAGMOP
+         ACTR  500                                                76200
+&JOLDEF  SETA  1                                                  75128
+&TYPEGEN SETC  '&TYPE'                                            75128
+         AIF ('&TYPE' NE 'CSECT').DSECTX
+UJGENDET CSECT
+         AGO .STRT
+.DSECTX  ANOP
+UJGENDET DSECT
+.STRT  ANOP
+GENDETS  EQU   *                                                  75128
+* THIS CSECT IS GENERATED AS PART OF THE 'JOLGEN' AND IS LOADED   75128
+* DURING THE JOL COMPILER INITIALISATION PHASES                   75128
+AGENCOPY DC    A(DEFCOPY)  A COPY IS HELD AS IT MAY BE ALTERED    75128
+*                          BY PARAMETER INFORMATION               75128
+         AIF ('&TYPE' NE 'DSECT').REALADD
+*
+* THE FOLLOWING ARE DEFINED AS DS A(0) ITEMS.
+* IN FACT, WHEN THE SYSTEM IS GENERATED,THEY ARE REAL ADDRESS CONS
+*
+AGENUNIT DS    A(0)
+APREFVOL DS    A(0)
+ARETVOLS DS    A(0)
+ASWAPUNI DS    A(0)           SWAP UNIT TABLE                     75128
+AS01NCAT DS    A(0)           NO CATLG SEARCH DSN TABLE           75128
+         AGO .SP1
+.REALADD ANOP
+AGENUNIT DC    A(GENUNIT)  ADDRESS OF UNIT NAMES
+APREFVOL DC    A(PREFVOLS) ADDRESS OF PREFERRED VOLUMES           75128
+ARETVOLS DC    A(RETVOLS)  ADDRESS OF VOLUMES TO BE RETAINED      75128
+ASWAPUNI DC    A(SWAPUNIT)                                        75128
+AS01NCAT DC    A(UJS01NC)                                        75128
+.SP1     ANOP
+*                                                                 75128
+* SOME ZAP SPACE                                                  75128
+*                                                                 75128
+         DC    A(0,0)                                             75128
+         DC    A(0,0)                                             75128
+         DC    A(0,0)                                             75128
+         DC    A(0,0)                                             75128
+         DC    A(0,0)                                             75128
+         SPACE 3
+DEFAULTS EQU  *
+MAXLINE  DC    H'&LINECNT' MAXIMUM NO. LINES PER PAGE             75128
+         AIF   ('&SYSTEM' EQ  'MFT').MFT
+         AIF   ('&SYSTEM' EQ  'MVT').MVT
+         AIF   ('&SYSTEM' EQ  'VS1').VS1
+         AIF   ('&SYSTEM' EQ  'MVS').MVS
+         AIF   ('&SYSTEM' EQ  'OSIV/X8').X8
+         AIF   ('&SYSTEM' EQ  'OSIV/F4').F4
+         AIF   ('&SYSTEM' EQ  'OS4').F4
+         AIF   ('&SYSTEM' EQ  'OS4/F4').F4
+         AIF   ('&SYSTEM' EQ  'BS3000').MVS
+         MNOTE 8,'&SYSTEM INVALID,MVS ASSUMED'
+         AGO .MVS
+.MFT     ANOP                                                     75128
+DEFSYS   DC    C'MFT'         MFT SYSTEM                          75128
+         AGO   .DOHASP
+.F4      ANOP
+DEFSYS   DC    C'OS4'         F4  SYSTEM
+         AGO   .DOSPOO
+.MVT     ANOP                                                     75128
+DEFSYS   DC    C'MVT'         MVT SYSTEM                          75128
+         AGO   .DOHASP
+.VS1     ANOP                                                     75128
+DEFSYS   DC    C'VS1'         VS1 SYSTEM                          75128
+         AGO   .DOSPOO
+.MVS     ANOP                                                     75128
+DEFSYS   DC    C'MVS'         MVS SYSTEM OR FACOM OSIV/F4         75128
+         AGO   .DOSPOO
+.X8      ANOP                                                     75128
+DEFSYS   DC    C'X8 '         FACOM OSIV/X8 SYSTEM
+         AGO   .DOSPOO
+.DOHASP  AIF   ('&SPOOL' EQ 'HASP').HASP
+         AIF   ('&SPOOL' EQ 'ASP').ASP
+         AIF   ('&SPOOL' EQ '').NSPOOL NO SPOOLING SYSTEM
+         MNOTE 8,'SPOOLING SYSTEM INVALID FOR &SYSTEM:-&SPOOL'
+         AGO   .NSPOOL
+.HASP    ANOP                                                     75128
+SPOOL    DC    C'H'           SET HASP INDICATOR                  75128
+         AGO   .DOPRTY                                            75128
+.DOSPOO  ANOP
+         AIF   ('&SPOOL' EQ '').TSYS2
+         AIF   ('&SPOOL' EQ 'JES1' OR '&SPOOL' EQ 'JES2' OR            *
+               '&SPOOL' EQ 'JES3').VSPOOLO   SPOOL OK
+         MNOTE 8,'SPOOLING SYSTEM &SPOOL INVALID FOR &SYSTEM'
+         AGO   .TSYS2
+.VSPOOLO ANOP
+&DEFPI   SETC  '&SPOOL'(4,1)  SET TO LAST CHAR
+SPOOL    DC    CL1'&DEFPI'              JES SYSTEM
+         AGO   .DOPRTY
+.TSYS2   ANOP
+         AIF   ('&SYSTEM' EQ 'VS1').SPVS1
+         AIF   ('&SYSTEM' EQ 'MVS').MAKEHSP
+         AIF   ('&SYSTEM' EQ  'OSIV/F4').MAKEHSP
+         AIF   ('&SYSTEM' EQ  'OSIV/X8').MAKEHSP
+         AIF   ('&SYSTEM' EQ  'OS4/F4').MAKEHSP
+         AIF   ('&SYSTEM' EQ  'OS4').MAKEHSP
+         AIF   ('&SYSTEM' EQ  'BS3000').MAKEHSP
+.NSPOOL  ANOP
+SPOOL    DC    C'2'           NO SPOOLING SYSTEM                  75128
+         AGO   .DOPRTY
+.MAKEHSP AIF   ('&TYPE' EQ 'DSECT').NOMESS1
+         MNOTE 0,'JES2 SPOOLING SYSTEM ASSUMED'                   75128
+.NOMESS1 ANOP
+SPOOL    DC    C'2'           JES2                                75128
+         AGO   .DOPRTY                                            75128
+.SPVS1   MNOTE 0,'JES1 SPOOLING SYSTEM ASSUMED'                   75128
+SPOOL    DC    C'1'           JES1                                75128
+         AGO   .DOPRTY
+.ASP     ANOP                                                     75128
+SPOOL    DC    C'A'           ASP IS IN: SPOOLING SYSTEM          75128
+.DOPRTY  AIF   ('&PRTY' EQ '').NOPRTY                             74303
+DEFPRTY  DC    CL1'&PRTY'     DEFINE DEFAULT PRIORITY             75128
+         AGO   .TELAP                                             75128
+.NOPRTY  ANOP                                                     75128
+DEFPRTY  DC    C' '           NO DEFAULT PRIORITY                 75128
+.TELAP   AIF   ('&ELAP' EQ '').NOELAP                             75128
+DEFETIME DC    CL3'&ELAP'     DEFINE DEFAULT ELAPSED TIME         75128
+         AGO   .TCPU                                              75128
+.NOELAP  ANOP                                                     75128
+DEFETIME DC    CL3' '         NO DEFAULT ELAPSED TIME             75128
+.TCPU    AIF   ('&CPU' EQ '').NOCPU                               75128
+DEFCTIME DC    CL3'&CPU'      DEFINE DEFAULT CPU TIME             75128
+         AGO   .TCLASS                                            75128
+.NOCPU   ANOP                                                     75128
+DEFCTIME DC    CL3' '         NO DEFAULT CPU TIME                 75128
+.TCLASS  AIF   ('&CLASS' EQ '').NOCLASS                           75128
+DEFCLASS DC    CL1'&CLASS'    DEFINE DEFAULT CLASS                75128
+         AGO   .TREGION                                           75128
+.NOCLASS ANOP                                                     75128
+DEFCLASS DC    C' '           NO DEFAULT CLASS                    75128
+.TREGION AIF   ('&JOBREGN' EQ '').NOREGN                          75128
+DEFPREGN DC    CL3'&JOBREGN'  DEFINE DEFAULT REGION               75128
+         AGO   .TJCLP                                             75128
+.NOREGN  ANOP                                                     75128
+DEFPREGN DC    CL3' '         NO DEFAULT REGION                   75128
+.TJCLP   ANOP                                                     75128
+         AIF   ('&PRNTJCL' EQ 'YES').MSG1
+DEFMSG1  DC    C' '           NO JCL TO BE PRINTED                75128
+         AGO   .TALLOC
+.MSG1    ANOP                                                     75128
+DEFMSG1  DC    C'1'           LET OS PRINT THE JCL                75128
+.TALLOC  AIF   ('&PRNTALL' EQ 'YES').MSG2
+DEFMALLC DC    C' '           PRINT JCL ALLOCATION MESSAGES IF ABN75128
+         AGO   .TPI                                               75128
+.MSG2    ANOP                                                     75128
+DEFMALLC DC    C'1'           PRINT ALL ALLOCATION MESSAGES       75128
+.TCLSS   ANOP                                                     74303
+.TPI     AIF   ('&PI' EQ 'NO').NOPI                               75128
+&DEFPI   SETC  '1'            PI ON                               75128
+         AGO   .TPM                                               75128
+.NOPI    ANOP                                                     75128
+&DEFPI   SETC  '0'            PI OFF                              75128
+.TPM     AIF   ('&PM' EQ 'NO').NOPM
+&DEFPM   SETC  '1'            PM ON                               75128
+.NOPM    ANOP                                                     75128
+&DEFPM   SETC  '0'            PM OFF                              75128
+.TPE     AIF   ('&PE' EQ 'NO').NOPE
+&DEFPE   SETC  '1'            PE ON                               75128
+         AGO   .TPJ
+.NOPE    ANOP                                                     75128
+&DEFPE   SETC  '0'            PE OFF                              75128
+.TPJ     AIF   ('&PJ' EQ 'NO').NOPJ
+&DEFPJ   SETC  '1'            PJ ON                               75128
+         AGO   .TPO
+.NOPJ    ANOP                                                     75128
+&DEFPJ   SETC  '0'            PJ OFF                              75128
+.TPO     AIF   ('&PO' EQ 'NO').NOPO
+&DEFPO   SETC  '1'            PO ON                               75128
+         AGO   .ENDPS
+.NOPO    ANOP                                                     75128
+&DEFPO   SETC  '0'            PO OFF                              75128
+.ENDPS   ANOP                                                     75311
+&PROPT   SETC '0'                                                 75311
+&FLAGMOP SETA 0                                                   75311
+           AIF ('&FLAG' EQ '0').NFLAGM                            75311
+&FLAGMOP   SETA 1                                                 75311
+.NFLAGM    ANOP
+           AIF ('&PRINT' EQ 'YES').NPROPT                         75311
+&PROPT     SETC '1'                                               75311
+.NPROPT    ANOP                                                   75311
+PARMPRNT   DC  B'&DEFPI&DEFPM&DEFPE&DEFPJ.00&PROPT&DEFPO' PRINT        *
+               OPTIONS
+* BIT 0 ON TO PRINT INCLUDES
+* BIT 1 ON TO PRINT MACROS AS THEY ARE BEING READ FROM THE MACRO-LIB
+* BIT 2 ON TO PRINT MACRO EXPANSIONS
+* BIT 3 ON TO PRINT GENERATED JCL
+* BIT 4 ON WHEN 'TEST' CODED IN * JOL | COMPILER OPTIONS          75128
+*       - STOPS CONSOLE MESSAGES WHEN ERRORS OCCUR                75128
+* BIT 5 ON IF NPC (PRINT JCL COMMENTS NOT REQD)                   75311
+* BIT 6 ON WHEN 'NOPRINT' ON (DON'T PRINT COMPILE)                75311
+* BIT 7 ON TO PRINT OPTIONS AND DEFAULTS
+         AIF   ('&DEFTAPE' EQ '').NOTAPE                          75128
+DEFTAPE  DC    CL8'&DEFTAPE'  DEFAULT TAPE UNIT NAME              75128
+         AGO   .TDISK                                             75128
+.NOTAPE  ANOP                                                    75128
+DEFTAPE  DC    CL8' '         NO DEFAULT TAPE UNIT                75128
+         MNOTE *,'NO TAPE UNIT SPECIFIED AS A DEFAULT'            75128
+.TDISK   AIF   ('&DEFDISK' EQ '').NODISK                          75128
+DEFDISK  DC    CL8'&DEFDISK'  DEFAULT DISK UNIT NAME              75128
+         AGO   .TSRECF                                            75128
+.NODISK  ANOP                                                     75128
+DEFDISK  DC    CL8' '         NO DEFAULT DISK UNIT                75128
+         MNOTE *,'NO DISK UNIT SPECIFIED AS A DEFAULT'            75128
+* NOW FIX UP DEFAULT OUTPUT CONSTANTS                             74303
+.TSRECF  ANOP                                                     75128
+           AIF ('&OUTDEFS(1)' EQ '').NORECF                       74303
+DEFRECF  DC    CL3'&OUTDEFS(1)' DEFAULT RECFM                     75128
+         AGO   .TDBLK                                             75128
+.NORECF  ANOP                                                     75128
+DEFRECF  DC    CL3' '         NO DEFAULT RECFM                    75128
+.TDBLK   AIF   ('&OUTDEFS(2)' EQ '').NODBLK                       75128
+DEFBLK   DC    H'&OUTDEFS(2)' DEFAULT BLOCKSIZE                   80289
+         AGO   .TDLREC                                            75128
+.NODBLK  ANOP                                                     75128
+DEFBLK   DC    H'0'           NO DEFAULT BLOCKSIZE                80289
+.TDLREC  AIF   ('&OUTDEFS(3)' EQ '').NOLREC                       75128
+DEFLREC  DC    H'&OUTDEFS(3)' DEFAULT LRECL                       80289
+         AGO   .TDPRIM                                            75128
+.NOLREC  ANOP                                                     75128
+DEFLREC  DC    H'0'           NO DEFAULT LRECL                    80289
+.TDPRIM  AIF   ('&OUTDEFS(4)' EQ '').NOPRIM                       75128
+DEFPRIM  DC    H'&OUTDEFS(4)' DEFAULT PRIMARY                     80289
+         AGO   .TDSEC                                             75128
+.NOPRIM  ANOP                                                     75128
+DEFPRIM  DC    H'0'           NO DEFAULT PRIMARY SPACE            80289
+.TDSEC   AIF   ('&OUTDEFS(5)' EQ '').NOSEC                        75128
+DEFSEC   DC    H'&OUTDEFS(5)'  DEFAULT SECONDARY SPACE            80289
+         AGO   .TALLOC2                                           75128
+.NOSEC   ANOP                                                     75128
+DEFSEC   DC    H'0'           NO DEFAULT SECONDARY ALLOCATION     80289
+.TALLOC2 AIF   ('&OUTDEFS(6)' EQ '').NOALLOC                      75128
+DEFALLUN DC    CL1'&OUTDEFS(6)' DEFAULT SPACE ALLOCATION UNITS    75128
+         AGO   .TSYSREC                                           75128
+.NOALLOC ANOP                                                     75128
+DEFALLUN DC    CL1' '         NO DEFAULT SPACE UNIT OF ALLOCATION 75128
+* NOW SYSOUT DEFAULTS                                             74303
+.TSYSREC ANOP                                                     75128
+         AIF   ('&SYSDEFS(1)' EQ '').NOSRECF                      74303
+DEFSRECF DC    CL3'&SYSDEFS(1)' DEFAULT SYSOUT RECFM              75128
+         AGO   .TSBLK
+.NOSRECF ANOP
+DEFSRECF DC    CL3' '         NO DEFAULT SYSOUT RECFM
+.TSBLK   AIF   ('&SYSDEFS(2)' EQ '').NOSBLK
+DEFSBLK  DC    H'&SYSDEFS(2)' DEFAULT SYSOUT BLOCKSIZE
+         AGO .TSLREC
+.NOSBLK  ANOP
+DEFSBLK  DC    H'0'           NO DEFAULT SYSOUT BLOCKSIZE
+.TSLREC  AIF   ('&SYSDEFS(3)' EQ '').NOSLREC
+DEFSLREC DC    H'&SYSDEFS(3)' DEFAULT SYSOUT LRECL
+         AGO   .TSPRIM
+.NOSLREC ANOP
+DEFSLREC DC    H'0'           NO DEFAULT SYSOUT LRECL
+.TSPRIM  AIF   ('&SYSDEFS(4)' EQ '').NOSPRIM
+DEFSPRIM DC    H'&SYSDEFS(4)' DEFAULT PRIMARY SYSOUT SPACE
+         AGO   .TSSEC
+.NOSPRIM ANOP
+DEFSPRIM DC    H'0'         NO DEFAULT PRIMARY SYSOUT SPACE
+.TSSEC   AIF   ('&SYSDEFS(5)' EQ '').NOSSEC
+DEFSSEC  DC    H'&SYSDEFS(5)' DEFAULT SYSOUT SECONDARY SPACE
+         AGO   .TSALLOC
+.NOSSEC  ANOP
+DEFSSEC  DC    H'0'           NO SYSOUT SECONDARY SPACE           75128
+.TSALLOC AIF   ('&SYSDEFS(6)' EQ '').NOSALLO                      75128
+DEFSCT   DC    CL1'&SYSDEFS(6)' DEFAULT SYSOUT SPACE ALLOCATION   75128
+         AGO   .TBATCH                                            75128
+.NOSALLO ANOP                                                     75128
+DEFSCT   DC    CL1' '         NO SYSOUT SPACE ALLOCATION TYPE     75128
+.TBATCH  ANOP                                                     75128
+.NOSUNIA ANOP                                                     74303
+         SPACE 2
+         AIF   ('&MON' NE 'BATCH').NOBATCH                        74303
+&THISSYS(2)    SETB 1                                             75128
+.NOBATCH AIF   ('&SRDR' EQ 'NO').NOSRDR                           75128
+&THISSYS(6)    SETB 1         TURN ON START READER INDICATOR      75128
+.NOSRDR  ANOP                                                     75128
+         AIF   ('&REALJCL' EQ 'NO').NREAL                         75311
+&THISSYS(4) SETB 1                                                75311
+.NREAL   ANOP                                                     75311
+THISSYS  DC      B'&THISSYS(1)&THISSYS(2)&THISSYS(3)&THISSYS(4)&THISSYS*
+               (5)&THISSYS(6)&THISSYS(7)&THISSYS(8)'              75128
+VSSYS    EQU   X'80'          BIT 0 = VS SYSTEM                   76200
+PRODOPT  EQU   X'40'          BIT 1 = PRODUCTION OPTION ON        76200
+LETOPT   EQU   X'08'          BIT 4 = LET OPTION ON               76200
+SRDROPT  EQU   X'04'          BIT 5 = SRDR OPTION ON              76200
+SCHED    DC    CL8'&SCHED'    SCHEDULER/MONITOR NAME              75128
+         DS    0H                                                 75128
+SUPRVSR  SVC   &SVC           SVC EXECUTED TO GET INTO SUPERVISOR 75128
+PARMCOL  DC    CL2&JOLCARD    JOL CARD INDICATORS (COL 1&2)       75128
+PARMSYSB DC    H'&SYSBLK'     DEFAULT SYSIN BLOCKSIZE             75128
+SM1      DC    H'&SM(1)'      COLUMN START OF JOL CARD            75128
+SM2      DC    H'&SM(2)'      COLUMN STOP OF JOL CARD             75128
+SM3      DC    H'&SM(3)'      COLUMN FOR PRINT CONTROL CHARACTER  75128
+CPU      DC    CL7'&CPUTYPE'                                      75128
+OSVSREL  DC    CL4'&REL'                                          75128
+CPUID    DC    CL6'&CPUID'                                        75128
+SPECFORM DC    CL1'&SPCFORM'   SPECIAL FORM CHARACTER             75311
+TSOCLASS DC    CL1'&TSOCLAS'   DEFAULT SYSOUT CLS FOR TSO JOBS    80289
+         AIF   ('&TSSCLAS' EQ '').NOTSS1
+         ORG   TSOCLASS
+         DC    CL1'&TSSCLAS'   DEFAULT SYSOUT CLASS FOR TSS JOBS  84150
+.NOTSS1  ANOP
+DEFSCLAS DC    CL1'&SYSCLAS'   DEFAULT SYSOUT CLASS (NON TSO)     80289
+PUNCHCLS DC    CL1'&PUNCHCL'   PUNCH CLASS TO BE USED             75311
+FLAGCOL  DC    H'&FLAG'        COLUMN TO PLACE * BEFORE           75311
+.* FIX ERRSEV PRINT LEVEL                                         75311
+         AIF   (&ERRSEV LT 6).ERRSEVO                             75311
+         MNOTE 4,'ERROR SEVERITY = &ERRSEV:- SET TO 0'            75311
+PFLAG    DC    AL1(0)          DEFAULT PRINT SEVERITY             75311
+         AGO   .AFTEE1                                            75311
+.ERRSEVO ANOP                                                     75311
+PFLAG    DC    AL1(&ERRSEV)    SPECIFIED PRINT SEVERITY           75311
+.AFTEE1  ANOP                                                     75311
+*                                                                 75128
+* ZAP SPACE                                                       75128
+*                                                                 75128
+ADEVNAME DC    A(0)                                               75311
+MODEIN   DC    X'00'          INPUT MODE INDICATOR                76200
+TSOINOPT EQU   X'80'          BIT 0 = TSO INPUT MODE              76200
+         SPACE 2
+         AIF   ('&MON' NE 'BATCH').NOBAT1                         74303
+&MOUT(3)       SETB 1                                             75128
+.NOBAT1  AIF   ('&MON' NE 'DYNAM').NODYNAM
+&MOUT(2)       SETB 1         TURN ON DYNAMIC ALLOCATION
+.NODYNAM ANOP                                                     75128
+         AIF   ('&REALJCL' EQ 'NO').NREALX
+&MOUT(6) SETB 1                                                   75311
+.NREALX  ANOP                                                     75311
+MODEOUT  DC      B'&MOUT(1)&MOUT(2)&MOUT(3)&MOUT(4)&MOUT(5)&MOUT(6)&MOU*
+               T(7)&MOUT(8)'
+IMMED    EQU   X'80'          BIT 0 = IMMEDIATE EXECUTION REQUIRED76200
+DYNAM    EQU   X'40'          BIT 1 = DYNAMIC ALLOCATION REQUESTED76200
+MONITOR  EQU   X'20'          BIT 2 = NORMAL JOL MONITOR REQUEST  76200
+ONESTEP  EQU   X'10'          BIT 3 = ONE STEP TO BE GENERATED    76200
+.*PROCJCL  EQU   X'08'          BIT 4 = CATLG PROC TO BE GENERATED
+REALJCL  EQU   X'04'          BIT 5 = REAL JCL (NO MONITOR)       76200
+         SPACE 1                                                  76200
+         DC    X'00'                                              76200
+         DC    X'00'                                              76200
+         DC    A(0)
+         DC    A(0,0)                                             75128
+         DC    A(0,0)                                             75128
+.* THE NEXT BIT OF CODE VALIDES SM & FLAG FIELDS (A LITTLE)...    75311
+&SM1     SETA  &SM(1)                                             75311
+&SM2     SETA  &SM(2)                                             75311
+&SM3     SETA  &SM(3)                                             75311
+&FLAGMOP SETA  &FLAG                                              75311
+.* ONLY A FEW CHECKS CAN BE MADE
+.*         1.  SM3=0 | > SM2
+.*         2.  FLAG=0 | >SM3 | IF SM3=0, > SM2
+.*         3.  SM1,SM2,SM3,FLAG <=80
+.*         4.  SM1<SM2
+.*
+.* DO 3 FIRST
+.*
+         AIF   (&SM1 LT 81 AND &SM2 LT 81 AND &SM3 LT 81 AND &FLAGMOP  *
+               LT 81).SMVAL1
+           MNOTE 16,'SOURCE MARGINS OR FLAG COLUMN INCORRECT (>80),SM1=*
+               &SM1,SM2=&SM2,SM3=&SM3,FLAG=&FLAGMOP'
+         AGO   .ESMVAL
+.SMVAL1  AIF   (&SM3 EQ 0).SM3ZERO
+         AIF   (&SM3 GT &SM2).SMVAL2
+        MNOTE 16,'SM3=&SM3,SM2=&SM2,SM3=&SM3:- SM3 MUST BE GREATER THAN*
+               SM2'
+         AGO   .ESMVAL
+.SMVAL2  AIF   (&FLAGMOP EQ 0).NFMAR2
+         AIF   (&FLAGMOP GT &SM3).SMVAL3
+         MNOTE 16,'FLAG=&FLAGMOP,SM3=&SM3:- FLAG MUST BE > SM3'
+         AGO   .ESMVAL
+.SMVAL3  ANOP
+.SM3ZERO AIF   (&FLAGMOP EQ 0).NFMAR3
+         AIF   (&FLAGMOP GE &SM2).SMVAL4
+         MNOTE 16,'SM2=&SM2,FLAG=&FLAGMOP:-FLAG MUST BE > SM2'
+         AGO   .ESMVAL
+.SMVAL4  AIF   (&SM2 GT &SM1).SMVAL5
+         MNOTE 16,'SM1=&SM1,SM2=&SM2:- SM2 MUST BE > SM1'
+         AGO   .ESMVAL
+.SMVAL5  ANOP
+.ESMVAL  ANOP
+.NFMAR2  ANOP
+.NFMAR3  ANOP
+         DC    A(0,0,0,0)    RESERVED
+         DC    A(0,0,0,0)    RESERVED
+LNAMETBL DC    A((((&MAXNAME+7)/8)*8)*20) ROUNDED TO MULTIPLE OF 8(UP)
+MAXNAME  DC    AL2(((&MAXNAME+7)/8)*8)    ROUNDED TO MULTIPLE OF 8(UP)
+* ABOVE 2 LOCATIONS INDICATE MAXIMUM NUMBER OF DSID'S AND PGMID'S
+*    AND MACRO NAMES ALLOWED DURING COMPILATION
+         SPACE 1
+LSYMTBL  DC    A(((((&MAXSYM*12)+7)/8)*8)+(((&MAXSYMV+7)/8)*8))
+MAXSYM   DC    AL2((((&MAXSYM+7)/8)*8))
+* ABOVE 2 LOCATIONS INDICATE MAXIMUM NUMBER OF SYMBOLICS AND THE TOTAL
+*    TABLE SIZE CONTAINING THE NAMES AND THEIR ASSOCIATED VALUES
+         SPACE 1
+GDGDCB   DC    CL20'&GDGDCB'   DCB USED FOR + GDGS
+DUMPCARD DC    H'0',CL80' '                                       80290
+         AIF  ('&DUMP' EQ '').NODCAR1
+         ORG   DUMPCARD                                           75128
+         DC    AL2(L'DUMPC)                                       75311
+DUMPC    DC    C&DUMP                                             75311
+.NODCAR1 ORG   DUMPCARD+80+2                                      75311
+         DS    0H                                                 75311
+DEFAULTE EQU   *
+LDEFAULT EQU   DEFAULTE-DEFAULTS
+DEFCOPY  DS    (LDEFAULT)C
+         DS    CL8            SPARE
+LGENCRD1 DC    H'0',CL80' '                                       75128
+LGENCRD2 DC    H'0',CL80' '                                       75128
+LGENCRD3 DC    H'0',CL80' '                                       75128
+TITLE    DC    H'5',H'0',CL1'0',CL137' '
+         AIF  ('&CARD1' EQ '').NOGCAR1                            75128
+         ORG   LGENCRD1                                           75128
+         DC    AL2(L'GENCARD1)                                    75128
+GENCARD1 DC    C&CARD1                                            75128
+.NOGCAR1 AIF  ('&CARD2' EQ '').NOGCAR2                            75128
+         ORG   LGENCRD2                                           75128
+         DC    AL2(L'GENCARD2)                                    75128
+GENCARD2 DC    C&CARD2                                            75128
+.NOGCAR2 AIF   ('&CARD3' EQ '').NOGCAR3                           75128
+         ORG   LGENCRD3                                           75128
+         DC    AL2(L'GENCARD3)                                    75128
+         DC    C&CARD3                                            75128
+.NOGCAR3 ANOP                                                     75128
+         AIF   ('&TITLE' EQ '').NOWNR
+         ORG   TITLE
+         DC    AL2(L'LTITLE+5,0),C'0'   SKIP UP A LINE
+LTITLE   DC    C&TITLE
+.NOWNR   ANOP
+         ORG
+         DS    0D
+JOLGENE  EQU   *                                                  75128
+         MEND
+           SPACE 3
+         MACRO
+         NOCAT &GENERIC=,&INDEX=,&DSN=
+.* THIS IS A NEW PART OF THE 'JOLGEN' 26/4/75
+.* IT STOPS JOL SEARCHING THE CATALOG FOR CERTAIN INDEXES,DSNAMES ETC.
+.* FOR EXAMPLE, TO STOP JOL SEARCHING FOR ANY DSNAME STARTING IN 'SYS'
+.*  CODE GENERIC=(SYS)
+.* TO STOP JOL SEARCHING FOR INDEX 'SYS1.', CODE INDEX=(SYS1)
+.* TO STOP JOL SEARCHING FOR DSN 'SYS1.PROCLIB' CODE DSN=(SYS1.PROCLIB)
+.*
+.* THIS CSECT IS CALLED OR LOADED BEFORE ANY CATALOG SEARCHING
+.*  IS DONE
+.* IT USES 15 AS A BASE, 0 IS SET TO 0 IF THE NAME WAS FOUND(IE
+.*    DO NOT SEARCH),AND 1 ON ENTRY POINTS TO THE DSNAME
+.* CONTROL WILL NOT BE GIVEN HERE IF 'NOCAT' WAS SPECIFIED EITHER
+.*    ON THE PARM FIELD, OR THE DATA SET DEFINITION.
+         GBLA &NOCAT
+            LCLA &NO
+&NOCAT   SETA  1
+UJS01NC  CSECT
+&NO      SETA 1
+&NO      SETA 1              GET &NO=1 FOR FIRST LOOP
+.* WE WILL TACKLE THE 'GENERIC' DATA SET NAME FIRST,
+.*  THEN THE 'INDEX', THEN THE 'DSN'
+         SR    0,0           SET RETURN CODE TO 0 FIRST
+         USING UJS01NC,15    SET UP BASE REGISTER.
+.LUP1    AIF   (&NO GT N'&GENERIC).DOINDX
+         CLC   =C'&GENERIC(&NO)',0(1) COMPARE PART OF DSNAME (GENERIC)
+         BCR   8,14          IF EQUAL RETURN IMMEDIATELY TO UJS01CAT
+&NO      SETA  &NO+1
+         AGO   .LUP1
+.DOINDX  ANOP
+&NO      SETA  1
+.LUP2    AIF   (&NO GT N'&INDEX).DODSN
+         CLC   =C'&INDEX(&NO)..',0(1) COMPARE INDEX EQUAL
+         BCR   8,14          IF EQUAL RETURN TO UJS01CAT
+&NO      SETA  &NO+1
+         AGO   .LUP2
+.DODSN   ANOP
+&NO      SETA  1
+.LUP3    AIF   (&NO GT N'&DSN).DOINIT
+         CLC   =CL44'&DSN(&NO)',0(1)  COMPARE DSNAMES
+         BCR   8,14          IF EQUAL RETURN TO UJS01CAT
+&NO      SETA  &NO+1
+         AGO   .LUP3
+.DOINIT  ANOP
+&NO      SETA  1
+.LUP4    AIF   (&NO GT N'&SYSLIST).ENDL4
+         CLC   =CL44'&SYSLIST(&NO,1)',0(1) INITIATOR DEDICATED DSNAME?
+         BNE   X&SYSNDX&NO NO,GO TO NEXT TEST
+         MVC   0(44,1),=CL44'&SYSLIST(&NO,2)' YES,REPLACE DSNAME
+         BR    14            AND RETURN
+X&SYSNDX&NO EQU  *
+&NO      SETA  &NO+1
+         AGO   .LUP4
+.ENDL4   ANOP
+         LA    0,4           SET BAD RETURN CODE
+         BR    14            AND RETURN
+         LTORG
+         DROP  15            DROP OUR BASE
+         MEND
+         MACRO
+&NAME    SWAPUNIT
+         GBLA &SWAPU
+         LCLA &THISP,&NOPARMS
+&SWAPU   SETA  1
+&NOPARMS SETA  N'&SYSLIST(1)
+SWAPUNIT CSECT
+         DC    A(*+12)            A(START)
+         DC    A(16)              INCREMENT
+         DC    A(SWAPEND-16)      STOP ADDRESS
+&THISP   SETA  1
+.TLUPEND AIF   (&THISP LE &NOPARMS).GEN
+SWAPEND  EQU   *
+         DC  CL32' '              ZAP SPACE
+         MEXIT
+.GEN     DC  CL8'&SYSLIST(1,&THISP)',CL8'&SYSLIST(1,&THISP+1)'
+&THISP   SETA &THISP+2
+         AGO .TLUPEND
+         MEND
+         MACRO
+         VOLSTART
+         GBLA  &VOLSTAR                                           75128
+&VOLSTAR SETA  1                                                  75128
+PREFVOLS CSECT
+C03VOLS  EQU  *
+         ENTRY C03VOLS
+         DC    A(#VOLSTRT)
+         DC    A(7)
+         DC    A(#VOLEND-7)
+#VOLSTRT EQU   *
+         MEND
+       SPACE 3                                                   J60
+         MACRO
+         P33903
+         JOLVOL &SYSLIST(1),CODE=11010010
+         MEND
+       SPACE 3                                                   J60
+         MACRO
+         P33902
+         JOLVOL &SYSLIST(1),CODE=11010001
+         MEND
+       SPACE 3                                                   J60
+         MACRO
+         P3390
+         JOLVOL &SYSLIST(1),CODE=11010000
+         MEND
+       SPACE 3
+         MACRO
+         P3380
+         JOLVOL &SYSLIST(1),CODE=11001110
+         MEND
+       SPACE 3
+         MACRO
+         P3375
+         JOLVOL &SYSLIST(1),CODE=11001101
+         MEND
+       SPACE 3
+         MACRO
+         P3350
+         JOLVOL &SYSLIST(1),CODE=11001011
+         MEND
+       SPACE 3
+         MACRO
+         P2314
+         JOLVOL &SYSLIST(1),CODE=11000001
+         MEND
+       SPACE 3
+         MACRO
+         P3340
+         JOLVOL &SYSLIST(1),CODE=11001000
+         MEND
+       SPACE 3
+         MACRO
+         P3330
+         JOLVOL &SYSLIST(1),CODE=11000010
+         MEND
+       SPACE 3
+         MACRO
+         P2311
+         JOLVOL &SYSLIST(1),CODE=11000011
+         MEND
+       SPACE 3
+         MACRO
+         P2301
+         JOLVOL &SYSLIST(1),CODE=11000100
+         MEND
+       SPACE 3
+         MACRO
+         P2302
+         JOLVOL &SYSLIST(1),CODE=11000101
+         MEND
+       SPACE 3
+         MACRO
+         P23051
+         JOLVOL &SYSLIST(1),CODE=11000110
+         MEND
+       SPACE 3
+         MACRO
+         P23052
+         JOLVOL &SYSLIST(1),CODE=11000111
+         MEND
+       SPACE 3
+         MACRO
+         D3350
+         JOLVOL &SYSLIST(1),CODE=10001011
+         MEND
+       SPACE 3
+         MACRO
+         D3340
+         JOLVOL &SYSLIST(1),CODE=10001000
+         MEND
+       SPACE 3
+         MACRO
+         D3330
+         JOLVOL &SYSLIST(1),CODE=10000010
+         MEND
+       SPACE 3
+         MACRO
+         D2314
+         JOLVOL &SYSLIST(1),CODE=10000001
+         MEND
+       SPACE 3
+         MACRO
+         D2311
+         JOLVOL &SYSLIST(1),CODE=10000011
+         MEND
+       SPACE 3
+         MACRO
+         D2301
+         JOLVOL &SYSLIST(1),CODE=10000100
+         MEND
+       SPACE 3
+         MACRO
+         D2302
+         JOLVOL &SYSLIST(1),CODE=10000101
+         MEND
+       SPACE 3
+         MACRO
+         D23051
+         JOLVOL &SYSLIST(1),CODE=10000110
+         MEND
+       SPACE 3
+         MACRO
+         D23052
+         JOLVOL &SYSLIST(1),CODE=10000111
+         MEND
+       SPACE 3
+         MACRO
+         D2400
+         JOLVOL &SYSLIST(1),CODE=00000100
+         MEND
+       SPACE 3
+         MACRO
+         D24002
+         JOLVOL &SYSLIST(1),CODE=00000100
+         MEND
+       SPACE 3
+         MACRO
+         D24003
+         JOLVOL &SYSLIST(1),CODE=00000100
+         MEND
+       SPACE 3
+         MACRO
+         D24004
+         JOLVOL &SYSLIST(1),CODE=00000101
+         MEND
+       SPACE 3
+         MACRO
+         D34002
+         JOLVOL &SYSLIST(1),CODE=00000100
+         MEND
+       SPACE 3
+         MACRO
+         D34003
+         JOLVOL &SYSLIST(1),CODE=00000100
+         MEND
+       SPACE 3
+         MACRO
+         D34004
+         JOLVOL &SYSLIST(1),CODE=00000101
+         MEND
+       SPACE 3
+         MACRO
+         PF6425
+         JOLVOL &SYSLIST(1),CODE=11001110
+         MEND
+       SPACE 3
+         MACRO
+         PF6421
+         JOLVOL &SYSLIST(1),CODE=11001111
+         MEND
+       SPACE 3
+         MACRO
+         PF496
+         JOLVOL &SYSLIST(1),CODE=11001111
+         MEND
+       SPACE 3
+         MACRO
+         PF493
+         JOLVOL &SYSLIST(1),CODE=11001011
+         MEND
+       SPACE 3
+         MACRO
+         PF479
+         JOLVOL &SYSLIST(1),CODE=11000010
+         MEND
+       SPACE 3
+         MACRO
+         PF478
+         JOLVOL &SYSLIST(1),CODE=11000010
+         MEND
+       SPACE 3
+         MACRO
+         DF496
+         JOLVOL &SYSLIST(1),CODE=10001111
+         MEND
+       SPACE 3
+         MACRO
+         DF493
+         JOLVOL &SYSLIST(1),CODE=10001011
+         MEND
+       SPACE 3
+         MACRO
+         DF479
+         JOLVOL &SYSLIST(1),CODE=10000011
+         MEND
+       SPACE 3
+         MACRO
+         DF478
+         JOLVOL &SYSLIST(1),CODE=11001111
+         MEND
+       SPACE 3
+         MACRO
+         TF611
+         JOLVOL &SYSLIST(1),CODE=00000100
+         MEND
+       SPACE 3
+         MACRO
+         TF613
+         JOLVOL &SYSLIST(1),CODE=00000100
+         MEND
+       SPACE 3
+         MACRO
+         TF615
+         JOLVOL &SYSLIST(1),CODE=00000100
+         MEND
+       SPACE 3
+         MACRO
+         TF617
+         JOLVOL &SYSLIST(1),CODE=00000100
+         MEND
+       SPACE 3
+         MACRO
+         TF618
+         JOLVOL &SYSLIST(1),CODE=00000100
+         MEND
+       SPACE 3
+         MACRO
+         JOLVOL &CODE=
+.* INTERNAL MACRO FOR VOLSTART MACROS
+.*   GENERATES CODE FOR SUB-MACROS OF VOLSTART MACRO.
+         LCLA  &PARMNO
+&PARMNO  SETA  1
+.SPLIT   ANOP
+         AIF   (&PARMNO GT N'&SYSLIST(1)).END
+         DC    CL6'&SYSLIST(1,&PARMNO)',B'&CODE'
+&PARMNO  SETA  &PARMNO+1
+         AGO   .SPLIT
+.END     ANOP
+         MEND
+   SPACE 3
+        SPACE 3
+           MACRO
+           VOLEND
+#VOLEND    EQU   *
+         DC    CL50' '        ZAP                                 75128
+         DC    CL50' '                                            75128
+           MEND
+           SPACE 3
+           MACRO
+           TPUBLIC &A
+.* THIS MACRO TEST IF THE JOL UNIT NAME IS 'PUBLIC','SYSDA','TAPE',
+.*  'SYSSQ'
+.*  AND IF SO TURNS ON THE APPROPRIATE &NAME
+           GBLA &PUBLIC,&SYSDA,&SYSSQ,&TAPE
+           AIF ('&A' EQ 'PUBLIC').GOTPUB
+           AIF ('&A' EQ 'SYSDA').GOTSYSD
+           AIF ('&A' EQ 'SYSSQ').GOTSYSQ
+           AIF ('&A' EQ 'TAPE').GOTTP
+           MEXIT
+.GOTPUB    ANOP
+&PUBLIC    SETA 1
+           MEXIT
+.GOTSYSD   ANOP
+&SYSDA     SETA 1
+           MEXIT
+.GOTSYSQ   ANOP
+&SYSSQ     SETA 1
+           MEXIT
+.GOTTP     ANOP
+&TAPE      SETA 1
+           MEXIT
+           MEND
+           MACRO
+           RETVOLS
+         GBLA  &RETVOLS                                           75128
+           LCLA &THIS
+&RETVOLS   SETA  1
+RETVOLS    CSECT
+           DC  A(A&SYSNDX)
+           DC  A(6)
+           DC  A(B&SYSNDX-6)
+A&SYSNDX   EQU  *
+&THIS      SETA 1
+         AIF (N'&SYSLIST GT 0).GO
+         DC CL6' '            DUMMY VOL
+         AGO .ENDX
+.GO      ANOP
+           AIF ('&SYSLIST(1)'(1,1) NE '(').LOOP                   74256
+.LOOP2     DC  CL6'&SYSLIST(1,&THIS)'                             74256
+&THIS      SETA &THIS+1                                           74256
+           AIF (&THIS LE N'&SYSLIST(1)).LOOP2                     74256
+.ENDX    ANOP
+B&SYSNDX   EQU *                                                  74256
+            DS CL200     FOR ZAPS
+           MEXIT                                                  74256
+.LOOP      DC  CL6'&SYSLIST(&THIS)'
+&THIS      SETA &THIS+1
+           AIF (&THIS LE N'&SYSLIST).LOOP
+B&SYSNDX   EQU *
+            DS CL200     FOR ZAPS
+           MEND
+   SPACE 3
+         MACRO
+         $GENU  &CODE=
+.* INTERNAL MACRO FOR DEFUNIT
+.*   GENERATES CODE FOR SUB-PARAMETERS OF DEFUNIT MACRO.
+         LCLA  &PARMNO
+&PARMNO  SETA  1
+.SPLIT   ANOP
+         AIF   (&PARMNO GT N'&SYSLIST(1)).END
+      DC    CL8'&SYSLIST(1,&PARMNO)',CL8'&SYSLIST(1,&PARMNO+1)',B&CODE
+         TPUBLIC &SYSLIST(1,&PARMNO)   TEST IF REQD JOL UNIT CODED.
+&PARMNO  SETA  &PARMNO+2
+         AGO   .SPLIT
+.END     ANOP
+         MEND
+   SPACE 3
+         MACRO
+         DEFUNIT &P33903=,              +++ IBM DEVICES +++       J60  +
+               &P33902=,                                          J60  +
+               &P3390=,                                           J60  +
+               &P3380=,                                                +
+               &P3375=,                                                +
+               &P3350=,                                                +
+               &P3340=,                                                +
+               &P3330=,                                                +
+               &P2314=,                                                +
+               &P2311=,                                                +
+               &D3350=,                                                +
+               &D3340=,                                                +
+               &D3330=,                                                +
+               &D2314=,                                                +
+               &D2311=,                                                +
+               &T2400=,                                                +
+               &T24002=,                                               +
+               &T24003=,                                               +
+               &T24004=,                                               +
+               &T34002=,                                               +
+               &T34003=,                                               +
+               &T34004=,                                               +
+               &T34005=,                                               +
+               &T34006=,                                               +
+               &T34209=,                                               +
+               &T3420C=,                                               +
+               &PF6425=,                +++ FACOM DEVICES +++          +
+               &PF6421=,                                               +
+               &PF496=,                                                +
+               &PF493=,                                                +
+               &PF479=,                                                +
+               &PF478=,                                                +
+               &DF496=,                                                +
+               &DF493=,                                                +
+               &DF479=,                                                +
+               &DF478=,                                                +
+               &TF611=,                                                +
+               &TF613=,                                                +
+               &TF615=,                                                +
+               &TF617=,                                                +
+               &TF618=,                                                +
+               &LP=,&CP=,&CR=
+         GBLA  &DEFUNIT                                           75128
+         GBLA &PUBLIC,&SYSDA,&SYSSQ,&TAPE                         75311
+         LCLA &NOPARM
+         ACTR 200
+&DEFUNIT SETA  1
+.GEN     ANOP
+.* NOW GENERATE A TABLE THAT CONTAINS ONLY UNIT NAMES AND TYPES
+GENUNIT  CSECT               THIS CSECT CONTAINS UNIT NAMES AND TYPES
+         DC  A(A&SYSNDX)
+         DC  A(17)
+         DC  A(B&SYSNDX-17)
+A&SYSNDX EQU  *
+         $GENU  &T2400,CODE='00000010'
+         $GENU  &T24002,CODE='00000011'
+         $GENU  &T24003,CODE='00000100'
+         $GENU  &T24004,CODE='00000101'
+         $GENU  &T34002,CODE='00000110'
+         $GENU  &T34003,CODE='00000111'
+         $GENU  &T34004,CODE='00001000'
+         $GENU  &T34005,CODE='00001010'
+         $GENU  &T34006,CODE='00001011'
+         $GENU  &T34209,CODE='00001100'
+         $GENU  &T3420C,CODE='00001101'
+         $GENU  &D3340,CODE='10001000'
+         $GENU  &P3340,CODE='11001000'
+         $GENU  &P3350,CODE='11001011'
+         $GENU  &P3330,CODE='11000010'
+         $GENU  &P2314,CODE='11000001'
+         $GENU  &P2311,CODE='11000011'
+         $GENU  &D3330,CODE='10000010'
+         $GENU  &P33903,CODE='11010010'                            J60
+         $GENU  &P33902,CODE='11010001'                            J60
+         $GENU  &P3390,CODE='11010000'                             J60
+         $GENU  &P3380,CODE='11001110'
+         $GENU  &P3375,CODE='11001101'
+         $GENU  &D2314,CODE='10000001'
+         $GENU  &D2311,CODE='10000011'
+         $GENU  &PF6425,CODE='11001110'
+         $GENU  &PF6421,CODE='11001111'
+         $GENU  &PF496,CODE='11001111'
+         $GENU  &PF493,CODE='11001010'
+         $GENU  &PF478,CODE='11000010'
+         $GENU  &PF479,CODE='11000010'
+         $GENU  &DF496,CODE='10001111'
+         $GENU  &DF493,CODE='10001010'
+         $GENU  &DF478,CODE='10000010'
+         $GENU  &DF479,CODE='10000010'
+         $GENU  &TF611,CODE='00000110'
+         $GENU  &TF613,CODE='00000111'
+         $GENU  &TF615,CODE='00001000'
+         $GENU  &TF617,CODE='00001010'
+         $GENU  &TF618,CODE='00001001'
+         $GENU  &CP,CODE='00000000'
+.* TEST IF PUBLIC ETC DEFINED
+           AIF (&PUBLIC EQ 1).GOTPUB
+           MNOTE 4,'PUBLIC UNIT NOT SPECIFIED:- DEFAULT PUBLIC TO SYSDA*
+               (3380)'
+   DC CL8'PUBLIC  ',CL8'SYSDA   ',B'11001110'  DEFAULT
+.GOTPUB    ANOP
+           AIF (&SYSDA EQ 1).GOTSYSD
+           MNOTE 4,'SYSDA UNIT NOT SPECIFIED:- DEFAULT SYSDA (3380) MAD*
+               E'
+   DC CL8'SYSDA   ',CL8'SYSDA   ',B'11001110'  DEFAULT
+.GOTSYSD   ANOP
+           AIF (&SYSSQ EQ 1).GOTSYSS
+       MNOTE   4,'SYSSQ UNIT NOT SPECIFIED:- DEFAULT SYSSQ TO SYSDA SET*
+                UP (3380)'
+   DC CL8'SYSSQ   ',CL8'SYSDA   ',B'11001110'  DEFAULT
+.GOTSYSS   ANOP
+           AIF (&TAPE EQ 1).GOTTAPE
+        MNOTE  4,'TAPE UNIT NOT SPECIFIED:- DEFAULT TAPE (2400-3) SET U*
+               P'
+   DC CL8'TAPE    ',CL8'2400-3  ',B'00000100'  DEFAULT
+.GOTTAPE   ANOP
+   DC CL8'2314    ',CL8'2314    ',B'10000001'
+   DC CL8'3330    ',CL8'3330    ',B'10000010'
+   DC CL8'2311    ',CL8'2311    ',B'10000011'
+   DC CL8'2301    ',CL8'2301    ',B'10000100'
+   DC CL8'2302    ',CL8'2302    ',B'10000101'
+   DC CL8'2305-1  ',CL8'2305-1  ',B'10000110'
+   DC CL8'2305-2  ',CL8'2305-2  ',B'10000111'
+   DC CL8'3340    ',CL8'3340    ',B'10001000'
+   DC CL8'3330-1  ',CL8'3330-1  ',B'10001001'
+   DC CL8'3330V   ',CL8'3330V   ',B'10001100' ** FIX F478V 16/2/81 **
+   DC CL8'3350    ',CL8'3350    ',B'10001011'
+   DC CL8'3375    ',CL8'3375    ',B'10001101'
+   DC CL8'3380    ',CL8'3380    ',B'10001110'
+   DC CL8'3390    ',CL8'3390    ',B'10010000'
+   DC CL8'3390-2  ',CL8'3390-2  ',B'10010001'
+   DC CL8'3390-3  ',CL8'3390-3  ',B'10010010'
+   DC CL8'F6421   ',CL8'F6421   ',B'10001111'
+   DC CL8'2400    ',CL8'2400    ',B'00000001'
+   DC CL8'2400-1  ',CL8'2400-1  ',B'00000010'
+   DC CL8'2400-2  ',CL8'2400-2  ',B'00000011'
+   DC CL8'2400-3  ',CL8'2400-3  ',B'00000100'
+   DC CL8'2400-4  ',CL8'2400-4  ',B'00000101'
+   DC CL8'3400-2  ',CL8'3400-2  ',B'00000110'
+   DC CL8'3400-3  ',CL8'3400-3  ',B'00000111'
+   DC CL8'3400-4  ',CL8'3400-4  ',B'00001000'
+   DC CL8'3400-5  ',CL8'3400-5  ',B'00001010'                      DASD
+   DC CL8'3400-6  ',CL8'3400-6  ',B'00001011'                      DASD
+   DC CL8'3420-9  ',CL8'3400-9  ',B'00001100'                     87150
+   DC CL8'3420-C  ',CL8'3400-C  ',B'00001101'                     87150
+   DC CL8'3400-6  ',CL8'3400-6  ',B'00001001' **** ZAPS ****       DASD
+   DC CL8'3400-6  ',CL8'3400-6  ',B'00001001' **** ZAPS ****       DASD
+   DC CL8'3400-6  ',CL8'3400-6  ',B'00001001' **** ZAPS ****       DASD
+   DC CL8'3400-6  ',CL8'3400-6  ',B'00001001' **** ZAPS ****       DASD
+B&SYSNDX   EQU *
+           MEND
+         MACRO
+         JOLEND
+.* THIS MACRO CHECKS THAT ALL THE OTHER REQUIRED MACROS HAVE
+.*  BEEN ISSUED.
+.* IT IS NEW AT JUNE 5,1975
+.*
+         GBLA  &JOLDEF,&VOLSTAR,&RETVOLS,&DEFUNIT,&NOCAT,&SWAPU
+         GBLC  &TYPEGEN
+         AIF   ('&TYPEGEN' NE '').TYPEOK
+&TYPEGEN SETC  'CSECT'
+.TYPEOK  ANOP
+         AIF   (&JOLDEF NE 0).OK1
+         JOLDEF TYPE=&TYPEGEN
+         MNOTE 16,'NO JOLDEF MACRO ISSUED'
+.OK1     AIF   (&VOLSTAR NE 0).OK2
+         MNOTE 4,'NO VOLSTART MACRO ISSUED'
+         VOLSTART
+         VOLEND
+.OK2     AIF   (&RETVOLS NE 0).OK3
+         RETVOLS     ALL
+         MNOTE 4,'NO RETVOLS MACRO ISSUED - RETVOLS ''ALL'' ASSUMED'
+.OK3     AIF   (&DEFUNIT NE 0).OK4
+         MNOTE 4,'DEFUNIT MACRO NOT ISSUED,ISSUED FOR YOU'
+         DEFUNIT
+.OK4     ANOP
+         AIF   (&NOCAT NE 0).OK5
+         NOCAT
+.OK5     AIF   (&SWAPU NE 0).OK6
+         SWAPUNIT
+.OK6     ANOP
+         END
+         MEND
+         EJECT
+         PRINT ON,GEN,DATA

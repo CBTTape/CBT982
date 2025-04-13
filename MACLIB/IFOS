@@ -1,0 +1,32 @@
+         MACRO
+&L       IFOS
+         LCLB  &B
+         LCLC  &C
+         AIF   (T'&SYSLIST(1) NE 'O').P1OK
+         MNOTE 12,'FIRST PARAMETER IS REQUIRED'
+         MEXIT
+.P1OK    ANOP
+         AIF   (T'&SYSLIST(2) NE 'O').P2OK
+         MNOTE 12,'SECOND PARAMETER IS REQUIRED'
+         MEXIT
+.P2OK    ANOP
+&C       SETC  '&SYSLIST(1)'(1,1)
+&B       SETB  1
+         AIF   ('&C' EQ '=').EQ
+&B       SETB  0
+&C       SETC  '&SYSLIST(1)'(1,2)
+         AIF   ('&C' NE '¬=').P1BAD
+.EQ      ANOP
+&C       SETC '&SYSLIST(1)'(1+K'&C,K'&SYSLIST(1)-K'&C)
+         AIF   (T'AGENDETS EQ 'U').NOTCOMP  BR IF NO JOLCOM
+         L     R14,AGENDETS
+         CLC   =CL3'&C',DEFSYS-GENDETS(R14)
+&C       SETC  (&B)'BE  '.(1-&B)'BNE '
+         &C    &SYSLIST(2)
+         MEXIT
+.NOTCOMP CLC   =CL3'&C',DEFSYS       TEST VERSION OF OS
+&C       SETC  (&B)'BE  '.(1-&B)'BNE '
+         &C    &SYSLIST(2)            BR ACCORDING TO RESULT
+         MEXIT
+.P1BAD   MNOTE 12,'INVALID FIRST OPERAND: MUST BEGIN "=" OR "¬="'
+         MEND

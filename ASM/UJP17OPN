@@ -1,0 +1,813 @@
+UJP17 TITLE 'OPEN, GETFILE, PUTFILE FREEFILE ROUTINES'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974
+* COPYRIGHT CCS 1975,1976,1980
+* COPYRIGHT CCS 1981,1982.
+* COPYRIGHT CLEM CLARKE 1983.
+* COPYRIGHT CCS-JOL 1984.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+*
+*
+*
+******************************************************************
+*
+* NEW MODULE, CODED OCTOBER 16, 1984
+*             FINISHED JANUARY  1986
+*  THIS MODULE SETS UP THE CONTROL BLOCKS FOR THE ALLOC, OPENFILE
+*    ETC MODULES.
+*
+******************************************************************
+*
+* MODULES INVOLVED ARE UJM15ALL, UJM15DAL, UJP15CLS
+*                      UJP17OPN, UJP18GET, UJP19PUT,
+*                      UJP60REA, UJP61WRI, UJP19FRE,
+*
+******************************************************************
+*
+* DATE 16 OCT, 1984
+* C. V. CLARKE COPYRIGHT CCS-JOL.
+*
+         PRINT OFF
+         COPY JOLCOM
+         PRINT ON,DATA
+      TITLE 'FREE ALL DYNAMIC ALLOCATION CONTROL BLOCKS'
+         JOLSAVE CSECT=UJP15DAL
+*
+* THIS CSECT GETS CONTROL AFTER THE PRE-PROCESSOR HAS FINISHED    84290
+*
+* IT MUST TIDY UP THE ALLOCATED DATA SET, CLOSE THEM AND FREE THEM.
+*
+P15NEXT  ICM     R4,15,P17FCNTL     ANY THERE?
+         BZ      P15SRET            NO, SIMPLY RETURN
+         USING   DYNFCNTL,R4        WE ARE POINTING AT A BLOCK
+         MVC     SYMBOLIC,ALLDDNAM
+         $CALL   UJP15CLR           CLOSE THE FILE AND FREE AREAS
+         B       P15NEXT            TRY NEXT BLOCK THEN.
+P15SRET  JOLRETN ,                  FINISHED, SO GO BACK TO CALLER.
+         DROP    R4
+         LTORG
+         DC      30S(*)
+         TITLE 'CLOSE FILE'
+         JOLSAVE CSECT=UJP15CLS
+*
+* CLOSE THE FILE SPECIFIED.
+*
+         MVC      ICOMMAND,=CL8'MACRO' MAKE ASSIGN BETTER.
+         MVC      SYMBOLIC,=CL8'LASTCC'
+         MVC      #WORK(3),=X'0001F0'  SET RC=0 TO START
+         $CALL    UJP85ASN             STORE IN %LASTCC
+         GETTKN   1                    SEE IF CLOSE OR CLOSFILE
+         CLC      =C'CLOSFILE',TKN
+         BNE      P15CLOS
+         GETTKN   2                    GET THE FILE NAME
+         MVC      SYMBOLIC,TKN         MOVE TO PARAMETER AREA
+         GETTKN   3                    GET NEXT SYMBOL
+         CLI      TKN,C' '             BLANK ?
+         BNE      P15TOOM              NO, OUT MESSAGE, THEN CLOSE
+P15CALL  $CALL    UJP15CLR
+         LTR      R15,R15
+         BZ       P15RET0
+         MVC      SYMBOLIC,=CL8'LASTCC'
+         MVC      #WORK(4),=X'0002F1F6'       SET RC=16
+         $CALL    UJP85ASN                    STORE IN %LASTCC
+         JOLRETN  RC=16
+P15RET0  JOLRETN
+*
+P15CLOS  GETTKN   2                    GET SECOND TOKEN.
+         CLI      TKN,C' '             ANY MORE TOKENS??
+         BNE      P15OK1
+         JOLERR   301,'NO FILE SPECIFIED ON CLOSE STATEMENT'
+         JOLRETN  RC=16
+P15OK1   CLC      =C'F ',TKN           F SPECIFIED?
+         BE       P15KEYWD             YES, HAVE A KEYWORD
+         CLC      =C'FILE ',TKN        FILE SPECIFIED?
+         BE       P15KEYWD             YES, HAVE A KEYWORD
+* HERE WE HAVE A FILE NAME WITHOUT THE FILE KEYWORD
+         MVC      SYMBOLIC,TKN         SAVE IN 'SYMBOLIC'
+         GETTKN   (R1)                 GET INPUT, OUTPUT OR UPDATE
+         CLI      TKN,C' '             NO PARAMETER?
+         BE       P15CALL              CALL CLOSE, RETURN
+P15TOOM  JOLERR   302,'TOO MANY SYMBOLS ON CLOSE'
+         B        P15CALL              CALL CLOSE, RETURN
+P15TEND  GETTKN   (R1)
+         CLI      TKN,C' '
+         BE       P15CALL
+         B        P15TOOM              MESSAGE  'TOO MANY SYMBOLS '
+P15KEYWD DS       0H
+         GETTKN   (R1)          SEE IF '('
+         CLI      TKN,C'('
+         BNE      P15GOTF1
+         GETTKN   (R1)
+P15GOTF1 MVC      SYMBOLIC,TKN  SAVE FILE NAME THERE
+         GETTKN   (R1)
+         CLI      TKN,C')'      END ')'
+         BNE      P15TEND      CHECK TYPE OF OPEN
+         GETTKN   (R1)
+         B        P15TEND
+         DC      30S(*)
+         LTORG
+         TITLE 'CLOSE FILE (REALLY)'
+         JOLSAVE CSECT=UJP15CLR
+*
+* CLOSE THE FILE SPECIFIED IN SYMBOLIC.
+*
+*        JOLERR   309,'CLOSING ',SYMBOLIC
+         $CALL    P17SFILE
+* ON RETURN, R1 POINTS TO THE LAST BLOCK FOUND. IF IT IS THE
+*    FIRST TIME CALLED, OR THE ADDRESS OF THE FILE CONTROL BLOCK.
+         LR       R5,R0         COPY PREVIOUS CHAIN TO R5
+         LR       R4,R1         COPY ADDRESS OF DCB TO R4
+         LTR      R15,R15       TEST IF WE FOUND THE FILE BLOCK
+         BZ       P15GOTDT      YES, GOOD, ISSUE CLOSE TO THAT DCB
+P15ERR   JOLERR   303,'CANNOT CLOSE FILE ''',SYMBOLIC,''''
+         JOLRETN  RC=16
+         USING    DYNFCNTL,R4
+* TEST IF OPEN, AND IF NOT CLOSE, AND FREEPOOL
+P15GOTDT LA       R9,ALLDCB
+         ST       R9,CALLAREA
+         MVI      CALLAREA,X'80'
+         USING    IHADCB,R9
+         TM       DCBOFLGS,DCBOFOPN   IS IT OPEN?
+         BNO      P15TDEQ             NO, GIVE MESSAGE
+         CLOSE    MF=(E,CALLAREA)
+         FREEPOOL (R9)
+         SPACE 3
+* WE MUST DEQUEUE THE DATA SET IF IT IS ENQUEUED.
+P15TDEQ  CLC      ALLDSN,BLANKS
+         BE       P15NODEQ       NO DEQUEUE NECESSARY (INPUT OR TEMP)
+         $CALL    JOLDEQ,(P15QNAME,ALLDSNL,P15WAIT)
+P15NODEQ DS       0H
+*
+* NOW THIS BLOCK IS GOING, AND WE MUST RESET THE PREVIOUS CHAIN
+*     POINTER TO THE NEXT POINTER.
+*
+* WE NEED TO CHECK IF WE ARE DELETING THE FIRST BLOCK,
+*    OR A MIDDLE BLOCK, AND TAKE APPROPRIATE ACTION.
+*
+         L        R10,ALLNEXT   GET THE POINTER TO THE NEXT BLOCK
+         FREEMAIN R,A=(4),LV=P17CLEN
+         L        R14,P17FCNTL GET POINTER TO FIRST CONTROL BLOCK
+*
+*     P17FCNTL    -> 1ST BLOCK              -> 2ND BLOCK
+*                    2ND BLOCK              -> 3RD BLOCK
+*                    3RD BLOCK              -> 4TH BLOCK
+*                    4TH BLOCK              -> 0  (END OF CHAIN)
+*
+* NOW :- R4 POINTS  TO CURRENT (NOW FREED)
+*        R5  POINTS TO PREVIOUS
+*        R10 POINTS TO NEXT
+*        R14 POINTS TO FIRST
+*
+         CR       R4,R14        IS DELETED BLOCK FIRST IN CHAIN?
+         BE       P15FIRST
+* HERE IT IS A MIDDLE BLOCK OR THE LAST BLOCK
+         LR       R4,R5         SET CURRENT TO PREVIOUS
+         ST       R10,ALLNEXT   RESET THE CHAIN
+         JOLRETN  ,             FINISHED.
+P15FIRST DS       0H
+         ST       R10,P17FCNTL KEEP FIRST CHAIN CORRECT
+         JOLRETN  ,             FINISHED.
+P15QNAME DC       CL8'SPFDSN'
+P15WAIT  DC       X'00'
+         DROP     R9
+         DROP     R4
+         LTORG
+         CNOP  0,8
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)
+         DC    S(*,*,*,*,*,*,*,*,*,*,*,*)
+         TITLE 'OPEN FILE'
+P17SAVE  DSECT
+         DS      18F
+P17OPT   DS      XL1,XL3
+P17OPENP DS      XL1,XL3
+         DS      0F
+TEMPEXIT DS      F
+P17MEMBR DS      CL8
+         IEFJFCBN LIST=NO
+         PUSH  PRINT
+         PRINT OFF
+PDSDCB   DCB   DSORG=PO,MACRF=R
+         POP   PRINT
+P17QUIET DS    CL1             SET TO NON-BLANK IF 'QUIET' CODED
+P17SAVEL EQU     *-P17SAVE
+         JOLSAVE CSECT=UJP17OPN,SIZE=P17SAVEL
+* NOTE:- THE READ INSTRUCTION USES GET LOCATE SO THAT WE CAN
+*        SET UP AN EOF FUNCTION FOR THE USER, RATHER THAN SETTING UP
+*        AN ERROR EXIT AS TSO DOES.
+*  THIS MEANS THAT WE MUST USE LOCATE MODE SO THAT WE KNOW BEFORE HAND
+*        WHETHER THE FILE IS AT EOF OR NOT- IN OTHER WORDS WE HAVE TO
+*        BE ONE STEP IN FRONT OF OUR SELVES.
+         USING    P17SAVE,R13
+         CLEAR P17QUIET        SET QUIET FLAG OFF
+         MVC      ICOMMAND,=CL8'MACRO' MAKE ASSIGN BETTER.
+         MVC      SYMBOLIC,=CL8'LASTCC'
+         MVC      #WORK(3),=X'0001F0'  SET RC=0 TO START
+         $CALL    UJP85ASN             STORE IN %LASTCC
+         GETTKN   2                    GET SECOND TOKEN.
+         CLI      TKN,C' '             ANY MORE TOKENS??
+         BNE      P17OK1
+         JOLERR   301,'NO FILE SPECIFIED ON OPEN STATEMENT'
+         JOLRETN  RC=16
+P17OK1   CLC      =C'F ',TKN           F SPECIFIED?
+         BE       P17KEYWD             YES, HAVE A KEYWORD
+         CLC      =C'FILE ',TKN        FILE SPECIFIED?
+         BE       P17KEYWD             YES, HAVE A KEYWORD
+* HERE WE HAVE A FILE NAME WITHOUT THE FILE KEYWORD
+         MVC      SYMBOLIC,TKN         SAVE IN 'SYMBOLIC'
+         GETTKN   (R1)         GET INPUT, OUTPUT OR UPDATE
+P17CHKT  CLI      TKN,C' '             NO PARAMETER?
+         BE       P17IN ASSUME INPUT LIKE TSO
+         CLC      =C'INPUT ',TKN
+         BE       P17IN
+         CLC      =C'OUTPUT ',TKN
+         BE       P17OUT
+         CLC      =C'UPDATE ',TKN
+         BE       P17UPD
+         JOLERR   302,'INVALID OPEN OPTION:-''',#TKN,''''
+P17RC16  MVC      SYMBOLIC,=CL8'LASTCC'
+         MVC      #WORK(4),=X'0002F1F6'       SET RC=16
+         $CALL    UJP85ASN                    STORE IN %LASTCC
+         JOLRETN  RC=16
+P17IN    MVI      P17OPT,1
+         B        P17GETF
+P17OUT   MVI      P17OPT,B'00000010'
+         B        P17GETF
+P17UPD   MVI      P17OPT,B'00000011'
+         B        P17GETF
+P17KEYWD DS       0H
+         GETTKN   (R1)          SEE IF '('
+         CLI      TKN,C'('
+         BNE      P17GOTF1
+         GETTKN   (R1)
+P17GOTF1 MVC      SYMBOLIC,TKN  SAVE FILE NAME THERE
+         GETTKN   (R1)
+         CLI      TKN,C')'      END ')'
+         BNE      P17CHKT      CHECK TYPE OF OPEN
+         GETTKN   (R1)
+         B        P17CHKT
+P17GETF  GETTKN   (R1)
+         CLI   TKN,C' '        BLANK, OR OTHERWISE?
+         BE    P17GETF2
+         CLC   =C'QUIET ',TKN
+         BNE   P17BADTK
+         MVI   P17QUIET,C'1'   NON-BLANK
+         GETTKN   (R1)         GET NEXT AFTER QUIET OPTION
+         CLI   TKN,C' '        BLANK, OR OTHERWISE?
+         BE    P17GETF2
+P17BADTK JOLERR   303,'TOO MANY SYMBOLS ON OPEN'
+P17GETF2 DS       0H
+         $CALL    P17SFILE
+* ON RETURN, R1 POINTS TO THE LAST BLOCK FOUND. IF IT IS THE
+*    FIRST TIME CALLED, R1 WILL POINT TO 'USER4'. ++++ NONO
+         LR       R4,R1         COPY LAST IN CHAIN TO R4
+         LTR      R15,R15       TEST IF WE FOUND THE FILE BLOCK
+         BZ       P17GOTDT      YES, AND THAT SHOULDN'T REALLY HAPPEN.
+         USING    DYNFCNTL,R4
+* HERE WE HAVE A NEW FILE, SO WE WILL DO A GETMAIN FOR THE
+*      DCB AND CHAIN IT TO THE LAST.
+         GETMAIN  R,LV=P17CLEN
+         ST       R1,ALLNEXT    SET UP THE CHAIN
+         LR       R4,R1         ADDRESS THE AREA
+         MVC      DYNFCNTL(P17CLEN),P17CONST  COPY TO GOTTEN AREA.
+         MVC      ALLDDNAM,SYMBOLIC  COPY IN THE DDNAME
+P17GOTDT DS       0H
+         CLI      ALLSTAT,0
+         BE       P17OPEN
+         JOLERR   304,'FILE ''',SYMBOLIC,''' ALREADY OPEN'
+         B     P17RC16
+P17OPEN  DS    0H
+         MVC   ALLSTAT,P17OPT
+* I SUPPOSE I COULD HAVE MADE THE INDICATORS THE SAME AS OPEN REQUIRES,
+*   BUT I DIDN'T, SO A BIT OF EXTRA WORK IS REQUIRED HERE.
+         LA    R9,ALLDCB
+         ST    R9,CALLAREA
+         OI    CALLAREA,X'80'
+         USING IHADCB,R9
+         MVC   DCBDDNAM,ALLDDNAM   SET UP DCB NAME
+         MVC      ALLDSN,BLANKS
+* READ THE JFCB FOR ENQUE PURPOSES, AND SO WE CAN DO
+*   A 'FIND' OR 'BLDL' SO WE DON'T ABEND IF OPEN FAILS
+         LA    R7,INFMJFCB
+         USING INFMJFCB,R7
+         ST    R7,TEMPEXIT
+         MVI   TEMPEXIT,X'87'
+         LA    R15,TEMPEXIT
+         ST    R15,DCBEXLST
+         RDJFCB MF=(E,CALLAREA)
+         CLI   ALLSTAT,B'00000001' INPUT?
+         BNE   P17NIN
+         TM    JFCBIND1,JFCPDS     PARTITIONED DATA SET ?
+         BNO   P17NPDS         NO, SO DO ORDINARY OPEN
+* A PDS. CHECK IF THE MEMBER IS PRESENT
+         LA    R9,PDSDCB       SET R9 TO POINT TO OUR WORK AREA.
+         ST    R9,CALLAREA
+         MVI   CALLAREA,X'80'
+         MVC   PDSDCB(P17PDS2L),P17PDS2 COPY TO WORK AREA.
+         MVC   DCBDDNAM,ALLDDNAM   SET UP DCB NAME
+         LA    R15,TEMPEXIT
+         ST    R15,DCBEXLST
+         NI    JFCBIND1,255-JFCPDS  TURN OFF PARTITIONED DATA SET IND
+         OI    JFCBTSDM,JFCNWRIT   DON'T WRITE JFCB BACK
+         MVC   P17MEMBR,JFCBELNM SAVE MEMBER NAME
+         MVC   JFCBELNM,BLANKS
+         OPEN  MF=(E,CALLAREA),TYPE=J
+         TM    DCBOFLGS,DCBOFOPN   DID IT OPEN?
+         BNO   P17ERROP               OPEN ERROR
+         FIND  PDSDCB,P17MEMBR,D
+         LR    R9,R15
+         CLOSE MF=(E,CALLAREA) CLOSE THE PDS DCB
+         LTR   R9,R9
+         BZ    P17MEMOK        MEMBER NOT FOUND
+         CLI   P17QUIET,C' '   DO WE NOTIFY THE USER ?
+         BNE   P17SETER        SET ERROR IN LASTCC, RETURN
+         B     P17ERROP        MEMBER NOT FOUND
+P17MEMOK LA    R9,ALLDCB       RESET R9 AFTER FIND ETC
+         ST    R9,CALLAREA
+P17NPDS  DS    0H
+         MVI   CALLAREA,X'80'
+         B     P17OPEN2
+P17NIN   CLI   ALLSTAT,B'00000010' OUTPUT?
+         BNE   P17NOUT
+         MVI   CALLAREA,X'8F'
+* WE MUST ENQUE ON THE OUTPUT FILE
+P17ENQ   DS    0H
+         TM    JFCBIND2,JFCTEMP    TEMPORARY DSNAME ?
+         BO    P17OPEN2
+* NOW FIND THE END OF THE DSNAME SO WE CAN SET UP A PROPER ENQ LIST
+         LA    R15,JFCBDSNM+43     GET END OF DSNAME
+P17FBLNK CLI   0(R15),C' '         GOT THE LAST '.' ?
+         BNE   P17GOTBL            YES
+         BCT   R15,P17FBLNK        FIND STOP LOOP
+P17DSNER JOLERR   505,'INTERNAL ERROR:DSNAME ALL BLANK OR LENGTH <0'
+         JOLRETN  RC=16
+P17GOTBL DS    0H
+         LA    R14,JFCBDSNM        GET START OF DSNAME
+         SR    R15,R14             GIVES LENGTH -1
+         BM    P17DSNER            ERROR
+         LA    R15,1(R15)          GET REAL LENGTH
+         STH   R15,ALLDSNL         STORE IT
+         MVC   ALLDSN(44),JFCBDSNM COPY THE NAME OVER TOO
+         SPACE
+         L        R6,CALLAREA          SAVE CALLAREA BECAUSE JOLENQ
+*                                      DESTROYS IT.
+         $CALL    JOLENQ,(SPFDSN,ALLDSNL,WAITON)
+         ST       R6,CALLAREA          RESET OPEN PARAMETERS
+         LTR      R15,R15
+         BNZ      P17RC16            RETURN A 16
+         MVC      DCBEXLST(4),ZERO
+         B        P17OPEN2
+* MUST BE UPDATE
+P17NOUT  MVI      CALLAREA,X'84'
+         B        P17ENQ
+P17OPEN2 DS       0H
+         MVC   DCBEXLST+1(3),=AL3(0)
+         OPEN     MF=(E,CALLAREA)
+         TM       DCBOFLGS,DCBOFOPN   DID IT OPEN?
+         BNO      P17ERROP            OPEN ERROR
+         CLC      DCBLRECL,=H'3000'
+         BL       P17TIN2             TEST IF INPUT, MUST PRIME RECORD
+         JOLERR   306,'RECORD LENGTH OF FILE ''',ALLDDNAM,             C
+               ''' TOO LARGE:->3000 CHARACTERS'
+P17SETER MVI      ALLSTAT,B'10000000'  STOPS ANY READS OR WRITES
+*                 TO THAT FILE
+         B        P17RC16
+P17TIN2  DS       0H                   PRIME BUFFER IF INPUT
+         CLI      ALLSTAT,B'00000001'  INPUT?
+         BNE      P17RETN              NO, SO RETURN
+         MVC      DCBEODA,=AL3(P17SETEN)  EOF ADDRESS
+         GET      ALLDCB               TRY TO GET LOCATE A RECORD
+         ST       R1,ALLGETAD          SAVE THE RECORD ADDRESS
+P17RETN  JOLRETN
+P17SETEN OI       ALLSTAT,B'01000000'  TURN ON EOF FLAG THERE TOO
+*        JOLERR   107,'FILE ''',SYMBOLIC,''' HAS NO DATA'
+         JOLRETN
+P17ERROP JOLERR   308,'OPEN FAILED FOR FILE ''',ALLDDNAM,''''
+         B        P17SETER
+SPFDSN   DC       CL8'SPFDSN'
+WAITON   DC       X'01'
+         DROP     R9
+         LTORG
+* THIS NEXT AREA IS THE SAME AS THE 'DYNFCNTL' BLOCK; IT IS COPIED
+*        TO 'GOTTEN' STORAGE.
+P17CONST DC       A(0)      SAME AS 'ALLNEXT'
+         DC       CL8' '    DDNAME
+         DC       AL1(0)    STATUS INITIALLY 0
+         DC       A(0)      GET LOCATE NEXT RECORD ADDRESS
+         DC       AL2(0)    LENGTH OF DSNAME
+         DC       CL44' '   DSNAME AREA IF ENQUED
+         PRINT    NOGEN
+P17DCB   DCB      DDNAME=NONE,MACRF=(PM,GL),DSORG=PS
+P17CLEN  EQU      *-P17CONST
+         SPACE 3
+P17PDS2  DCB      DDNAME=NONE,MACRF=R,DSORG=PO
+P17PDS2L EQU      *-P17PDS2
+         PRINT    GEN
+         LTORG
+         DC      30S(*)
+         TITLE 'SEARCH FOR FILE DCB AND OTHER DETAILS'
+         JOLSAVE CSECT=P17SFILE
+         DROP    R13
+* THIS CSECT SEARCHES THE TABLE FOR THE FILENAME SPECIFIED
+*  IN 'SYMBOLIC' AND RETURNS:-
+*     0 IF FOUND
+*     4 IF NOT FOUND (BUT MORE ROOM IN THE TABLE FOR ANOTHER)
+*     8 OTHERWISE (NO ROOM, AND NOT FOUND)
+* R0 POINTS TO THE LAST AREA, FOR DECHAINING IN CLOSE
+* R1 POINTS TO THE AREA, OR NEXT AREA FOR RC=0 OR RC=4
+*
+         L       R4,P17FCNTL
+         LTR     R5,R4              FIRST TIME IN?
+         BZ      P17SRET4           YES, SIMPLY RETURN A 4.
+         USING   DYNFCNTL,R4        WE ARE POINTING AT A BLOCK
+P17NEXT  CLC     SYMBOLIC,ALLDDNAM
+         BE      P17SGOT
+         CLC     ALLNEXT,ZERO       MORE BLOCKS ALLOCATED?
+         BE      P17SRETR           NO, SO RETURN A 4
+         LR      R5,R4              SAVE PREVIOUS ADDRESS
+         L       R4,ALLNEXT         GET NEXT ADDRESS
+         B       P17NEXT            TRY NEXT BLOCK THEN.
+P17SRET4 LA      R4,P17FCNTL        POINT TO THE CORRECT SPOT
+P17SRETR L       R14,4(R13)
+         ST      R5,20(R14)         SET R0 TO ADDRESS
+         ST      R4,24(R14)         SET R1 TO ADDRESS
+         JOLRETN RC=4
+P17SGOT  L       R14,4(R13)
+         ST      R4,24(R14)         SET R1 TO ADDRESS
+         ST      R5,20(R14)         SET R0 TO ADDRESS
+         JOLRETN RC=0
+         DROP    R4
+         LTORG
+         DC      30S(*)
+         TITLE 'SEARCH FOR FILE DCB AND OTHER DETAILS'
+         JOLSAVE CSECT=P18TEOF
+         L        R1,0(R1)             GET THE FILENAME
+         MVC      SYMBOLIC,0(R1)       COPY TO SYMBOLIC
+         $CALL    P17SFILE             FIND THE FILE DETAILS
+         LTR      R15,R15
+         BZ       EOFGOTF
+EOFRC16  DS       0H
+         JOLRETN  RC=16
+         USING    DYNFCNTL,R8
+EOFGOTF  LR       R8,R1                SAVE CODE IN R8
+         TM       ALLSTAT,1            OPEN FOR INPUT?
+         BO       EOFTERR
+         B        EOFRC16
+EOFTERR  TM       ALLSTAT,B'10000000'
+         BNO      EOFOK1
+         B        EOFRC16
+EOFOK1   DS       0H
+         TM       ALLSTAT,B'01000000'
+         BNO      EOFRET0
+         B        EOFRC16
+* WE COULD CLOSE THE FILE AND FREE THE BUFFERS, BUT I MUST SEE
+*    IF THAT WILL CAUSE ANY LOGICAL PROBLEMS BEFORE I PUT CODE IN.
+*
+EOFRET0  JOLRETN
+         LTORG
+         DC      30S(*)
+         TITLE 'READ RECORD ROUTINE'
+         JOLSAVE CSECT=UJP18GET
+* THIS IS THE GETFILE INSTRUCTION   ****************************
+         USING TKNX,R3
+* THIS ROUTINE DOES THE GETFILE INSTRUCTION
+         GETTKN   2                    GET NAME OF SYMBOLIC VALUE
+*                                      TO BE RETURNED TO.
+         MVC      SYMBOLIC,TKN         STORE IN SYMBOLIC NAME FIELD
+         GETTKN   3                    CHECK FOR ERRORS.
+         CLI      TKN,C' '             ANY MORE TOKENS??
+         BE       P18SYNOK
+         JOLERR   301,'TOO MANY SYMBOLS ON GETFILE STATEMENT'
+P18SYNOK DS       0H
+         MVC      TKN(8),SYMBOLIC      COPY BACK FOR GET SUBRTN
+         MVC      #TKN,=H'8'           SET UP LENGTH TO 8.
+         $CALL    UJP182               ACTUALLY DO THE GET
+         LTR      R15,R15
+         BZ       GETRC0
+         JOLRETN  RC=4
+GETRC0   JOLRETN
+         LTORG
+         DC      30S(*)
+         TITLE 'REAL READ RECORD ROUTINE'
+         JOLSAVE  CSECT=UJP182         READ FILE
+* SYMBOLIC CONTAINS THE FILE NAME, TKN CONTAINS SYMBOLIC FOR DATA
+         MVC      ICOMMAND,=CL8'MACRO' MAKE ASSIGN BETTER.
+         $CALL    P17SFILE             FIND THE FILE DETAILS
+         LTR      R15,R15
+         BZ       P18GOTF
+         JOLERR   302,'FILE ''',SYMBOLIC,''' NOT OPENED'
+P18RC16  MVC      SYMBOLIC,=CL8'LASTCC'
+         MVC      #WORK(4),=X'0002F1F6'       SET RC=16
+         $CALL    UJP85ASN                    STORE IN %LASTCC
+         JOLRETN  RC=16
+         USING    DYNFCNTL,R8
+P18GOTF  LR       R8,R1                SAVE CODE IN R8
+         TM       ALLSTAT,1            OPEN FOR INPUT?
+         BO       P18TERR
+         JOLERR   303,'FILE ''',SYMBOLIC,''' NOT OPEN FOR INPUT'
+         B        P18RC16
+P18TERR  TM       ALLSTAT,B'10000000'
+         BNO      P18OK1
+         JOLERR   304,'FILE ''',SYMBOLIC,''' HAD OPEN ERROR:- IT CANNOT+
+                BE USED'
+         B        P18RC16
+P18OK1   DS       0H
+         TM       ALLSTAT,B'01000000'
+         BNO      P18OK2
+P18ATEOF JOLERR   305,'FILE ''',SYMBOLIC,''' IS AT END OF FILE'
+* WE COULD CLOSE THE FILE AND FREE THE BUFFERS, BUT I MUST SEE
+*    IF THAT WILL CAUSE ANY LOGICAL PROBLEMS BEFORE I PUT CODE IN.
+*
+P18NULL  MVC      #WORK(2),=X'0000'    RETURN A NULL RECORD
+         MVC      SYMBOLIC,TKN         SET UP RECEIVING NAME
+         $CALL    UJP85ASN             NULL RETURNED
+         B        P18RC16 RETURN A CODE OF 16 TOO
+P18OK2   LA       R9,ALLDCB            GET ADDRESS OF DCB
+         USING    IHADCB,R9
+         L        R1,ALLGETAD          GET ADDRESS OF RECORD IN BUFFER
+         LTR      R1,R1                AT EOF ?
+         BZ       P18ATEOF
+         TM       DCBRECFM,X'50'       VARIABLE BLOCKED?
+         BO       P18VB
+         LA       R15,WORK             GET RECEIVE AREA ADDRESS
+         LH       R14,DCBLRECL         GET LENGTH OF RECORD
+         STH      R14,#WORK            SET UP LENGTH
+         BCTR     R14,0                -1 FOR MVC EXECUTE
+         EX       R14,P18MVCFB         MOVE THE RECORD TO WORK
+         B        P18STORE             STORE READ RECORD
+P18VB    DS       0H
+         LH       R14,0(R1)            GET RECORD LENGTH FROM BUFFER
+         SH       R14,=H'4'            -4 FOR RECORD DESCRIPTOR WORD
+         CH       R14,=H'253'          CHECK IF RECORD IS TOO LONG
+         BNH      P18VBOK
+         JOLERR   306,'FILE ''',SYMBOLIC,''' RECORD IS TOO LONG'
+         B        P18NULL
+P18VBOK  STH      R14,#WORK            SET UP LENGTH
+         BCTR     R14,0                -1 FOR MVC EXECUTE
+         EX       R14,P18MVCVB         MOVE THE RECORD TO WORK
+P18STORE LH       R1,#WORK             MUST ADD 2 FOR THE QUOTES
+         LA       R14,2(R1)
+         STH      R14,#WORK
+         MVI      WORK,C''''           PUT IN QUOTES FOR CHAR TEXT
+*        LH       R1,#WORK             PUT A QUOTE
+         LA       R1,WORK+1(R1)        -- AT THE END
+         MVI      0(R1),C''''          ---- OF THE STRING
+         MVC      SYMBOLIC,TKN         COPY IN NAME
+         $CALL UJP85ASN
+* SET UP %LASTCC=0
+         MVC      SYMBOLIC,=CL8'LASTCC'
+         MVC      #WORK(3),=X'0001F0'  SET RC=0 TO START
+         $CALL    UJP85ASN             STORE IN %LASTCC
+* NOW GET LOCATE NEXT RECORD SO WE CAN SET UP EOF ETC
+         MVC      DCBEODA,=AL3(P18SETEN)  EOF ADDRESS
+         MVC      ALLGETAD,=A(0)       CLEAR RECORD POINTER FIRST
+         TM       ALLSTAT,B'01000000'  ARE WE AT EOF ALREADY?
+         BO       P18ATEOF             YES
+         TM       DCBOFLGS,DCBOTFM     IS IT AN END OF FILE?
+         BNO      P18DORD              NO, DO THE READ
+         JOLRETN
+P18DORD  GET      ALLDCB               TRY TO GET LOCATE A RECORD
+         ST       R1,ALLGETAD          SAVE THE RECORD ADDRESS
+         JOLRETN
+P18SETEN OI       ALLSTAT,B'01000000'  TURN ON EOF FLAG THERE TOO
+*        JOLERR   107,'FILE ''',SYMBOLIC,''' NOW AT EOF'
+         JOLRETN
+P18MVCFB MVC      WORK+1(*-*),0(R1)
+P18MVCVB MVC      WORK+1(*-*),4(R1)
+         DC    80S(*,*,*,*)              ZAP SPACE IF REQUIRED
+         LTORG
+         DC      30S(*)
+         TITLE 'WRITE RECORD ROUTINE'
+         JOLSAVE CSECT=UJP19PUT
+* THIS IS THE PUTFILE INSTRUCTION   ****************************
+         GETTKN   2                    GET NAME OF SYMBOLIC VALUE
+*                                      TO BE SENT.
+         MVC      SYMBOLIC,TKN         STORE IN SYMBOLIC NAME FIELD
+         GETTKN   3                    CHECK FOR ERRORS.
+         CLI      TKN,C' '             ANY MORE TOKENS??
+         BE       P19OK1
+         JOLERR   301,'TOO MANY SYMBOLS ON PUTFILE STATEMENT'
+         USING TKNX,R3
+P19OK1   DS       0H
+         MVC      TKN(8),SYMBOLIC      COPY BACK FOR GET SUBRTN
+         MVC      #TKN,=H'8'           SET UP LENGTH TO 8.
+         $CALL    UJP192               ACTUALLY DO THE GET
+         LTR      R15,R15
+         BZ       PUTRC0
+         JOLRETN  RC=4
+PUTRC0   JOLRETN
+         LTORG
+         DC      30S(*)
+         TITLE 'REAL WRITE RECORD ROUTINE'
+         JOLSAVE  CSECT=UJP192         WRITE FILE
+* SYMBOLIC CONTAINS THE FILE NAME, TKN CONTAINS SYMBOLIC FOR DATA
+* OR A LITERAL STRING TO GO OUT
+         MVC      ICOMMAND,=CL8'MACRO' MAKE ASSIGN BETTER.
+         L        R9,AJCL              SET R9 TO $$JCL DCB
+         CLC      SYMBOLIC,=CL8'$$JCL' WRITING TO JCL FILE ?
+         BE       P19OK2               YES, OK, FILE MUST BE OPEN
+         $CALL    P17SFILE             FIND THE FILE DETAILS
+         LTR      R15,R15
+         BZ       P19GOTF
+         JOLERR   302,'FILE ''',SYMBOLIC,''' NOT OPEN'
+* QUESTION?
+*  WHY SHOULDN'T I OPEN IT FOR HIM?
+*  MAYBE JUST FOR INPUT?
+P19SETRC MVC      SYMBOLIC,=CL8'LASTCC'
+         MVC      #WORK(4),=X'0002F1F6'       SET RC=16
+         $CALL    UJP85ASN                    STORE IN %LASTCC
+         JOLRETN  RC=16
+         USING    DYNFCNTL,R8
+P19GOTF  LR       R8,R1                SAVE CODE IN R8
+         LA       R9,ALLDCB            GET ADDRESS OF DCB
+         USING    IHADCB,R9
+         TM       ALLSTAT,2            OPEN FOR OUTPUT?
+         BO       P19OK2
+         JOLERR   303,'FILE ''',SYMBOLIC,''' NOT OPEN FOR OUTPUT'
+         B        P19SETRC
+P19OK2   MVC      SYMBOLIC,TKN         GET NAME TO WRITE FROM
+         CLI      TKN,C''''            IS IT A LITERAL STRING ?
+         BE       P19WLIT              YES, SO WRITE IT OUT
+         FINDSYM  SYMBOLIC
+         LTR      R15,R15
+         BNZ      P19NFND              MESSAGE - NOT FOUND
+         LR    R1,R0           COPY ADDRESS OF SYM TO R1          87150
+* R1 POINTS TO THE SYMBOLIC WORK AREA TABLE ENTRY
+         USING    SYMOVLY,R1
+* MOVE TO #TKN FOR WRITING PURPOSES
+         MVI      TKN,C' '
+         MVC      TKN+1(255),TKN       CLEAR 255 ONLY BYTES
+         L        R0,SYMADDR           GET ITS ADDRESS
+         LA       R1,#TKN
+         BAL      R14,MOVEDATA         MOVE SYMBOLIC TO #TKN
+P19WLIT  BAL      R14,DROPQUOT         DROP QUOTES, IF ANY
+         C        R9,AJCL              WRITING TO JCL FILE ?
+         BNE      P19TDCB
+* OK, HERE WE ARE WRITING DIRECTLY TO THE JCL FILE.
+* THIS IS A PUT LOCATE FILE.
+         PUT      (R9)                 PUT LOCATE MODE
+         MVC      0(80,R1),TKN         SHIFT RECORD IN
+         B        P19RC0
+P19TDCB  TM       DCBRECFM,X'50'       VARIABLE BLOCKED ?
+         BO       P19VB
+         PUT      ALLDCB,TKN
+         CLC      #TKN,DCBLRECL
+         BH       P19FBLER
+P19RC0   MVC      SYMBOLIC,=CL8'LASTCC'
+         MVC      #WORK(3),=X'0001F0'  SET RC=0 TO START
+         $CALL    UJP85ASN             STORE IN %LASTCC
+         JOLRETN
+P19VB    LH       R1,#TKN              VARIABLE BLOCKED
+         LA       R1,2(R1)             ADD 2 FOR THE 0 WORK
+         STH      R1,#TKN-2
+         MVC      #TKN,ZERO
+         PUT      ALLDCB,#TKN-2
+         MVC      SYMBOLIC,=CL8'LASTCC'
+         MVC      #WORK(3),=X'0001F0'  SET RC=0 TO START
+         $CALL    UJP85ASN             STORE IN %LASTCC
+         JOLRETN
+P19FBLER JOLERR   304,'RECORD ''',#TKN,                                C
+               ''' TRUNCATED ON OUTPUT TO FILE ''',SYMBOLIC,''''
+         B        P19SETRC
+P19NFND  JOLERR   305,'SYMBOLIC VARIABLE ''',SYMBOLIC,                 C
+               ''' NOT FOUND FOR OUTPUT'
+         B        P19SETRC
+         DC      30S(*)
+         TITLE 'READ RECORD ROUTINE'
+         JOLSAVE CSECT=UJP60REA
+         USING TKNX,R3
+* THIS ROUTINE IS THE READ INSTRUCTION.
+* IT EITHER DOES:-
+*       READ SYMBOLIC;
+* OR    READ FILE(X) INTO(Y);
+         MVC      ICOMMAND,=CL8'MACRO' MAKE ASSIGN BETTER.
+         GETTKN   3                    SEE IF A BRACKET
+         CLI      TKN,C'('
+         BNE      P60TERM              SYMBOLIC TERMINAL READ
+* HERE IT IS MOST LIKELY A READ FILE TYPE INSTRUCTION.
+         GETTKN   2
+         CLC      =C'FILE ',TKN
+         BE       P60FNAME
+         CLC      =C'F ',TKN
+         BNE      P60ERR
+P60FNAME GETTKN   4
+         MVC      SYMBOLIC,TKN         SET UP FILE NAME
+         GETTKN   5
+         CLI      TKN,C')'
+         BE       P60GET6
+P60ERR   JOLERR   302,'INVALID SYNTAX ON READ FILE STATEMENT'
+         MVC      SYMBOLIC,=CL8'LASTCC'
+         MVC      #WORK(3),=X'0001F1F6'  SET RC=16
+         $CALL    UJP85ASN             STORE IN %LASTCC
+         JOLRETN  RC=16
+P60GET6  GETTKN   6
+         CLC      =C'INTO',TKN
+         BNE      P60ERR
+         GETTKN   7
+         CLI      TKN,C'('
+         BNE      P60ERR
+         GETTKN   9
+         CLI      TKN,C')'
+         BNE      P60ERR
+         GETTKN   10
+         CLI      TKN,C' '
+         BNE      P60ERR
+         GETTKN   8                   GET NAME OF RECEIVING SYMBOLIC
+         $CALL    UJP182
+         JOLRETN  RC=(15)
+         SPACE 3
+P60TERM  GETTKN   2                    GET NAME OF SYMBOLIC VALUE
+*                                      TO BE RETURNED TO.
+         MVC      SYMBOLIC,TKN         STORE IN SYMBOLIC NAME FIELD
+         GETTKN   3                    CHECK FOR ERRORS.
+         CLI      TKN,C' '             ANY MORE TOKENS??
+         BE       P60OK1
+         JOLERR   301,'TOO MANY SYMBOLS ON READ STATEMENT'
+P60OK1   LA       R1,WORK              GET RECEIVE AREA
+         TGET     (1),L'WORK
+         STH      R1,#WORK
+         B        P60STR
+P60STR   OC       WORK(256),=CL256' '  CONVERT TO UPPER CASE
+         $CALL UJP85ASN
+         JOLRETN
+         LTORG
+         DC      30S(*)
+         TITLE 'WRITE FILE ROUTINE'
+         JOLSAVE CSECT=UJP61WRI
+         USING TKNX,R3
+* THIS ROUTINE IS THE WRITE INSTRUCTION.
+* IT EITHER DOES:-
+*       WRITE SYMBOLIC;
+* OR    WRITE FILE(X) FROM(Y);
+         MVC      ICOMMAND,=CL8'MACRO' MAKE ASSIGN BETTER.
+         GETTKN   3                    SEE IF A BRACKET
+         CLI      TKN,C'('
+         BNE      P61TERM              SYMBOLIC TERMINAL READ
+* HERE IT IS MOST LIKELY A READ FILE TYPE INSTRUCTION.
+         GETTKN   2
+         CLC      =C'FILE ',TKN
+         BE       P61FNAME
+         CLC      =C'F ',TKN
+         BNE      P61ERR
+P61FNAME GETTKN   4
+         MVC      SYMBOLIC,TKN         SET UP FILE NAME
+         GETTKN   5
+         CLI      TKN,C')'
+         BE       P61GET6
+P61ERR   JOLERR   302,'INVALID SYNTAX ON WRITE FILE STATEMENT'
+         MVC      SYMBOLIC,=CL8'LASTCC'
+         MVC      #WORK(3),=X'0001F1F6'  SET RC=16
+         $CALL    UJP85ASN             STORE IN %LASTCC
+         JOLRETN  RC=16
+P61GET6  GETTKN   6
+         CLC      =C'FROM',TKN
+         BNE      P61ERR
+         GETTKN   7
+         CLI      TKN,C'('
+         BNE      P61ERR
+         GETTKN   9
+         CLI      TKN,C')'
+         BNE      P61ERR
+         GETTKN   10
+         CLI      TKN,C' '
+         BNE      P61ERR
+         GETTKN   8                   GET NAME OF RECEIVING SYMBOLIC
+         $CALL    UJP192
+         JOLRETN  RC=(15)
+         SPACE 3
+* THIS ROUTINE WRITES A CHARACTER STRING ONTO A TSO SCREEN.
+P61TERM  GETTKN   3                    CHECK FOR ERRORS.
+         CLI      TKN,C' '             ANY MORE TOKENS??
+         BE       P61OK1
+         JOLERR   301,'TOO MANY TOKENS ON WRITE STATEMENT'
+P61OK1   GETTKN   2                    GET MESSAGE TO BE WRITTEN.
+         BAL      R14,DROPQUOT         DROP QUOTES FROM THE MESSAGE
+         LA       R1,TKN               GET MESSAGE AREA ADDRESS.
+         LH       R0,#TKN              GET LENGTH TO GO TO SCREEN.
+         SVC      93                   GET VALUE FROM THE SCREEN.
+         JOLRETN
+         DC    20S(*)                  ZAP SPACE IF REQUIRED
+         LTORG
+         EJECT
+         COPY  DYNFCNTL
+DCBOTFM  EQU   B'00000100'
+         DCBD  DSORG=PS,DEVD=DA                                   75128
+         END

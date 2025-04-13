@@ -1,0 +1,95 @@
+JOBLIB    TITLE 'JOL JOB LIB PROCESSING'
+           PRINT  FF
+         COPY  JOLCOM
+           PRINT ON,GEN
+P01SAVE  DSECT
+         DS    18F
+LP01BUF  DS    A              L'BUFFER FOR FREEMAIN AT END OF FILE
+AP01BUF  DS    A              A(BUFFER) FOR FILE
+P01BLKSI   DS  H               BLOCKSIZE
+P01CURRA   DS  A               ADDRESS OF CURRENT RECORD
+P01SAVEL EQU   *-P01SAVE
+         PRINT GEN,DATA
+         JOLSAVE CSECT=UJP01LIB,SIZE=P01SAVEL
+          USING TKNX,R3
+         USING JOLCOM,R2
+         USING P01SAVE,R13
+* COPYRIGHT CCS-JOL PTY LTD.
+*
+* THIS ROUTINE IS HANDLES THE JOB LIB STATEMENT.
+*
+***** WRITTEN JULY, 1987 TO REPLACE THE JOBLIB MACRO.
+*
+* WE NEED THE JOB LIB TO BE REAL JOL FOR DYNAMIC ALLOCTION.
+*
+         MVC ICOMMAND,=CL8'MACRO'
+         L     R4,AJOBDETS
+         USING JOBDETS,R4
+         SPACE
+* NOW SET UP THE DSNAMES
+         GETTKN 2              GET 2ND TOKEN
+         STH   R1,TKNCURR      SAVE CURRENT TOKEN NUMBER
+         CLI   TKN,C' '        ANY DATA THERE?
+         BNE   P01GO1
+         JOLERR   301,'JOBLIB CALLED WITH NO PARAMETERS'
+         JOLRETN  RC=16
+P01GO1   EQU   *
+         CLI   TKN,C''''       DSNAME LITERAL SPECIFIED ?
+         BNE   P01START        NOPE
+         BAL   R14,DROPQUOT    DROP THE QUOTES
+         MVC   #WORK(L'TKN),#TKN MOVE TKN TO WORK
+P01STRL  BAL   R14,STORLIB     STORE THE LIBRARY NAME
+P01TEND  CLI   TKN,C' '        ANY MORE TO DO?
+         BE    P01END          NO
+         CLC   TKN,=C'||'      CONCATENATE SYMBOL ?
+         BE    P01SKIP         YES, SKIP IT
+         CLI   TKN,C','        A COMMA?
+         BNE   P01START        NO -> CONTINUE
+P01SKIP  GETTKN TKNCURR        GET NEXT TOKEN
+         STH   R1,TKNCURR      SAVE CURRENT TOKEN NUMBER
+         B     P01TEND         TEST IF END AGAIN, OR ','
+         SPACE
+P01START DS    0H
+         MVC   #WORK(L'TKN),#TKN MOVE FIRST PART TO WORK
+         GETTKN TKNCURR        GET NEXT TOKEN
+         STH   R1,TKNCURR      SAVE CURRENT TOKEN NUMBER
+         CLI   TKN,C' '        ANY MORE TO DO?
+         BE    P01STRL         NOPE
+P01DOTL  CLI   TKN,C'.'        PART OF A DSNAME ?
+         BNE   P01STRL         NOPE
+         BAL   R14,CONCAT      WORK=WORK||TKN ('.')
+         GETTKN (R1)           GET NEXT TOKEN (NEXT PART OF NAME)
+         STH   R1,TKNCURR      SAVE CURRENT TOKEN NUMBER
+         BAL   R14,CONCAT      WORK=WORK||TKN.
+         GETTKN (R1)           GET NEXT TOKEN (NEXT PART OF NAME)
+         STH   R1,TKNCURR      SAVE CURRENT TOKEN NUMBER
+         B     P01DOTL         SEE IF A '.', AND CONCAT, ELSE STORE
+P01END   JOLRETN RC=0
+STORLIB  DS    0H
+* STORE THE LIBRARY NAME IN THE NEXT AVAILABLE SPOT
+         LH    R7,JOBLIB#
+         LA    R7,1(R7)        INCREMENT
+         CH    R7,=H'6'
+         BH    P01ERR2
+         STH   R7,JOBLIB#
+         SH    R7,=H'1'
+         MH    R7,=H'46'
+         LA    R7,JOBLIB(R7)
+         MVC   0(46,R7),#WORK
+         BR    R14             RETURN
+P01ERR2  LR    R6,R14
+         JOLERR 302,'TOO MANY JOB LIBS SPECIFIED'
+         BR    R6
+         LTORG
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*)
+           END

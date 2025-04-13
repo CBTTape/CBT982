@@ -1,0 +1,120 @@
+***  DEQUEUE OR DEQ JOL INSTRUCTION
+*          ON DATA SETS OR ANY RESOURCE                               *
+*                                                                     *
+*    MODIFIED FROM US26ENQ BY MIKE STRAHAN, SHELL OIL, MELBOURNE.     *
+*                                                                     *
+*                                                                     *
+*    FUNCTION:                                                        *
+*                                                                     *
+*         TO DEQUEUE ON MAJOR AND MINOR NAMES AS                      *
+*         SPECIFIED BY THE USER.                                      *
+*                                                                     *
+*         THIS IS A COMPILER INSTRUCTION, NOT EXECUTION.              *
+*                                                                     *
+*         ALTHOUGH REALLY DESIGNED FOR SAVESYMS, IT IS APPLICABLE     *
+*         TO MANY MANY FUNCTIONS.                                     *
+*                                                                     *
+*    LINKAGE:                                                         *
+*                                                                     *
+*         INVOKED BY DEQ MAJOR-NAME,MINOR-NAME {OPTIONS}              *
+*                                                                     *
+*           WHERE OPTIONS ARE:-                                       *
+*                                                                     *
+*              SYSTEM ¦ STEP                                          *
+*              -------                                                *
+*              TEST ¦ USE ¦ HAVE ¦ CHNG                               *
+*              WAIT ¦ NOTIFY
+*              ----                                                   *
+*                                                                     *
+*         ON ENTRY, REGISTERS CONTAIN STANDARD JOL REGISTER VALUES.   *
+*                                                                     *
+*         ON RETURN, %LASTCC IS SET TO :-                             *
+*         REGISTER 15 CONTAINS A RETURN CODE :                        *
+*         FOR ENTRY POINT US26ENQ                                     *
+*                                                                     *
+*         RC = 0   CONTROL OF RESOURCE HAS BEEN RELEASED.             *
+*                                                                     *
+*                                                                     *
+*         FOR ENTRY POINT US26DEQ                                     *
+*                                                                     *
+*         RC = 0   CONTROL OF THE RESOURCE HAS BEEN RELEASED.         *
+*                                                                     *
+*         RC = 4   APPLICABLE ONLY TO BACKGROUND TASKS.               *
+*                  CONTROL OF THE RESOURCE IS NOT RELEASED AS THE     *
+*                  TASK IS CURRENTLY WAITING FOR CONTROL OF THE       *
+*                  RESOURCE.                                          *
+*                                                                     *
+*         RC = 8   TASK HAS NO REQUESTS FOR CONTROL OF THE RESOURCE.  *
+*                                                                     *
+*                                                                     *
+*    MODULE ATTRIBUTES:                                               *
+*                                                                     *
+*         RE-ENTERABLE.                                               *
+*                                                                     *
+***********************************************************************
+DEQUEUE  TITLE 'DEQUEUE ON NAMES SPECIFIED BY USER'
+         PRINT OFF
+         COPY  JOLCOM
+         PRINT ON
+         SPACE
+P26WORK  DSECT
+SAVE     DS    18F                 SAVE AREA
+EXENQ    DEQ   (,,0,SYSTEM),RET=HAVE,MF=L
+         DS    0F
+QNAME    DS    CL8                 MAJOR NAME COPIED HERE
+MINORNM  DS    CL60                MINOR NAME COPIED HERE
+LNTHWRK  EQU   *-P26WORK           LENGTH OF WORK AREA
+*R8       EQU   8                   STORES RETURN CODE DURING EXECUTION
+*R10      EQU   10                  POINTS TO WORK AREA
+*R11      EQU   11                  BASE REGISTER FOR BULK OF PROGRAM
+*   EQUATES FOR FIELDS IN SYSTEM CONTROL BLOCKS
+         SPACE 3
+         JOLSAVE CSECT=UJP26DEQ,SIZE=LNTHWRK
+         USING P26WORK,R13
+         LR    R10,R13             SET TO POINT TO WORK AREA
+         DROP  R13
+         USING P26WORK,R10
+         MVC   ICOMMAND,=CL8'MACRO'
+         MVC   SYMBOLIC,=CL8'LASTCC'
+         MVC   #WORK(3),=X'0001F0' SET UP RC=0
+         $CALL UJP85ASN
+         SPACE 2
+*    FIND THE RESOURCES WE WANT TO DEQ
+         SPACE 1
+         GETTKN  2                 GET THE MAJOR QNAME
+         MVC   QNAME,TKN
+         GETTKN  3                 GET THE SLASH (/)
+         CLI   TKN,C'/'
+         BE    P26SLASH
+P26BAD   JOLERR 301,'DEQUEUE:- INVALID PARAMETERS'
+         JOLERR 302,'MUST BE:- MAJOR-NAME/MINOR-NAME'
+P26RET4  MVC   #WORK(3),=X'0001F4' SET UP RC=4
+         $CALL UJP85ASN
+         JOLRETN RC=4
+P26SLASH DS    0H
+         GETTKN  4                 GET THE NAME AFTER THE SLASH
+         BAL   R14,DROPQUOT
+         MVC   #WORK(L'TKN),#TKN
+         MVC   MINORNM(50),WORK    FOR ERROR MESSAGES
+         CLC   =C'   ',TKN
+         BE    P26BAD
+         GETTKN  5
+         CLI   TKN,C' '
+         BE    P26OK3
+* WAIT DOESN'T MNATTER FOR DEQUEUE, SO IGNORE IT.
+         CLC   =C'NOWAIT',TKN
+         BE    P26OK3
+         CLC   =C'WAIT',TKN
+         BE    P26OK3
+WAITERR  JOLERR 306,'WAIT OR NOWAIT EXPECTED, NOT ''',#TKN,''''
+P26OK3   DS    0H
+         MVC   EXENQ(DEQLNTH),DEQ  SET UP DEQ PARAMETERS
+         DEQ   (QNAME,WORK-1,0),MF=(E,EXENQ)  TRY RET = USE
+         LTR   R15,R15
+         BNZ   P26RET4
+         JOLRETN
+DEQ      DEQ   (,,0,SYSTEM),RET=HAVE,MF=L
+DEQLNTH  EQU   *-DEQ               LENGTH OF DEQ LIST
+         LTORG
+         SPACE 3
+         END

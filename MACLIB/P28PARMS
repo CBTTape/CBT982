@@ -1,0 +1,41 @@
+#PARM    DSECT
+#LINES   DS    F                                                  J50
+#COLUMNS DS    F                                                  J50
+#TERMFLG DS    X                 TERMINAL FLAGS                   J50
+F9525    EQU   X'80'                                              J50
+F9526AC  EQU   X'40'                                              J50
+F9526BC  EQU   X'20'                                              J50
+F9526    EQU   X'60'                                              J50
+F6682    EQU   X'10'                                              J50
+#TRMEXTD EQU   X'01'            TERMINAL ACCEPTS EXTENDED DATA STREAM
+#SCITEMS DS    H
+#ITEMDSC DS    H                                                  J50
+DITEM    DSECT
+ROWNO    DS    H              ROWNO OF MESSAGE
+TXTROWNO EQU   ROWNO                                              J50
+COLNO    DS    H              COLNO OF MESSAGE
+TXTCOLNO EQU   COLNO                                              J50
+TXTLEN   DS    H              ACTUAL MESSAGE LENGTH
+TXTATTR  DS    X                 FIELD HIGHLIGHTING OPTIONS       J50
+TXTCOLR  DS    X                 FIELD COLOUR                     J50
+RROW     DS    H              REPLY ROWNO
+REPROWNO EQU   RROW                                               J50
+RCOL     DS    H              REPLY COLUMN
+REPCOLNO EQU   RCOL                                               J50
+RPLYLEN  DS    H              MAX LENGTH OF REPLY
+REPATTR  DS    X                 FIELD HIGHLIGHTING OPTIONS       J50
+REPCOLR  DS    X                 FIELD COLOUR                     J50
+RLITLEN  DS    H              DEFAULT REPLY LENGTH
+TESTR    DS    CL1            1= DEFAULT SUPPLIED, 0= NO DEFAUKT REPLY
+DITENEXT DS    0X                                                 J50
+LITERAL  DS    CL1000
+LFIXED   EQU   LITERAL-DITEM +1
+* FOLLOWING FIELDS DESCRIBE THE COLORS                            J51
+VBLACK   EQU   0                BLACK                             J51
+VBLUE    EQU   1                BLUE                              J51
+VRED     EQU   2                RED                               J51
+VMAGENT  EQU   3                MAGENTA                           J51
+VGREEN   EQU   4                DEFAULT FOR MANY SCREENS          J51
+VCYAN    EQU   5                CYAN                              J51
+VYELLOW  EQU   6                YELLOW (CALL IT BROWN?)           J51
+VWHITE   EQU   7                WHITE                             J51

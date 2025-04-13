@@ -1,0 +1,55 @@
+            GENSAVE CSECT=UJERDR1  VS1 ONLY
+* THIS PROGRAM STARTS A READER AND IS CALLED FROM THE JOL COMPILER
+* IT IS ASSUMMED THAT JOL IS ALLOWED TO USE THE 'MODESET' MACRO
+*      TO ENTER SUPERVISOR MODE
+            LR R4,R1    LOAD A(DCB) OF JCL FILE
+            USING IHADCB,R4
+            L  R5,DCBEXLST
+            MVC DCBEXLST+1(3),=AL3(ESTLIST)
+            RDJFCB ((4))
+         MVC   JCLDSN,ESTJFCB
+         LA    R1,JCLDSN+L'JCLDSN-1
+         CLI 0(R1),C' '
+         BNE   ENDDSN
+         BCT   R1,*-8
+         WTO 'CANNOT FIND END OF DSNAME FOR AUTO READER START',        *
+               ROUTCDE=(2,11)
+         ABEND 16,DUMP
+ENDDSN   LR    R10,R1  SET R10 SO WE CAN USE CONCAT MACRO
+         LA    R10,1(R10)   POINT TO NEXT FREE BYTE
+         CONCAT ',VOL=SER=',ESTVOL CONCATENATE THE VOL SER
+         LA    R1,ESTMSSGE   GET START ADDRESS OF WTO(SVC34)
+         SR    R10,R1         R10 = LENGTH OF MESSAGE
+         STH   R10,ESTMSSGE   SET LENGTH
+         ST R5,DCBEXLST
+         LA    R1,X'003C'     INTO SUPERVISOR STATE
+         SVC   107            MODESET
+         LA  R1,ESTMSSGE  LOAD ADDRESS OF SRDR
+         SR    R0,R0
+         SVC 34 ISSUE START
+         LA  R1,X'0024'   PROBLEM STATE NOW
+         SVC  107     MODESET SVC BACK TO PROB STATEKS
+         GENRETN RC=0
+         DS    0D
+ESTLIST     DC X'87',AL3(ESTJFCB)
+ESTMSSGE    DC AL2(JCLDSN+44-*),AL2(0)
+            DC C'START JOLRDR,DSN='
+JCLDSN   DC    CL44' '
+JCLVOL   DC CL20' '
+         DS    0D
+ESTJFCB     DC CL44' '
+       ORG ESTJFCB+118
+ESTVOL  DS CL6           JFCB VOLUME
+            DS CL200
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+            LTORG
+         PRINT NOGEN
+            DCBD DSORG=PS
+            END

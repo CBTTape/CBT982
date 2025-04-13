@@ -1,0 +1,394 @@
+US37AA   CSECT
+         COPY  JOLGLOBL                                          88036
+         LCLC  &C                                                88036
+         $UJEPARM                                                88036
+*
+*
+*     AUTHOR CLEM CLARKE SHELL COMPANY OF AUSTRALIA
+*
+      ENTRY SYSPRINT
+           ENTRY US37COL                  COLUMN POSITION
+           ENTRY US37LINE                  L&-& 3M0-T
+           ENTRY US37EXIT                 USER ROUTINE ADDR TO BE GIVEN
+*                                         CONTROL BEFORE HOF DONE
+           ENTRY US37PAGE                 PAGE COUNT
+           ENTRY US37MAXL                 NUMBER LINES TO A PGE
+* THIS ROUTINE IS USED IN CONJUNCTION WITH THE #PRINT MACRO
+*
+*    THE # PRINT MACRO DOES NOT GENERATE NORMAL PARAMETERS
+*          ALTHOUGH LINKAGE IS STANDARD
+*
+*    THE PARAMETER LIST IS UNUSUAL BECAUSE IT IS A LIST OF QUITE
+*          EXECUTABLE INSTRUCTIONS VIZ:-
+*              MVC FOR A CHARACTER STRING
+*              L   FOR A BIN FIELD
+*              LH  FOR A HALF WORD BIN FIXED FIELD
+*              LR  FOR A REGISTER
+*              IC  FOR A BIT STRING
+*              LA  FOR A VARYING CHARACTER STRING(FIRST 2 BYTES=LEN)
+*
+*          HOWEVER THE FIRST INSTRUCTION COULD BA A MVI WHICH CONTAINS
+*                  THE ASA PRINT CONTROL CHARACTER
+*
+           SPACE 5
+*    NOTICE THAT THIS ROUTINE USES REGISTERS 0,1,13,14,15 ONLY
+*          REGISTER 13 IS USED ASA BASE REGISTER AS WELL AS POINTING
+*    TO A SAVE AREA
+           SPACE 5
+* EQUATE R0,R1,R14,R15
+R0         EQU 0
+R1         EQU 1
+R14        EQU 14
+R15        EQU 15
+*
+R13         EQU 13
+           USING *,R15
+           SPACE 3
+* NOW FIRST CHECK IF THE FILE IS OPEN,AND IF THE USER HAS SPECIFIED
+*     A PAGE EXIT ROUTINE.IF SO LET HIM HAVE CONTROL FOR THE
+*     FIRST PAGE SKIP
+           TM SYSPRINT+48,X'10'
+           BO STORREGS
+           L  R0,US37EXIT
+           LTR R0,R0
+           BZ STORREGS    NO USER ROUTINE
+* NOW THE FILE ISN'T OPEN AND THE USER (BLESS HIS HEART) HAS SPECIFIED
+*     AN EXIT TO BE GIVEN CONTROL AT HOF
+* THIS (BEING THE FIRST OUTPUT) IS GOING TO BE HOF.
+* HOWEVER IF THIS PRINT IS HOF,WE'LL LET HIM DO IT NOW AND WE WON'T
+* GO TO HIS EXIT.IN OTHER WORDS,PRINT SKIP=PAGE HAS PRIORITY OVER
+* OVER HIS EXIT ROUTINE
+           CLC 0(2,R14),=X'92F1'            SKIP=PAGE ?
+           BE STORREGS                     CONTINUE AS NORMAL
+* RIGHT WHAT VE VILL DO IS RESET R14 TO ITSELF-6 (IE GO BACK TO THE
+*  L 15,=V(US37AA) AND THEN GIVE THE USER CONTROL
+           SH R14,=H'6'
+           LR R15,R0
+           BR R15    THERE HE HAS NOW GOT CONTROL
+           SPACE 3
+STORREGS   EQU  *
+           STM 12,14,12(13)
+           LA R1,SAVEAREA
+           ST R1,8(,R13)
+           ST R13,SAVEAREA+4
+BEGIN      BAL R13,START
+SAVEAREA   DS 18F
+START      EQU *
+           USING SAVEAREA,R13
+           ST R14,PARMPOSN     KEEP IT HANDY IN THIS CSECT
+         EJECT
+* NOW SEE IF SYSPRINT IS OPEN.IF NOT OPEN IT AND SET UP A FEW VALUES
+         SPACE 1
+         TM SYSPRINT+48,X'10'
+         BO FILEOPEN
+&C       SETC  (&X8)'AD'.(1-&X8)'OUTPUT'                         88036
+         OPEN (SYSPRINT,&C)
+         TM SYSPRINT+48,X'10'
+         BO FIRSTOP
+         ABEND 16,DUMP
+         EJECT
+FIRSTOP  DS    0H
+         LH R1,SYSPRINT+82
+         SH R1,=H'4'         -4   COS OF LRECL ETC (VBA IS USED)
+         ST R1,LINELEN
+         PUT   SYSPRINT
+         ST R1,BUFSTART
+         LA R1,4(,R1)        SKIP RECORD DESCRIPTOR WORDS
+* NOW SEE IF THE PRINT INSTRUCTION CONTAINS A PRINT CONTROL CHAR
+* IF IT DOESN'T WE WILL PAGE EJECT
+         L     R14,PARMPOSN
+         CLI   0(R14),X'92'
+         BE    FIRSTMVI
+* NO ASA CONTROL CHAR SO WE WILL GO TO HOF
+         MVI   0(R1),C'1'
+         LA    R1,1(,R1)
+         ST    R1,PRINTPOS      BUF ADDRESS WE ARE UP TO NOW
+         MVC   US37COL,=H'1'
+         MVC   US37LINE,=H'1'
+         B     OPLOOP            NOW CONTINUE TO HAPPILY OP
+* NOW AT R14 WE HAVE AN INSTRUCTION TO OP A CONTROL CHAR
+* IF IT IS  A HOF CHAR  THEN GO TO NORMAL ENTRY POINT OTHERWISE
+*WE HAD BETTER SKIP TO HOF BEFORE THE USER HAS HIS LITTLE GO
+FIRSTMVI CLI   1(R14),C'1'     HOF
+         BE    FILEOPEN
+         L     R1,BUFSTART
+         MVC   0(9,R1),DUMMYPR       SKIP TO HOF AND BLANKS
+         PUT   SYSPRINT
+         ST    R1,BUFSTART
+         LA    R1,4(,R1)
+         ST    R1,PRINTPOS CURRENT POSITION
+         L     R1,BUFSTART
+         AH    R1,SYSPRINT+82     LRECL
+         ST    R1,BUFSTOP
+           B FILEOPEN
+           EJECT
+FILEOPEN     EQU *
+           L R14,PARMPOSN
+           SPACE 2
+* THIS IS THE NORMAL WAY WE COME INTO THIS PROGRAM
+           SPACE 1
+* NOW LETS CHECK TO SEE IF THE FIRST EXECUTABLE INSTRUCTION IS A MVU
+           CLI 0(R14),X'92'    MVI ?
+           BNE OPLOOP          NO SKIP JUST ADD TO CURRENT LINE
+           SPACE 2
+* NOW CJECK IF THIS LINE HAS A CURRENT LENGTH .9
+           L R15,BUFSTART
+           CLC 0(2,15),=H'9'
+           BH NEWLINE
+* THE OUTPUT WROTER WON'T ACCEPT <9 BYTES SO WE WILL BUILD IT UP
+           SR R1,R1            LOAD RECORD LENGTH (CURRENT) TO R1
+           IC R1,0(R15)
+           SLL R1,8
+           IC R1,1(R15)
+           SPACE
+           AR R1,R15           + BUFFER LOCN
+           MVC 0(9,R1),=C'           '
+           MVC 0(2,R15),=H'9'
+NEWLINE  EQU *
+* LAST LINE IS SET UP TO GO
+*     BEFORE WE GET A NEW ONE HOWEVER,LETS HAV E A LOOK AN DSEE IF
+*     WE ARE GOING TO GO TO HOF WITH A SKIP=PAGE
+           CLC 0(2,R14),=X'92F1'
+           BNE TLINECNT
+* HERE SKIP TO HOF
+           LA R1,1
+           B SAMEPAGE     WILL PUT THEN MOVE IN HOF
+TLINECNT   EQU *
+* NOW SEE IF THE SKIP HE SPECOFIED IS GOING TO TAKE US TO HOF
+           LH  R1,US37LINE                LOAD CURRENT LINE NUMBER
+           CLI 1(R14),C' '                SKIP=1 ?
+           BE ONELINEF
+           CLI 1(R14),C'0'
+           BE TWOLINEF
+* HERE IT HAS TO BE THREE (??WATCH THE MACRO CVC)
+           LA  R1,1(R1)
+TWOLINEF   LA  R1,1(R1)
+ONELINEF   LA  R1,1(R1)
+           CH  R1,US37MAXL
+           BNH  SAMEPAGE
+* WELL THIS LINE WON'T FIT ON THIS PAGE
+NEWPAGE    LH  R1,US37PAGE
+           LA  R1,1(R1)
+           STH R1,US37PAGE
+           LA  R1,1
+           L  R15,US37EXIT
+           LTR R15,R15
+           BZ SAMEPAGE
+           SH R14,=H'6'
+           L R13,4(R13)
+           BR R15
+SAMEPAGE   STH  R1,US37LINE
+           PUT SYSPRINT
+           MVC  US37COL,=H'1'
+* NOW WE STILL HAVE TO EXECUTE THE INSTRUCTION AT (14) THE MVI
+           ST R1,BUFSTART
+           AH R1,SYSPRINT+82
+           ST R1,BUFSTOP
+           L R1,BUFSTART
+           LA R1,4(,R1)
+           L R14,PARMPOSN
+           EX 0,0(,R14)
+           LA 1,1(,R1)
+           ST R1,PRINTPOS
+           LA R14,4(,R14)        +4 AROUND MVI INSTRUCT
+           ST R14,PARMPOSN
+           L R1,BUFSTART
+           MVC 0(2,R1),=H'5'   NOT NEC BUT LEAVE NOW *****************
+OPLOOP     EQU *
+           EJECT
+*    BY NOW WE HAVE OUTPUT THE FIRST LINE AND/OR SEEN TO PRINTING
+* OF THE PREVIOUS LINE
+           SPACE 1
+*          BY RIGHTS PARMPOSN SHOULD POINT TO THE NEXT INSTRUCTION
+* AND BIFSTART TO THE START POSN IN THE BUFFER
+* AND BUFSTOP TO THE LAST USABLE POSN
+           SPACE 1
+           L R1,PRINTPOS       ALL INSTRUCTIONS MOVE TO 1
+           L R14,PARMPOSN
+           CLI 0(R14),X'D2'    MVC INSTRUCT ?
+           BNE NOTMVC
+* NOW SEE IF IT WULL FIT ON THIS LINE
+           SR R15,R15
+           IC R15,1(,R14)      LOAD THE LENGTH OF THE MVC
+           A R15,PRINTPOS
+           C R15,BUFSTOP
+           BH MVCBIG           TOO BIG,HAVE TO SPLIT IT
+           EX 0,0(,R14)        EXECUTE THE MOVE
+           LA R14,6(,R14)      ADD LENGTH OF THE MVC
+           ST R14,PARMPOSN     WILL USE LATER
+           LA R15,1(,R15)      +1 COS LENGTH IN MOVES IS 1 LESS
+* THAN ACTUAL
+           ST R15,PRINTPOS
+           B OPLOOP
+MVCBIG     EQU *
+*    NOW THE MVC IS A LITTLE BIG TO BE EXECUTED IN 1 HIT
+* THE SIMPLEST THIBG TO DO IS LAOD THE ADDR OF THE DATA IN  1 AND
+* THE LENGTH IN 15 AND BRANCH TO OP ROUTINE FOR NOS ETC
+           L R14,PARMPOSN
+           SR R15,R15
+           IC R15,1(,R14)      15 = LENGTH
+* NOW GET LA TO ADD THE COMPONENTS FOR US
+           MVC  LAINST+2,0(R14) JUST MOVE BASE REG AND DISPLACEMENR
+          EX 0,LAINST
+           B MUVLARGE
+LAINST     LA 1,0
+           EJECT
+NOTMVC       EQU *
+           CLI 0(R14),X'41'    LA FOR VARYING CHAR STRING ?
+           BNE NOTLA
+* AGAIN SIMPLY LOSD THE COMPONENTS  AND BRANCH TO 'BIGMOVE'
+           EX 0,0(,R14)        LOAD ADDR IN R1
+           LA R14,4(,R14)
+           ST R14,PARMPOSN
+           LH R15,0(,R1)       R15=LENGTH OF THE MOVE
+          LA R1,2(,R1)  LOAD ADDR OF START OF REAL DATA
+           B MUVLARGE
+NOTLA      EQU *
+           CLI 0(R14),X'48'    LH ?
+           BNE NOTLH
+* NOW LOAD THE NO IN R1
+           EX 0,0(,R14)
+           LA R14,4(,R14)
+           ST R14,PARMPOSN
+           B BINNO
+NOTLH      EQU *
+           CLI 0(R14),X'58'   L?
+           BNE NOTL
+           EX 0,0(,R14)        EX THE LOAD
+           LA R14,4(,R14)
+           ST R14,PARMPOSN
+           B BINNO
+NOTL       EQU *
+* NOT MUCH LEFT IS THERE
+           CLI 0(R14),X'DE'    EDIT FOR DEC LOCN ?
+           BNE NOTED
+* NOW THE EDIT IS NOT DIFFICULT
+           MVC NO,=X'4020202020202020202020202020202020202020202020'
+           LA R1,NO
+           EX 0,0(,R14)        EDIT IT
+           LA R14,8(,R14)
+           ST R14,PARMPOSN
+           B CONVERTD          DROPS BLANKS AND EVENTUALLY OPS IT
+NOTED      EQU *
+           CLI 0(R14),X'18'    LR ?
+           BNE NOTLR
+           EX 0,0(,R14)        LOAD R1
+           LA R14,2(,R14)
+           ST R14,PARMPOSN
+           B BINNO
+NOTLR      CLC 0(2,R14),=H'0'   END PARM LIST ?
+           BNE INVALID
+ENDPRINT   EQU *
+           LA R14,2(,R14)   BRANCH AROUND THE   0
+           L R15,BUFSTART
+           L R1,PRINTPOS
+           S R1,BUFSTART
+           STH R1,US37COL
+           STC R1,1(R15)
+           SRL R1,8
+           STC  R1,0(R15)
+           SPACE
+           L R13,SAVEAREA+4    RESET SAVE AREA ADDR
+           BR R14    GO HOME
+INVALID      EQU *
+ADD2       AH R14,=H'2'
+           CLC 0(2,R14),=H'0'
+           BE ENDPRINT
+           B ADD2
+BINNO      EQU *
+* R1 HAS THE BINARY NO IN IT AT THIS STAGE
+           CVD R1,DECNO
+           MVC NO,=X'4020202020202020202020202020202020202020202020'
+           ED  NO,DECNO
+           SPACE 1
+CONVERTD   EQU *
+           LA  R1,NO
+          LA R15,NO+31    STOP VAL
+TNO        CLI 0(R1),C' '
+           BNE  GOTSTART
+           LA  R1,1(,R1)
+           CR  R1,R15
+           BE  OPLOOP  COS IT'S ALL BLANK BABY
+           B  TNO
+GOTSTART   EQU *
+           LR  R0,R1           SAVE IT
+FINDSTOP   LA  R1,1(,R1)
+           CR  R1,R15
+           BE  STOPPOSN
+           CLI 0(R1),C' '
+           BE  STOPPOSN
+           B   FINDSTOP
+STOPPOSN   LR  R15,R1
+           SR  R15,R0          LENGTH OF FIELD
+           LR  R1,R0           ADDR OF AREA TO MOVE
+MUVLARGE   EQU *
+           L   R14,BUFSTOP
+           S   R14,PRINTPOS
+           CR    R15,R14  14=LENGTH LEFT IN BUFFER,15=LEN OF DATA
+           BH  SPLITMUV
+* WILL FIT,EXECUTE A MOVE
+           L   R14,PRINTPOS
+           EX  R15,MOVEDATA
+           AR  R14,R15         ADD THE LENGTH
+           ST  R14,PRINTPOS
+           B   OPLOOP          CONTINUE OUTPUTTING
+MOVEDATA   MVC 0(0,R14),0(R1)
+SPLITMUV   EQU *               R1=ADDR,R15=LENGTH,R14=AMOUNT LEFT
+           ST R14,SAVE14
+           L R14,PRINTPOS
+           EX  R15,MOVEDATA    MOVE AS MUCH AS POSSIBLE
+           L   R14,SAVE14
+           AR  R1,R14          GET NEW STARTING ADDRESS
+           ST  R1,ADDRNOW
+           SR  R15,R14         GET NEW LENGTH
+           ST  R15,LENNOW
+           L   R1,BUFSTART
+           MVC 0(2,R1),SYSPRINT+82 LRECL LENGTH
+           PUT SYSPRINT
+           LH   R15,US37LINE
+            LA R15,1(R15)
+           STH  R15,US37LINE
+      SPACE 3
+           LR  R0,R1
+           ST  R1,BUFSTART
+           AH  R1,SYSPRINT+82
+           ST  R1,BUFSTOP
+           LR  R1,R0
+           LA  R1,4(,R1)
+           MVI 0(R1),C' '      SKIP TO NEW LINE
+           LA  R1,1(,R1)
+           ST  R1,PRINTPOS
+           L   R1,ADDRNOW
+           L   R15,LENNOW
+           B   MUVLARGE
+US37COL    DC H'1'        COLUMN POSITION
+US37LINE   DC H'1'        LINE COUNT
+US37PAGE   DC H'1'        PAGE COUNT
+US37MAXL   DC H'58'       NUMBER OF LINES ALLOWED ON PAGE
+US37EXIT    DC A(0)       ADDRESS OF USER'S HOF ROUTINE
+ADDRNOW    DS  1F
+LENNOW     DS  1F
+PARMPOSN   DS 1F
+SAVE14   DS 1F
+DUMMYPR    DC H'9'
+           DC H'0'
+           DC C'1            '
+BUFSTART   DS 1F
+BUFSTOP    DS 1F
+PRINTPOS    DS 1F
+LINELEN    DS 1F
+NO         DS CL32
+DECNO      DS 1D
+SYSPRINT  DCB DDNAME=JOLPRINT,RECFM=VBA,LRECL=137,DSORG=PS,            *
+               MACRF=PL,EXLST=EXLST
+EXLST    DS    0D
+         DC    X'85'
+         DC    AL3(DCBEXIT)
+DCBEXIT  DS    0H
+         USING IHADCB,1
+         CLC   DCBBLKSI,=H'0'
+         BNE   GOBACK
+         MVC   DCBBLKSI,=H'141'
+GOBACK   BR    R14
+         DCBD  DSORG=PS
+         END

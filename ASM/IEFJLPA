@@ -1,0 +1,356 @@
+*        %GOTO JLPAPLS; /*
+         MACRO
+         IEFJLPA  &DSECT=YES
+.*MODULE NAME = IEFJLPA(OS/VS1)                                @X048E82
+.*                                                                    *
+.*DESCRIPTIVE NAME=                                            @X048E82
+.*       JOB LIST MANAGER  PARAMETER AREA                             *
+.*                                                                    *
+.*COPYRIGHT = NONE                                             @X048E82
+.*                                                                    *
+.*CHANGE ACTIVITY =                                            @X048E82
+.*                                                                    *
+         AIF   ('&DSECT' EQ 'YES').JLP01
+JLPA     DS    0F -
+         AGO   .JLP02
+.JLP01   ANOP
+JLPA     DSECT
+.JLP02   SPACE 1
+*
+*        JOB LIST MANAGER PARAMETER AREA
+*   OS/VS1   RELEASE 4     LEVEL 1  --   03/20/73
+*
+JLPOP    DS    XL1 -                   OPERATION CODE
+JLPASGS  EQU   X'00' -                 ASSIGN/START WITH ASSIGN
+JLPASGN  EQU   X'01' -                 ASSIGN - ANY LENGTH RECORDS
+JLPWRTA  EQU   X'02' -                 WRITE WITH ASSIGN - 176 BYTE REC
+JLPWRTE  EQU   X'03' -                 WRITE - 176 BYTE RECORDS
+JLPREAD  EQU   X'04' -                 READ - 176 BYTE RECORDS
+JLPWREN  EQU   X'05' -                 ENQUEUE OR WRITE/ENQUEUE
+JLPDTOP  EQU   X'06' -                 DEQUEUE TOP OF CLASS
+JLPDELE  EQU   X'08' -                 DELETE
+JLPSTRT  EQU   X'09' -                 ASSIGN/START
+JLPWRTV  EQU   X'0A' -                 WRITE - VARIABLE LENGTH RECORDS
+JLPREDV  EQU   X'0B' -                 READ - VARIABLE LENGTH RECORDS
+JLPENQN  EQU   X'15' -                 ENQUEUE OR WRITE/ENQUEUE WITHOUT
+*                                      FREEMAIN OF I/O WORK AREA
+JLPDELN  EQU   X'18' -                 DELETE WITHOUT FREEMAIN OF I/O
+*                                      WORK AREA
+JLPJLMW  EQU   X'1A' -                 VALID ONLY WHEN USED BY JOB
+*                                      LIST MANAGER. FORCES A PHYSICAL
+*                                      WRITE, WITH AN L OF 0 VALID
+JLPFWRT  EQU   X'23' -                 FORCE PHYSICAL WRITE - 176 BYTE
+*                                      RECORDS
+JLPFRED  EQU   X'24' -                 FORCE PHYSICAL READ - 176 BYTE
+*                                      RECORDS
+JLPFWRV  EQU   X'2A' -                 FORCE PHYSICAL WRITE - VARIABLE
+*                                      LENGTH RECORDS
+JLPIDF   DS    CL3 -                   BLOCK ID. SET TO C'JLP'
+JLPFWA   DS    0A -                    POINTER TO FUNCTIONAL WORK AREA
+         DS    C -                     RESERVED
+JLPFWAA  DS    AL3 -                   ADDRESS OF FUNCTIONAL WORK AREA
+*        EQUATES FOR THE FUNCTIONAL WORK AREA LENGTHS
+*        THE LABELS ARE FORMED BY APPENDING A 'W' TO THE OP CODE OF
+*        THE FUNCTION
+JLPABIGW EQU   224                    LARGEST FWA NEEDED FOR ANY
+*                                     JLPA FUNCTION
+JLPASGSW EQU   112
+JLPASGNW EQU   112
+JLPWRTAW EQU   112
+JLPWRTEW EQU   112
+JLPREADW EQU   112
+JLPWRENW EQU   224
+JLPDTOPW EQU   224
+JLPDELEW EQU   136
+JLPSTRTW EQU   112
+JLPWRTVW EQU   112
+JLPREDVW EQU   112
+JLPENQNW EQU   224
+JLPDELNW EQU   136
+JLPFWRTW EQU   112
+JLPFREDW EQU   112
+JLPFWRVW EQU   112
+JLPFWIDD EQU   0 -                     DISPLACEMENT OF FWA IDENTIFIER
+*                                      FIELD IN FWA. IDENTIFIER VALUE
+*                                      IS C'FWA '
+JLPDCA   DS    0CL16 -                 INFO COPIED TO DCA BY ENQUEUE
+JLPNAM   DS    0CL8 -                  JOB NAME -OR
+JLPNWE   DS    A -                     POINTER TO NO-WORK-ELEMENT  -AND
+         DS    F -                     RESERVED
+JLPNUM   DS    F -                     JOB NUMBER
+JLPQC    DS    0CL4 -                  QUEUEING CRITERIA
+JLPQID   DS    H -                     QID NUMBER
+JLPID    DS    CL1 -                   PROFILE IDENTIFICATION
+JLPSUBQ  DS    0BL.4 -                 SUBQUEUE TYPE (BITS 0-3)
+JLPOUT   EQU   X'20' -                 BIT MASK FOR OUTPUT
+JLPIN    EQU   X'10' -                 BIT MASK FOR INPUT
+JLPPRI   DS    0XL.4 -                 PRIORITY (BITS 4-7)
+         DS    XL1 -                   BYTE FOR ABOVE 2 FIELDS
+JLPFREC  DS    CL4 -                   TTRL OF FIRST RECORD OF ENTRY
+JLPNREC  DS    CL4 -                   TTRL OF NEXT AVAILABLE RECORD
+JLPNBLK  DS    FL1 -                   NUM BLOCKS USED IN THIS ENTRY
+JLPBLKT  DS    FL1 -                   BLOCK TYPE
+JLPT01   EQU   01 -                    BLOCK TYPE 1
+JLPT02   EQU   02 -                    BLOCK TYPE 2
+JLPT03   EQU   03 -                    BLOCK TYPE 3
+JLPT04   EQU   04 -                    BLOCK TYPE 4
+JLPSTA   DS    B -                     ENTRY STATUS FLAGS
+JLPHOLD  EQU   X'80' -                 HELD
+JLPNQD   EQU   X'40' -                 ENQUEUED
+JLPDQD   EQU   X'20' -                 DEQUEUED
+JLPNCAN  EQU   X'10' -                 NOT CANCELLABLE
+JLPFAIL  EQU   X'08' -                 JOB FAILED
+JLPCNCL  EQU   X'04' -                 ENTRY CANCELLED
+JLPCHNG  EQU   X'02' -                 PRIORITY OR CLASS CHANGED
+JLPFLAG  DS    BL1 -                   RESOURCE BRAKING FLGS
+JLPSTTSK EQU   X'20' -                 STARTED TASK INDICATOR
+JLPQCODE EQU   X'10' -                 RETURN SPECIAL CODES FOR
+*                                      ACCEPTABLE START COMMANDS
+JLPQBRK  EQU   X'08' -                 REQUEST NOT TO USE RSVD Q SPACE
+JLPQFUL  EQU   X'04' -                 RETURN CODE FOR Q FULL INSTEAD
+*                                      OF WAIT (ASSIGN REQUEST)
+JLPLBRK  EQU   X'02' -                 REQUEST NOT TO USE RSVD JOB
+*                                      LIST SPACE
+JLPLFUL  EQU   X'01' -                 RETURN CODE FOR JOB LIST FULL
+*                                      INSTEAD OF WAIT ( ENQUEUE
+*                                      REQUEST)
+JLPEIA   DS    0A -                    POINTER TO I/O WORK AREA
+JLPDBL   DS    FL1 -                   LENGTH OF DATA PORITON OF I/O
+*                                      WORK AREA (IN WORDS)
+*                                      0 = FULL BUFFER LENGTH
+JLPEIAA  DS    AL3 -                   ADDRESS OF I/O WORK AREA
+JLPEIAL  EQU   1072 -                  TOTAL LEN REQD FOR I/O WORK AREA
+*                                      SUBJECT TO CHANGE
+JLPEIACL EQU   192 -                   LENGTH REQD FOR JUST CONTROL
+*                                      PORTION OF I/O WORK AREA
+*                                      IF A SHORT BUFFER IS TO BE USED
+*                                      ADD THE DATA LENGTH (IN BYTES)
+*                                      TO THIS VALUE TO GET ACTUAL I/O
+*                                      WORK AREA SIZE
+*                                      SUBJECT TO CHANGE
+JLPEPA   DS    0A -                    POINTER TO EXTERNAL PARM AREA
+JLPCM    DS    0XL.4 -                 NUM RECS TO ASSIGN (BITS 0-3)
+JLPNC    DS    0XL.4  -                NO RECS TO READ/WRITE (BITS 4-7)
+         DS    XL1 -                   BYTE FOR ABOVE 2 FIELDS
+JLPEPAA  DS    AL3 -                   ADDRESS OF EXTERNAL PARM AREA
+*                                      RETURN CODES IN REG 15
+JLPRCNOR EQU   0 -                     NORMAL RETURN
+JLPRCGMF EQU   4 -                     GETMAIN FAILURE
+JLPRCQFL EQU   8 -                     JOB LIST (ENQUEUE) OR SYSJOBQE
+*                                      (ASSIGN) FULL
+JLPRCNWA EQU   8 -                     NO WORK TO DEQUEUE
+JLPRCIOE EQU   12 -                    SYSJOBQE I/O ERROR
+JLPRCLER EQU   16 -                    LOGICAL ERROR
+*  THE FOLLOWING RETURN CODES MAY BE RETURNED WHEN BIT 'JLPQCODE'
+*  IN BYTE 'JLPFLAG' IS ON FOR ANY ASSIGN REQUEST.  THESE MAY
+*  BE USED SINGLY OR IN ANY COMBINATION OF THE 3.
+JLPRCWTR EQU   X'20' -                 ALLOW A WRITER TO START
+JLPRCINT EQU   X'40' -                 ALLOW AN INITIATOR TO START
+JLPRCEXT EQU   X'80' -                 ALLOW THE SYSJOBQE EXTEND
+*                                      ROUTINE TO START
+JLPALEN  EQU   *-JLPA -                LENGTH OF JLPA
+         MEND  , */
+*%JLPAPLS:;
+* /*                                                                 */
+* /*JOB LIST MANAGER PARAMETER AREA                                  */
+* /*                                                                 */
+* /*  OS/VS1   RELEASE 4     LEVEL 1    --   03/20/73                */
+* /*                                                                 */
+*
+ %IF DSECT ¬='NO' %THEN
+    %GOTO JLPLVL1;                                         /*@X04AA82*/
+ %ELSE %GOTO JLPLVL2;                                      /*@X04AA82*/
+ %JLPLVL2:;                                                /*@X04AA82*/
+   2  JLPA BDY(WORD,1),   /* JOB LIST MANAGER PARM AREA      @X04AA82*/
+ %GOTO JLPMAIN;                         /*                   @X04AA82*/
+ %JLPLVL1:;                                                /*@X04AA82*/
+*DECLARE
+*  1 JLPA      BASED(JLPAPTR),     /* JOB LIST MANAGER PARM AREA     */
+ %JLPMAIN:;                                                /*@X04AA82*/
+*   3 JLPOP     CHAR(1),           /* OPERATION CODE                 */
+*     %JLPASGS = '''00''X';
+* /* JLPASGS = ASSIGN/START WITH ASSIGN OP CODE                      */
+*     %JLPASGN = '''01''X';
+* /* JLPASGN = ASSIGN OP CODE                                        */
+*     %JLPWRTA = '''02''X';
+* /* JLPWRTA = WRITE WITH ASSIGN (176 BYTE RECORDS) OP CODE          */
+*     %JLPWRTE = '''03''X';
+* /* JLPWRTE = WRITE (176 BYTE RECORDS) OP CODE                      */
+*     %JLPREAD = '''04''X';
+* /* JLPREAD = READ (176 BYTE RECORDS) OP CODE                       */
+*     %JLPWREN = '''05''X';
+* /* JLPWREN = ENQUEUE OR WRITE/ENQUEUE OP CODE                      */
+*     %JLPDTOP = '''06''X';
+* /* JLPDTOP = DEQUEUE (TOP OF CLASS) OP CODE                        */
+*     %JLPDELE = '''08''X';
+* /* JLPDELE = DELETE OP CODE                                        */
+*     %JLPSTRT = '''09''X';
+* /* JLPSTRT = ASSIGN/START OP CODE                                  */
+*     %JLPWRTV = '''0A''X';
+* /* JLPWRTV = WRITE (VARIABLE LENGTH RECORDS) OP CODE               */
+*     %JLPREDV = '''0B''X';
+* /* JLPREDV = READ (VARIABLE LENGTH RECORDS) OP CODE                */
+*     %JLPENQN = '''15''X';
+* /* JLPENQN = ENQUEUE OR WRITE/ENQUEUE (WITHOUT FREEMAIN OF
+*              I/O WORK AREA) OP CODE                                */
+*     %JLPDELN = '''18''X';
+* /* JLPDELN = DELETE (WITHOUT FREEMAIN OF I/O WORK AREA) OP CODE    */
+*     %JLPJLMW = '''1A''X';
+* /* JLPJLMW = WRITE (FORCED PHYSICAL INTO DCA) OP CODE
+*              VALID ONLY FOR JOB LIST MANAGER                       */
+*     %JLPFWRT = '''23''X';
+* /* JLPFWRT = FORCE PHYSICAL WRITE (176 BYTE RECORDS) OP CODE       */
+*     %JLPFRED = '''24''X';
+* /* JLPFRED = FORCE PHYSICAL READ (176 BYTE RECORDS) OP CODE        */
+*     %JLPFWRV = '''2A''X';
+* /* JLPFWRV = FORCE PHYSICAL WRITE (VARIABLE LENGTH RECORDS)
+*              OP CODE                                               */
+*   3 JLPIDF    CHAR(3),           /* JLPA IDENTIFIER FIELD          */
+*     %JLPIDV = '''JLP''';
+* /* JLPIDV = JLPA BLOCK ID VALUE                                    */
+*   3 JLPFWA    PTR(31),           /* PTR TO FUNCTIONAL WORK AREA    */
+*    5 *         CHAR(1),          /* RESERVED                       */
+*    5 JLPFWAA   PTR(24),          /* ADDR OF FUNCTIONAL WORK AREA   */
+* /* LENGTHS FOR THE FUNCTIONAL WORK AREAS ARE DECLARED AS FIXED     */
+* /* COMPILE-TIME VARIABLES.  THEIR LABELS ARE FORMED BY TAKING      */
+* /* THE LABEL FOR THE CORRESPONDING OP CODE AND APPENDING A 'W'.    */
+* /* FOR EXAMPLE, THE LENGTH OF THE WORK AREA REQUIRED FOR ASSIGN    */
+* /* IS LABELED JLPASGNW.                                            */
+* /* THE VARIABLE 'JLPABIGW' IS EQUAL TO THE LARGEST FWA NEEDED      */
+* /* FOR ANY JLPA FUNCTION.                                          */
+*%DCL JLPABIGW FIXED;
+*%JLPABIGW = 224;
+*%DCL   JLPASGSW  FIXED;
+*%JLPASGSW = 112;
+*%DCL   JLPASGNW  FIXED;
+*%JLPASGNW = 112;
+*%DCL   JLPWRTAW  FIXED;
+*%JLPWRTAW = 112;
+*%DCL   JLPWRTEW  FIXED;
+*%JLPWRTEW = 112;
+*%DCL   JLPREADW  FIXED;
+*%JLPREADW = 112;
+*%DCL   JLPWRENW  FIXED;
+*%JLPWRENW = 224;
+*%DCL   JLPDTOPW  FIXED;
+*%JLPDTOPW = 224;
+*%DCL   JLPDELEW  FIXED;
+*%JLPDELEW = 136;
+*%DCL   JLPSTRTW  FIXED;
+*%JLPSTRTW = 112;
+*%DCL   JLPWRTVW  FIXED;
+*%JLPWRTVW = 112;
+*%DCL   JLPREDVW  FIXED;
+*%JLPREDVW = 112;
+*%DCL   JLPENQNW  FIXED;
+*%JLPENQNW = 224;
+*%DCL   JLPDELNW  FIXED;
+*%JLPDELNW = 136;
+*%DCL   JLPFWRTW  FIXED;
+*%JLPFWRTW = 112;
+*%DCL   JLPFREDW FIXED;
+*%JLPFREDW = 112;
+*%DCL   JLPFWRVW  FIXED;
+*%JLPFWRVW = 112;
+*%DCL JLPFWIDD FIXED;
+*%JLPFWIDD = 0;
+* /* JLPFWIDD = FWA BLOCK ID DISPLACEMENT                            */
+*%JLPFWIDV = '''FWA ''';
+* /* JLPFWIDV = FWA BLOCK ID VALUE                                   */
+*   3 JLPDCA    CHAR(16)BDY(WORD), /* INFO COPIED TO DCA BY ENQUEUE  */
+*    5 JLPNAM    CHAR(8)BDY(WORD), /* JOB NAME   -OR                 */
+*     7 JLPNWE    PTR(31),         /* PTR TO NO-WORK-ELEMENT  -AND   */
+*     7 *         FIXED(31),       /* RESERVED                       */
+*    5 JLPNUM    FIXED(31),        /* JOB NUMBER                     */
+*    5 JLPQC     BIT(32) BDY(WORD),  /* QUEUEING CRITERIA            */
+*     7 JLPQID    FIXED(15),       /* QID NUMBER                     */
+*     7 JLPID     CHAR(1),         /* PROFILE IDENTIFICATION         */
+*     7 JLPSUBQ   BIT(4),          /* SUBQUEUE TYPE                  */
+*      9 *         BIT(2),         /* RESERVED                       */
+*      9 JLPOUT    BIT(1),         /* BIT MASK FOR OUTPUT GROUP      */
+*      9 JLPIN     BIT(1),         /* BIT MASK FOR INPUT GROUP       */
+*     7 JLPPRI    BIT(4),          /* PRIORITY OF THIS ENTRY         */
+*   3 JLPFREC   CHAR(4),           /* TTRL OF FIRST RECORD OF ENTRY  */
+*   3 JLPNREC   CHAR(4),           /* TTRL OF NEXT AVAILABLE RECORD  */
+*   3 JLPNBLK   PTR(8),            /* NUM BLOCKS USED IN THIS ENTRY  */
+*   3 JLPBLKT   PTR(8),            /* BLOCK TYPE                     */
+*%DCL  (JLPT01,JLPT02,JLPT03,JLPT04) FIXED;
+*%JLPT01 = 1;
+*%JLPT02 = 2;
+*%JLPT03 = 3;
+*%JLPT04 = 4;
+* /*  LABELS FOR BLOCK TYPE VALUES ARE JLPT01, JLPT02, JLPT03
+*     AND JLPT04, TYPES 1 THRU 4 RESPECTIVELY                        */
+*   3 JLPSTA    BIT(8),            /* ENTRY STATUS FLAGS             */
+*    5 JLPHOLD   BIT(1),           /* HELD                           */
+*    5 JLPNQD    BIT(1),           /* ENQUEUED                       */
+*    5 JLPDQD    BIT(1),           /* DEQUEUED                       */
+*    5 JLPNCAN   BIT(1),           /* NOT CANCELLABLE                */
+*    5 JLPFAIL   BIT(1),           /* JOB FAILED                     */
+*    5 JLPCNCL   BIT(1),           /* ENTRY CANCELLED                */
+*    5 JLPCHNG   BIT(1),           /* PRIORITY OR CLASS CHANGE       */
+*    5 *         BIT(1),           /* RESERVED */
+*   3 JLPFLAG   BIT(8),            /* RESOURCE BRAKING FLAGS         */
+*    5 *         BIT(2),           /* RESERVED                       */
+*    5 JLPSTTSK  BIT(1),           /* STARTED TASK INDICATOR         */
+*    5 JLPQCODE  BIT(1),           /* RETURN SPECIAL CODES FOR
+*                                     ACCEPTABLE START COMMANDS      */
+*    5 JLPQBRK   BIT(1),           /* REQUEST NOT TO USE RSVD Q SPACE*/
+*    5 JLPQFUL   BIT(1),           /* RETURN CODE FOR Q FULL INSTEAD
+*                                     OF WAIT (ASSIGN REQUEST)       */
+*    5 JLPLBRK   BIT(1),           /* REQUEST NOT TO USE RSVD JOB
+*                                     LIST SPACE                     */
+*    5 JLPLFUL   BIT(1),           /* RETURN CODE FOR JOB LIST FULL
+*                                     INSTEAD OF WAIT (ENQUEUE REQST)*/
+*   3 JLPEIA    PTR(31),           /* POINTER TO I/O WORK AREA       */
+*    5 JLPDBL    PTR(8),           /* LENGTH OF DATA PORTION OF I/O
+*                                     WORK AREA (IN WORDS)
+*                                     0 = FULL BUFFER LENGTH         */
+*    5 JLPEIAA   PTR(24),          /* ADDRESS OF I/O WORK AREA       */
+*%DCL  JLPEIAL  FIXED;
+*%JLPEIAL = 1072;
+* /* JLPEIAL = TOTAL LENGTH REQUIRED FOR I/O WORK AREA --
+*    SUBJECT TO CHANGE                                               */
+*%DCL JLPEIACL  FIXED;
+*%JLPEIACL = 192;
+* /* JLPEIACL = LENGTH REQUIRED FOR JUST CONTROL PORTION OF I/O
+*    WORK AREA.   IF A SHORT BUFFER IS TO BE USED -- ADD THE
+*    DATA LENGTH (IN BYTES) TO THIS VALUE TO GET ACTUAL I/O
+*    WORK AREA LENGTH                                                */
+*   3 JLPEPA    PTR(31),           /* POINTER TO EXTERNAL PARM AREA  */
+*    5 JLPCM     BIT(4),           /* COUNT OF RECS TO ASSIGN        */
+*    5 JLPNC     BIT(4),           /* COUNT OF RECS TO READ/WRITE    */
+ %IF DSECT ¬='NO' %THEN
+    %GOTO JLPDSECT;                                        /*@X04AA82*/
+ %ELSE %GOTO JLPINLIN;                                     /*@X04AA82*/
+ %JLPINLIN:;                             /*                  @X04AA82*/
+     5 JLPEPAA PTR(24), /* ADDRESS OF EXT PARM AREA          @X04AA82*/
+                       /* RETURN CODE IN REG 15              @X04AA82*/
+ %GOTO JLPEND;                                             /*@X04AA82*/
+ %JLPDSECT:;                                               /*@X04AA82*/
+*    5 JLPEPAA   PTR(24);          /* ADDRESS OF EXTERNAL PARM AREA  */
+*                                  /* RETURN CODES IN REG 15         */
+ %JLPEND:;                                                 /*@X04AA82*/
+*%JLPRCNOR = '''00''X';
+* /* JLPRCNOR = NORMAL RETURN                                        */
+*%JLPRCGMF = '''04''X';
+* /* JLPRCGMF = GETMAIN FAILURE                                      */
+*%JLPRCQFL = '''08''X';
+* /* JLPRCQFL = JOB LIST (ENQUEUE) OR SYSJOBQE (ASSIGN) FULL         */
+*%JLPRCNWA = '''08''X';
+* /* JLPRCNWA = NO WORK TO DEQUEUE                                   */
+*% JLPRCIOE = '''0C''X';
+* /* JLPRCIOE = SYSJOBQE I/O ERROR                                   */
+*%JLPRCLER = '''10''X';
+* /* JLPRCLER = LOGICAL ERROR                                        */
+* /* THE FOLLOWING RETURN CODES MAY BE RETURNED WHEN BIT 'JLPQCODE'
+*    IN BYTE 'JLPFLAG' IS ON FOR ANY ASSIGN REQUEST.  THESE MAY BE
+*    USED SINGLY OR IN ANY COMBINATION OF THE 3.                     */
+*%JLPRCWTR='''20''X';
+* /* JLPRCWTR = ALLOW A WRITER TO START                              */
+*%JLPRCINT='''40''X';
+* /* JLPRCINT = ALLOW AN INITIATOR TO START                          */
+*%JLPRCEXT='''80''X';
+* /* JLPRCEXT = ALLOW THE SYSJOBQE EXTEND ROUTINE TO START           */
+*%JLPALEN = 'LENGTH(JLPA)';
+* /* JLPALEN = LENGTH OF JLPA                                @X04AA82*/

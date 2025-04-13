@@ -1,0 +1,29 @@
+         MACRO
+&L       $TELL  &FCTADDR
+         AIF   (K'&L EQ 0).NL
+&L       DS    0H
+.NL      ANOP
+ AGO  .END
+         LA    R10,WORK+4
+         CONCAT '&SYSECT ABOUT TO MODIFY FCT FOR FILE '
+         MVC   0(8,R10),FCTACSN
+         LA    R10,8(,R10)
+         CONCAT ' AT '
+         IHBINNRA &FCTADDR
+         ST    R1,TASKSSI
+         UNPK  DBL(9),TASKSSI(5)
+         TR    DBL,HEX
+         MVC   0(6,R10),DBL+2
+         LA    R10,6(,R10)
+         LA    R0,WORK
+         SR    R0,R10    MSG LEN
+         LCR   R0,R0
+         STH   R0,WORK
+         MVI   WORK+2,X'80'   MCS FLAG
+         MVI   WORK+3,X'00'
+         MVC   0(2,R10),=X'00004020' DESC,ROUTCD
+         LA    R1,WORK+4
+         SH    R0,=H'4'
+         TPUT  (1),(0),USERIDL==C'JOLAIF  '
+         WTO   MF=(E,WORK)
+.END     MEND

@@ -1,0 +1,27 @@
+DYNFCNTL DSECT
+* THIS DSECT IS USED FOR ALLOC, GETFILE OPENFILE ETC FOR JOL
+*
+* IT DESCRIBES THE DDNAME, STATUS ,NEXT BLOCK AND THE DCB.
+*
+* MODULES USING THIS AREA ARE UJM15FRE (FREES THE ENTIRE CHAIN)
+*                         AND UJP17OPN, UJP18GET, UJP19PUT,
+*                             UJP60REA, UJP61WRI, UJP19FRE,
+*
+* DATE 16 OCT, 1984
+* C. V. CLARKE COPYRIGHT CCS-JOL.
+*
+ALLNEXT  DS    A              ADDRESS OF NEXT OR ZERO IF LAST
+ALLDDNAM DS    CL8            DDNAME
+ALLSTAT  DS    XL1            STATUS OF DDNAME
+*                             00000001 = OPEN FOR INPUT
+*                             00000010 = OPEN FOR OUTPUT
+*                             00000011 = OPEN FOR UPDATE
+*                             00000100 = A GET HAS BEEN DONE FOR DCB
+*                             01000000 = FILE AT END OF FILE
+*                             10000000 = FILE HAD AN OPEN ERROR
+ALLGETAD DS    A              ADDRESS OF RECORD (GET LOCATE MODE)
+*                                *** PRIMED IN OPEN
+*                             IF 0 THEN AT EOF
+ALLDSNL  DS    H              LENGTH OF DSNAME FOR ENQ
+ALLDSN   DS    CL44           DSNAME OR BLANK IF NOT ENQUEUED
+ALLDCB   DS    0F             THE DCB IS HERE

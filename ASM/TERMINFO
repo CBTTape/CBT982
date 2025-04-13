@@ -1,0 +1,30 @@
+         PUNCH ' PAGE X'                                          J50
+X        CSECT                                                    J50
+         USING X,12                                               J50
+         LR    12,15                                              J50
+         TERMTYPE TERMIDL=ANS                                     J50
+STOP1    DS    0H                                                 J50
+*        TERMTYPE TERMIDL=ANS2,TERMATR=(ATTR1,ATTR2)              J50
+STOP2    DS    0H                                                 J50
+         GTTERM  PRMSZE=SIZE1,                                    J50  .
+               ALTSZE=SIZE2,                                      J50  .
+               ATTRIB=ATTRIBS                                     J50
+STOP3    DC    X'0700',D'0'                                       J50
+X1       MVI   NED,1                                              J50
+         BR    14                                                 J50
+X2       MVI   NED,2                                              J50
+         BR    14                                                 J50
+NED      DC    D'0'                                               J50
+ANS      DC    CL8' '                                             J50
+ANS2     DC    CL8' '                                             J50
+ATTR1    DC    A(X1)
+         DC    0XL32'0',32X'FF'                                   J50
+         DC    4096X'FF'                                          J50
+ATTR2    DC    A(X2)
+         DC    0XL32'0',32X'FF'                                   J50
+         DC    4096X'FF'                                          J50
+SIZE1    DS    2AL1                                               J50
+SIZE2    DS    2AL1                                               J50
+ATTRIBS  DS    XL8                                                J50
+         DC    4096X'FF'                                          J50
+         END   X                                                  J50

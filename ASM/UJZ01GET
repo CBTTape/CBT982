@@ -1,0 +1,31 @@
+         COPY  JOLCOM
+         EJECT
+         JOLSAVE CSECT=UJZ01GET
+         USING TKNX,R3
+         GETTKN 2
+         LH    R1,#TKN                 LENGTH OF TOKEN/PGM-ID
+         BCTR  R1,0                    SUBTRACT 1 FOR EX/MVC
+         EX    R1,UJZ01MVC             MOVE PGM-ID INTO EPLOC LOCATION
+         GETTKN 3
+         BAL   R14,DROPQUOT            DROP OFF QUOTES IF
+         LA    R1,#TKN                 R1 HAS ADDRESS OF PARM
+         ST    R1,UJZ01CAL             SAVE ADDRESS
+         LA    R1,UJZ01CAL             AND POINT TO IT
+         LINK  EPLOC=UJZ01DTA          LINK IN PROGRAM
+         CVD   R15,DBL                 CONVERT RETURN CODE
+         UNPK  WORK(5),DBL             TO EBCDIC
+         OI    WORK+4,C'0'             CHANGE SIGN ZONE TO X'F'
+         MVC   ICOMMAND,=CL8'MACRO'    BECAUSE I WAS TOLD TO PUT IT IN
+         MVC   SYMBOLIC,=CL8'SYSRC'    NAME OF SYMBOLIC
+         MVC   #WORK,=H'5'             LENGTH OF SYMBOLIC
+         B     *+4                     ZAP SPACE IF REQUIRED
+         $CALL UJP85ASN
+         JOLRETN
+         DC    S(*,*,*,*)              ZAP SPACE IF REQUIRED
+         DC    S(*,*,*,*)              ZAP SPACE IF REQUIRED
+         DC    S(*,*,*,*)              ZAP SPACE IF REQUIRED
+         DC    S(*,*,*,*)              ZAP SPACE IF REQUIRED
+UJZ01CAL DC    F'0'                    ADDRESS OF PARM LIST
+UJZ01DTA DC    CL8' '                  PGM-ID FOR LINK
+UJZ01MVC MVC   UJZ01DTA(*-*),TKN       MOVE PGM-ID
+         END

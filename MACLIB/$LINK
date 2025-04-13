@@ -1,0 +1,32 @@
+         MACRO
+&NAME    $LINK &EP
+         GBLA  &$LINKN
+         GBLC  &$LINKS(100)
+         LCLA  &A
+         LCLC  &LINK,&DONE
+         AIF   (T'&EP NE 'O').EPOK
+         MNOTE 12,'$LINK:-EP PARAMETER IS REQUIRED'
+         MEXIT
+.EPOK    ANOP
+&LINK    SETC  'KCP'.'&SYSNDX'.'A'
+&DONE    SETC  'KCP'.'&SYSNDX'.'B'
+.LP      AIF   (&A GE &$LINKN).EL
+&A       SETA  &A+1
+         AIF   ('&EP' NE '&$LINKS(&A)').LP
+         AGO   .FND
+.*
+.EL      ANOP
+.*    NAME IS NOT DEFINED, GENERATE WXTRN, AND ADD TO THE TABLE
+         WXTRN &EP
+&$LINKN  SETA  &$LINKN+1
+&$LINKS(&$LINKN) SETC '&EP'
+.FND     ANOP  NAME IS DEFINED NOW, GENERATE A CALL TO IT
+&NAME    ICM   R15,15,=V(&EP) LOAD ENTRY ADDRESS, TEST AVAILABILITY
+         BZ    &LINK          BRANCH IF NOT LINKED IN
+         BALR  R14,R15        CALL THE ROUTINE
+         B     &DONE
+&LINK    MVC   CALLAREA(8),=CL8'&EP' MOVE IN ROUTINE NAME
+         LA    R15,AJOLLOAD-4
+         SVC   6              LINK TO ROUTINE
+&DONE    DS    0H
+         MEND

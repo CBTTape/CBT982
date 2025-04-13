@@ -1,0 +1,56 @@
+    COMPSYS:PROC OPTIONS(MAIN);
+       DCL LIMIT   BIN FIXED(31) INIT  (5000);
+       DCL OLDSYS FILE RECORD INPUT,
+           NEWSYS FILE RECORD INPUT;
+    ON ENDFILE(OLDSYS) GO TO STEP2;
+    ON ENDFILE(NEWSYS) GO TO STEP3;
+     DCL 1 RECS(LIMIT),
+          2 CARD CHAR(72),
+          2 NUMBER CHAR(8);
+     DCL 1 INDS(LIMIT),
+          2 IND CHAR(1);
+     DCL CARDX CHAR(80) STATIC;
+   DCL (I,J,IENDNEW,IENDOLD) BIN FIXED(31) EXT;
+     INDS='';
+     DO I=1 TO LIMIT;
+          READ FILE(OLDSYS) INTO(CARDX);
+          CARD(I)=CARDX;
+          NUMBER(I)=SUBSTR(CARDX,73,8);
+     END;
+   STEP2:
+     IENDOLD=I;
+     DO J=I TO LIMIT;
+          READ FILE(NEWSYS) INTO(CARDX);
+          CARD(J)=CARDX;
+          NUMBER(J)=SUBSTR(CARDX,73,8);
+     END;
+     PUT SKIP LIST ('****ARRAY OVERFLOW!!!*, INCR VARIABLE ''LIMIT''');
+   STEP3:
+     IENDNEW=J;
+   PUT SKIP EDIT(I,J,IENDOLD,IENDNEW)(A);
+     PUT SKIP EDIT(I,J,IENDOLD,IENDNEW)(A);
+    PUT SKIP EDIT(I,J,IENDOLD,IENDNEW)(A);
+     DO I=1 TO IENDOLD;
+        DO J=IENDOLD TO IENDNEW;
+           IF  IND(J)=' ' THEN
+           IF CARD(I)=CARD(J)
+           THEN DO;
+               IND(J)='1';
+               IND(I)='1';
+               GO TO X;
+            END;
+        END;
+   X:
+     END;
+     DO I=1 TO 50;
+       PUT SKIP EDIT(CARD(I))(A);
+     END;
+    PUT PAGE EDIT('OLD MASTER RECORDS NOT FOUND ')(A);
+     DO I=1 TO IENDOLD;
+       IF IND(I)=' ' THEN PUT SKIP EDIT(CARD(I),NUMBER(I))(A);
+     END;
+    PUT PAGE EDIT('NEW MASTER RECORDS NOT FOUND ')(A);
+     DO I=I TO IENDNEW;
+       IF IND(I)=' ' THEN PUT SKIP EDIT(CARD(I),NUMBER(I))(A);
+     END;
+   END;

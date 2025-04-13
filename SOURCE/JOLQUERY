@@ -1,0 +1,70 @@
+         PUNCH ' PAGE JOLQUERY'
+JOLQUERY CSECT
+         LCLA  &A
+         LCLB  &B
+         LCLC  &C
+.L       AIF   (&A GT 15).E
+&B       SETB  (&A LT 10)
+&C       SETC  (&B)'0'
+R&C&A    EQU   &A
+&A       SETA  &A+1
+         AGO   .L
+.E       ANOP
+         STM   R14,R12,12(R13)
+         LR    R12,R15
+         USING JOLQUERY,R12
+         GETMAIN R,LV=WRKLEN
+         LR    R11,R01
+         USING WRK,R11
+         LA    R14,SAVES
+         ST    R14,8(,R13)
+         ST    R13,4(,R14)
+         LR    R13,R14
+ASK      DS    0H
+         TPUT  Q,QL,ASIS,WAIT,HOLD
+         B     GREP
+TOOMUCH  TCLEARQ INPUT
+         TPUT  E2,E2L,ASIS
+GREP     LA    R01,REPLY
+         LA    R00,L'REPLY
+         TGET  (1),(0)
+         LTR   R15,R15
+         BZ    CONT
+         CH    R15,=H'12'
+         BL    ASK
+         BE    TOOMUCH
+         TPUT  E1,E1L
+         ABEND 1
+STOP     NOP   *
+CONT     DS    0H
+         OC    REPLY,=CL20' '
+         BCTR  R01,0
+         CLC   REPLY(0),=C'YES '
+         EX    R01,*-6
+         BE    OK
+         LA    R15,4
+         CLC   REPLY(0),=C'NO  '
+         EX    R01,*-6
+         BE    OK
+         TPUT  E,EL,ASIS
+         B     GREP
+OK       LR    R01,R13
+         L     R13,4(,R13)
+         ST    R15,16(,R13)
+         FREEMAIN R,LV=WRKLEN,A=(1)
+         LM    R14,R14,12(R13)
+         BR    R14
+E        DC    C'I DON''T UNDERSTAND YOUR REPLY: REENTER'
+EL       EQU   *-E
+E1       DC    C'UNRECOGNISED TERMINAL GET ERROR'
+E1L      EQU   *-E1
+E2       DC    C'YOUR REPLY IS TOO LONG: IT MUST BE FROM 1 TO THREE CHA.
+               RACTERS LONG. REENTER'
+E2L      EQU   *-E2
+Q        DC    C'DO YOU WANT TO SUBMIT THIS JOB?'
+QL       EQU   *-Q
+WRK      DSECT
+SAVES    DS    18F
+REPLY    DS    CL3
+WRKLEN   EQU   *-WRK
+         END   JOLQUERY

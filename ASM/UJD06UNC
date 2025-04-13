@@ -1,0 +1,102 @@
+UJD06UNC TITLE 'UNCATALOG DATA SET'
+* JOL COPYRIGHT CCS-JOL PTY LTD 1988
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+         SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+* LAST SOURCE UPDATE
+*   CHANGES:-
+*     1.
+         COPY  JOLGLOBL
+         $UJEPARM
+&TYPE    SETC  'SCHED'                                           88036
+         PRINT ON,DATA
+UJECOMM  DSECT
+         USING UJECOMM,R3,R5
+         COPY  UJECOMM
+D06WORK  DSECT                                                    J40B
+         DS    18F                                                J40B
+D06WORKS EQU   *-D06WORK                                          J40B
+         JOLSAVE CSECT=UJD06UNC,                                       .
+               SIZE=D06WORKS,                                     J40B .
+               BASE=R11
+*        AIF   (&X8).X8260
+         CALL  UJD48TAL      TEST IF THE DATA SET IS ALLOCATED TO US
+         LTR   R15,R15
+         FIX   '*****************'
+*        BZ    D06TVOLS      YES, IT WAS ALLOCATED TO US
+         LA    R1,DSNAME
+         ST    R1,D06REMUV+4
+         ST    R1,D06REMDT+4   REMOVE INDEXES,TOO
+****************************************************************   DASD
+* NEW 8-1-77 "UNCATLG GDGALL"   NO JCL NEED   ITS ALL DONE HERE*   DASD
+****************************************************************   DASD
+         CLI   DDCATLGS,104    UNCAT GDG ALL ?                     DASD
+         BE    D06GDGAL        GO DO IT                            DASD
+         CLI   DDMBR,C'+'      GDG ?
+         BE    D06NODLT        YES,DON'T DELETE INDEX
+         CLI   DDMBR,C'('      GDG ?
+         BE    D06NODLT        YES,DON'T DELETE INDEX
+         $CTLG D06REMDT    DO THE UNCATALOG AND REMOVE INDEXES
+         LTR   R15,R15         ERROR ?
+         BNZ   D06FAIL         YES,PRINT ERROR MESSAGES
+         B     D06SUCES
+D06NODLT DS    0H
+         $CTLG D06REMUV
+         LTR   R15,R15
+         BNZ   D06FAIL
+D06SUCES DS    0H
+         JOLERR 101,'DSID ''',DDDSID,''' DSNAME ''',                   *
+               #DSNAME,''' UNCATALOGED'
+         B     D06RETN
+D06FAIL  DS    0H
+         LR    R2,R15          SAVE UNCATLG RETURN CODE
+         JOLERR 202,                                                   *
+               'UNCATLG FOR DSID ''',DDDSID,                           *
+               ''' NAME ''',#DSNAME,''' FAILED BECAUSE:-'
+         CALL UJD05CAT       LET IT PRINT WHY
+D06RETN  JOLRETN   RC=0                                            DASD
+D06GDGAL DS    0H
+         L     R15,AE05VOLS            LOAD CAMLIST ADDRESS        DASD
+         ST    R15,D06LOCAT+12         POINT TO LOCATE AREA        DASD
+         MVC   #DSNAME(2),=H'44'       SET DSNAME TO THE BIGGIE    DASD
+         LA    R6,300(R15)             GO UP A FEW AND SAVE POINTERDASD
+         LA    R1,DSNAME               POINT TO DSNAME             DASD
+         LA    R15,43(R1)              POINT TO END OF DSNAME      DASD
+         LA    R14,1                   INCR BY 1                   DASD
+D06FIND  CLI   0(R1),C' '              END OF DSNAME YET           DASD
+         BE    *+8                     YEP LETS MOVE               DASD
+         BXLE  R1,R14,D06FIND          RETURN                      DASD
+         MVC   0(3,R1),=C'(0)'         LOOK FOR RELATIVE GDG 0     DASD
+         MVC   0(44,R6),DSNAME         MOVE TO LOCATE AREA         DASD
+D06LOOK  MVC   DSNAME,0(R6)            MOVE DSNAME IN              DASD
+         $LOCATE D06LOCAT                                          DASD
+         LTR   R15,R15                 DID LOACTE FIND ANYTHING ?? DASD
+         BNZ   D06RETN                 NOPE THAT ALL               DASD
+         $CTLG D06REMUV                                            DASD
+         LTR   R15,R15                 DID THIS WORK OK            DASD
+         BNZ   D06FAIL                 NOPE SOMETHINGS WRONG       DASD
+         JOLERR 103,'DSID ''',DDDSID,''' DSNAME ''',                   *
+               #DSNAME,''' GDGALL UNCATALOGED'                     DASD
+         B     D06LOOK                 RETURN TO LOOK FOR MORE GDGADASD
+.X8260   ANOP
+         JOLRETN
+         SPACE 2
+         DC    20S(*)
+         LTORG
+         END

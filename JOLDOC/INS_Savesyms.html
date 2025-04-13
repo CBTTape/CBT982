@@ -1,0 +1,184 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Mozilla SeaMonkey">
+  <title>Savesyms</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="RIGHT" valign="TOP" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="RIGHT"><font
+ size="5"><u>SAVESYMS</u></font><font size="5"><u><span
+ style="font-weight: normal;"> </span></u></font><u>- </u><font
+ size="5"><i><u><span style="font-weight: normal;">Immediate Command</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Purpose</h4>
+      </td>
+      <td align="LEFT" valign="TOP">The <span
+ style="font-weight: bold;">SAVESYMS</span> command stores specified
+symbolic values into a member of a partitioned data set. These symbolic
+values may be <span style="font-weight: bold;">INCLUDE</span>d in a
+subsequent compile, thus providing the facility to communicate with
+other Jol procedures, or the same procedure at a later time.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; <br>
+      </b></p>
+      <div style="margin-left: 80px;"><b>SAVESYMS&nbsp;&nbsp;&nbsp; </b><span
+ style="font-style: italic;">symbolic1 [,symbolic2&nbsp; ...]</span><br
+ style="font-style: italic;">
+      </div>
+      <div style="margin-left: 200px;"><b>IN </b><span
+ style="font-style: italic;">'data-set-name(member)' ;</span><br>
+      </div>
+      <div style="margin-left: 40px;"><span style="font-style: italic;">where</span><br>
+      </div>
+      <div style="margin-left: 80px;"><span style="font-style: italic;"><span
+ style="font-weight: bold;"><br>
+      </span>symbolic-variable-name-list</span><br>
+      </div>
+      <div style="text-align: left; margin-left: 160px;">is a symbolic
+name or a list of names separated by commas, without the % preceding
+them.<br>
+      <br>
+      </div>
+      <div style="margin-left: 80px;"><span style="font-style: italic;">data-set-name<br>
+      </span>
+      <div style="margin-left: 80px;"><span style="font-style: italic;"></span>specifies
+the
+name
+of
+an existing data set or library into which the data will be
+saved.<br>
+      <br>
+      </div>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><br>
+Any <span style="font-style: italic; font-weight: bold;">symbolic
+variable</span>&nbsp; that has been used during the current compilation
+may be saved in an external data set. Subsequent runs can reuse the
+saved or previous values in issuing an <span style="font-weight: bold;">INCLUDE</span>&nbsp;
+specifying
+the
+member
+name the symbolics were saved in.<br>
+      <br>
+By displaying these values, perhaps in a <span
+ style="font-weight: bold;">PANEL</span>, the user will automatically
+know the data that was used for the prior run. The values saved may
+then be used on a subsequent run to initialize values to those that
+were set on a previous run. <br>
+      <br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP">
+      <ol style="font-weight: normal;">
+        <li>The data is stored as a series or Symbolic Variable
+Assignments. Thus:</li>
+      </ol>
+      <div style="margin-left: 80px;">SAVESYMS DAY IN '%SYSUID.JOL(X)';</div>
+      <br>
+      <div style="margin-left: 40px; font-weight: normal;">will result
+in member X
+containing a statement similar to:</div>
+      <div style="margin-left: 40px;"><br>
+      <div style="margin-left: 40px;">%X='MONDAY';<br>
+      <br>
+      </div>
+      </div>
+      <div style="margin-left: 40px; font-weight: normal;">To retrieve
+the data, simply <span style="font-weight: bold;">INCLUDE</span> the
+member(s).</div>
+      <ol start="2">
+        <li style="font-weight: normal;">The information can also be
+used by another job, and so
+information may be passed from job to job.</li>
+        <li style="font-weight: normal;">If subsequent saves are made
+to the same data set or
+member, the new data will destroy the data that was previously saved.</li>
+      </ol>
+      <div style="margin-left: 40px; font-weight: normal;">To retain
+the previous data, you
+must copy it to a different data set, or use a different member name.
+For example:</div>
+      <div style="margin-left: 40px;"><br>
+      <div style="margin-left: 40px;">SAVESYMS RUN,DOLLVAL <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IN '%SYSUID.JOL(%DAY)';</div>
+      </div>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">will
+automatically
+save
+the data
+for symbolic variables <span style="font-weight: bold;">RUN</span> and
+      <span style="font-weight: bold;">DOLLVAL</span> in the Jol data
+set, but the
+member name will change depending on the day the job is used.</span><br>
+      <br>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP">
+      <ol>
+        <li>SAVESYMS A,B IN '%SYSUID.JOL(LASTRUN)'; </li>
+      </ol>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">will
+save
+the
+values
+of <span style="font-weight: bold;">A</span> and <span
+ style="font-weight: bold;">B</span> in the users private Jol data set
+in the
+member called <span style="font-weight: bold;">LASTRUN</span>. </span><br>
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">To retrieve the data that was
+saved, issue the following:- </span><br>
+      <br>
+      </div>
+      <div style="margin-left: 80px;">&nbsp;&nbsp;&nbsp; INCLUDE
+LASTRUN; <br>
+      </div>
+      <br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

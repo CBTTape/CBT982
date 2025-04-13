@@ -1,0 +1,36 @@
+         MACRO
+&NAME    MOVE  &D1,&L,&B1,&D2,&B2
+         LCLA  &X,&Y,&Z
+         AIF   (N'&SYSLIST NE 5).TOOFEW
+         AIF   (&L GT 768).TOOBIG
+.*
+         AIF   (&L GT 512).GT512
+         AIF   (&L GT 256).GT256
+.*
+&NAME    MVC   &D1.(&L,&B1),&D2.(&B2)
+         MEXIT
+.*
+.GT512   ANOP
+&NAME    MVC   &D1.(256,&B1),&D2.(&B2)
+&Y       SETA  &D1+256
+&Z       SETA  &D2+256
+         MVC   &Y.(256,&B1),&Z.(&B2)
+&X       SETA  &L-512
+&Y       SETA  &D1+512
+&Z       SETA  &D2+512
+         MVC   &Y.(&X,&B1),&Z.(&B2)
+         MEXIT
+.*
+.GT256   ANOP
+&NAME    MVC   &D1.(256,&B1),&D2.(&B2)
+&X       SETA  &L-256
+&Y       SETA  &D1+256
+&Z       SETA  &D2+256
+         MVC   &Y.(&X,&B1),&Z.(&B2)
+         MEXIT
+.*
+.*
+.TOOFEW  MNOTE 8,'***  INCORRECT NO. OF OPERANDS - SHOULD HAVE 5'
+         MEXIT
+.TOOBIG  MNOTE 8,'***  LENGTH OPERAND EXCEEDS MAXM. ALLOWED OF 768'
+         MEND

@@ -1,0 +1,507 @@
+UJP27PNL TITLE 'JOL PANEL INSTRUCTION'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1980.
+* JOL COPYRIGHT CCS-JOL 1988      1990
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+* cvc test only, mar 2001
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0  ¬     ¬   0        L
+*                   J         0  O     O   0        L
+*                   J         0            0        L
+*                   J         0     V      0        L
+*                   J         0            0        L
+*                   J         0   <____>   0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+         PRINT OFF                                                J50
+         COPY  JOLCOM
+         PRINT ON                                                 J50
+         COPY  P28PARMS                                           J50
+         AGO .ZZ
+         TITLE 'JOL PANEL INSTRUCTION'
+P27DSAVE DSECT
+         DS    18F
+DWORD    DS    D                                                  J50
+SIZE1    DS    H                                                  J50
+SIZE2    DS    H                                                  J50
+CURRROW  DS    H
+CURRCOL  DS    H
+P27FLAGS DS    X                                                  J40B
+P27F1BOX EQU   X'80'                                              J40B
+P27F1CTR EQU   X'40'                                              J40B
+P27HI    DS    X                 HIGHLIGHTING OPTIONS             J40B
+P27COLOR DS    X                 COLOUR OF FIELD                  J40B
+         DS    0F                                                 J40B
+P27SVSIZ EQU   *-P27DSAVE
+         USING P27DSAVE,R13
+UJP27PNL JOLSAVE  SIZE=P27SVSIZ
+.ZZ      ANOP
+         JOLSAVE  CSECT=UJP27PNL
+        L       R10,P27GBL
+        USING   PANELWRK,R10
+* THIS COMMAND PUTS INFORMATION ON A SCREEN IN A MANNER SUCH THAT
+*  FILL IN THE BLANKS CAN BE DONE.
+         MVI   P27FLAGS,0                                         J40B
+         MVI   P27COLOR,4                                         J40B
+         MVC   ICOMMAND,=CL8'MACRO' MAKE ASSIGN BETTER.
+         MVC   #WORK,=H'0'
+         MVC   SYMBOLIC,=CL8'SYSPFK'
+         $CALL UJP85ASN
+         MVC   CURRROW,=H'2'  SET THE CURRENT ROW NUMBER COUNTER
+         MVC   CURRROW,=H'1'  SET THE CURRENT ROW NUMBER COUNTER 88036
+         MVC   CURRCOL,=H'1'  SET THE CURRENT COLUMN NUMBER COUNTER
+         ICM   R4,15,P27WRKA                                      J50
+         BNZ   P27NOGTM                                           J50
+         GETMAIN  R,LV=9288   GET 9K OF MEMORY FIX DJD 22/08/83 CVC
+         LR    R4,R1          SAVE ADDRESS OF 'GOTTEN' STORAGE
+         ST    R4,P27WRKA                                         J50
+P27NOGTM DS    0H                                                 J50
+         USING #PARM,R4
+         LA    R5,#ITEMDSC
+         USING DITEM,R5
+         XC    #SCITEMS(LFIXED+3),#SCITEMS
+         LA    R7,4000(R4)    POINT TO END OF WORK AREA
+         MVI   P27COLOR,4        DEFAULT COLOUR IS GREEN          J40B
+         TERMTYPE                                                 J50
+         LTR   R15,R15                                            J50
+         BNZ   P27NTT                                             J50
+         CLM   R0,1,=X'08'       9525/3270 STYLE TERMINAL?        J50
+         BNE   NOTTERM           NO: KILL IT                      J50
+         STCM  R1,2,#TERMFLG     STORE TERMINAL TYPE FLAGS        J50
+P27NTT   DS    0H                                                 J50
+         LA    R0,80                                              J50
+         ST    R0,#COLUMNS                                        J50
+         LA    R0,24                                              J50
+         ST    R0,#LINES                                          J50
+         GTTERM  PRMSZE=SIZE1,                                    J50  .
+               ALTSZE=SIZE2,                                      J50  .
+               ATTRIB=DWORD,                                      J50  .
+               MF=(E,CALLAREA)                                    J50
+         LTR   R15,R15                                            J50
+         BNZ   P27NGT                                             J50
+         SLR   R0,R0                                              J50
+         IC    R0,SIZE2                                           J50
+         ST    R0,#LINES                                          J50
+         IC    R0,SIZE2+1                                         J50
+         ST    R0,#COLUMNS                                        J50
+         TM    DWORD+3,X'01'                                      J50
+         BZ    P27NGT                                             J50
+         OI    #TERMFLG,#TRMEXTD EXTENDED DATA STREAM             J50
+P27NGT   DS    0H                                                 J50
+         MVI   P27HI,0           TURN OFF HIGHLIGHTS              J50
+         MVI   P27COLOR,4        SET DEFAULT COLOUR               J50
+* OK, JUST CHECK IF WE HAVE ANY PARAMETERS
+         GETTKN 2
+         CLC   =C'BOX ',TKN                                       J40B
+         BNE   P27NTBOX          WE IGNORE BOXES                  J40B
+         OI    P27FLAGS,P27F1BOX BUT SAY WE WANT ONE ANYWAY       J40B
+         STH   R1,TKNCURR     UP IT BY 1
+*        GETTKN 3                                                 J40B
+         BAL   R9,P27GETTK
+P27NTBOX DS    0H                                                 J40B
+         CLI   TKN,C'('
+         BE    P27NOHED       NO HEADING
+         CLI   TKN,C'/'                        P FOLEY,DJD & CVC 84029
+         BE    P27NOHED       NO HEADING       P FOLEY,DJD & CVC 84029
+* OK, HERE WE HAVE A HEADING
+         SPACE 2
+         BAL   R14,DROPQUOT               FIX HEADER  DJD 22/08/83
+ZZZZ     XC    RROW(TESTR-RROW),RROW  CLEAR REPLY INFORMATION
+         LH    R15,#TKN       GET THE LENGTH OF THE MESSAGE TEXT
+         STH   R15,TXTLEN     SET UP MSG LENGTH
+         MVC   ROWNO,=H'1'    SET ROW=1
+         MVC   COLNO,=H'2'    SET COL=2
+         MVC   CURRROW,ROWNO  SAVE CURRENT ROW NUMBER
+         BCTR  R15,0          -1 FOR R15
+         EX    R15,*+4        MOVE LITERAL TO CORRECT SPOT
+         MVC   LITERAL(0),TKN    MOVE TOKEN TO 'LITERAL'
+         MVC   TXTATTR(2),P27HI  COPY ATTRIBUTE, COLOUR           J50
+         MVI   P27HI,0           TURN OFF HIGHLIGHTS              J50
+         MVI   P27COLOR,4        SET DEFAULT COLOUR               J50
+* PUT IT IN THE CENTRE OF THE SCREEN
+         LA    R14,80
+         SH    R14,TXTLEN     GIVES AMOUNT LEFT
+         BNP   P27LONGH       LONG HEADING, JUST PUT IT OUT.
+         SRL   R14,1          DIVIDE BY TWO. GIVES A START COLUMN
+         STH   R14,COLNO
+P27LONGH DS    0H
+P27STRT2 MVC   TKNCURR,=H'3'
+         B     P27ENDIT
+         TITLE 'HANDLE SUB-PARAMETERS OF PANEL INSTRUCTION'
+P27NOHED DS   0H
+         MVC   TKNCURR,=H'2'  GET TKN NUMBER 2 IF NO HEADING
+* NOW, THE SUBPARAMETERS ARE LIKE THIS:-
+*        (>:- START
+*        'LITERAL TO BE DISPLAYED'.
+*        SYMBOLIC NAME TO RECEIVE DATA,
+*        MAX LENGTH TO RECEIVE,
+*         OPTIONAL DEFAULT REPLY , (IN QUOTES)
+*         OPTIONAL ROW AND COLUMN NUMBERS OF MESSAGES
+*         OPTIONAL ROW AND COLUMN NUMBERS OF REPLY ,
+*        )     END OF SUBPARAMETER
+         SPACE 2
+* OK, LET'S GO
+         MVI   P27HI,0           TURN OFF HIGHLIGHTS              J50
+         MVI   P27COLOR,4        SET DEFAULT COLOUR               J50
+P27STAR  XC    DITEM(LFIXED),DITEM
+         BAL   R9,P27GETTK
+         CLC   #TKN(3),=X'000161' IS IT A '/' (SKIP CONTROL CHARACTER?)
+         BNE   P27MAIN        NO, SO DEAL WITH LITERAL
+         LH    R15,CURRROW        LOAD CURRENT ROW COUNTER
+         LA    R15,1(R15)     ADD ONE TO IT
+         STH   R15,CURRROW        SAVE IT BACK AGAIN
+         B     P27STAR        ROUND TO LOOP AGAIN
+         SPACE 2
+P27MAIN  DS    0H
+         BAL   R9,P27GETTK
+         B     *+4(R15)
+         B     P27MSG1        GET FIRST LITERAL
+         B     P27MAIN        '(' FOUND, SKIP IT
+         B     P27MAIN        ')' FOUNG, INVALID
+         B     P27WRAP        END OF INSTRUCTION
+         SPACE
+P27RETNF DS    0H
+         JOLRETN RC=16
+         SPACE 2
+P27MSG1  LH    R15,#TKN       LOAD LITERAL LENGTH
+         STH   R15,TXTLEN     STORE IT
+         BCTR  R15,0
+         EX    R15,*+4        MOVE STRING TO 'LITERAL'
+         MVC   LITERAL(0),TKN    MOVE TOKEN TO 'LITERAL'
+         MVC   TXTATTR(2),P27HI  COPY ATTRIBUTE, COLOUR           J50
+         MVI   P27HI,0           TURN OFF HIGHLIGHTS              J50
+         MVI   P27COLOR,6 {      SET DEFAULT COLOUR               J50
+         TM    P27FLAGS,P27F1CTR                                  J50
+         BZ    P27NOCOL                                           J50
+STOP     SRL   R15,1             DIVIDE BY 2                      J50
+         SH    R15,=H'40'                                         J50
+         LCR   R15,R15                                            J50
+         STH   R15,COLNO                                          J50
+P27NOCOL BAL   R9,P27GETTK    GET NEXT TOKEN
+         B     *+4(R15)
+         B     P27NAME        WE HAVE SYMBOLIC NAME, SAVE IT
+         B     P27ERR2        '(' FOUND
+         B     P27ERR3        ')' FOUND
+         B     P27ERR3        ' 'FOUND (END OF PANEL)
+         SPACE 2
+P27ERR2  JOLERR 402,'NEW SUB-COMMAND ''',#TKN,''' FOUND AT TOKEN NUMBER*
+                ',TKNCURR
+         B     P27RETNF
+P27ERR3  DS    0H    NO SYMBOLIC NAME FOUND TO RETURN VALUES TO HERE
+*                    THEREFORE HE IS JUST PUTTING OUT TEXT.
+         CLEAR RPLYLEN         THERE IS NO REPLY....
+         B     P27ENDIT        GO TO END OF ITEM
+         SPACE 2
+P27NAME  SH    R7,=H'8'       BACKTRACK IN TABLE
+         MVC   0(8,R7),TKN
+         MVC   SYMBOLIC,TKN    SAVE SYMBOLIC NAME AGAIN SO THAT WE CAN
+*                             STORE THE DEFAULT VALUE OF THE SYMBOLIC
+         CLC   #TKN,=H'9'    CHECK IF SYMBOLIC NAME TOO LONG
+         BL    P27NAME2
+         JOLERR 404,'SYMBOLIC NAME ''',#TKN,''' TOO LONG'
+         B     P27RETNF
+         SPACE
+P27NAME2 EQU   *
+         BAL   R9,P27GETTK    GET NEXT TOKEN
+         B     *+4(R15)
+         B     P27GOTLN       GOT LENGTH (MAX) TO ALLOW USER TO TYPE
+         B     P27NOLEN       '('
+         B     P27NOLEN       ')'
+         B     P27NOLEN       ' '
+P27NOLEN LH    R1,=H'100'
+         B     P27STRLN
+P27GOTLN LR    R9,R15
+         TNUM  #TKN
+         LTR   R15,R15
+         BNZ   P27ERR4
+         LR    R15,R9
+P27STRLN STH   R1,RPLYLEN
+         MVC   REPATTR(2),P27HI  COPY ATTRIBUTE, COLOUR           J50
+         MVI   P27HI,0           TURN OFF HIGHLIGHTS              J50
+         MVI   P27COLOR,6        SET DEFAULT COLOUR{              J50
+         B     *+4(R15)
+         B     P27GETRP       GET REPLY (DEFAULT)
+         B     P27ENDIT       '(' ->
+         B     P27ENDIT       ')' ->
+         B     P27ENDIT       ' ' ->
+P27ERR4  JOLERR 205,'REPLY LENGTH IN ERROR;-''',#TKN,''''
+         B     P27RETNF
+         SPACE 2
+NOTTERM  JOLERR 411,'JOL DOES NOT SUPPORT YOUR TERMINAL'
+         B     P27RETNF
+         SPACE 2
+P27GETRP BAL   R9,P27GETTK    GET NEXT TOKEN
+         LTR   R15,R15
+         BNZ   P27ENDIT       END ITEM
+* WE HAVE A DEFAULT REPLY TO PUT OUT.
+         SPACE
+         LH    R14,TXTLEN     LOAD THE LENGTH OF THE MESSAGE TEXT
+         LA    R14,LITERAL(R14)  CALCULATE END OF CURRENT STRING.
+         LH    R15,#TKN       LOAD THE LENGTH OF THE DEFAULT REPLY
+         STH   R15,RLITLEN    STORE LENGTH FOR SCREEN HANDLER
+         LTR   R15,R15         SEE IF THERE IS ONE (MAY BE 0 LENGTH)
+         BE    P27CHKRO       CHECK ROW AND COLUMN NUMBERS
+         BCTR  R15,0
+         EX    R15,*+4         SHIFT TO END OF MESSAGE TEXT
+         MVC   0(0,R14),TKN MOVE DEFAULT REPLY
+         MVI   TESTR,X'01'     TELL ROUTINE THAT THERE IS A REPLY
+         MVC   REPATTR(2),P27HI  COPY ATTRIBUTE, COLOUR           J50
+         MVI   P27HI,0           TURN OFF HIGHLIGHTS              J50
+         MVI   P27COLOR,6 {      SET DEFAULT COLOUR               J50
+         MVC   #WORK(L'TKN+2),#TKN  MOVE DEFAULT REPLY TO SAVE AREA
+         $CALL UJP85ASN      SET UP DEFAULT REPLY IN THE SYMBOLIC
+         SPACE 2
+P27CHKRO BAL   R9,P27GETTK
+         LTR   R15,R15
+         BNZ   P27ENDIT       END OF ITEM
+         TNUM  #TKN
+         LTR   R15,R15
+         BZ    P27ROW10 K
+         JOLERR 206,'ROW NUMBER ''',#TKN,''' INVALID - DEFAULTS USED'
+         SR    R1,R1
+P27ROW10 STH   R1,ROWNO
+         BAL   R9,P27GETTK
+         LTR   R15,R15
+         BNZ   P27ENDIT
+         TNUM  #TKN
+         BZ    P27COL10
+         JOLERR 207,'COLUMN NUMBER ''',#TKN,''' INVALID - DEFAULTS USED*
+               '
+         SR    R1,R1
+P27COL10 STH   R1,COLNO
+         BAL   R9,P27GETTK
+         LTR   R15,R15
+         BNZ   P27ENDIT
+         TNUM  #TKN
+         BZ    P27ROW20
+         JOLERR 208,'REPLY ROW NUMBER ''',#TKN,                        *
+               '''INVALID - DEFAULT USED'
+         SR    R1,R1
+P27ROW20 STH   R1,RROW
+         BAL   R9,P27GETTK
+         LTR   R15,R15
+         BNZ   P27ENDIT
+         TNUM  #TKN
+         LTR   R15,R15
+         BZ    P27COL20
+         JOLERR 209,'REPLY COLUMN NUMBER ''',#TKN,                     *
+               '''INVALID - DEFAULT USED'
+         SR    R1,R1
+P27COL20 STH   R1,RCOL
+         BAL   R9,P27GETTK     J40PAN1                           88036
+P27ENDIT DS    0H
+* HERE IS THE END OF THE ITEM.
+         SPACE 2
+* WE MUST
+* 1. UPDATE THE ITEM COUNT
+* 2. FIX UP R5 TO POINT TO THE NEXT HOLE (AFTER THE LITERAL
+*        STRINGS)
+* 3. PUT IN DEFAULT ROW, COLUMN ETC IF NONE PROVIDED
+         SPACE 2
+         LH    R1,#SCITEMS
+         LA    R1,1(R1)
+         STH   R1,#SCITEMS
+P27ROW2  DS    0H
+         IFVALUE ROWNO,P27ROW30
+         MVC   ROWNO,CURRROW   SHIFT CURRENT ROW NUMBER
+         MVC   RROW,CURRROW    AS ABOVE
+P27ROW30 DS    0H
+         MVC   CURRROW,ROWNO   ENSURE CURRENT ROW IS SAME AS ONE USED
+         IFVALUE COLNO,P27ROW35
+         LA    R1,1
+         STH   R1,COLNO
+P27ROW35 DS    0H
+         IFVALUE RCOL,P27RCOLO  USER HARD CODE REPLY COLUMN?
+         LH    R1,TXTLEN        NOT HERE, SO WE WILL PUT ONE IN.
+         LA    R1,2(R1)
+         TM    P27FLAGS,P27F1CTR                                  J50
+         BZ    P27NCOL                                            J50
+STOP1    DS    0H
+         AH    R1,RPLYLEN       NOW CHECK IF IT WILL RUN OVER A LINE.
+         SRL   R1,1              DIVIDE BY 2                      J50
+         SH    R1,=H'40'                                          J50
+         LCR   R1,R1                                              J50
+ESTOP1   DS    0H                                                 J50
+         STH   R1,COLNO
+         AH    R1,TXTLEN        NOT HERE, SO WE WILL PUT ONE IN.
+         LA    R1,2(R1)
+P27NCOL  DS    0H                                                 J50
+         STH   R1,RCOL
+         AH    R1,RPLYLEN       NOW CHECK IF IT WILL RUN OVER A LINE.
+         SLR   R0,R0          CLEAR FOR DIVIDE
+         D     R0,#COLUMNS    FIND REMAINDER
+         AH    R1,CURRROW     ADD TO CURRENT LINE NUMBER
+         STH   R1,CURRROW
+P27RCOLO LH    R1,TXTLEN
+         AH    R1,RLITLEN
+         AR    R5,R1          BUMP UP TO POINT TO NEW SPOT IN TABLE
+         LA    R5,LFIXED(R5)  POINT OVER FIXED AREA IN PARM LIST
+         B     P27NTEST
+*        LA    R1,TKN+100
+*        TGET  (1),1
+         SPACE 2
+P27NTEST LH    R15,CURRROW
+         LA    R15,1(R15)
+         STH   R15,CURRROW
+         CLC   #TKN(2),=H'0' 8484160
+         BNE   P27STAR
+P27WRAP  EQU   *
+         SH    R7,=H'8'
+         MVC   0(8,R7),BLANKS TO ACT AS A STOP ON RETURN FROM SCREEN
+         TITLE 'CALL SCREEN MANAGER'
+* CHECK IF WE ARE UNDER TSO, OR IF THE PANELS HAVE BEEN TURNED
+*  OFF BEFORE ACTUALLY DISPLAYING THEM.
+         IFNULL IFTSO,P27RETN0 OK, NOT TSO, SO RETURN
+         CLI   IFFULLSC,C'Y'  HAVE PANELS BEEN TURNED OFF ANYWAY?
+         BNE   P27RETN0       YES, SO OUT WE GO
+         SPACE 2
+         LA    R0,4000(R4)    GET WORK AREA FOR SCREEN HANDLER FIX DJD
+         LR    R1,R4          POINT TO START OF PARAMETER AREA
+         CALL  UJP28SCR
+         LR    R9,R15       SAVE THE RETURN CODE
+         CVD   R0,DBL
+         UNPK  WORK(2),DBL
+         OI    WORK+1,X'F0'  SET ZONE BITS
+         MVC   #WORK,=H'2'
+         MVC   SYMBOLIC,=CL8'SYSPFK'
+         $CALL UJP85ASN
+*        LA    R1,WORK                                            J40B
+*        TPUT  (1),2                                              J40B
+*        LA    R1,WORK+2                                          J40B
+*        TGET  (1),2                                              J40B
+         LTR   R9,R9          CHECK RETURN CODE FROM 28
+         BZ    P27REC         RECIEVE DATA BACK
+P27SERR  JOLERR 410,'ERROR OCCURRED IN SCREEN HANDLER'
+         B     P27RETNF
+         TITLE 'RETURN INFORMATION TO JOL SYMBOLICS'
+P27REC   EQU   *
+         LR    R8,R1          SAVE R1 (RETURNED STRINGS)
+         LH    R9,CURRROW     LOAD THE LAST ROW OUTPUT        **CVC
+         LA    R9,1(R9)       SET +1 SO CURSOR ENDS UP THERE  **CVC
+         LA    R9,1           SET LINE TO 1  ****************
+         STLINENO LINE=(R9),MODE=OFF SET LINE, AND TURN OFF FS **CVC
+*        STFSMODE   OFF
+         B     IBM            IF ON IBM, DON'T DO NEXT BIT    **CVC
+         LA    R0,1           FACOM ERROR, PUT SOMETHING ON THE SCREEN
+         LA    R1,=C' '       FACOM ERROR, PUT SOMETHING ON THE SCREEN
+         SVC   93             TPUT
+* ON RETURN, R1 POINTS TO THE RETURNED STRINGS.
+IBM      LH    R9,#SCITEMS    LOAD THE NUMBER OF ITEMS RETURNED
+         LA    R7,4000-8(R4)  POINT TO TABLE CONTAINING SYMBOLICS
+P27STRN  MVC   SYMBOLIC,0(R7) SHIFT NAME TO JOL SYMBOLIC NAME ADDRESS
+         IFNULL SYMBOLIC,P27RETN0 REACHED END, JUST RETURN
+         LA    R1,#WORK       LOAD RECIEVE ADDRESS
+         CLC   =H'0',0(R8)    IS THERE A PARAMETER TO RETURN?
+         BE    P85SKIP        NOPE, SO LEAVE VALUE THE WAY IT WAS.
+         TM    0(R8),X'80'    IS HIGH ORDER BIT ON?
+         BNO   P27STR         YES MEANS A FIELD WAS CANCELLED
+         NI    0(R8),X'FF'-X'80' SO... STORE 0 FILED IN IT.
+P27STR   LR    R0,R8          LOAD SEND ADDRESS
+         BAL   R14,MOVEDATA   MOVE TO WORK
+         OC    WORK(256),=CL256' ' MAKE UPPER CASE
+         FIX   'PROPERLY LATER'
+         $CALL UJP85ASN       STORE IN SYMBOLIC FIELD
+P85SKIP  SH    R7,=H'8'       BACK TO NEXT SYMBOLIC NAME
+         AH    R8,0(R8)       BUMP UP TO NEXT RETURNED ITEM.
+         LA    R8,2(R8)       SKIP LENGTH OF STRING (VARYINGÝ)
+         BCT   R9,P27STRN     GO BACK AND STORE NEXT SYMBOLIC
+P27RETN0 DS    0H
+*        FREEMAIN R,LV=9288,A=(R4)
+         JOLRETN
+         EJECT
+P27GETTK GETTKN TKNCURR
+         STH   R1,TKNCURR     UP IT BY 1
+         CLI   TKN,C','       COMMA ?
+         BE    P27GETTK       YES, SKIP IT
+         SR    R15,R15
+         CLI   TKN,C'('
+         BNE   P27GT010                                           J40B
+         NI    P27FLAGS,255-P27F1CTR                              J40B
+         MVI   P27HI,0           TURN OFF HIGHLIGHTS              J50
+         MVI   P27COLOR,4        SET DEFAULT COLOUR               J50
+         B     P274                                               J40B
+P27GT010 DS    0H                                                 J40B
+*        BE    P274           RETURN 4     NEW SUB PARAMETER
+         CLI   TKN,C')'
+         BE    P278           RETURN 8     END OF SUB PARAMETER
+         CLC   =C'CTR ',TKN                                       J40B
+         BE    P27CTR                                             J40B
+         CLC   =C'CENTRE ',TKN                                    J40B
+         BE    P27CTR                                             J40B
+         CLC   =C'CENTER ',TKN                                    J40B
+         BNE   P27GT020                                           J40B
+P27CTR   DS    0H                                                 J50
+         OI    P27FLAGS,P27F1CTR CENTRE THE LINE                  J40B
+         B     P27GETTK                                           J40B
+P27GT020 DS    0H                                                 J40B
+         CH    R1,TKNNO
+         BH    P2712          RETURN 12    END OF STATEMANT
+         L     R1,=V(UJCOLOUR)                                    J40B
+         LM    R14,R15,4(R1)                                      J40B
+         L     R6,0(,R1)                                          J40B
+P27GT030 DS    0H                                                 J40B
+         CLC   0(12,R6),TKN                                       J40B
+         BNL   P27GT040                                           J40B
+         BXLE  R6,R14,P27GT030                                    J40B
+P27GT040 DS    0H                                                 J40B
+         BNE   P27GT050                                           J40B
+XXXX     CLI   12(R6),X'FF'      RESET ATTRIBUTE?                 J50
+         BNE   P27NORES          NO                               J50
+         MVI   P27HI,0           SET NO HIGHLIGHTING              J50
+P27NORES DS    0H                                                 J40B
+         TM    12(R6),X'F8'      TEST ATTR BITS                   J50
+         BNZ   P27ATTRX                                           J53
+COLOUR   MVC   P27COLOR,12(R6)   COPY NEW COLOUR                  J40B
+         NI    P27COLOR,X'07'                                     J50
+XXXX1    B     P27GETTK                                           J40B
+P27ATTRX DS    0H                                                 J53
+         OC    P27HI,12(R6)      MASK NEW ATTRIBUTE               J40B
+XXXX2    B     P27GETTK                                           J40B
+P27GT050 DS    0H                                                 J40B
+         BAL   R14,DROPQUOT   DROP QUOTES IF THERE ARE ANY
+         SLR   R15,R15                                            J40B
+         BR    R9
+P2712    LA    R15,4(R15)
+P278     LA    R15,4(R15)
+P274     LA    R15,4(R15)
+         BR    R9
+         DS    0D                                                 J40B
+         LTORG
+         DC    20S(*)
+UJCOLOUR CSECT                                                    J40B
+COLOURTB DC    A(CTSTA,13,CTEND)                                  J40B
+CTSTA    DC    CL12'BLACK     ',X'00'                             J40B
+         DC    CL12'BLINK     ',X'80'                             J40B
+         DC    CL12'BLINKING  ',X'80'                             J40B
+         DC    CL12'BLUE      ',X'01'                             J40B
+         DC    CL12'BOLD      ',X'06'                             J40B
+         DC    CL12'BRIGHT    ',X'06'                             J40B
+         DC    CL12'BROWN     ',X'02'                             J40B
+         DC    CL12'CYAN      ',X'03'                             J40B
+         DC    CL12'FLASH     ',X'80'                             J40B
+         DC    CL12'FLASHING  ',X'80'                             J40B
+         DC    CL12'GREEN     ',X'04'                             J40B
+         DC    CL12'HI        ',X'06'                             J40B
+         DC    CL12'INVERSE   ',X'40'                             J40B
+         DC    CL12'INVISIBLE ',X'00'                             J40B
+         DC    CL12'MAGENTA   ',X'05'                             J40B
+         DC    CL12'NORMAL    ',X'01'                             J40B
+         DC    CL12'OVERLINE  ',X'20'                             J40B
+         DC    CL12'OVERSCORE ',X'20'                             J40B
+         DC    CL12'RED       ',X'06'                             J40B
+         DC    CL12'RESET     ',X'FF'                             J40B
+         DC    CL12'UNDERLINE ',X'10'                             J40B
+         DC    CL12'UNDERSCORE',X'10'                             J40B
+         DC    CL12'VERTLINE  ',X'08'                             J40B
+         DC    CL12'WHITE     ',X'07'                             J40B
+         DC    CL12'YELLOW    ',X'02'                             J40B
+CTEND    DC    12X'FF',X'00'                                      J40B
+         END

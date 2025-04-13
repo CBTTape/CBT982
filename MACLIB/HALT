@@ -1,0 +1,6 @@
+         MACRO
+&NAME    HALT
+*        LA    0,OP1DEC
+*        LA    1,OP2DEC
+&NAME    DC    H'0'
+         MEND                                                     J50

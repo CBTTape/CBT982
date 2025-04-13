@@ -1,0 +1,66 @@
+VARSTR   DSECT
+#STR     DS   H
+STR      DS   CL1000
+SCRNADDR DSECT
+SETBA    DS   CL1
+MSGADDR1 DS   CL1
+MSGADDR2 DS   CL1
+         REGEQU
+GOTORCSR CSECT
+         USING *,R15
+ TOMASM  'SRCNCONS DATASECT'
+         B     DOSTM                                              J51
+SDATA    DC    X'40C1C2C3C4C5C6C7C8C94A4B4C4D4E4F'
+         DC    X'50D1D2D3D4D5D6D7D8D95A5B5C5D5E5F'
+         DC    X'6061E2E3E4E5E6E7E8E96A6B6C6D6E6F'
+         DC    X'F0F1F2F3F4F5F6F7F8F97A7B7C7D7E7F'
+LOWMASK  DC    X'0000FFFF'
+EIGHTY   DC    F'80'
+SIXTY4   DC    F'64'
+*
+* R1 points at a VARYING string (ie a HALFWORD containing
+* the length of a string to go to the terminal).
+*
+* R0 contains the ROW and COLUMN number
+*
+* R0 (Hi side) has the ROW and the least significant part has
+*    the column.
+DOSTM    STM   R3,R5,20(R13)  Save some registers
+         LR    R3,R14         Save Return Addr
+*
+         LR    R4,R1          Load address of string
+         USING VARSTR,R4
+         LH    R1,#STR        Get current length of string
+         LA    R5,STR(R1)     Point to the actual string END
+         TOMASM ' add word ptr r5,2'  sim bug
+         USING SCRNADDR,R5
+         LA    R1,3(R1)       Add 3 for SBA, address
+         STH   R1,#STR        SAve it back in string
+         DROP  R4
+*
+* Now fix up the ROWS and COLUMNS
+         LR    R1,R0          LOAD LINE NUMBER
+         SRL   R1,16          Drop the column
+         N     R0,LOWMASK     Get the column
+         LR    R14,R0         Put Column in R14
+         BCTR  R14,0          BUFFER POSITION STARTS AT ZERO
+         BCTR  R1,0           SUBTRACT 1
+         M     R0,EIGHTY      MULTIPLY BY NUMBER IF COLUMNS
+         AR    R1,R14         R1 NOW HAS BUFFER ADDRESS
+*        AIF   (T'&STO EQ 'O').NSTO
+*        LA    R15,1(,R1)
+*        STH   R15,&STO
+*        LA    R7,2(,R7)
+         D     R0,SIXTY4      R1 NOW HAS 1ST ADDR R14 NOW HAS 2ND ADDR
+         MVI   SETBA,X'11'    Set Buffer Address
+         STC   R1,MSGADDR1    STORE HIGH BYTE                 (JCS)
+         STC   R0,MSGADDR2      AND LOW BYTE                  (JCS)
+         TR    MSGADDR1(2),SDATA TRANSLATE PROPERLY           (JCS)
+*        LA    R11,3(,R11)
+         LR    R14,R3         Restore return address
+         LM    R3,R5,20(R13)
+         TOMASM ' retf'
+         SR    R15,R15        Set 0 return code
+         BR    R14            Return to caller
+         LTORG
+         END

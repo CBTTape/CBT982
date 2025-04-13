@@ -1,0 +1,25 @@
+UJTSCMD  JOLTSOCP ALIAS=JOL,                                     88036 .
+               INCLIB=('CLARKE.JOL40X8.CVCJOL',                        .
+               'CLARKE.JOL40X8.INCLUDE',                         88036 .
+               'CLARKE.JOL40.INCLUDE'),                          88036 .
+               CMDLIB=('CLARKE.JOL40X8.CVCJOL',                        .
+               'CLARKE.JOL40X8.CMDLIB',                          88036 .
+               'CLARKE.JOL40.CMDLIB'),               88036 .     88036 .
+               SYMS='TSOCLASS=P',                                88036 .
+               PEXPAND=NO,                                       88036 .
+               GENCB=YES,                                        88036 .
+               PINCLUD=YES,                                      88036 .
+               TERM=YES,                                         88036 .
+               LET=(8,PROMPT),                                   88036 .
+               UNITWRK=DA,                                       88036 .
+               UNITJCL=DA,                                       88036 .
+               JCLBLK=6160,                                      88036 .
+               JCL=CLARKE.ZZSUB,                                 88036 .
+               PRTBLK=6144,                                      88036 .
+               PRINT=ZZJPRINT,                                   88036 .
+               FLAG=1,                                           88036 .
+               VSAMCAT=NO,                                       88036 .
+               PREFOUT=SYSPREF,                                  88036 .
+               PGM=$JOLCP40,                                     88036 .
+               OS=OSIV/X8                                        88036 .
+                                                                 88036

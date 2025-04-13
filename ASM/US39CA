@@ -1,0 +1,102 @@
+US39CA     START 0             OP ALL FILLED BLOCKS (#EMPTY)
+R0         EQU 0
+R1         EQU 1
+R2         EQU 2
+R3         EQU 3
+R4         EQU 4
+R5         EQU 5
+R6         EQU 6
+R7         EQU 7
+R8         EQU 8
+R9         EQU 9
+R10        EQU 10
+R11        EQU 11
+R12        EQU 12
+R13        EQU 13
+R14        EQU 14
+R15        EQU 15
+           USING *,R15
+           SAVE (14,12),,*
+           LR R11,R15
+           DROP R15
+           USING US39CA,R11
+           LR  R2,R1           DCB ADDRESS
+           USING IHADCB,R2
+           L   R3,88(R2)       GET OUR CONTROL AREA ADDRESS
+           USING CNTRL,R3
+           LA  R4,SAVEAREA
+           ST  R13,4(R4)
+           ST  R4,8(R13)
+           LR  R13,R4
+           SPACE 3
+           MVC DCBPUT+1(3),REALRTN+1
+* CHECK BLOCKS 2 ON HAVE BEEN USED AND WRITTEN.
+*    IF NOT,WRITE THEM
+           LA  R6,CURRENT+4
+SEEWRITE   CLI 0(R6),X'FF'     FILLED AND GONE ?
+           BE  ALLGONE         END LOOP
+           CLI 0(R6),X'00'     NOT USED
+           BE  ALLGONE         END LOOP
+           L   R7,0(R6)        GET ADDR DECB
+*          WRITE (7),SF,(R2),MF=E
+* NOW WRITE THE BLOCK  ******REPLACES 'WRITE' MACRO**************
+           LR  R1,R7           DECB ADDR TO R1
+           MVI 5(R1),X'20'     SET TYPE FIELD
+           L  R15,REALRTN      WRITE ADDR MOVED IN #OPEN
+           BALR R14,R15
+           MVI 0(R6),X'FF'     SIGNAL THEM GONE
+           LA  R6,4(,R6)       LOOK AT NEXT DECB
+           B   SEEWRITE
+ALLGONE    EQU *
+* NOW WRITE THE'CURRENT' BLOCK
+           MVI CURRENT,X'00'   ******* 1ST BYTE MUST BE NZERO
+           L   R7,CURRENT
+*    THIS IS THE LAST BLOCK TO BE WRITTEN
+*NOW BECAUSE BLOODY OS TAKES THE LENGTH OF THE BLOCK TO
+* BE WRITTEN FROM THE DCBBKSIZE IF FORMAB IS 'FB'    WE MUST
+*ALTER THE BLKSIZE IN THE DCB
+          LH R5,DCBBLKSI
+          MVC DCBBLKSI(2),6(R7)           DECB BLKSIZE
+*          WRITE (7),SF,(R2),MF=E
+* NOW WRITE THE BLOCK  ******REPLACES 'WRITE' MACRO**************
+           LR  R1,R7           DECB ADDR TO R1
+           MVI 5(R1),X'20'     SET TYPE FIELD
+           L  R15,REALRTN      WRITE ADDR MOVED IN #OPEN
+           BALR R14,R15
+          STH R5,DCBBLKSI        RESET THE DCB BLOCKSIZE
+* NOW PROCEED TO CHECK THE BLOCKS JUST WRITTEN
+           LA  R6,CURRENT+4
+SEECHECK   CLI 0(R6),X'FF'
+           BNE CHECK1          CHECK DECB(1)
+           L   R7,0(R6)
+*          CHECK (7)
+*  CHECK *******REPLACES THE 'CHECK' MACRO ******
+           LA  R1,0(R7)
+           L   R15,DCBCHECK
+           BALR R14,R15
+           MVI 0(R6),X'00'     SIGNAL READY TO FILL
+           LA  R6,4(,R6)       LOOK AT NEXT
+           B   SEECHECK
+CHECK1     L  R7,CURRENT            CHECK DECB (1)
+*          CHECK (7)
+*  CHECK *******REPLACES THE 'CHECK' MACRO ******
+           LA  R1,0(R7)
+           L   R15,DCBCHECK
+           BALR R14,R15
+           MVI 0(R6),X'00'     SIGNAL READY TO FILL
+           XC AMNTLEFT,AMNTLEFT
+           MVC DCBPUT+1(3),=AL3(US39BA)
+           EXTRN US39BA
+           L   R13,SAVEAREA+4
+           RETURN (14,12),T,RC=0
+CNTRL      DSECT
+LENGTH  DS 1F
+POSNNOW    DS  1F
+AMNTLEFT   DS  1F
+REALRTN    DS  1F              ADDR OF REAL PUT ROUTINE
+SAVEAREA   DS  18F
+CURRENT    EQU *
+DECBFLG    DS  CL2             FLAGS FOR DECB
+DECBADDR   DS  AL3             ADDR OF DECB
+           DCBD DSORG=PS
+           END

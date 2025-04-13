@@ -1,0 +1,19 @@
+         MACRO
+&L       UJE22UPD &P1,&P2,&DDN
+.* P1 IS ADDRESS OF DSNAME
+.* P2 IS ADDRESS OF VOLUME SERIAL NUMBER(S)
+         LCLC  &AREA                                             88036
+&AREA    SETC  'CALLARE2'                                        88036
+         AIF   (T'&L EQ 'O').NOL                                 88036
+&L       DS    0H                                                88036
+.NOL     ANOP                                                    88036
+.*       AGO   .END                                              88036
+         MVC   &AREA.(8),=CL8'$$INST'                            88036
+         MVC   &AREA+8(4),=V(UJE22UPD)                           88036
+         LA    R0,E22PARM      SET UP PARAMETER LIST
+         ST    R0,&AREA+12
+         MVC   E22DSN,&P1      COPY DSNAME
+         MVC   E22VOL,&P2      AND VOLUME INFO
+         L     R1,AFINSTR      THE FINAL TOUCH
+         $DAMIO UPDATE,(1),&AREA GO AND DO IT
+.END     MEND

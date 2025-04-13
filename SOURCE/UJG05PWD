@@ -1,0 +1,45 @@
+RACFUSER TITLE 'UJG05PWD:OBTAIN AND DECRIPT RACF PASSWORD FOR USER'
+         SPACE
+         EXTRN UJG04JOB            ENSURE LINKAGE IS AUTOMATIC
+         PRINT OFF SUPPRESS JOLCOM
+         COPY  JOLCOM
+         PRINT ON
+         JOLSAVE CSECT=UJG05PWD
+         USING JOLCOM,R2
+         USING JOBDETS,R4
+         USING ACEE,R3
+         L     R4,AJOBDETS
+         ICM   R9,7,ACEEIEP+1      ADDRESS INSTALLATION FIELD
+         BZ    G05DONE             SKIP IF ABSENT
+         TM    ACEEFLG1,ACEERACF   Q... RACF DEFINED?
+         BZ    G05DONE             A... NO: SKIP THE RACF BITS
+         CLI   ACEEUSRL,0          Q... USER-ID PRESENT?
+         BE    G05DONE             A... NO: IGNORE RACF STUFF????
+         SLR   R15,R15             AND PUT THIS ONE IN
+         ICM   R15,1,4(R9)
+         BZ    G05DONE             EXIT IF ABSENT
+         BCTR  R15,0
+         EX    R15,*+4
+         MVC   JOBPASS1(0),5(R9)   THE PASSWORD
+************************************************************
+*    PASSWORD DECRIPTION ALGORITHM                         *
+************************************************************
+         LA    R10,JOBPASS1       R10 --> PASSWORD
+         SLR   R8,R8              ZERO OUT REGISTER 8
+         ICM   R8,1,4(R9)         R8 CONTAINS PASSWORD LENGTH
+LOOP     DS    0H
+         L     R6,0(R10)          R6 CONTAINS PASSWORD CHARACTER
+         L     R7,0(R10)          R7 --> SAME AS R6
+         SLL   R6,4               DECRIPT
+         SRL   R6,28                     THE
+         SLDL  R6,28                        CHARACTER
+         STCM  R6,8,0(R10)        DECRIPTED CHAR INTO PASSWORD
+         LA    R10,1(R10)         NEXT CHARACTER OF PASSWORD
+         BCT   R8,LOOP            KEEP GOING UNTIL PASSWORD END
+G05DONE  DS    0H                 RETURN TO CALLER
+         JOLRETN
+         SPACE 3
+         SPACE 3
+         TITLE 'RACF STUFF'
+         KDSACEE
+         END   UJG04JOB

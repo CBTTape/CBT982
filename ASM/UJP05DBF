@@ -1,0 +1,529 @@
+UJP05DBF TITLE 'JOL PREPROC INSTRUCTION TO GET D/S INFO FROM JOL /BASE'
+* JOL COPYRIGHT CCS-JOL 1989
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-JOL
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         PUNCH ' PAGE UJP05DBF '
+         PRINT OFF
+         COPY JOLCOM
+         PRINT ON
+JOLCOM   DSECT
+         ORG   #WORK
+#DSN     DS    H
+DSN      DS    CL44
+         ORG   WORK+100
+MBRNAME  DS    CL8
+         ORG
+P05WORK  DSECT                                                    J50
+P05SAV   DS    18F                                                J50
+P05FLAG1 DS    X                                                  J50
+P05F1MDL EQU   X'80'                                              J50
+         DS    3X                                                 J50
+P05MODEL DS    CL12              MODEL NAME                       J50
+*                                                                 J51
+* DATA BASE RECORD IS READ HERE                                   J51
+*                                                                 J51
+P05DBREC DS    CL256             RECORD READ HERE FROM DATA BASE  J50
+         DS    CL256             VSAM INFO MAY FOLLOW             J52
+*        ORG   P05DBREC          VSAM RECORDS FOLLOW HERE         J50
+*                                                                 J51
+*  VSAM SECTION .......................................................
+*                                                                 J51
+CLFREECI DS    CL2             /* %
+CLFREECA DS    CL2             /* % OR 0
+CLUNIQUE DS    CL1             /*    UNIQUE SPACE
+*
+*CLPASSRD DS    CL8             /* PASSWORD (READ)
+*CLPASSWR DS    CL8             /* PASSWORD (WRITE)
+CLATTEMP DS    CL1             /* ATTEMPTS
+*
+*CLRETPD  DS    CL1
+*CLEXPDT  DS    CL5
+*
+*CLBUFFSP DS    CL1             /*    BUFFER SPACE
+CLCODE   DS    CL1
+CLWAIT   DS    CL1             /*    STAGE WAIT
+CLERASE  DS    CL1             /*    YES OR NO
+CLIMBED  DS    CL1             /*    YES OR NO
+CLINDEXD DS    CL1             /*    YES, NO OR NUMBERED
+CLKEYRNG DS    CL5
+*CLRKP    DS    CL3
+*CLKEYLEN DS    CL3
+CLORDERD DS    CL1             /*    YES OR NO
+CLREPLIC DS    CL1             /*    YES OR NO
+CLREUSE  DS    CL1             /*    YES OR NO
+CLSPAN   DS    CL1             /*    YES OR NO
+CLSPEED  DS    CL1             /*    R=RECOVERY
+CLSTAGE  DS    CL1             /*    STAGE, BIND OR CYL FAULT
+*
+*
+* VSAM DATA DETAILS
+*
+*
+* START OF NEW SECTION .... VSAM DATA SECTION .......................
+*
+DTNAME   DS    CL44            /* DATA NAME
+*
+DTVOLUME DS    CL42            /* ENOUGH FOR 6 VOLS             *
+*
+DTPRIM   DS    CL5
+DTSEC    DS    CL5
+DTCISIZE DS    CL5
+*DTNORLSE DS    CL1             /*    NORLSE                     *
+DTCYLTRK DS    CL1             /* CYL TRK OR REC                *
+DTFREECI DS    CL2             /* %                             *
+DTFREECA DS    CL2             /* % OR 0                        *
+DTUNIQUE DS    CL1             /*    UNIQUE SPACE               *
+*
+*DTPASSRD DS    CL8             /* PASSWORD (READ)               *
+*DTPASSWR DS    CL8             /* PASSWORD (WRITE)              *
+DTATTEMP DS    CL1             /* ATTEMPTS                      *
+*
+DTRETPD  DS    CL1
+DTEXPDT  DS    CL5
+*
+DTBUFFSP DS    CL1             /*    BUFFER SPACE               *
+DTCODE   DS    CL1
+DTWAIT   DS    CL1             /*    STAGE WAIT                 *
+DTERASE  DS    CL1             /*    YES OR NO                  *
+DTIMBED  DS    CL1             /*    YES OR NO
+DTINDEXD DS    CL1             /*    YES, NO OR NUMBERED
+DTKEYRNG DS    CL5
+DTRKP    DS    CL3
+DTKEYLEN DS    CL3
+DTORDERD DS    CL1             /*    YES OR NO
+DTREPLIC DS    CL1             /*    YES OR NO
+DTREUSE  DS    CL1             /*    YES OR NO
+DTSPAN   DS    CL1             /*    YES OR NO
+DTSPEED  DS    CL1             /*    R=RECOVERY
+DTSTAGE  DS    CL1             /*    STAGE, BIND OR CYL FAULT
+*
+*
+* VSAM INDEX DETAILS
+*
+*
+* START OF NEW SECTION
+*
+INNAME   DS    CL44            /* CLUSTER DATA SET NAME.
+INVOLUME DS    CL42            /* ENOUGH FOR 6 VOLS             *
+*
+INPRIM   DS    CL5
+INSEC    DS    CL5
+INCISIZE DS    CL5
+INNORLSE DS    CL1             /*    NORLSE                     *
+INCYLTRK DS    CL1             /* CYL TRK OR REC                *
+INFREECI DS    CL2             /* %                             *
+INFREECA DS    CL2             /* % OR 0                        *
+INUNIQUE DS    CL1             /*    UNIQUE SPACE               *
+*
+*INPASSRD DS    CL8             /* PASSWORD (READ)               *
+*INPASSWR DS    CL8             /* PASSWORD (WRITE)              *
+INATTEMP DS    CL1             /* ATTEMPTS                      *
+*
+*INRETPD  DS    CL1
+*INEXPDT  DS    CL5
+*
+INBUFFSP DS    CL1             /*    BUFFER SPACE               *
+INCODE   DS    CL1
+INWAIT   DS    CL1             /*    STAGE WAIT                 *
+INERASE  DS    CL1             /*    YES OR NO                  *
+INIMBED  DS    CL1             /*    YES OR NO
+ININDEXD DS    CL1             /*    YES, NO OR NUMBERED
+INKEYRNG DS    CL5
+INRKP    DS    CL3
+INKEYLEN DS    CL3
+INORDERD DS    CL1             /*    YES OR NO
+INREPLIC DS    CL1             /*    YES OR NO
+INREUSE  DS    CL1             /*    YES OR NO
+INSPAN   DS    CL1             /*    YES OR NO
+INSPEED  DS    CL1             /*    R=RECOVERY
+INSTAGE  DS    CL1             /*    STAGE, BIND OR CYL FAULT
+         ORG   ,                                                  J51
+P05WSIZ  EQU   *-P05WORK                                          J50
+         SPACE 3
+* ON ENTRY TO THIS ROUTINE R1 POINTS TO NOTHING OF NOTE
+         SPACE 3
+         JOLSAVE CSECT=UJP05DBF,BASE=(11,12),                          .
+               SIZE=P05WSIZ                                       J50
+         USING P05WORK,R13                                        J50
+         MVI   P05FLAG1,P05F1MDL                                  J50
+         SETVAR 'ZLASTCC',12
+         SETVAR 'LASTCC',12
+         GETTKN 2
+         CLI   TKN,C''''         QUOTED DATA SET NAME?            J52
+         BNE   NDSNQUOT                                           J52
+         DROPQUSR  #TKN                                           J52
+         MVC   #DSN(L'DSN+2),#TKN                                 J52
+         SETVAR 'ZDSN',#DSN AME
+         B     P05DSN3         GO FIND DSNAME                     J52
+NDSNQUOT DS    0H
+         CLC   =C'MODEL ',TKN                                     J50
+         BE    P05#10                                             J50
+         XI    P05FLAG1,P05F1MDL                                  J50
+         CLC   =C'DS ',TKN                                        J50
+         BE    P05#10                                             J50
+         CLC   =C'DATASET ',TKN                                   J50
+         BE    P05#10                                             J50
+         JOLERR 300,'INVALID KEYWORD ',#TKN,RC=12                 J50
+P05#10   DS    0H
+         GETTKN 3
+         CLI   TKN,C''''
+         BNE   NQUOTED
+         TM    P05FLAG1,P05F1MDL                                  J50
+         BZ    NQUOTED
+         JOLERR 306,'MODEL NAME SHOULD NOT BE IN QUOTES'
+         JOLRETN
+NQUOTED  DS    0H
+*        GETTKN 3
+         MVC   CALLAREA(2),=C'||'
+         MVC   TKNCURR,=H'3'
+         $CALL UJS60DSN
+         SPACE 3
+* NOW WE MUST FORM UP THE FULL DSNAME.EACH PART IS SEPARATED BY A '.'
+*  OR THERE MAY BE'( )' AFTER
+         XC    CALLAREA(2),CALLAREA
+         $CALL UJS60DSN        PROCESS DSNAME
+         B     *+4(R15)
+         B     P05DSN3         STRAIGHT DSNAME
+         B     P05DSN1         DSNAME + GENERATION NUMBER
+         B     P05DSN1         DSNAME + MEMBER
+         B     P05DSN1         ERROR IN GENERATION NUMBER
+         B     P05DSN5         INVALID DSNAME
+P05DSN1  JOLERR 301,'MEMBER NAME AND GENERATION NUMBER NOT ALLOWED WITH.
+                ',#WORK,'.',RC=12
+P05DSN5  JOLERR 303,'INVALID DATASET NAME',#WORK,'(',MBRNAME,').'
+         JOLRETN
+P05DSN3  DS    0H
+         L     R6,VSAMCBS                                         J50
+         TM    UJFLAG1,UF1DBOPN+UF1DBERR                          J50
+         BNZ   P05XX             OPENED, OR IN ERROR              J50
+         USING VSAMINFO,R6                                        J50
+         VSOPEN (JOLDSDB,INPUT),                                       .
+               MF=(E,CALLAREA),NRETURN=P05XX
+         OI    UJFLAG1,UF1DBERR                                   J50
+         JOLERR 307,'ERROR ',CALLAREA,' OPENING JOL DS DB',RC=16
+P05XX    DS    0H                                                 J50
+         OI    UJFLAG1,UF1DBOPN+UF1DBINP OPEN TO READ             J50
+*        LA    R8,TRANS                                           J50
+         LA    R8,P05DBREC       CVC DEC 89                       J50
+         USING DDDSNDET,R8                                        J50
+         MVC   DDDSNAME,DSN                                       J50
+         VSIO  GETFIRST,JOLDSDB,DDDSNDET,NRETURN=P05FND30
+P05NFND  SETVAR 'ZLASTCC',4
+* THE RECORD WASN'T FOUND, BUT WE WANT TO SET UP THE              J50
+* SYMBOLIC VARIABLES ANYWAY.                                      J50
+         MVI   DDOSVB,C' '                                        J50
+         MVC   DDOSVB+1(254),DDOSVB C                             J50
+         MVC   DDOSVB,=AL2(DDLEN)                                 J50
+*        CLEAR C03DEXT,C03DLIKE                                   75128
+         CLEAR DDSPECTP,DDSPECT2,                                 75128*
+               DDCANCEL,DDLABEL,DDUNITNO,DDPRIM,DDSEC,DDDIRECT,   80290*
+               DDBLKSZE,DDLRECL,DDSIZE,DDSIZE2,DDAVREC,DDBUFNO,   80290*
+               DDBUFND,DDBUFNI,                                   82300*
+               DDBUFL,DDRKP,DDKEYLEN,DDOVERFL,DDVOLSEQ,DDMAXVOL,  80290*
+               DDUNITQU
+*        CLEAR DDAEXTRA,DDLENXTR,DDLENXTR+2,#DDSUBS,#DDVOL,       87150*
+               DDSUBS,DDLONGVL                                    87150
+           MVI DDDD1,C'D'                      SET RECORD TYPE TO'D'
+*          MVC DDSTMT,STMT                     MOVE STMT NO IN FOR
+*                                              ERRORS LATER
+           MVC DDLEVEL,LEVEL+1
+           MVC DDNEST,NEST+1
+           MVC DDOSVB,=AL2(DDLEN)
+*          GETTKN NO=2                         GET THE 2ND TOKEN
+*          MVC DDDSID,TKN                      MOVE THE DSIDENTIFIER
+*                                              IN
+           SPACE 3
+*        JOLERR 310,'D/S ',DDDSNAME,' NOT FOUND IN JOLDSDB',           .
+               RC=4
+*        JOLRETN RC=4                                             J50
+         B     SETDSNX                                            J52
+P05FND30 DS    0H                                                 J50
+         CLC   DDDSNAME,DSN      WE ARE SEARCHING GENERICALLY     J52
+         BNE   P05NFND           AND WE DIDN'T GET IT!            J52
+         MVC   #WORK,=H'1'                                        J52
+         MVI   WORK,C'0'                                          J52
+         SETVAR 'ZLASTCC',#WORK                                   J52
+         SETVAR 'LASTCC',#WORK                                    J52
+SETDSNX  DS    0H                                                 J52
+         MVC   P05MODEL,DDDSID   BLANKS OR 12 CHARACTER MODEL NAME 50
+         SETVAR 'ZMODEL',P05MODEL                                 J50
+         SETVAR 'ZOWNER',DDDDNAME                                 J52
+*        MVC   #TKN(2),=AL2(L'TKN)                                J50
+         MVC   #TKN(2),ZERO                                       J52
+         CLEAR TKN                                                J50
+         CLC   DDOSVB,=AL2(DDLEN)                        JOL30047 J52
+         BNH   P05NVSP        NO VSAM DATA                        J52
+*        CLC   DDOSVB,=H'300'                                     J50
+*        BL    P05NVSP                                            J50
+         MVC   #TKN(256),#DDVSAML                                 J50
+P05NVSP  DS    0H                                                 J50
+* UNPACK VSAM STUFF (FIELDS MAY BE BLANK, BUT THAT IS OK)         J50
+         SETVAR 'ZVSAMTXT',#TKN
+         SETVAR 'ZMBR',DDMBR
+         SETVAR 'ZTYPE',DDTYPE
+         TM    DDCANCEL,DDNOVOL                                   J50
+         BO    P05#110                                            J50
+         SETVAR 'ZNOVOL',=C'N'
+         B     P05#120                                            J50
+P05#110  DS    0H
+         SETVAR 'ZNOVOL',=C'Y'
+P05#120  DS    0H
+         TM    DDCANCEL,DDNODCB                                   J50
+         BO    P05#210                                            J50
+         SETVAR 'ZNODCB',=C'N'
+         B     P05#220                                            J50
+P05#210  DS    0H
+         SETVAR 'ZNODCB',=C'Y'
+P05#220  DS    0H
+         TM    DDCANCEL,DDNOUNI                                   J50
+         BO    P05#310                                            J50
+         SETVAR 'ZNOUNIT',=C'N'
+         B     P05#320                                            J50
+P05#310  DS    0H
+         SETVAR 'ZNOUNIT',=C'Y'
+P05#320  DS    0H
+         TM    DDUNITQU,DDUNITQ                                   J50
+         BO    P05#330                                            J50
+         SETVAR 'ZQUEUE',=C'N'
+         B     P05#340                                            J50
+P05#330  DS    0H
+         SETVAR 'ZQUEUE',=C'Y'
+P05#340  DS    0H
+         SETVAR 'ZLABTYP',DDLABTYP
+         SETVAR 'ZVOLUMES',DDVOLUME
+         SETVAR 'ZFILENO',DDLABEL
+         SETVAR 'ZUNIT',DDUNIT
+         SETVAR 'ZUNITCT',DDUNITNO
+         SETVAR 'ZPRIM',DDPRIM
+         SETVAR 'ZSEC',DDSEC
+         SETVAR 'ZDIR',DDDIRECT
+         SETVAR 'ZSPACETP',DDCYLTRK
+         TM    DDSPECTP,X'01'                                     J50
+         BO    P05#350                                            J50
+         SETVAR 'ZROUND',=C'N'
+         B     P05#360                                            J50
+P05#350  DS    0H
+         SETVAR 'ZROUND',=C'Y'
+P05#360  DS    0H
+         TM    DDSPECTP,X'02'                                     J50
+         BO    P05#370                                            J50
+         SETVAR 'ZALX',=C'N'
+         B     P05#380                                            J50
+P05#370  DS    0H
+         SETVAR 'ZALX',=C'Y'
+P05#380  DS    0H
+         TM    DDSPECTP,X'04'                                     J50
+         BO    P05#390                                            J50
+         SETVAR 'ZMAXIG',=C'N'
+         B     P05#3A0                                            J50
+P05#390  DS    0H
+         SETVAR 'ZMAXIG',=C'Y'
+P05#3A0  DS    0H
+         SETVAR 'ZPROTECT',=C'N'                                  J52
+         TM    DDSPECTP,X'20'                                     J52
+         BZ    P05#3A1                                            J52
+         SETVAR 'ZPROTECT',=C'Y'                                  J52
+P05#3A1  DS    0H                                                 J52
+         SETVAR 'ZRECFM',DDRECFM
+         SETVAR 'ZLRECL',DDLRECL
+         SETVAR 'ZBLKSIZE',DDBLKSZE
+         SETVAR 'ZAVREC',DDAVREC
+         SETVAR 'ZBUFNO',DDBUFNO
+         SETVAR 'ZBUFL',DDBUFL
+         SETVAR 'ZBUFNI',DDBUFNI
+         SETVAR 'ZBUFND',DDBUFND
+         SETVAR 'ZLIMCT',DDLIMCT
+         SETVAR 'ZOPTCD',DDOPTCD
+         SETVAR 'ZDEN',DDDENS
+         SETVAR 'ZRKP',DDRKP
+         SETVAR 'ZKEYLEN',DDKEYLEN
+         SETVAR 'ZOVERFL',DDOVERFL
+         SETVAR 'ZDSORG',DDDSORG
+         TM    DDSPECT2,X'01'                                     J50
+         BZ    P05#3B0                                            J50
+         SETVAR 'ZDSORG',=C'VSAM'
+P05#3B0  DS    0H
+         SETVAR 'ZRLSE',=C'Y'                                     J52
+         TM    DDSPECT2,X'02'                                     J52
+         BZ    P05#3B1                                            J52
+         SETVAR 'ZRLSE',=C'N'                                     J52
+P05#3B1  DS    0H                                                 J52
+         SETVAR 'ZCONTIG',=C'N'                                   J52
+         TM    DDSPECT2,X'80'                                     J52
+         BZ    P05#3B2                                            J52
+         SETVAR 'ZCONTIG',=C'Y'                                   J52
+P05#3B2  DS    0H                                                 J52
+         SETVAR 'ZRETPD',DDRETPD
+         SETVAR 'ZEXPDT',DDEXPDT
+         SETVAR 'ZVOLSEQ',DDVOLSEQ
+         SETVAR 'ZMAXVOL',DDMAXVOL
+         SETVAR 'ZCODE',DDCODE
+         SETVAR 'ZFUNC',DDFUNC
+         CLC   DDOSVB,=AL2(DDLEN)  LONGER THAN USUAL ?            J52
+         BH    C03LEXTR            YES,LEAVE EXTRA                J52
+*        MVC   DDOSVB,=AL2(DDLEN) SET RECORD LENGTH TO EXCLUDE IT J52
+         MVC   DDEXTRA,BLANKS      JUST FOR SAFETY!               J52
+C03LEXTR EQU   *                                                  J52
+         SETVAR 'ZEXTRA',DDEXTRA
+         CLI   DDTYPE,DDPUNCH                                     J52
+         BNH   P05PRNT                                            J52
+         SETVAR 'ZSYSCLS',=C' '                                   J52
+         SETVAR 'ZSYSFOR',=C' '                                   J52
+         SETVAR 'ZOUTLIM',=C' '                                   J52
+         SETVAR 'ZSYSPGM',=C' '                                   J52
+         SETVAR 'ZSYSUCS',=C' '                                   J52
+         SETVAR 'ZSYSCHAR',=C' '                                  J52
+         SETVAR 'ZCOPIES',=C' '                                   J52
+         SETVAR 'ZSYSROUT',=C' '                                  J52
+         SETVAR 'ZSYSFCB',=C' '                                   J52
+         SETVAR 'ZSYSFLAS',=C' '                                  J52
+         SETVAR 'ZSYSMOD',=C' '                                   J52
+         SETVAR 'ZSYSBURS',=C' '                                  J52
+         JOLRETN RC=0                                             J52
+P05PRNT  DS    0H                                                 J52
+         SETVAR 'ZSYSCLS',DDSYSCLS                                J52
+         SETVAR 'ZSYSFOR',DDSYSFRM                                J52
+         SETVAR 'ZOUTLIM',DDOUTLIM                                J52
+         SETVAR 'ZSYSPGM',DDSYSPGM                                J52
+         SETVAR 'ZSYSUCS',DDUCS                                   J52
+         SETVAR 'ZSYSCHAR',DDCHAR                                 J52
+         SETVAR 'ZCOPIES',DDCOPIES                                J52
+         SETVAR 'ZSYSROUT',DDROUTE                                J52
+         SETVAR 'ZSYSFCB',DDFCB                                   J52
+         SETVAR 'ZSYSFLAS',DDFLASH                                J52
+         SETVAR 'ZSYSMOD',DDMODIFY                                J52
+         SETVAR 'ZSYSBURS',DDBURST                                J52
+         JOLRETN RC=0                                             J52
+         AGO    .SKIPVSM                                          J51
+         SETVAR 'ZCLFREEI',CLFREECI
+         SETVAR 'ZCLFREEA',CLFREECA
+         SETVAR 'ZCLUNIQU',CLUNIQUE         UNIQUE SPACE
+*
+*CLPASSRD DS    CL8             /* PASSWORD (READ)
+*CLPASSWR DS    CL8             /* PASSWORD (WRITE)
+         SETVAR 'ZCLATTEM',CLATTEMP         ATTEMPTS
+*
+*CLRETPD  DS    CL1
+*CLEXPDT  DS    CL5
+*
+*CLBUFFSP DS    CL1             /*    BUFFER SPACE
+         SETVAR  'ZCLCODE',CLCODE
+         SETVAR  'ZCLWAIT',CLWAIT          /*    STAGE WAIT
+         SETVAR  'ZCLERASE',CLERASE         /*    YES OR NO
+         SETVAR  'ZCLIMBED',CLIMBED         /*    YES OR NO
+         SETVAR  'ZCLINDEX',CLINDEXD       /*    YES, NO OR NUMBER
+         SETVAR  'ZCLKEYRG',CLKEYRNG
+*CLRKP
+*CLKEYLEN
+         SETVAR  'ZCLORDER',CLORDERD            /*    YES OR NO
+         SETVAR  'ZCLREPL',CLREPLIC           /*    YES OR NO
+         SETVAR  'ZCLREUSE',CLREUSE           /*    YES OR NO
+         SETVAR  'ZCLSPAN',CLSPAN             /*    YES OR NO
+         SETVAR  'ZCLSPEED',CLSPEED           /*    R=RECOVERY
+         SETVAR  'ZCLSTAGE',CLSTAGE            /*    STAGE, BIND OR CY
+*
+*
+* VSAM DATA DETAILS
+*
+*
+* START OF NEW SECTION .... VSAM DATA SECTION ........
+*
+         SETVAR  'ZDTNAME',DTNAME              /* DATA NAME
+*
+         SETVAR  'ZDTVOL',DTVOLUME            /* ENOUGH FOR 6 VOLS
+*
+         SETVAR  'ZDTPRIM',DTPRIM   DS    CL5
+         SETVAR  'ZDTSEC',DTSEC    DS    CL5
+         SETVAR  'ZDTCSIZE',DTCISIZE DS    CL5
+*DTNORLSE DS    CL1             /*    NORLSE
+         SETVAR  'ZDTCYLTR',DTCYLTRK            /* CYL TRK OR REC
+         SETVAR  'ZDTFREEI',DTFREECI            /* %
+         SETVAR  'ZDTFREEA',DTFREECA            /* % OR 0
+         SETVAR  'ZDTUNIQU',DTUNIQUE            /*    UNIQUE SPACE
+*
+*DTPASSRD DS    CL8             /* PASSWORD (READ)
+*DTPASSWR DS    CL8             /* PASSWORD (WRITE)
+         SETVAR  'ZDTATTEM',DTATTEMP             /* ATTEMPTS
+*
+         SETVAR  'ZDTRETPD',DTRETPD
+         SETVAR  'ZDTEXPDT',DTEXPDT
+*
+         SETVAR  'ZDTBUFSP',DTBUFFSP            /*    BUFFER SPACE
+         SETVAR  'ZDTCODE',DTCODE
+         SETVAR  'ZDTWAIT',DTWAIT              /*    STAGE WAIT
+         SETVAR  'ZDTERASE',DTERASE             /*    YES OR NO
+         SETVAR  'ZDTIMBED',DTIMBED             /*    YES OR NO
+         SETVAR  'ZDTINDEX',DTINDEXD           /*    YES, NO OR NUMBER
+         SETVAR  'ZDTKEYRG',DTKEYRNG
+         SETVAR  'ZDTRKP',DTRKP
+         SETVAR  'ZDTKEYLN',DTKEYLEN
+         SETVAR  'ZDTORDER',DTORDERD           /*    YES OR NO
+         SETVAR  'ZDTREPL',DTREPLIC           /*    YES OR NO
+         SETVAR  'ZDTREUSE',DTREUSE            /*    YES OR NO
+         SETVAR  'ZDTSPAN',DTSPAN             /*    YES OR NO
+         SETVAR  'ZDTSPEED',DTSPEED            /*    R=RECOVERY
+         SETVAR  'ZDTSTAGE',DTSTAGE            /*    STAGE, BIND OR CY
+*
+*
+* VSAM INDEX DETAILS
+*
+*
+* START OF NEW SECTION
+*
+         SETVAR  'ZINNAME',INNAME          /* CLUSTER DATA SET NAME.
+         SETVAR  'ZINVOL',INVOLUME         /* ENOUGH FOR 6 VOLS
+*
+         SETVAR  'ZINPRIM',INPRIM   CL5
+         SETVAR  'ZINSEC',INSEC    CL5
+         SETVAR  'ZINCSIZE',INCISIZE CL5
+*         SETVAR  INNORLSE CL1       /*    NORLSE
+         SETVAR  'ZINCYLTR',INCYLTRK CL1       /* CYL TRK OR REC
+         SETVAR  'ZINFREEI',INFREECI CL2      /* %
+         SETVAR  'ZINFREEA',INFREECA CL2      * % OR 0
+         SETVAR  'ZINUNIQU',INUNIQUE CL1      /*    UNIQUE SPACE
+*
+*INPASSRD CL8     /* PASSWORD (READ)
+*INPASSWR CL8     /* PASSWORD (WRITE)
+         SETVAR  'ZINATTEM',INATTEMP CL1      /* ATTEMPTS
+*
+*INRETPD  CL1
+*INEXPDT  CL5
+*
+         SETVAR  'ZINBUFSP',INBUFFSP CL1      /*    BUFFER SPACE
+         SETVAR  'ZINCODE',INCODE   CL1
+         SETVAR  'ZINWAIT',INWAIT   CL1       /*    STAGE WAIT
+         SETVAR  'ZINERASE',INERASE  CL1      /*    YES OR NO
+         SETVAR  'ZINIMBED',INIMBED  CL1       /*    YES OR NO
+         SETVAR  'ZININDEX',ININDEXD CL1       /*    YES, NO OR NUMBER
+         SETVAR  'ZINKEYRG',INKEYRNG CL5
+         SETVAR  'ZINRKP',INRKP    CL3
+         SETVAR  'ZINKEYLN',INKEYLEN CL3
+         SETVAR  'ZINORDER',INORDERD CL1       /*    YES OR NO
+         SETVAR  'ZINREPLI',INREPLIC CL1       /*    YES OR NO
+         SETVAR  'ZINREUSE',INREUSE  CL1       /*    YES OR NO
+         SETVAR  'ZINSPAN',INSPAN   CL1       /*    YES OR NO
+         SETVAR  'ZINSPEED',INSPEED  CL1       /*    R=RECOVERY
+         SETVAR  'ZINSTAGE',INSTAGE  CL1      /*    STAGE, BIND OR CY
+.SKIPVSM  ANOP                                                    J51
+         JOLRETN
+HEX      EQU *-240
+         DC    C'0123456789ABCDEF'
+         DC    60S(*)
+         DS    0D
+         END

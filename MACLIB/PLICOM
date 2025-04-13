@@ -1,0 +1,106 @@
+  /***** ************************************************************/
+  /*                                                                */
+  /*  THE FOLLOWING DEFINITIONS DESCRIBE THE JOL COMMON AREA.       */
+  /*                                                                */
+  /*  NOT ALL THE AREAS ARE DESRIBED, AS MANY ARE USEFUL ONLY       */
+  /*    TO ASSEMBLER PROGRAMMERS.                                   */
+  /*                                                                */
+  /*  HOWEVER, THE DESCRIBED AREAS SHOULD BE SUFFICENT TO           */
+  /*     ENABLE A PL1 PROGRAM TO PERFORM ALL THE FUNCTIONS          */
+  /*     THAT CAN BE DONE IN ASSEMBLER, WITH THE EXCEPTION          */
+  /*     OF CERTAIN I/O FUNCTIONS WHICH USE JOL WORK FILES          */
+  /******************************************************************/
+  DCL 1 JOLCOM BASED(JOLCOM_POINTER),
+  2 CALLAREA(10) BIN FIXED(31),      /* WORK AREA */
+  2 DBL(2)       BIN FIXED(31),      /* DOUBLE WORD */
+  2 Z4           CHAR(4),            /* WORK AREA */
+         /* SKIP OVER DCB ADDRESS CONSTANTS */
+  2 YEAR         CHAR(4) DEF(JOLCOM) POS(96),
+                                                 /* YEAR (1976 ETC)*/
+  2 MONTH        CHAR(9),            /* NOVEMBER ETC */
+  2 MONTHNO      PIC'99',            /* 11 IF NOV    */
+  2 DAY          CHAR(9),            /* MONDAY ETC   */
+  2 DAYNO        PIC'99',            /* 16 IF 16TH   */
+  2 TIME         PIC'9999',          /* HHMM         */
+  2 VERSION      CHAR(4),            /* JOL VERSION,
+                                                     EG 3.1       */
+  2 PHASE_TIME,
+    3(UJPSTART,             /* PREPROCCESSOR START TIME */
+      UJCSTART,             /* COMPILER START TIME      */
+      UJOSTART,             /* OPTIMISE START TIME      */
+      UJGSTART              /* GENERATE START TIME */
+      )      BIN FIXED(31),
+  2 JOLERRIN     BIT(8),   /* JOL ERROR INDICATORS*/
+  2 RUNINDIC     CHAR(1),
+  2 ERRCNT       BIN FIXED(15), /* NO. ERRORS DETECTED */
+  2 LASTINST     CHAR(8) DEF(JOLCOM) POS(186),
+                                             /* PREVIOUS INSTRUCTION
+                                                NAME */
+  2 LABEL        CHAR(8) DEF(JOLCOM) POS(200),
+                                             /* LABEL ON INVOKING
+                                                STATEMENT */
+  2(LEVEL,NEST)  BIN FIXED(15), /* CURRENT LEVEL,NEST*/
+  2 COND         CHAR(50),
+  2 SAVENEST     CHAR(6),
+  2 BLANKS       CHAR(80) VAR DEF(JOLCOM) POS(280),
+  2 CARD         CHAR(80) DEF(JOLCOM) POS(376), /* CURRENT CARD */
+  2 ASYMTBL      POINTER,       /* ADDRESS OF SYMBOLIC TABLE  */
+  2 ANEXTSYM     POINTER,       /* ADDRESS OF NEXT AVAILABLE ENTRY
+                                 FOR SYMBOLIC VALUE */
+  2 SYMLEN       BIN FIXED(15), /* MAX SIZE OF TABLE  */
+  2(MAXSYMS,                    /*   NUMBER OF SYMBOLICS ALLOWED */
+  2 NOSYMS,                  /*  CURRENT NUMBER STORED           */
+  2 RORGSYMT)  BIN FIXED(15),/*  NUMBER TIMES TABLE RE-ORGED     */
+  2 AIDTBL       POINTER,       /* ADDRESS OF IDENTIFIER TABLE     */
+  2 (ZERO,
+     ONE)        BIN  FIXED(31) DEF(JOLCOM) POS(1016),
+  2 DYNPARMS_AREA,            /* R1-> HERE ON ENTRY */
+    3 ATKNSTRING POINTER,     /* SEE TKNX BELOW *
+    3 ATNX       POINTER,
+    3 ACALLAREA  POINTER,
+    3 AUJP90     ENTRY,       /* ADDRESS PREPROCESS OUTPUT RTN */
+    3 AUJP85     ENTRY,
+    3 AUJP02     ENTRY,
+    3 AMACBUF    POINTER,
+    3 AWORK      POINTER,
+    3 ADRL       POINTER,
+    3 ASYMBOLIC  POINTER,
+    3 AJOBDETS   POINTER,
+    3 AGENDETS   POINTER,
+    3 AUJSPLIT   ENTRY,
+    3 AUJP98     ENTRY,
+    3 AUJS20     ENTRY,
+    3 AUJS21     ENTRY,
+    3 APRINTLN   POINTER,
+    3 AUJSPRNT   ENTRY,
+    3 ATNUM      ENTRY,
+   3 JCLDDNAM    CHAR(8),
+  2 SYMBOLIC     CHAR(8) POS(1724),  /* MOVE SYMBOLIC HERE */
+  2 WORK         CHAR(1000) VARYING, /* WORK AREA          */
+  2 END;
+  DCL 1  JOBDETS BASED(AJOBDETS),
+   2 JOBNAME     CHAR(8),
+   2 JOBACCT     CHAR(80) VARYING,
+   2 JOBELAP     CHAR(8) POS(250),
+   2 JOBCPU      CHAR(4);
+  DCL 1 SYMNAMES BASED(ASYMTBL),
+   2 SYMNAME     CHAR(8),
+   2 SYMLEVEL    BIT(8),
+   2 SYMADDR     POINTER POS(8);
+  DCL SYMBOLIC_VALUE CHAR(100) VAR BASED(SYMADDR);
+  DCL 1 TKNX  BASED(ATKNX),
+         2 TKNNO    BIN FIXED(15),
+         2 TNKCURR  BIN FIXED(15),
+         2 TKNDESC(150),
+           3 TKNLEN      BIT(8),
+           3 TKNTYPE1    BIT(8),
+           3 TKNOFFSET   BIN FIXED(15),
+         2 TKNSTRG       CHAR(1000) VARYING,
+         2 TKNTYPE       BIT(8),
+     2   TKN   CHAR(120) VARYING;
+  DCL 1 GENERATION_DETAILS BASED(AJOLGEN),
+         2 AGENUNIT      POINTER POS(4),
+         2 APREFVOL      POINTER POS(4),
+         2 ARETVOLS      POINTER,
+         2 ASWAPUNIT     POINTER,
+         ;

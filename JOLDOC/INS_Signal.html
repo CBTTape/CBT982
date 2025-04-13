@@ -1,0 +1,333 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Mozilla SeaMonkey">
+  <title>Signal</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=ISO-8859-1">
+  <title></title>
+  <meta name="GENERATOR" content="OpenOffice.org 3.1  (Win32)">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="RIGHT" valign="TOP" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="RIGHT">
+      <style type="text/css">
+	<!--
+		@page { margin: 2cm }
+		H1 { margin-bottom: 0.11cm }
+		H1.western { font-family: "Arial", sans-serif; font-size: 16pt }
+		H1.cjk { font-family: "Arial Unicode MS"; font-size: 16pt }
+		H1.ctl { font-family: "Tahoma"; font-size: 12pt; font-weight: normal }
+		P { margin-bottom: 0.21cm }
+	-->
+	</style>
+      </h1>
+      <h1 class="western" align="RIGHT"><font size="5"><u>SIGNAL ERROR </u></font><font
+ size="5">- </font><font size="5"><i><span style="font-weight: normal;">Immediate
+or
+Execute
+Command</span></i></font></h1>
+      <font size="5"><i><u><span style="font-weight: normal;"></span></u></i></font>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Purpose</h4>
+      </td>
+      <td align="LEFT" valign="TOP">The <span
+ style="font-weight: bold;">SIGNAL ERROR</span> instruction is used to
+indicate an error has occurred. If it is used at execution time the
+message will be written to the Job Log; if performed at compile time,
+the message will appear with other Jol messages.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <div style="margin-left: 40px;">&nbsp;&nbsp; </div>
+      <div style="font-weight: bold;">
+      <div style="margin-left: 40px;">SIGNAL [ERROR] <span
+ style="font-style: italic;">severity, 'message'</span><br>
+      </div>
+      </div>
+      <div style="margin-left: 40px; font-weight: bold;"> <br>
+      </div>
+      <span style="font-style: italic;">where: </span><br>
+      <div style="margin-left: 40px;"><br>
+      </div>
+      <div style="margin-left: 40px;"><span style="font-style: italic;">message</span>
+&nbsp;&nbsp;&nbsp; may be any message less than 100 characters long. <br>
+      <br>
+      </div>
+      <div style="margin-left: 40px;"><span style="font-style: italic;">severity</span>&nbsp;&nbsp;
+&nbsp;
+&nbsp;&nbsp;
+indicates the severity of the error. It must be
+from zero to four (0-4). <br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+When the <span style="font-weight: bold;">SIGNAL ERROR</span> is
+executed in the Compile Phase, the severity has the following effect:-<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td
+ style="vertical-align: top; background-color: rgb(204, 204, 204);">
+      <table style="text-align: left; width: 100%;" border="0"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td
+ style="vertical-align: top; font-weight: bold; text-align: center;">Severity</td>
+            <td
+ style="vertical-align: top; font-weight: bold; text-align: center;">Meaning</td>
+            <td
+ style="vertical-align: top; font-weight: bold; text-align: center;">Effect
+
+
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">0<br>
+            </td>
+            <td style="vertical-align: top; text-align: left;">Information
+only
+&nbsp; <br>
+            </td>
+            <td style="vertical-align: top;">Message placed on Jol
+Compiler Listing File and the Terminal. </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">1<br>
+            </td>
+            <td style="vertical-align: top; text-align: left;">Warning</td>
+            <td style="vertical-align: top;">Message placed on Jol
+Compiler Listing File and the Terminal. </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">2</td>
+            <td style="vertical-align: top; text-align: left;">Minor
+Error</td>
+            <td style="vertical-align: top;">Message placed on Jol
+Compiler Listing File and the Terminal. </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">3<br>
+            </td>
+            <td style="vertical-align: top; text-align: left;">Severe
+Error</td>
+            <td style="vertical-align: top;">Message placed on Jol
+Compiler Listing File and
+the Terminal.&nbsp; The job is placed in the HOLD status; the operator
+must
+release it. </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">4<br>
+            </td>
+            <td style="vertical-align: top; text-align: left;">Terminal
+Error </td>
+            <td style="vertical-align: top;">Message placed on Jol
+Compiler Listing File and
+the Terminal. The job is not allowed to start unless the LET compiler
+option was specified; same as using STOP instruction. </td>
+          </tr>
+        </tbody>
+      </table>
+&nbsp; </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+When executed at <span style="font-style: italic;">run time</span>
+(that is, after an <span style="font-weight: bold;">IF</span>
+statement), the severity has the following effect:- <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td
+ style="vertical-align: top; background-color: rgb(255, 255, 255);"><br>
+      </td>
+      <td
+ style="vertical-align: top; background-color: rgb(204, 204, 204);">
+      <table style="text-align: left; width: 100%;" border="0"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td
+ style="vertical-align: top; font-weight: bold; text-align: center;">Severity</td>
+            <td
+ style="vertical-align: top; font-weight: bold; text-align: center;">Meaning</td>
+            <td
+ style="vertical-align: top; font-weight: bold; text-align: center;">Effect
+
+
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">0<br>
+            </td>
+            <td style="vertical-align: top; text-align: left;">Information
+only
+&nbsp; <br>
+            </td>
+            <td style="vertical-align: top;">Message placed on Job Log
+only; similar to <span style="font-weight: bold;">DISPLAY</span>.&nbsp;
+
+
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">1<br>
+            </td>
+            <td style="vertical-align: top; text-align: left;">Warning</td>
+            <td style="vertical-align: top;">Message placed on Job Log;
+similar to <span style="font-weight: bold;">DISPLAY</span>. </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">2</td>
+            <td style="vertical-align: top; text-align: left;">Minor
+Error</td>
+            <td style="vertical-align: top;">Message placed on Job Log
+and written to Operator; similar to <span style="font-weight: bold;">TYPE</span>.&nbsp;
+
+
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">3<br>
+            </td>
+            <td style="vertical-align: top; text-align: left;">Severe
+Error</td>
+            <td style="vertical-align: top;">Message placed on Job Log
+and written to Operator; Operator asked to reply <span
+ style="font-weight: bold;">YES</span> if job is to continue, <span
+ style="font-weight: bold;">NO</span> if it is to be stopped.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; text-align: center;">4<br>
+            </td>
+            <td style="vertical-align: top; text-align: left;">Terminal
+Error </td>
+            <td style="vertical-align: top;">Message placed on Job Log
+and written to Operator; Job stops immediately; <span
+ style="font-weight: bold;">IF ERROR</span> not actioned; similar to <span
+ style="font-weight: bold;">STOP</span>. <br>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP">
+      <ol>
+        <li><span style="font-weight: normal;">The message must be less
+than 100 characters long.</span></li>
+        <li><span style="font-weight: normal;">If there are any
+apostrophes, two apostrophes must be coded; only one will appear on the
+produced message. </span></li>
+        <li><span style="font-weight: normal;">The severity must be
+from <span style="font-weight: bold;">0</span> to<span
+ style="font-weight: bold;"> 4.</span> </span></li>
+        <li><span style="font-weight: normal;">If the <span
+ style="font-weight: bold;">SIGNAL ERROR</span> terminates a job, any <span
+ style="font-weight: bold;">IF ERROR </span>instructions are ignored -
+the job stops immediately. </span></li>
+        <li><span style="font-weight: normal;">Jol automatically stops
+a job when any program returns a 16 or greater than 2000. Thus,
+whenever a program returns a 16 or greater than 2000 the job is
+terminated. In PL/1 the <span style="font-weight: bold;">EXIT</span>
+or <span style="font-weight: bold;">STOP</span> instructions stop the
+program; these return 2000 or greater to Jol, which terminates the
+entire job. </span></li>
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">STOP WHEN</span> instruction may be used to
+alter the default of <span style="font-weight: bold;">16 or &gt; 2000.</span></span></li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP">1.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SIGNAL
+ERROR
+1, 'SIMPLE EXAMPLE OF SIGNAL ERROR'; <br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">After
+executing
+the
+      <span style="font-weight: bold;">SIGNAL ERROR</span>,
+the message <span style="font-weight: bold;">'SIMPLE EXAMPLE OF SIGNAL
+ERROR'</span> will be placed in the Jol Compiler Listing. Because the
+severity specified was one, the job will be allowed to start. The
+return code from the compiler will be 4.</span><br>
+      </div>
+      <br>
+2.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IF %LIB = 'SYS1.SVCLIB' <br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; THEN SIGNAL ERROR 3, <br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 'SYS1.SVCLIB IS TO BE
+RE-ORGANIZED, RELEASE WHEN MACHINE IDLE'; <br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+
+
+      <span style="font-weight: bold;">IF</span> statement tests the
+symbolic variable <span style="font-weight: bold;">%LlB</span>, and if
+      <span style="font-weight: bold;">%LlB</span> contains the
+characters <span style="font-weight: bold;">'SYS1.SVCLIB'</span> the <span
+ style="font-weight: bold;">SIGNAL ERROR</span> instruction will be
+executed, and the message will be placed on the error log. <br>
+      <br style="font-weight: normal;">
+      </span><span style="font-weight: normal;">In addition, the job
+will be placed in the <span style="font-weight: bold;">HOLD</span>
+status and the operator will have to release the job manually.<br>
+&nbsp;</span><br style="font-weight: normal;">
+      <span style="font-weight: normal;">Note that the above message
+may be written to the operator at execution time, if desired. The <span
+ style="font-weight: bold;">SIGNAL ERROR</span> must be preceded by an
+execution oriented <span style="font-weight: bold;">IF</span>. </span><br>
+      </div>
+      <div style="margin-left: 80px;">&nbsp;<br>
+      </div>
+      <div style="text-align: center;">---000---<br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

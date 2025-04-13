@@ -1,0 +1,192 @@
+UJD70OPN TITLE 'JOL SCHEDULER FILE OPEN'                         88036
+         COPY  JOLGLOBL                                          88036
+         LCLC  &C                                                88036
+         $UJEPARM                                                88036
+         TITLE 'EXECUTION PHASE COMMON WORK AREA'                88036
+UJECOMM  DSECT                                                   88036
+         USING UJECOMM,R3
+         COPY  UJECOMM                                           88036
+         TITLE 'JOL SCHEDULER FILE OPEN'                         88036
+         JOLSAVE CSECT=UJD70OPN
+         LR    R9,R1           SAVE PARAMETER AREA ADDRESS INTO R9
+* B 4 WE GET TOO INVOLVED, LET'S  OPEN THE PRINT FILE INCASE      J40B
+*        FINDDD =CL8'JOLPRINT'
+*        LTR   R15,R15         IS IT PRESENT ?
+*        BNZ   E70OPEN         GO AND OPEN THE OTHER FILES
+*        JOLOPEN (,AD),MF=(E,AFPRINT)   EXTEND THE PRINT FILE
+         CLI   ISTSO,C' '                                         J50
+         BE    E70NTSO                                            J50
+         JOLOPEN (,EXTEND),MF=(E,AFPRINT)   EXTEND THE PRINT FILE
+         LTR   R15,R15                                           88036
+         BZ    E70OPEN                                           88036
+*              TRY AGAIN                                          J50
+E70NTSO  DS    0H                                                 J50
+         JOLOPEN (,OUTPUT),MF=(E,AFPRINT)   EXTEND THE PRINT FILE
+         LTR   R15,R15                                           88036
+         BZ    E70OPEN                                           88036
+         SPEAK 'I THINK THE PRINT FILE OPENED'                   88036
+E70OPEN  DS    0H
+         SPEAK 'WELL HERE WE ARE IN UJS70OPN'                    88036
+* FUNCTION : OPEN REQUIRED FILES, SET INDICATORS, LOAD IBM JOBQ RTN
+*  IF NECESSARY.
+         SPACE 3
+&C       SETC  (&X8)'FLCTOLD'.(1-&X8)'PSATOLD'                   88036
+*        MVC   ATCB,&C         COPY MY TCB ADDRESS               88036
+         AIF   (&X8).X8040
+         AGO   .Z040                                              J40B
+         L     R2,=A(JOBQCOM)
+         USING JOBQCOM,R2
+         L     R10,ATCB        SAVE FOR LATER USE
+         USING TCB,R10
+* NOW SET TTR ADDRESS OF JCT. FOR VS1 SYSTEMS WE WILL ALTER LATER,
+*  BUT THIS IS OK FOR OTHER SYSTEMS.
+         L   R14,TCBJSCB     R14-> JSCB NOW
+         ST  R14,AJSCB       SAVED
+         MVC   JCTTTR,261(R14) THERE, JCT ADDRESS SET UP
+* NOTE : MVS MAY BE A REAL CORE ADDRESS, THEREFORE DIFFERENT.
+* EXPERIENCE WILL TELL.
+           SPACE 3
+* NOW LETS SEE WHAT SORT OF SYSTEM ETC.
+* START BY PREPARING TO OPEN THE INSTRUCT AND RETN FILES
+         FIX   'IT WILL BE NECESSARY TO DO SOME WORK HERE FOR F4/MVS'
+*        MVC   DCBSOPEN(4),AINSTRUC INSTRUCTION FILE
+*        MVI   DCBSOPEN,X'0'   INPUT
+*        MVC   DCBSOPEN+4(4),ARETN  RETURNCODE MEMBER.
+*        MVI   DCBSOPEN+4,X'0F' OUTPUT
+* NOW CHECK IF $$PRNT PRESENT OR NOT
+         LA    R5,DCBSOPEN     NEXT HOLE IN DCB LIST
+         FINDDD =CL8'$$PRNT'
+         LTR   R15,R15         IS IT PRESENT ?
+         BNZ   E70CHKSY        NOW CHECK SYSTEM TYPE.
+* THERE IS A $$PRNT DD CARD
+         MVC   0(4,R5),AFPRINT   SHIFT DCB ADDRESS INTO LIST
+         MVI   0(R5),X'0F'     OUTPUT DATA SET, SET OPEN OPTION
+         SPACE 3
+E70CHKSY DS    0H
+.Z040    ANOP                                                     J40B
+         SPACE 2
+* NOW WE HAVE TO WORK OUT WHAT TYPE OF SYSTEM WE ARE ON SO THAT WE
+*  CAN DETERMINE IF WE HAVE TO OPEN THE JOBQ DATA SET OR NOT.
+         SPACE 2
+         MVI   VS,C' '     SET TO BLANK INITIALLY
+*        MVI   SYSTYPE,C' ' AS ABOVE
+         L     R15,16          CVT POINTER
+         TM    116(R15),X'02'  USING DAT FEATURE (VS?) ?
+         BO    E70VS             IT'S VS SOMETHING
+         JOLERR 501,'THIS VERSION OF JOL REQUIRES A VIRTUAL-STORAGE OPER
+               RATING SYSTEM'                                     J40B
+* OK, IS A VS SYSTEM OF SOME DESRIPTION
+E70VS    DS    0H
+         TM    116(R15),X'10'  MVS (VS2)
+         BO    E70MVS
+         JOLERR 502,'THIS VERSION OF JOL WILL NOT RUN ON OS/VS1'  J40B
+* HERE A VS1 SYSTEM.
+*        MVI   VS,C'1'         INDICATE VS1 SYSTEM
+*        MVI   SYSTYPE,C'1'    INDICATE VS1 SYSTEM
+         SPACE 1
+         AGO   .Z050                                              J40B
+* NOW FIND OUT IF WE ARE USING SWA OR SWADS
+         L     R1,AJSCB       ADDRESS OF THE JOB STEP CONTROL BLOCK
+         L     R1,X'E0'(R1)   POINT TO SWA CONTROL BLOCK
+         TM    68(R1),X'80'   USING SWA?
+         BO    E70SWA1        YES, GO ELSEWHERE
+* HERE WE ARE USING SWADS.
+*        WTO 'VS1 USING SWADS DATA SET',ROUTCDE=11
+         MVC   0(4,R4),=X'00000100'   FIRST RECORD IN SWADS IS JCT
+         B     E70OPNJB
+         B     LOADRAW
+E70SWA1  EQU   *              SWA ON VS1 SYSTEM HERE
+*THE ADDRESS OF THE JCT IN A VS1 SYSTEM IS THE FIRST RECORD IN SWA
+         MVC   0(3,R4),69  SHIFT CORE ADDRESS (WE KNOW TO SHIFT RIGHT)
+         MVI   3(R4),0        ZERO RIGHT BYTE
+         WTO 'VS1 USING SWA',ROUTCDE=11
+         B     E70OPEN
+         B     LOADRAW
+* NOW WE WILL PUT IN CODE TO SUPPORT 'SWADS' AND OUR '$$JOBQ'
+*    DCB  THIS HOPEFULLY WILL NEVER BE REQUIRED, BUT
+E70OPNJB DS    0H
+         LA    R5,4(R5)        BUMP UP OPEN'S PARAMETER LIST
+         MVC   0(4,R5),AFJOBQ   SHIFT IN JOBQ DCB
+         MVI   0(R5),X'04'     OPEN FOR UPDATE
+         B     E70OPEN
+         B     *+4
+         B     *+4
+         B     *+4
+         B     *+4
+         B     *+4
+         B     *+4
+         SPACE 3
+.Z050    ANOP                                                     J40B
+E70MVS   MVI   VS,C'2'         MVS (VS2)
+*        MVI   SYSTYPE,C'2'    MVS (VS2) AGAIN
+         B     E70DONE         BYPASS LOAD IEFQMRAW.....
+         AGO   .Z060                                              J40B
+LOADRAW  EQU   *
+E70NVS   DS    0H
+         MVC   IBMRTN,=CL8'IEFQMRAW'
+         SPACE 3
+E70OPEN  OI    0(R5),X'80'     TURN OFF LIST FOR OPEN
+         OPEN  MF=(E,DCBSOPEN) OPEN THE DATA SETS.
+* NOW LOAD ROUTINE IF NECESSARY.
+         CLI   IBMRTN,C' '
+         BE    E70NLOAD
+* IF THE SYSTEM IS A VS SYSTEM, WE WILL POP INTO SUPERVISOR
+* BEFORE LOADING THE QMRAW ROUTINE.
+         CLI   VS,C' '     VS?
+         BE    JUSTLOAD
+*        LA    R1,X'3C'       INTO SUPERVISOR STATE
+*        SVC   107            MODESET
+JUSTLOAD EQU   *
+         LOAD EPLOC=IBMRTN   LOAD RTN
+         ST   R0,AQMRAW
+* NOW CHECK IF WE HAD TO GO INTO SUPERVISOR MODE
+         CLI   VS,C' '     DID WE?
+         BE    LOADOK
+*        LA    R1,X'24'       PROBLEM STATE NOW
+*        SVC   107
+LOADOK   DS    0H
+         AGO   .NX8040
+.X8040   AIF   (NOT &X8).NX8040
+         SPACE 2
+*  CHECK THAT THIS REALLY IS AN X8 SYSTEM
+         SPACE
+         L     R15,X'010'    ADDRESS THE CVT
+         USING CVT,R15
+         CLI   CVTDCB,X'83'  THIS IS THE VALUE FOR X8
+         BE    E70TISX8      AND THAT'S WHAT'S THERE!!
+         WTO   'THIS VERSION OF JOL ONLY SUPPORTS OSIV/X8, AND THIS SYS.
+               TEM ISN''T',ROUTCDE=(11,14)
+         ABEND 3,DUMP,STEP
+         SPACE 3
+E70TISX8 DS    0H
+         MVI   VS,C'X'          AND SAY "IT IS OSIV/X8"
+.Z060    ANOP                                                     J40B
+         SPACE 2                                                 88036
+.NX8040  ANOP
+E70NLOAD DS    0H
+E70DONE  DS    0H
+         JOLRETN RC=0
+         DC    10S(*)
+         LTORG
+         SPACE 2                                                  J40B
+         AIF   (&F4).F4CB                                         J40B
+         AIF   (&MVS).MVSCB                                       J40B
+         TITLE 'LOW STORAGE'   VECTOR TABLE'
+         XAMFLC DSECT=YES
+         TITLE 'COMMUNICATIONS VECTOR TABLE'
+         XAMCVT DSECT=YES
+         AGO   .CBDUN                                             J40B
+.F4CB    ANOP                                                     J40B
+         TITLE 'LOW STORAGE'   VECTOR TABLE'                      J40B
+         KAAFLC DSECT=YES                                         J40B
+         TITLE 'COMMUNICATIONS VECTOR TABLE'                      J40B
+         KAACVT DSECT=YES                                         J40B
+         AGO   .CBDUN                                             J40B
+.MVSCB   ANOP                                                     J40B
+         TITLE 'LOW STORAGE'   VECTOR TABLE'                      J40B
+         IHAPSA DSECT=YES                                         J40B
+         TITLE 'COMMUNICATIONS VECTOR TABLE'                      J40B
+         CVT DSECT=YES,SYS=AOS2,                                  J40B .
+               PREFIX=YES                                         J40B
+.CBDUN   ANOP                                                     J40B
+         END

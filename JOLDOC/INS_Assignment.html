@@ -1,0 +1,1201 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Assignment</title>
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>ASSIGNMENT or SET </u></font><font size="5"><u><span
+ style="font-weight: normal;"></span></u></font><u>- </u><font size="5"><i><u><span
+ style="font-weight: normal;">Immediate Instruction</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">SET</span> or <span
+ style="font-weight: bold;">ASSIGNMENT</span> instruction is used to
+change or set the value of a Symbolic Variable.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; <br>
+      </b></p>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">[%]</span><span
+ style="font-style: italic; font-weight: bold;">name</span><span
+ style="font-weight: bold;"> = {</span><span
+ style="font-style: italic; font-weight: bold;">expression |
+function-expression </span><span style="font-weight: bold;">} } </span><br>
+      </div>
+      <div style="margin-left: 40px;">or <br>
+      </div>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">SET
+      <span style="font-style: italic;">name</span>&nbsp; = {<span
+ style="font-style: italic;">expression | function-expression</span> } }</span>
+      <br>
+      </div>
+      <br>
+&nbsp;&nbsp; where <span style="font-style: italic; font-weight: bold;">expression</span>
+is: <br>
+      <br>
+      <div style="margin-left: 80px;">
+      <div style="margin-left: 160px;">[&nbsp; +&nbsp;&nbsp; &nbsp;]<br>
+      </div>
+{ <span style="font-style: italic;">symbolic-variable</span>
+}&nbsp;&nbsp;&nbsp; [&nbsp; -&nbsp;&nbsp; &nbsp;{
+symbolic-variable&nbsp;&nbsp; &nbsp;}&nbsp;&nbsp; &nbsp;]<br>
+{ <span style="font-style: italic;">constant }&nbsp;</span> &nbsp;
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; [&nbsp;
+*&nbsp;&nbsp; &nbsp;{ constant&nbsp;&nbsp; &nbsp;}&nbsp;&nbsp; &nbsp;]<br>
+{ <span style="font-style: italic;">'character-constant' </span>}&nbsp;
+[ / &nbsp;&nbsp; &nbsp;{'character-constant'&nbsp;&nbsp;
+&nbsp;}&nbsp;&nbsp; &nbsp;]<br>
+      <div style="margin-left: 160px;">&nbsp;[&nbsp; | |&nbsp;&nbsp;
+&nbsp;]<br>
+      </div>
+      </div>
+      <br>
+&nbsp; and <span style="font-weight: bold; font-style: italic;">function-expression</span>
+is one of: <br>
+      <br>
+      <div style="margin-left: 80px;">
+      <table style="width: 100%;" border="0" cellpadding="2"
+ cellspacing="2">
+        <tbody>
+          <tr>
+            <td><span style="font-weight: bold;">CAPS</span> </td>
+            <td>(<span style="font-style: italic;">string-expression</span>)</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">CENTER </td>
+            <td>(<span style="font-style: italic;">string-expression,
+length</span>) </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">CENTRE </td>
+            <td>(<span style="font-style: italic;">string-expression,
+length</span>) </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">CHAR </td>
+            <td>(<span style="font-style: italic;">numeric-expression</span>)</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">EOF </td>
+            <td>(<span style="font-style: italic;">file-name</span>)</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">INDEX </td>
+            <td style="font-style: italic;">(string-expression,'search
+string') </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">LEFT </td>
+            <td>(<span style="font-style: italic;">string-expression,length</span>)
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">LENGTH </td>
+            <td>(<span style="font-style: italic;">string-expression</span>)</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">LOWER </td>
+            <td>(<span style="font-style: italic;">string-expression</span>)</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">POS </td>
+            <td>(<span style="font-style: italic;">'search
+string',string-expression</span>) </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">RIGHT </td>
+            <td>(<span style="font-style: italic;">string-expression,length</span>)
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">STMT </td>
+            <td>() returns <span style="font-style: italic;">current-statement-number</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">SUBSTR </td>
+            <td>(<span style="font-style: italic;">string-expression,start-position[,length]</span>)
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">TYPE </td>
+            <td>(<span style="font-style: italic;">string-expression</span>)</td>
+          </tr>
+          <tr>
+            <td> <br>
+            </td>
+            <td>returns <span style="font-weight: bold;">'LIT',
+'CHAR', or NUM</span> </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">UPPER </td>
+            <td>(<span style="font-style: italic;">string-expression</span>)</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">USERID </td>
+            <td>() returns <span style="font-weight: bold;">USERID</span>
+or <span style="font-weight: bold;">Jobname</span><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">WHEREX </td>
+            <td>() returns current cursor column<br>
+            </td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">WHEREY </td>
+            <td>() returns current cursor row </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      <br>
+      </div>
+      <div style="margin-left: 80px;">
+      <div style="margin-left: 80px;"><br>
+      <br>
+      </div>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      <span style="font-weight: bold; font-style: italic;">Symbolic
+Variables and Text Replacement</span><br>
+      </td>
+      <td align="left" valign="top">
+      <p><br>
+A <span style="font-style: italic;">symbolic variable</span> is a
+special variable; it is recognizable by a <span
+ style="font-weight: bold;">%</span> in front of the name.&nbsp;
+Whenever a <span style="font-style: italic;">symbolic variable</span>
+name is found in instructions other than <span
+ style="font-weight: bold;">SET</span>, <span
+ style="font-weight: bold;">Assign</span> or <span
+ style="font-weight: bold;">DECLARE</span> symbolic statements the
+current contents of the symbolic variable replaces the name.&nbsp; For
+example:<br>
+      <br>
+      </p>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">%LOCATION
+= 'CHICAGO';<br>
+      <br>
+      </span></div>
+      <div style="margin-left: 40px;"><span style="font-style: italic;">other
+instructions . . .<br>
+      <br>
+      </span></div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">PRINT
+%LOCATION.PAYROLL.FILE;</span><br>
+      </div>
+      <p><br>
+      <span style="font-style: italic;">is equivalent to:</span><br
+ style="font-style: italic;">
+      <br>
+      </p>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">PRINT
+CHICAGO.PAYROLL.FILE;</span><br>
+      </div>
+      <p><br>
+      <br>
+The symbolic variable <span style="font-weight: bold;">%LOCATION</span>
+is set to contain <span style="font-weight: bold;">CHICAGO.</span><br>
+      <br>
+Later, the <span style="font-weight: bold;">PRINT</span> command
+prints the data set <span style="font-weight: bold;">%LOCATION.PAYROLL.FILE</span>.&nbsp;
+Because <span style="font-weight: bold;">%LOCATION</span> contains the
+characters <span style="font-weight: bold;">'CHICAGO'</span>, whenever
+      <span style="font-weight: bold;">%LOCATION</span> appears, it is
+replaced by <span style="font-weight: bold;">CHICAGO</span>.&nbsp;
+Thus the <span style="font-weight: bold;">PRINT</span> becomes <span
+ style="font-weight: bold;">PRINT CHICAGO.PAYROLL.FILE.</span><br>
+      <br>
+If <span style="font-weight: bold;">%LOCATION</span> contained <span
+ style="font-weight: bold;">LONDON </span>then the data set to be
+printed would have been <span style="font-weight: bold;">LONDON.PAYROLL.FILE</span>.<br>
+      <br>
+Thus symbolic substitution causes the symbolic variable names to be
+replaced by real values (numeric or character data).<br>
+      <br>
+      <br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Adding Flexibilty</span><br>
+      </td>
+      <td style="vertical-align: top;">Symbolic variables add
+flexibility to command procedures by symbolizing real values; these
+real values can change dynamically during the command execution.&nbsp;
+This allows command procedures using symbolic variables to execute
+multiple functions, or the same functions with different values.<br>
+      <br>
+Symbolic variables may be tested with the <span
+ style="font-weight: bold;">IF</span> instruction or altered with the <span
+ style="font-weight: bold;">Assign</span> or <span
+ style="font-weight: bold;">SET</span> instructions.<br>
+      <br>
+The Compile Time Facilities chapter describes the facilities available
+in detail.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td
+ style="vertical-align: top; font-weight: bold; font-style: italic;">Assigning
+Values to Symbolics</td>
+      <td style="vertical-align: top;">The symbolic variable assignment
+statement allows you to place values (numbers or character strings)
+into symbolic variables.&nbsp; Also, the functions allow you to store
+their results in variables that you can then use.<br>
+      <br>
+You may assign contents of other symbolic variables, for example:<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td
+ style="vertical-align: top; background-color: rgb(204, 204, 204);"><br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">%A=10;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* Set A to 10 */</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">%A='CHARACTER STRING';&nbsp;
+&nbsp;&nbsp;&nbsp; /* Set A to characters */</span><br>
+      </div>
+      <br>
+&nbsp;are examples of assigning constants, and<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">%A=%B;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp; /*
+Set A to contents of B */</span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">%A='%B' ||
+'%C';&nbsp;&nbsp;&nbsp;&nbsp; /* Set A to contents of B </span><span
+ style="font-weight: bold;">appended with contents of C */</span><br>
+      </div>
+      <br>
+&nbsp;are examples of assigning variables, and<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">%A=%B+10;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* Set A to contents
+of B plus 10 */</span><br>
+      </div>
+      <br>
+&nbsp;is an example of the mixture of variables and constants being
+used in an assignment.<br>
+      <br>
+&nbsp;In all the above cases, the symbolic variable A receives the
+values on the right hand side of the equal sign.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;"><br>
+Arithmetic Functions</span><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+You may add, subtract, multiply or divide a symbolic variable or
+constant with another symbolic variable or constant.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td
+ style="vertical-align: top; background-color: rgb(204, 204, 204);"><br>
+      <div style="margin-left: 40px;">+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; means add the two quantities together<br>
+      <br>
+- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; means subtract the second
+quantity from the first quantity<br>
+      <br>
+/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; means divide the first
+quantity by the second<br>
+      <br>
+* &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; means multiply the two
+quantities together<br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+The result is then stored in the variable named on the left hand side
+of the <span style="font-weight: bold;">Assignment</span> or <span
+ style="font-weight: bold;">SET</span> instruction.&nbsp; Thus:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">%A=10+5;</span>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; results in <span
+ style="font-weight: bold;">%A</span> being set to <span
+ style="font-weight: bold;">15</span>,<br>
+      </div>
+      <br>
+and<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">SET
+X =%B-10;</span>&nbsp;&nbsp; results in <span
+ style="font-weight: bold;">X</span> being set to the contents of <span
+ style="font-weight: bold;">B</span> minus <span
+ style="font-weight: bold;">10</span>.<br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Concatenation</span><br>
+      </td>
+      <td style="vertical-align: top;">The concatenate function allows
+you to append one string on to another.&nbsp; If <span
+ style="font-weight: bold;">%A</span> contains <span
+ style="font-weight: bold;">'ABC'</span> and the numerals <span
+ style="font-weight: bold;">02</span> are to be appended to the string,
+you could code:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">%A='%A'
+|| 02;</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; which results in <span
+ style="font-weight: bold;">%A</span>&nbsp;&nbsp;&nbsp; containing <span
+ style="font-weight: bold;">'ABC02'</span>.<br>
+      </div>
+      <br>
+      <span style="font-weight: bold;">Note</span>: &nbsp;&nbsp; Any
+coded apostrophes are temporarily removed before the concatenation is
+performed, then they are replaced.&nbsp; Even if only one operand had
+quotes, the result will have quotes.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Use of the SET
+Instruction</span><br>
+      </td>
+      <td style="vertical-align: top;">The <span
+ style="font-weight: bold;">SET</span> Instruction differs from the
+Assignment Statement in only one aspect: you can specify the name
+receiving the values as a symbolic name.<br>
+      <br>
+Suppose that <span style="font-weight: bold;">%X</span> had a name of
+a symbolic variable, and a 10 had to be stored in that name.&nbsp;
+Coding <span style="font-weight: bold;">%X=10;</span>&nbsp; will <span
+ style="font-style: italic; font-weight: bold;">not</span> do this,
+because this assigns a <span style="font-weight: bold;">10</span> to <span
+ style="font-weight: bold;">%X</span>, thus destroying the contents of <span
+ style="font-weight: bold;">%X</span>.&nbsp; In fact, the name
+contained in <span style="font-weight: bold;">%X</span> must be used
+in the Assignment Statement.&nbsp; This can be done with:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">SET
+%X = 10;</span><br>
+      </div>
+      <br>
+The <span style="font-weight: bold;">%X</span> is replaced with the
+name (say NUMBER) and this results in<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">SET
+NUMBER=10;</span><br>
+      </div>
+      <br>
+which assigns the value <span style="font-weight: bold;">10</span> to <span
+ style="font-weight: bold;">%NUMBER</span>.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Use of Apostrophes in
+the Assignment</span><br style="font-weight: bold; font-style: italic;">
+      <span style="font-weight: bold; font-style: italic;">Statement</span><br>
+      <br>
+      </td>
+      <td style="vertical-align: top;">Any string of characters
+containing blanks, or special characters (commas, periods and so forth)
+must be enclosed in apostrophes before being assigned to the
+variable.&nbsp; This also includes any symbolic variables that may
+contain strings with blanks and special characters.&nbsp; This is
+because Jol looks at the second token of an assignment statement to see
+if arithmetic operations must be performed.&nbsp; If there is a second
+token, and it is not +, -, /, * or || then an error is
+signalled.&nbsp;&nbsp;&nbsp; Thus, to assign the string:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">31
+QUEEN ST, MELBOURNE</span><br>
+      </div>
+      <br>
+to <span style="font-weight: bold;">%X,</span> it must be in
+apostrophes:<br>
+      <br>
+      <div style="margin-left: 40px; font-weight: bold;">%X='31 QUEEN
+ST, MELBOURNE';<br>
+      </div>
+      <br>
+If <span style="font-weight: bold;">%X</span> is now assigned to <span
+ style="font-weight: bold;">%Y</span>, it must again be enclosed in
+apostrophes because when the <span style="font-weight: bold;">%X</span>
+is replaced by its contents, it will be an invalid character string.<br>
+      <br>
+Thus <span style="font-weight: bold;">%Y=%X</span> would be invalid,
+but <span style="font-weight: bold;">%Y='%X'</span> would be valid.<br>
+      <br>
+If <span style="font-weight: bold;">%X</span> contained the string <span
+ style="font-weight: bold;">'5 + 3'</span> then<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">%Y=%X;</span><br>
+      </div>
+      <br>
+will result in (after replacement)<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">%Y=5+3;</span>
+which will assign <span style="font-weight: bold;">8</span> to <span
+ style="font-weight: bold;">%Y</span>.<br>
+      </div>
+      <br>
+However, <span style="font-weight: bold;">%Y ='%X';</span> will result
+in <span style="font-weight: bold;">'5+3'</span> being assigned to <span
+ style="font-weight: bold;">%Y</span> because the apostrophes signify
+that a direct character assignment is to be performed.&nbsp; It is good
+practice to always place apostrophes around any character strings when
+assigning them.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Replacement with Quoted
+Strings</span><br>
+      </td>
+      <td style="vertical-align: top;">Whenever a symbolic parameter
+name is replaced by its actual contents, any quotes are removed, and
+any double quotes converted to one apostrophe unless the replacement is
+made into a quoted string.<br>
+      <br>
+For example:&nbsp; &nbsp;&nbsp;&nbsp; <span style="font-weight: bold;">%DSN
+='JOL.INCLUDE';</span><br>
+      <div style="margin-left: 120px;"><span style="font-weight: bold;">.
+. .</span><br>
+      </div>
+      <div style="margin-left: 120px;"><span style="font-weight: bold;">DCL
+INPUT DS %DSN;</span><br>
+      </div>
+results in:&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span
+ style="font-weight: bold;">DCL INPUT DS JOL.INCLUDE;</span><br>
+      <br>
+      <br>
+and&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span
+ style="font-weight: bold;">%MESSAGE ='THAT''S IT EVERYONE';</span><br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">.
+. .</span><br>
+      </div>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">DISPLAY
+'%MESSAGE';<br>
+      <br>
+      </span></div>
+results in:&nbsp;&nbsp;&nbsp; <span style="font-weight: bold;">DISPLAY
+'THAT''S IT EVERYONE';</span><br>
+      <br>
+      <br>
+      <span style="font-weight: bold;">Note:</span> Had the <span
+ style="font-weight: bold;">DISPLAY</span> been:<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">DISPLAY
+%MESSAGE;</span><br>
+      </div>
+      <br>
+then the result would have been<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">DISPLAY
+THAT'S IT EVERYONE;</span><br>
+      </div>
+      <br>
+That is, the two apostrophes will have been converted to one apostrophe.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Functions</span><br>
+      </td>
+      <td
+ style="vertical-align: top; background-color: rgb(204, 204, 204);">Functions
+return values to a variable.&nbsp; Jol supports the following functions:<br>
+      <br>
+      <span style="font-weight: bold;">CAPS&nbsp;</span>&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp; (string-expression)<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">CAPS</span>
+converts a string expression to upper case.<br>
+      </div>
+      <br>
+      <div style="margin-left: 80px;">For example, <span
+ style="font-weight: bold;">A=CAPS</span>('lower case string');<br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">CENTER</span>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; (string-expression, length)<br>
+      <span style="font-weight: bold;">CENTRE</span>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; (string-expression, length)<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">CENTRE
+or CENTER</span>&nbsp;&nbsp;&nbsp; returns a string of length with
+string centered in it, with blanks added at either end.<br>
+      </div>
+      <br>
+      <div style="margin-left: 80px;">For example, A=CENTRE('Center
+me',78);<br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">CHAR</span>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; (numeric-expression)<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">CHAR</span>
+returns the <span style="font-weight: bold;">EBCDIC</span> or <span
+ style="font-weight: bold;">ASCII</span> representation of the number.<br>
+      </div>
+      <br>
+      <div style="margin-left: 80px;">For example, <span
+ style="font-weight: bold;">A=CHAR(217);</span>&nbsp; set <span
+ style="font-weight: bold;">A</span> to the character <span
+ style="font-weight: bold;">'R'</span>.<br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">EOF</span>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; determines if a file that is
+OPENed for <span style="font-weight: bold;">INPUT</span> is at the end
+of file, that is if all the records have been read from the file.<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">EOF</span>&nbsp;&nbsp;&nbsp;
+returns 0 if there are still records to be read, otherwise a 1 is
+returned.<br>
+      </div>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">Example</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">ALLOC F(INDATA)
+'SYS1.PROCLIB(Z)' SHR;</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">OPEN F(INDATA) INPUT;&nbsp;
+&nbsp;&nbsp;&nbsp; /* open the file */</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">%TEST = EOF(INDATA);&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; /* Test EOF */</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">IF %TEST=0&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; /* Check
+End-of-file */</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN GETFILE
+INDATA;&nbsp;&nbsp;&nbsp; &nbsp; &nbsp;&nbsp;&nbsp; /* Not End-of-file,
+get another record */</span><br style="font-weight: bold;">
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">INDEX</span>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; (string-expression,search-string)<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">INDEX</span>
+searches a string in a symbolic variable for the occurrence of a
+character, or a set of characters.<br>
+      </div>
+      <br>
+      <div style="margin-left: 80px;">The result is a 0 if the
+character(s) is not in the specified string, or a number which is the
+position in the string where the first occurrence of the character(s)
+was found.&nbsp; This number may then be used in a <span
+ style="font-weight: bold;">SUBSTR</span> to extract the string.<br>
+      </div>
+      <br>
+      <div style="margin-left: 80px;">Examples<br>
+      <br>
+      <span style="font-weight: bold;">%A='ABCDEFG';&nbsp;</span>&nbsp;&nbsp;
+&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* Set symbolic
+A to ABCDEFG */<br>
+      <br>
+      <span style="font-weight: bold;">%B=INDEX(A,'F');</span>&nbsp;&nbsp;&nbsp;
+&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* %B now contains 6,
+this being the position of the F in the string */<br>
+      <br>
+      <span style="font-weight: bold;">%C=INDEX(A, 'AB2G'); </span>&nbsp;&nbsp;&nbsp;
+/* %C contains zero because the characters AB2G were not in the
+character string ABCDEFG */<br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">LEFT</span>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp; (string-expression, length)<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">LEFT</span>
+returns a string of length which contains the left-most length
+characters of string.<br>
+      </div>
+      <br>
+      <div style="margin-left: 80px;">For example, <span
+ style="font-weight: bold;">A=LEFT</span>('abcdefg',2) sets <span
+ style="font-weight: bold;">A</span> to <span
+ style="font-weight: bold;">'ab</span>'.<br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">LENGTH&nbsp;</span>&nbsp;&nbsp;
+returns the length of the contents of a symbolic variable, that is the
+number of characters currently assigned to it.<br>
+      <br>
+      <div style="margin-left: 80px;">Examples<br>
+      <br>
+      <span style="font-weight: bold;">%A=10;</span><br>
+      <span style="font-weight: bold;">%B= LENGTH(A);</span>&nbsp;&nbsp;&nbsp;
+&nbsp; &nbsp;&nbsp;&nbsp; /* will set B to 2, because there are 2
+digits in the characters 10 */<br>
+      <br>
+      <br>
+      <span style="font-weight: bold;">%A='FRIDAY 10TH MAY';</span><br>
+      <span style="font-weight: bold;">%B=LENGTH(A);</span>&nbsp;&nbsp;&nbsp;
+&nbsp; &nbsp;&nbsp;&nbsp; /* %B will now contain 15.&nbsp; Note that
+the quotes are not counted, nor is it necessary to ever consider them */<br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">LOWER</span>&nbsp;&nbsp;&nbsp;&nbsp;
+(string-expression)<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">LOWER</span>
+converts a string expression to lower case.<br>
+      <br>
+For example, <span style="font-weight: bold;">A=LOWER('LOWER CASE
+STRING');</span><br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">POS</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; (string-string,search-expression)<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">POS</span>
+searches a string in a symbolic variable for the occurrence of a
+character, or a set of characters.<br>
+      <br>
+The result is a 0 if the character(s) is not in the specified string,
+or a number which is the position in the string where the first
+occurrence of the character(s) was found.<br>
+      <br>
+See the<span style="font-weight: bold;"> INDEX</span> function for
+examples.<br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">RIGHT</span>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp; (string-expression, length)<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">RIGHT</span>
+returns a string of length which contains the right-most length
+characters of string.<br>
+      <br>
+For example, <span style="font-weight: bold;">A=RIGHT('abcdefg',2)</span>
+sets A to <span style="font-weight: bold;">'fg'.</span><br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">STMT</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+( )&nbsp;&nbsp;&nbsp; returns current-statement-number<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">STMT
+      </span>returns the current statement number in the program.<br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">SUBSTR</span>&nbsp;&nbsp;&nbsp;
+extracts sub-strings from strings of data.<br>
+      <br>
+      <div style="margin-left: 80px;">The name of the symbolic variable
+containing the data must be specified, as well as the start position
+within the data from which the sub-string is to be extracted.&nbsp; If
+the length is not specified, the remaining data is transferred to the
+output symbolic variable.&nbsp; If the length is specified then only
+the amount of data specified is transferred.&nbsp; If the input string
+is shorter than the length specified, the output string will not be
+padded with blanks.<br>
+      <br>
+Examples:<br>
+      <br>
+      <span style="font-weight: bold;">%A = 'ABCDEFG';&nbsp;&nbsp;</span>&nbsp;
+&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp; /* Set symbolic A to ABCDEFG */<br>
+      <br>
+      <span style="font-weight: bold;">%B = SUBSTR(A,3);&nbsp;</span>&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp; /* %B now contains CDEFG */<br>
+      <br>
+      <span style="font-weight: bold;">%C = SUBSTR (A,3,2); </span>&nbsp;&nbsp;&nbsp;
+/* %C now contains CD */<br>
+      <br>
+      <span style="font-weight: bold;">%D = SUBSTR(A,15);&nbsp;&nbsp;
+&nbsp;&nbsp;</span>&nbsp; /* %D now contains '' null because the input
+string is shorter than the start position specified */<br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">TYPE</span>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp; determines the type of contents in a symbolic
+variable.<br>
+      <br>
+      <div style="margin-left: 80px;">If the contents are numeric, <span
+ style="font-weight: bold;">TYPE</span> returns <span
+ style="font-weight: bold;">NUM</span>.&nbsp; If the contents are in
+quotes, <span style="font-weight: bold;">TYPE</span> returns <span
+ style="font-weight: bold;">LIT</span>, otherwise <span
+ style="font-weight: bold;">CHAR</span>.<br>
+      <br>
+Examples<br>
+      <br>
+      <span style="font-weight: bold;">%A=10</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">%B=TYPE(A);</span>&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; /* sets %B to <span
+ style="font-weight: bold;">NUM</span> */<br>
+      <br>
+      <br>
+      <span style="font-weight: bold;">%A='FRIDAY 10TH MAY';</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">%B=TYPE(A);&nbsp;</span>&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; /* sets %B to <span
+ style="font-weight: bold;">LIT</span> */<br>
+      <br>
+      <br>
+      <span style="font-weight: bold;">%A = FRIDAY;</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">%B=TYPE(A);&nbsp;&nbsp;&nbsp;</span>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; /* sets %B to <span
+ style="font-weight: bold;">CHAR</span> */<br>
+      <br>
+      </div>
+      <br>
+      <span style="font-weight: bold;">UPPER</span>&nbsp;&nbsp;&nbsp;
+&nbsp; (string-expression)<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">UPPER</span>
+converts a string expression to upper case.<br>
+      <br>
+For example, <span style="font-weight: bold;">A=UPPER</span>('lower
+case string');<br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">USERID&nbsp;&nbsp;</span>&nbsp;
+( )<br>
+      <div style="margin-left: 80px;"><br>
+      <span style="font-weight: bold;">USERID</span> returns <span
+ style="font-style: italic;">userid</span> or&nbsp; jobname<br>
+      </div>
+      <br>
+      <br>
+      <span style="font-weight: bold;">WHEREX</span>&nbsp; (
+)&nbsp;&nbsp; returns current cursor column<br>
+      <span style="font-weight: bold;">WHEREY</span>&nbsp; (
+)&nbsp;&nbsp; returns current cursor row<br>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">WHEREX
+      </span>and <span style="font-weight: bold;">WHEREY</span> return
+the current cursor position when executing in interactive mode,
+otherwise 0.&nbsp; The cursor position is only valid after executing a <span
+ style="font-weight: bold;">PANEL</span> or <span
+ style="font-weight: bold;">POPUP</span> instruction.<br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Notes</span><br>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+        <li><span style="font-weight: bold;"></span><span
+ style="font-weight: normal;"> Symbolic
+variables and parameters are fully described in the chapter Compile
+Time Facilities.</span></li>
+        <li><span style="font-weight: bold;"></span><span
+ style="font-weight: normal;">The
+names may be preceded by a % symbol.&nbsp; They
+may be from one to eight alphameric or national ($, # or @)
+characters.&nbsp; For example:</span></li>
+      </ol>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">%A</span><br>
+      <span style="font-weight: bold;">%123</span><br>
+      <span style="font-weight: bold;">%$NAME</span><br>
+      <span style="font-weight: bold;">%GEN</span></div>
+      <br>
+      <ol start="3">
+        <li><span style="font-weight: bold;"></span><span
+ style="font-weight: normal;"> The
+following names are reserved and have special
+meanings.&nbsp; Any attempt to </span>DECLARE<span
+ style="font-weight: normal;">&nbsp;
+them will
+result in an error message; use of the </span>Assign<span
+ style="font-weight: normal;">
+or </span>SET<span style="font-weight: normal;"> instruction will
+alter the contents of the named variable to the value you specify.</span></li>
+      </ol>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+following are initialized by
+Jol before any statements have been
+read:</span><br>
+      </div>
+      <br>
+      <table style="width: 100%; text-align: left; margin-left: 40px;"
+ border="1" cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="font-weight: bold;">%SYSDATE <br>
+            </td>
+            <td style="vertical-align: top;">The current date e.g., <span
+ style="font-weight: bold;">09225</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">%DAY</td>
+            <td><span style="font-weight: bold;">MONDAY, TUESDAY</span>
+and so on</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">%MONTH</td>
+            <td><span style="font-weight: bold;">JANUARY, FEBRUARY</span>
+etc.</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">%MONTHNO</td>
+            <td><span style="font-weight: bold;">01,02</span> through
+to <span style="font-weight: bold;">12</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">%DAYNO</td>
+            <td style="font-weight: bold;">01 - 31</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">%YEAR</td>
+            <td style="font-weight: bold;">2009, 2010</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">%HOURS</td>
+            <td style="font-weight: bold;">0 - 23</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">%MINS</td>
+            <td style="font-weight: bold;">0 - 59</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">%SECS</td>
+            <td style="font-weight: bold;">0 - 59</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">%SYSTEM</td>
+            <td style="font-weight: bold;">MFT, MVT, VS1, VS2 or VM</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">%SPOOL</td>
+            <td><span style="font-weight: bold;">HASP, ASP, JES1, JES2,
+JES3</span> or blank</td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      <br>
+      <div style="margin-left: 40px; font-weight: normal;">Other
+Symbolic Variables are
+automatically initialized and changed
+during the compile.&nbsp; They are of particular interest to those
+writing Jol Macros.<br>
+      </div>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">These,
+and their contents, are:-</span><br>
+      </div>
+      <br>
+      <table style="width: 770px; height: 202px; margin-left: 40px;"
+ border="1" cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td><span style="font-weight: bold;">%SYSLABEL</span> <br>
+            </td>
+            <td style="vertical-align: top;">the label on the statement
+invoking the macro</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">%SYSMACNM <br>
+or %SYSSCMD</td>
+            <td style="vertical-align: top;">the name of the macro
+called . . . useful when you have one macro doing
+several related functions and each is stored as an ALIAS. You can have
+this to determine which "entry point" the macro was called at.</td>
+          </tr>
+          <tr>
+            <td><span style="font-weight: bold;">%SYSNLIST</span> </td>
+            <td>the number of LIST (non-keyword) items found on the
+invoking statement.</td>
+          </tr>
+          <tr>
+            <td><span style="font-weight: bold;">%SYSLEVEL</span> </td>
+            <td>the current level of the macro. If a macro invokes
+another macro it will be set at 2; in the mainline code it is set at 0,
+and in the first macro invocation it will be set at 1.</td>
+          </tr>
+          <tr>
+            <td><span style="font-weight: bold;">%SYSSTMT</span> </td>
+            <td>this variable is set at 0001 - 9999, and is altered
+every time a new statement is read.</td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      <br>
+      <br>
+      <ol start="4">
+        <li><span style="font-weight: bold;"></span><span
+ style="font-weight: normal;">If
+the variable is not already Declared, it is
+implicitly declared at the current level.</span></li>
+        <li style="font-weight: normal;">When used in a Macro,
+and the name is not defined
+nor declared external to the Macro, it is implicitly declared at the
+same level as the Macro, and the value will not be available after the
+Macro terminates.</li>
+        <li span="" style="font-weight: normal;">The <span
+ style="font-weight: bold;">SET</span> may be
+used to alter the value of a
+Symbolic Variable by using an existing symbolic variable contents to
+specify the name of the variable to be altered.&nbsp; For example:</li>
+      </ol>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">%X='ABC';</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">SET %X=1</span>;<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">Result:
+      </span>%ABC<span style="font-weight: normal;"> will contain the </span>1,<span
+ style="font-weight: normal;"> </span>%X<span
+ style="font-weight: normal;">
+will be unaltered.</span><br>
+      </div>
+      <br>
+      <ol start="7">
+        <li style="font-weight: normal;">The maximum length of any
+assignment value is 253
+characters.&nbsp; Assigning more than 253 characters will result in
+truncation.</li>
+        <li style="font-weight: normal;">All symbolic variable contents
+are held in
+character format, even if they are numeric.</li>
+        <li style="font-weight: normal;">When any arithmetic operations
+are to be performed on
+symbolics
+variables, they are first converted to decimal packed
+numbers.&nbsp;&nbsp;&nbsp; If any errors are detected during this
+conversion, an error is signalled and the result is forced to
+zero.&nbsp; The maximum numberof digits in a number is allowed to be
+thirteen (13) : longer numbers are treated as characters.</li>
+        <li style="font-weight: normal;">All arithmetic is performed in
+integers.&nbsp; Thus</li>
+      </ol>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">%A=5/3;<br>
+      <br>
+      </span> </div>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">results
+in </span>1 being assigned to <span style="font-weight: bold;">%A</span>.</div>
+      <ol start="11">
+        <li style="font-weight: normal;">&nbsp;When a name is declared
+in the main Jol procedure,
+and the same name is declared in a Macro Command, any reference to that
+symbolic variable will result in the second definition being
+utilized.&nbsp; When the END statement for the macro has been executed,
+any reference to that variable will revert to the value of the first
+declaration being used.</li>
+      </ol>
+      <ol start="12">
+        <li><span style="font-weight: normal;">All symbolic variable
+contents are held in character format, even if they are numeric.&nbsp;
+When arithmetic operations are performed on symbolic variables, they
+are first converted to decimal packed numbers.&nbsp; If errors are
+detected during this conversion, an error is signalled and the result
+is forced to zero.&nbsp; The maximum number of digits in a number is
+allowed to be thirteen (13) : longer numbers are treated as characters</span></li>
+      </ol>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top"><span
+ style="font-weight: bold;">1 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+A='ABC';</span><br style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+symbolic variable <span style="font-weight: bold;">A</span> is set to
+the characters <span style="font-weight: bold;">ABC</span>.&nbsp;
+Whenever <span style="font-weight: bold;">%A</span> is now written
+(except in an assignment), the characters <span
+ style="font-weight: bold;">ABC</span> will replace it.</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">2
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; NUM = B + 5;</span><br
+ style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+symbolic <span style="font-weight: bold;">NUM</span> is set to the
+current contents of <span style="font-weight: bold;">B</span>, plus
+5.&nbsp; If <span style="font-weight: bold;">B</span> contained a <span
+ style="font-weight: bold;">2</span>, then <span
+ style="font-weight: bold;">NUM</span> would now contain <span
+ style="font-weight: bold;">7</span>.</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">3
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; CHAR ='%A%B%C';</span><br
+ style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+symbolic <span style="font-weight: bold;">CHAR</span> is set equal to
+the result of concatenating the current contents of the symbolic
+variables <span style="font-weight: bold;">A, B</span> and <span
+ style="font-weight: bold;">C</span>.</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">4
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; NAME='MASTER.FILE' || %NUM;</span><br
+ style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+symbolic variable <span style="font-weight: bold;">NAME</span> is set
+to the characters <span style="font-weight: bold;">MASTER.FILE</span>
+concatenated to whatever the current contents of <span
+ style="font-weight: bold;">NUM</span> are.&nbsp; If <span
+ style="font-weight: bold;">NUM</span> contained <span
+ style="font-weight: bold;">02</span>, then <span
+ style="font-weight: bold;">NAME</span> would equal <span
+ style="font-weight: bold;">MASTER.FILE0.</span></span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">5 &nbsp;&nbsp; &nbsp; &nbsp;
+NAME = 'SET A = B+C';</span><br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">...</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: bold;">%NAME;</span><br
+ style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">Sets <span
+ style="font-weight: bold;">A</span> to the result of <span
+ style="font-weight: bold;">B</span> plus <span
+ style="font-weight: bold;">C</span>.</span><br
+ style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">The <span
+ style="font-weight: bold;">%NAME</span> statement is replaced by the
+current value of <span style="font-weight: bold;">%NAME</span> which,
+in this case, is an assignment or <span style="font-weight: bold;">SET</span>
+instruction.&nbsp; It is then executed.&nbsp; Other types of
+instructions may also be set up in this manner.</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;"><span
+ style="font-weight: bold;">6</span> &nbsp;&nbsp;&nbsp; This example is
+a macro that splits variables into two if the length of the information
+contained in the symbolic variable OP is greater than 71 characters.<br>
+      <br>
+      <br style="font-weight: normal;">
+      </span>
+      <ol style="font-weight: bold;">
+        <li><span style="font-weight: normal;">SPLITOP: MACRO;</span></li>
+        <li><span style="font-weight: normal;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; L = LENGTH (OP);</span></li>
+        <li><span style="font-weight: normal;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; IF %L&gt;72</span></li>
+        <li><span style="font-weight: normal;">&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; THEN DO;</span></li>
+        <li><span style="font-weight: normal;">&nbsp; &nbsp; &nbsp;
+&nbsp;&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp; LINE2 = SUBSTR (OP,72);</span></li>
+        <li><span style="font-weight: normal;">&nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp; OP = SUBSTR (OP, 1,71);</span></li>
+        <li><span style="font-weight: normal;">&nbsp;
+&nbsp;&nbsp;&nbsp; END;</span></li>
+      </ol>
+      <ol style="font-weight: bold;" start="8">
+        <li><span style="font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ELSE LINE2 ='';</span></li>
+      </ol>
+      <ol style="font-weight: bold;" start="9">
+        <li><span style="font-weight: normal;"> END;</span></li>
+      </ol>
+      <br style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+      <span style="font-weight: bold;">SPLITOP</span> command above
+checks the number of characters in <span style="font-weight: bold;">OP</span>
+and if there are more than 72 characters it will place the 73rd and
+subsequent characters in <span style="font-weight: bold;">LINE2</span>,
+and truncate <span style="font-weight: bold;">OP</span> to 72
+characters.&nbsp; If there are fewer than 72 characters, <span
+ style="font-weight: bold;">LINE2</span> will be cleared and <span
+ style="font-weight: bold;">OP</span> will remain unaltered.</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <br>
+      </td>
+    </tr>
+    <tr align="center">
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;">---000---</span><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

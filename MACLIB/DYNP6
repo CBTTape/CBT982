@@ -1,0 +1,30 @@
+         MACRO
+         DYNP6 &P,&OPT,&KEY
+.*  FLAGS1 AND FLAGS2
+         LCLC  &C,&D
+         GBLC  &B
+&C       SETC  '''0000000000000000'''
+         AIF   ('&P'EQ'').E
+         LCLA  &I,&J
+.A       ANOP
+&I       SETA  &I+1
+&J       SETA  1
+.B       AIF   ('&P(&I)'NE'&OPT(&J)').C
+&C       SETC  '&C'(1,&J).'1'.'&C'(&J+2,17-&J)
+         AGO   .D
+.C       ANOP
+&J       SETA  &J+1
+         AIF   (&J LE N'&OPT).B
+         MNOTE 4,'** PARAM &P(&I) INVALID'
+.D       AIF   (&I LT N'&P).A
+.E       ANOP
+&C       SETC  'B'.'&C'.'&B'.'&KEY'.'='.'&P'
+         AIF   (K'&C GT 51).F
+         DC    &C
+         AGO   .G
+.F       ANOP
+&D       SETC  '&C'(1,51)
+         DC    &D
+&D       SETC  '&C'(52,K'&C-51)
+         MNOTE '*     &D'
+.G       MEND

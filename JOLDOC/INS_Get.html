@@ -1,0 +1,333 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Get</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>GET</u></font><font size="5"><u><span
+ style="font-weight: normal;"> </span></u></font><u>- </u><font
+ size="5"><i><u><span style="font-weight: normal;">Immediate Instruction</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">GET</span> Instruction reads data into
+symbolic variables at compile time <span
+ style="font-style: italic; text-decoration: underline;">(not at
+execution time)</span>.&nbsp;
+Optionally, you can search the data set for records with specific keys
+in preset positions.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <p><b>&nbsp;<br>
+      </b></p>
+      <div style="margin-left: 40px;"><b>GET &nbsp;&nbsp;&nbsp;
+&nbsp;filename [(member-name)]</b><span style="font-style: italic;">
+options</span><b> ;</b><br>
+      </div>
+      <p><b><br>
+      </b><span style="font-style: italic;">options</span><b><br>
+      <br>
+      </b></p>
+      <div style="margin-left: 40px;"><b>KEYS = key-length,
+key-position, key-name-list</b><br>
+      </div>
+      <p><b>&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; </b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <span
+ style="font-weight: bold; font-style: italic;"><br>
+Reading Data Into Symbolic Variables</span><br>
+      </td>
+      <td align="left" valign="top">
+      <p><br>
+Sometimes it is highly desirable to read a data set (or part thereof)
+and, depending on the contents, perform different work to that which
+might be done otherwise.&nbsp; Several possible reasons for wanting to
+do this are:<br>
+      </p>
+      <ul>
+        <li>To run parts of a job on a cyclic basis - the current cycle
+number is held on a data set that Jol can interrogate.</li>
+        <li>To search a data set containing names of jobs that have
+executed, and organise the record to see if they ended correctly, and
+if so, generate another.</li>
+        <li>To allow a user to specify his requirements on a fixed
+format card that can be read into a symbolic variable and examine in
+order to produce Jol commands.</li>
+      </ul>
+      <p>Using the <span style="font-weight: bold;">GET</span>
+instruction you can:<br>
+      </p>
+      <ul>
+        <li>Read a small data set in its entirety into symbolic
+variables.</li>
+        <li>Read a member of a partitioned data set.</li>
+        <li>Read a data set and search particular columns of each
+record for specific information.</li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Reading an entire data
+set</span><br>
+      </td>
+      <td style="vertical-align: top;">To read a small data set you
+must first have allocated the file or DDname to the Jol Compiler with
+the Jol or <span style="font-weight: bold;">TSO ALLOC</span> command,
+or with JCL.&nbsp; Then the <span style="font-weight: bold;">GET </span>is
+coded:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">GET</span>
+filename;<br>
+      </div>
+      <br>
+and the data set is read into the symbolic variables called <span
+ style="font-weight: bold;">CARD(1), CARD(2)</span> up to <span
+ style="font-weight: bold;">CARD(n)</span>.<br>
+      <br>
+If you allocate a library or partitioned data set, you may request a
+specific member.&nbsp; For example<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">GET
+INPUT(MEMBER);</span><br>
+      </div>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Using Keys</span><br>
+      </td>
+      <td style="vertical-align: top;">You can also request the <span
+ style="font-weight: bold;">GET </span>instruction to search specified
+columns of a data set for particular values.&nbsp; If a record contains
+the value, then the record is placed in a symbolic variable of that
+name.&nbsp; If, after reading the entire data set, the key is not
+found, the symbolic will have a null value.&nbsp; You must specify
+where the key is to be found in the record, and its length.&nbsp; Then
+you code a list of names or keys you wish to find.&nbsp; If any of the
+names are less than 8 characters, they are padded with blanks.<br>
+      <br>
+For example<br>
+      <br>
+      <div style="margin-left: 40px; font-weight: bold;">GET CYCLE<br>
+      <div style="margin-left: 40px;">KEYS=7,22<br>
+      </div>
+      <div style="margin-left: 40px;">CYCLE1, CYCLE2;<br>
+      </div>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><span
+ style="font-weight: bold; font-style: italic;">Using the Data from the
+GET</span><br>
+      </td>
+      <td style="vertical-align: top;">Because the data is read into <span
+ style="font-style: italic;">symbolic variables</span>, any Jol
+instruction that operates on Symbolic Variables can help you examine
+the data.&nbsp; The <span style="font-weight: bold;">IF, EDIT, SUBSTR</span>,
+and
+so
+on are all useful to you.<br>
+      <br>
+If you had read a data set in its entirety, and the first record
+contained:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">JOBbPAYROLLbTUESDAY</span><br>
+      </div>
+      <br>
+and you wanted it to execute only if it was <span
+ style="font-weight: bold;">TUESDAY</span>, the following code would do
+that:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">EDIT
+CARD(1)
+JOB,JOBNAME,DATETEST</span><br style="font-weight: bold;">
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">A(3),X(1),A(8),X(1),A(8);</span><br>
+      </div>
+      </div>
+      <br>
+(the <span style="font-weight: bold;">EDIT</span> places specified
+columns into <span style="font-weight: bold;">%JOB, %JOBNAME, %DATETEST</span>)<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+%DAY
+=
+%DATETEST</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN INCLUDE %JOBNAME;</span><br>
+      </div>
+      <br>
+The code above checks the date on the data set with the <span
+ style="font-style: italic;">current</span> date, and if they are the
+same, the <span style="font-weight: bold;">INCLUDE</span> instruction
+will <span style="font-weight: bold;">INCLUDE PAYROLL.</span><br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+        <li><span style="font-weight: normal;">The file must have been
+previously allocated with the Jol <span style="font-weight: bold;">ALLOCATE</span>
+instruction, the <span style="font-weight: bold;">TSO ALLOCATE</span>
+instruction or with the JCL used to invoke Jol.</span></li>
+        <li><span style="font-weight: normal;">Any records longer than
+253 characters are truncated.</span></li>
+        <li><span style="font-weight: normal;">If no options are
+specified, the entire file is read into Symbolic Variables called <span
+ style="font-weight: bold;">CARD(1)</span> to <span
+ style="font-weight: bold;">CARD(nnnn)</span>.</span></li>
+        <li><span style="font-weight: normal;">Only <span
+ style="font-weight: bold;">Fixed Blocked</span> or <span
+ style="font-weight: bold;">Variable Blocked</span> files are supported.</span></li>
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">ISAM </span>and <span
+ style="font-weight: bold;">VSAM</span> files are not supported.</span></li>
+        <li><span style="font-weight: normal;">When the <span
+ style="font-weight: bold;">KEY</span> option is specified, the file is
+searched for the specified keys; the keys are the names specified in
+the name-list, and the symbolic variables are set equal to the contents
+of the record if the key is found in the file.</span></li>
+        <li><span style="font-weight: normal;">Any names specified in a
+name list will be implicitly defined if they are not already declared,
+and set to null if the corresponding data is not found on the input
+file.</span></li>
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">READ</span> or <span
+ style="font-weight: bold;">GETFILE</span> instructions are more
+flexible, and can be used in place of the <span
+ style="font-weight: bold;">GET</span> instruction.</span></li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      <span style="font-weight: normal;"><span
+ style="font-style: italic; font-weight: bold;">For the following
+examples</span>, assume that the file referenced by <span
+ style="font-weight: bold;">DDNAME INPUT</span> contains the following
+records:</span><br style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">a)&nbsp;&nbsp;&nbsp; JANbbb01</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">b)&nbsp;&nbsp;&nbsp; FEBbbb02</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">1.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+GET
+INPUT;</span><br style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">Result
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+      <span style="font-weight: bold;">%CARD(1)</span> will contain <span
+ style="font-weight: bold;">'JANbbb01'</span></span><br
+ style="font-weight: normal;">
+      <div style="margin-left: 80px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">%CARD(2)</span> will contain <span
+ style="font-weight: bold;">'FEBbbb02'</span></span><br
+ style="font-weight: normal;">
+      </div>
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">2.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+GET INPUT KEYS 5,1 JAN,FEB,MAR;</span><br style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">Result
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+      <span style="font-weight: bold;">%JAN</span>&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+will contain <span style="font-weight: bold;">'JANbbb01'</span></span><br
+ style="font-weight: normal;">
+      <div style="margin-left: 80px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">%FEB</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+will contain <span style="font-weight: bold;">'FEBbbb02'</span></span><br
+ style="font-weight: normal;">
+      </div>
+      <div style="margin-left: 80px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">%MAR</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+will contain <span style="font-weight: bold;">''(null)</span></span><br
+ style="font-weight: normal;">
+      </div>
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">3.&nbsp;&nbsp;&nbsp; GET INPUT
+LIST JAN,FEB,MAR;</span><br style="font-weight: bold;">
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">Result
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+      <span style="font-weight: bold;">%JAN</span>&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+will contain <span style="font-weight: bold;">01</span></span><br
+ style="font-weight: normal;">
+      <div style="margin-left: 80px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">%FEB</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+will contain <span style="font-weight: bold;">02</span></span><br
+ style="font-weight: normal;">
+      </div>
+      <div style="margin-left: 80px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">%MAR</span>&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+will contain <span style="font-weight: bold;">(null)</span></span><br>
+      </div>
+      </div>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

@@ -1,0 +1,360 @@
+RECOVER  TITLE 'PROGRAM TO AID RECOVERY OF A FLATTENED PDS'
+         LCLA  &A
+         LCLB  &B
+         LCLC  &C
+         SPACE 3
+* COPYRIGHT 1982, KURRAWANG COMPUTER PROGRAMMING PTY LTD
+* ALL RIGHTS RESERVED
+         SPACE 2
+*THIS PROGRAM IS THE PROPERTY OF KURRAWANG COMPUTER PROGRAMMING PTY LTD
+* AND MAY NOT BE USED BY ANY PERSON, BODY CORPORATE OR OTHER
+* OR OTHER ORGANISATION WITHOUT WRITTEN PERMISSION FROM THE OWNER.
+         SPACE 2
+RECOVER  CSECT
+.LP      ANOP
+&B       SETB  (&A LT 10)
+&C       SETC  'R'.(&B)'0'.'&A'
+&C       EQU   &A
+&A       SETA  &A+1
+         AIF   (&A LT 16).LP
+         STM   R14,R12,12(R13)
+         LR    R12,R15
+         USING RECOVER,R12
+         GETMAIN R,LV=WRKLEN
+         ST    R13,4(,R01)
+         ST    R01,8(,R13)
+         LR    R13,R01          SAVE AREA ADDRESS TO REGISTER 13
+         USING WORK,R13
+         BAL   R14,INIT
+         SPACE 2
+*   ALL SET, I HOPE
+         SPACE 1
+         B     NB050
+NEXTBLK  DS    0H
+         MVC   CCHHR,COUNT       ADDRESS OF THE NEXT RECORD TO READ
+         CLC   TRAKPREV,CCHHR    Q... BACK TO START OF TRACK?
+         BL    NB050             A... NO
+         BAL   R14,TRAKUP
+         LTR   R15,R15           Q... END OF DATA
+         BNZ   DONE              A... YES
+NB050    DS    0H
+         BAL   R14,READ          GO AND READ A BLOCK
+         B     DONE              EXIT IF ALL DONE
+         B     PUTPAD            BR IF NO DATA READ
+         BAL   R14,WRITE         GO AND WRITE THE BLOCK
+         B     MORE              GO AND DO THE NEXT
+         SPACE 2
+PUTPAD   DS    0H                PUT A MARK BETWEEN MEMBERS
+         AP    COUNTER,ONE
+         OI    COUNTER+L'COUNTER-1,X'0F' SET ZONE BITS
+         UNPK  MEMBERNO,COUNTER   MEMBER NUMBER TO THE RECORD
+         MVC   MEMBERNM,MEMBERNO-3
+         XC    MBRPAD,MBRPAD
+         STOW  SYSUT2,MEMBERNM,A  UPDATE THE DIRECTORY
+         CH    R15,=H'4'          TEST RC
+         BL    PP030              < 4 MEANS OK
+         BH    PP020              > 4 MEANS DIRECTORY FULL, OR CORRUPT
+         XC    MBRPAD,MBRPAD      = 4 MEANS ALREADY THERE, SO REPLACE
+         STOW  SYSUT2,MEMBERNM,R  UPDATE THE DIRECTORY
+         LTR   R15,R15            Q... OK THIS TIME?
+         BZ    PP030
+PP020    DC    H'0'
+PP030    DS    0H
+         PUT   SYSPRINT,MBRMSG    TELL THE READER
+         IC    R15,R              INCREMENT THE RECORD NUMBER
+         LA    R15,1(,R15)
+         STC   R15,R
+         MVC   COUNT(5),CCHHR
+MORE     B     NEXTBLK            GO AND GET THE NEXT BLOCK
+         SPACE 3
+DONE     DS    0H
+         SPACE 1
+*   ITS ALL OVER, FOLKS
+         SPACE 1
+         CLOSE SYSUT1
+         CLOSE SYSUT2
+         CLOSE SYSPRINT
+         LR    R01,R13
+         L     R13,4(,R13)
+         FREEMAIN R,LV=WRKLEN,A=(1)
+         LM    R14,R12,12(R13)
+         SLR   R15,R15
+         BR    R14
+         SPACE 4
+TRAKUP   DS    0H
+         MVI   R,0               FIRST RECORD TO SEARCH
+         LA    R00,1
+         AH    R00,HH
+         STH   R00,HH            STORE NEW HEAD NUMBER
+         CH    R00,=H'19'        MAX HEAD NUMBER
+         BL    TU010
+         XC    HH,HH
+         LA    R00,1
+         AH    R00,CC
+         STH   R00,CC            STORE NEW HEAD NUMBER
+TU010    DS    0H
+         CLC   CCHH,EXT@E        Q... END OF EXTENT?
+         BNH   TU020             A... NO
+         SLR   R01,R01
+         IC    R01,M
+         LA    R01,1(,R01)       INCREMENT EXTENT NUMBER
+         STC   R01,M
+         SLR   R00,R00
+         L     R15,SYSUT1+X'2C'
+         IC    R00,X'010'(,R15)  NUMBER OF EXTENTS
+         CR    R01,R00           Q... END OF DATASET?
+         BNL   TU050             A... YES
+         MH    R01,=H'16'        MULTIPLY BY SIZE OF EN EXTENT ENTRY
+         LA    R01,32(R01,R15)   ADDRESS THE EXTENT ENTRY
+         MVC   EXT@S,6(R01)
+         MVC   EXT@E,10(R01)
+         MVC   CCHH,EXT@S        INIT ADDRESS FOR NEW EXTENT
+TU020    DS    0H
+         MVC   TRAKPREV,CCHHR    ADDRESS OF FIRST RECORD ON THE TRACK
+         MVC   TRAKPREV+4,0      RECORD 0
+         SLR   R15,R15
+         BR    R14
+TU050    DS    0H
+         LA    R15,4
+         BR    R14
+         TITLE 'INITIALISATION'
+INIT     ST    R14,INRETN
+         SPACE 2
+*   OPEN FILES REQUIRED
+         OPEN  SYSUT1           FILE TO BE RECOVERED
+         OPEN  (SYSPRINT,OUTPUT) PRINT FILE
+         OPEN  (SYSUT2,OUTPUT)   RECOVERED FILE (SEQUENTIAL)
+         SPACE 2
+*   INITIALISE IOB FOR THE INPUT (EXCP) FILE
+         SPACE
+         XC    IOBAREA,IOBAREA
+         MVI   IOBFLG0,X'42'     COMMAND CHAINING+UNRELATED
+         LA    R00,EXCPECB
+         ST    R00,IOBECBAD      ADDRESS OF MY ECB
+         XC    MBBCCHHR,MBBCCHHR
+         LA    R00,SYSUT1
+         ST    R00,IOBDCBAD      ADDRESS OF DCB
+         L     R15,SYSUT1+X'2C'  ADDRESS THE DEB
+         MVC   EXT@S,32+6(R15)   FIRST DISK ADDRESS
+         MVC   EXT@E,32+10(R15)  LAST DISK ADDRESS
+         MVC   CCHH,EXT@S        AND TO IOB
+         MVI   R,1               TO READ RECORD 2 (SKIP LABEL)
+         MVC   TRAKPREV,CCHHR    ADDRESS OF FIRST RECORD ON THE TRACK
+         MVC   TRAKPREV+4,0      RECORD 0
+         LA    R02,CPAREA
+         ST    R02,IOBSTART      ADDRESS OF CHANNEL PROGRAM
+         SPACE 2
+*  SET UP THE CHANNEL PROGRAM
+         SPACE 1
+         MVI   0(R02),X'31'      SET UP SEARCH CCW
+         LA    R00,CCHHR
+         STCM  R00,7,1(R02)
+         MVI   4(R02),X'60'      MORE + SILI
+         LA    R00,5
+         STCM  R00,7,5(R02)
+         SPACE 1
+         LR    R00,R02           SAVE FOR THE NEXT CCW
+         LA    R02,8(,R02)       ADDRESS FOR NEXT CCW
+         MVI   0(R02),X'08'      SET UP TRANSFER-IN-CHANNEL
+         STCM  R00,7,1(R02)
+         MVI   4(R02),X'00'
+         SPACE 1
+         LA    R02,8(,R02)       ADDRESS FOR NEXT CCW
+         MVI   0(R02),X'12'      SET UP COUNT
+         LA    R00,COUNT
+         STCM  R00,7,1(R02)
+         MVI   4(R02),X'40'      MORE
+         MVC   6(2,R02),=Y(8) DATA LENGTH
+         SPACE 1
+         LA    R02,8(,R02)       ADDRESS FOR NEXT CCW
+         MVI   0(R02),X'0E'      SET UP READ KEY + DATA
+         LA    R00,BUFFER
+         STCM  R00,7,1(R02)
+         MVI   4(R02),X'20'             SILI
+         MVC   6(2,R02),=Y(13165) DATA LENGTH
+         ST    R02,READCCWA      SAVE ADDRESS OF THE READ COMMAND
+         SPACE 1
+*        LA    R02,8(,R02)       ADDRESS FOR NEXT CCW
+*        MVI   0(R02),X'12'      SET UP COUNT
+*        LA    R00,COUNT
+*        STCM  R00,7,1(R02)
+*        MVI   4(R02),X'00'      NO MORE
+*        MVC   6(2,R02),=Y(8)    DATA LENGTH
+         SPACE 1
+*   OTHER INITIALISATION
+         ZAP   COUNTER,=P'0'     ZERO MEMBER COUNTER
+         L     R14,INRETN
+         BR    R14
+         TITLE 'EXCP READ ROUTINE'
+*  READ RETURNS AT (14)
+*    +0 => NO MORE DATA
+*    +4 => EOF READ
+*    +8 => NORMAL BLOCK READ
+         SPACE 2
+READ     ST    R14,RDRETN         SAVE RETURN ADDRESS
+RD010    DS    0H
+         LA    R00,BUFFER      CLEAR THE BUFFER                  88036
+         L     R01,=A(L'BUFFER)                                  88036
+         SLR   R15,R15                                           88036
+         ICM   R15,8,=X'CC'                                      88036
+         MVCL  R00,R14                                           88036
+         MVC   TRAKPREV,CCHHR     SAVE ADDRESS OF THE PREVIOUS RECORD
+         MVC   IOBSEEK,MBBCCHHR   MOVE SEEK ADDRESS
+         XC    EXCPECB,EXCPECB    CLEAR THE ECB
+         EXCP  IOBAREA            ISSUE EXCP REQUEST
+         WAIT  ECB=EXCPECB        AIT FOR SOMETHING TO HAPPEN
+*        L     R15,READCCWA       ADDRESS THE READ CCW
+*        LH    R14,6(,R15)        LENGTH REQUESTED
+*        SH    R14,IOBCSW+6       - RESIDUAL
+         LH    R14,COUNT+6        LOAD THE DATA LENGTH
+         ST    R14,DATALEN        GIVES THE DATA LENGTH
+         CLI   EXCPECB,X'7F'      Q... NORMAL END?
+         BE    RD200              A... YES
+         CLI   EXCPECB,X'41'      Q... PERMANENT ERROR?
+         BNE   RD050              A... NO
+         NI    IOBCSW+4,X'DF'     TURN OFF CONTROL UNIT END
+         CLC   =X'0C40',IOBCSW+4  CE+DE+INCORR LEN?
+         BE    RD200               YES, ACCEPT AS NORMAL END
+         CLI   IOBCSW+4,X'0D'     CE+DE+UE?
+         BE    RD300               YES, THIS IS EOF
+         CLC   =X'0E40',IOBCSW+4  CE+DE+UNIT CHECK+ INCOR LEN?
+         BE    RD040               YES, CHECK FOR NRF
+         CLC   =X'0E00',IOBCSW+4  CE+DE+UNIT CHECK?
+         BNE   RD050               NO, DIE
+RD040    DS    0H
+         CLI   IOBSNS1,X'08'       Q... NO RECORD FOUND?
+         BNE   RD050               NO, DIE
+         SPACE 1
+*   NO RECORD FOUND: ASSUME STORAGE IS OK, AND STEP TO NEXT TRACK
+         SPACE 1
+AGAIN    DS    0H                                                88036
+         BAL   R14,TRAKUP
+         LTR   R15,R15
+         BZ    RD010
+         L     R14,RDRETN
+         B     0(R14)             END OF DATA RETURN TO CALLER
+RD050    DS    0H
+         L     R15,IOBCSW
+         SH    R15,=H'24'
+         MVC   TEMP,0(R15)
+         PUT   SYSPRINT,ERR1                                     88036
+         B     AGAIN                                             88036
+*        DC    H'0'               ABEND FOR DIAGNOSIS
+RD200    DS    0H
+         L     R14,RDRETN
+         B     8(R14)             NORMAL RETURN TO CALLER
+RD300    DS    0H
+         PUT   SYSPRINT,EOFMSG
+         L     R14,RDRETN
+         B     4(R14)             EOF RETURN
+         TITLE 'WRITE ROUTINE'
+WRITE    ST    R14,WRRETN
+         CLI   COUNT+5,0           Q... KEYED RECORD?
+         BNE   WRT090              A... YES: SKIP IT
+         CLI   R,0                 Q... SEARCH TO FIRST ON TRACK?
+         BE    WRT010              A... YES
+         CLC   TRAKPREV,COUNT      Q... BACK TO START OF TRACK?
+         BH    WRT090              A... YES
+WRT010   DS    0H
+         BAL   R14,READMSG       ISSUE MSG ABOUT THE BLOCK
+         L     R02,DATALEN
+         STH   R02,SYSUT2+X'3E'    STORE THIS BLOCK'S SIZE
+         WRITE WRIT,SF,SYSUT2,BUFFER,(R02),MF=E
+         CHECK WRIT
+WRT090   DS    0H
+         L     R14,WRRETN
+         BR    R14
+         TITLE 'SUBROUTINE TO ISSUE MESSAGE ABOUT THE BLOCK JUST READ'
+READMSG  ST    R14,RMRETN
+         UNPK  HEXCONV,COUNT(5)
+         TR    HEXCONV,HEXTAB
+         MVC   RMCNT1,HEXCONV
+         UNPK  HEXCONV,COUNT+4(5)
+         TR    HEXCONV,HEXTAB
+         MVC   RMCNT2,HEXCONV
+         UNPK  HEXCONV,IOBSEEK(5)
+         TR    HEXCONV,HEXTAB
+         MVC   RMSEEK1,HEXCONV
+         UNPK  HEXCONV,IOBSEEK+4(5)
+         TR    HEXCONV,HEXTAB
+         MVC   RMSEEK2,HEXCONV
+         L     R00,DATALEN
+         CVD   R00,DOUBLE
+         MVC   RMLEN,=X'4020206B202120'
+         ED    RMLEN,DOUBLE+5
+         PUT   SYSPRINT,RMMSG
+         L     R14,RMRETN
+         BR    R14
+SYSUT1   FCB   ACNAME=SYSUT1,MACRF=E,IMSK=CLEM
+SYSUT2   FCB   ACNAME=SYSUT2,DSORG=PO,MACRF=W,LRECL=80,RECFM=FB,       .
+               BLKSIZE=06080
+         WRITE WRIT,SF,SYSUT2,MF=L
+SYSPRINT FCB   ACNAME=SYSPRINT,DSORG=PS,MACRF=PM,LRECL=121,RECFM=VBA,  .
+               BLKSIZE=4000
+ONE      DC    P'1'
+RMMSG    DC    Y(RMMSGL,0),C' '
+         DC    C'SEEK: '
+RMSEEK1  DS    CL8
+RMSEEK2  DS    CL8
+         DC    C' COUNT: '
+RMCNT1   DS    CL8
+RMCNT2   DS    CL8
+         DC    C'. BLOCK LENGTH:'
+RMLEN    DS    CL7
+RMMSGL   EQU   *-RMMSG
+         ORG   *-240
+HEXTAB   DS    0CL256,240C
+         DC    C'0123456789ABCDEF'
+ERR1     DC    Y(ERR1L,0),C'0ERROR ON THIS BLOCK'
+ERR1L    EQU   *-ERR1                                            88036
+EOFMSG   DC    Y(08,0),C'0EOF'
+MBRMSG   DC    Y(84,0),C' '
+MEMBERMK DS    0CL80
+         DC    C'MEMBER $$$'
+MEMBERNO DC    CL5' ',CL65' WRITTEN TO OUTPUT DATASET'
+         TITLE 'WORK AREAS'
+WORK     DSECT
+         DS    18F       SAVE AREA
+MEMBERNM DS    0CL8
+MBRPREF  DS    CL3
+MBRNO    DS    CL5
+MBRPAD   DS    XL80
+COUNTER  DS    PL3
+MBBCCHHR DS    0CL8
+M        DC    X'00'
+BB       DC    X'0000'
+CCHHR    DS    0XL5
+CCHH     DS    0XL4
+CC       DC    X'0000'
+HH       DC    X'0000'
+R        DC    X'01'
+TRAKPREV DS    CL5         ADDRESS OF PREVIOUS RECORD
+READCCWA DS    A
+EXT@S    DS    F
+EXT@E    DS    F
+DOUBLE   DS    D
+EXCPECB  DS    A
+DATALEN  DS    F
+IOBAREA  DS    0XL40
+IOBFLG0  DS    X
+IOBFLG1  DS    X
+IOBSNS0  DS    X
+IOBSNS1  DS    X
+IOBECBAD DS    A
+IOBCSW   DS    XL8
+IOBSTART DS    A
+IOBDCBAD DS    A
+         DS    2F
+IOBSEEK  DS    XL8
+CPAREA   DS    10XL8         SPACE FOR 10 CCWS
+COUNT    DS    0XL8,7X       COUNT FIELD FOR CURRENT RECORD
+THISR    DS    X
+RDRETN   DS    A
+RMRETN   DS    A
+INRETN   DS    A
+WRRETN   DS    A
+HEXCONV  DS    CL9
+TEMP     DS    XL48
+BUFFER   DS    32768X'00'    LOTS OF SPARE SPACE
+WRKLEN   EQU   *-WORK
+         END   RECOVER

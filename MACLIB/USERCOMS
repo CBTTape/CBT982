@@ -1,0 +1,199 @@
+         SPACE 1                                                        COMS0010
+* THE ROUTINES SHOULD BE CODED FOR RE-ENTRABILTY.                       COMS0020
+         SPACE 1                                                        COMS0030
+* VARIOUS JOL MACROS MAY BE USED.                                       COMS0040
+         SPACE                                                          COMS0050
+*  OF PARTICULAR INTEREST ARE                                           COMS0060
+*                                                                       COMS0070
+*        JOLSAVE WHICH SETS UP THE SAVE AREA AND ADDRESSABILITY         COMS0080
+*        JOLRETN WHICH RETURNS                                          COMS0090
+*        JOLERR  WHICH PRINTS ERROR MESSAGES.                           COMS0100
+*        JOLSTOR WHICH STORES VARIABLES                                 COMS0110
+*        $CALL   WHICH CALLS OTHER MODULES                              COMS0120
+*        $LINK   WHICH LINKS TO MODULES IN THE JOLLOAD DATA-SET         COMS0130
+*        $LOAD   WHICH LOADS TO MODULES IN THE JOLLOAD DATA-SET         COMS0140
+*        $DELETE WHICH DELETES LOADED MODULES                           COMS0150
+*                                                                       COMS0160
+*        IFVALUE TESTS A LOCATION TO HAVE A VALUE                       COMS0170
+*        IFNULL  TESTS A LOCATION TO BE BLANK OR NULL                   COMS0180
+*        CLEAR   WHICH CLEARS A SERIES OF LOCATIONS                     COMS0190
+*        CONCAT  WHICH CONCATENATES ITEMS TO VARIABLE POINTED           COMS0200
+*                TO BY R10                                              COMS0210
+* IN ADDITION, SEVERAL ROUTINES MAY BE OF USE                           COMS0220
+*        CONCAT  CONCATS WHATEVER IS IN #TKN TO #WORK                   COMS0230
+*        MOVEDATA MOVES A VARYING STRING OF ANY SIZE TO ANOTHER         COMS0240
+*                 LOCATION                                              COMS0250
+           TITLE 'JOLSAVE MACRO'                                        COMS0252
+* JOLSAVE FORMAT:-                                                      COMS0260
+*                                                                       COMS0270
+*        JOLSAVE CSECT=<CSECT NAME>   BASE=<BASE REGISTER>              COMS0280
+*              SIZE=<SIZE>                                              COMS0290
+*                                                                       COMS0300
+* NOTES                                                                 COMS0310
+*        1. THE CSECT NAME MUST BE OF THE FORM:-                        COMS0320
+*              UJ,ANY CHARACTER, A TWO DIGIT NUMBER, ANY 3 CHARACTERS   COMS0330
+*           THE FORMAT IS EXPECTED BY THE 'JOLERR' MACRO WHEN IT        COMS0340
+*              CREATES ERROR MESSAGES FOR YOU.                          COMS0350
+*                                                                       COMS0360
+*        2. THE DEFAULT BASE IS R11. YOU MAY USE ANY BASE, BUT          COMS0370
+*              REGISTERS R0,R1,R13,R14 AND R15 ARE USED BY THE          COMS0380
+*              SYSTEM.                                                  COMS0390
+*              IN ADDITION, R2 ALWAYS POINTS TO 'JOLCOM' AND            COMS0400
+*              MUST NOT BE CHANGED                                      COMS0410
+*              *******************                                      COMS0420
+*              IT IS RECOMMENDED THAT R12 BE NOT USED (FOR PL1)         COMS0430
+*                                                                       COMS0440
+*              YOU MAY CODE 'BASE=11' OR 'BASE=(10,11)', IN WHICH       COMS0450
+*              CASE YOU MAY SPAN MORE THAN 4095 BYTES                   COMS0460
+*                                                                       COMS0470
+*        3.    SIZE DEFAULTS TO 72 (THE STANDARD SAVE AREA SIZE)        COMS0480
+*              HOWEVER, YOU MAY ELECT TO ALLOCATE A LITTLE MORE         COMS0490
+*              AS A WORK AREA FOR YOURSELF, ALTHOUGH THERE ARE          COMS0500
+*              VARIOUS FREE AREAS THAT YOU MAY USE.                     COMS0510
+*                                                                       COMS0520
+*              THESE AREAS ARE:-                                        COMS0530
+*                   DBL       : A DOUBLE WORD                           COMS0540
+*                   #OP       : A STRING OF 200 BYTES                   COMS0550
+*                   #WORK     : A STRING OF 1000 BYTES                  COMS0560
+*** DO NOT CHANGE ANY OTHER JOL LOCATION.                               COMS0570
+*                                                                       COMS0580
+*              THERE IS ONLY A VERY LIMITED AMOUNT OF STORAGE           COMS0590
+*              AVAILABLE FROM THE SAVE-AREA, AND IF THE ABOVE           COMS0600
+*              AREAS ARE IN-SUFFICENT, YOU MUST ALLOCATE YOUR           COMS0610
+*              OWN WITH A GETMAIN, OR IF YOU DO NOT WISH TO BE          COMS0620
+*              RE-ENTRANT, YOU MAY USE WHATEVER STORAGE YOU NEED        COMS0630
+*              WITH DC OR DS VARIABLES.                                 COMS0640
+        TITLE 'JOLRETN MACRO'                                           COMS0650
+* JOLRETN FORMAT:-                                                      COMS0660
+*                                                                       COMS0670
+*        JOLRETN <OPTIONAL REGISTER>,RC=<NUMBER>                        COMS0680
+*                                                                       COMS0690
+* NOTES                                                                 COMS0700
+*        1. THE JOLRETN FREES AREA OBTAINED OBTAINED FROM               COMS0710
+*              THE SAVE-AREA POOL                                       COMS0720
+*        2. IF NO OPTIONAL REGISTERS ARE CODED, (14,12) IS              COMS0730
+*              ASSUMED, AND A BRANCH TO A SPECIAL RETURN ROUTINE        COMS0740
+*              IS MADE, THUS REDUCING SIGNIFICANTLY THE AMOUNT          COMS0750
+*              OF CODE GENERATED                                        COMS0760
+*        3. IF RC=0,4,8,12 OR 16, NO LA R15,RETURN-CODE IS GENERATED    COMS0770
+*              IN GENERAL, A SIMPLE BRANCH INSTRUCTION IS GENERATED     COMS0780
+        TITLE 'JOLERR MACRO'                                            COMS0790
+* JOLERR FORMAT:-                                                       COMS0800
+*        JOLERR <3-DIGIT-NUMBER>,<OPTIONAL MESSAGE TEXTS>               COMS0810
+*                                                                       COMS0820
+* NOTES                                                                 COMS0830
+*        1. THE JOLERR MACRO WILL CONSTRUCT AND OUTPUT AN ERROR         COMS0840
+*              OR WARNING MESSAGE FOR YOU.                              COMS0850
+*        2. THE <3-DIGIT-NUMBER> IS MADE UP OF THE FOLLOWING:-          COMS0860
+*              A) A 1 DIGIT SEVERITY CODE RANGING FROM 0 TO 5           COMS0870
+*                   0 IS AN INFORMATIONAL MESSAGE ONLY                  COMS0880
+*                   1 IS A WARNING                                      COMS0890
+*                   2 IS AN ERROR                                       COMS0900
+*                   3 IS A SEVERE ERROR                                 COMS0910
+*                   4 IS A TERMINAL ERROR                               COMS0920
+*                   5 IS AN INTERNAL COMPILER SEVERITY                  COMS0930
+*              FOR SEVERITY 2, THE JOB IS PLACED ON THE HOLD QUEUE,     COMS0940
+*                   UNLESS 'LET' IS USED AS A COMPILER OPTION.          COMS0950
+*              FOR SEVERITIES 3,4, THE JOB IS CONSIDERED TO HAVE        COMS0960
+*                   FAILED, UNLESS 'LET' IS USED AS A COMPILER OPTION.  COMS0970
+*                                                                       COMS0980
+*           FOR EXAMPLE: JOLERR 401,'DSNAME ',DDDSNAME,' IS INVALID'    COMS0990
+*              WILL OUTPUT THE MESSAGE, AND THE CONTENTS OF 'DDDSNAME', COMS1000
+*              AND MARK THE JOB AS NOT SUITABLE FOR EXECUTION.          COMS1010
+*                                                                       COMS1020
+*              B) THE TWO DIGITS REMAINING ARE FOR YOUR OWN USE, BUT    COMS1030
+*              MUST BE UNIQUE WITHIN A CSECT, AS A LABEL IS GENERATED   COMS1040
+*              SO THAT YOU MAY EASILY FIND THE ERROR MESSAGE FROM THE   COMS1050
+*              ASSEMBLER CROSS REFERENCE.                               COMS1060
+*                                                                       COMS1070
+*              IN THE ABOVE JOLERR MESSAGE, IF THE 'JOLERR' WAS PLACED  COMS1080
+*              IN MODULE 'UJU03DS', THE ASSOCIATED ERROR MESSAGE        COMS1090
+*              NUMBER THAT WOULD BE CREATED FOR YOU WOULD BE            COMS1100
+*              'UJU03-01'                                               COMS1110
+*                                                                       COMS1120
+*        3.    THE STATEMENT NUMBER IS PRINTED AUTOMATICALLY            COMS1130
+*                                                                       COMS1140
+*        4. THE <OPTION MESSAGE TEXTS> MAY BE MADE UP OF THE            COMS1150
+*              FOLLOWING:-                                              COMS1160
+*                                                                       COMS1170
+*              A) A LITERAL QUOTED STRING, EG 'DSNAME INVALID'          COMS1180
+*              THESE STRINGS ARE USED TO GENERATE LITERALS IN THE       COMS1190
+*              ASSEMBLER LITERAL POOL, SO IF YOU HAVE MANY ERROR        COMS1200
+*              MESSAGES WITHIN A CSECT, IT MAY BE ADVISABLE TO          COMS1210
+*              MAKE USE OF THE SAME LITERALS IF YOU ARE ATTEMPTING      COMS1220
+*              TO SAVE CORE STORAGE.                                    COMS1230
+*                                                                       COMS1240
+*              B) SYMBOLIC NAME WHICH ARE SPECIFIED AS CHARACTER        COMS1250
+*              STRINGS                                                  COMS1260
+*                                                                       COMS1270
+* NB *** ANY STRING COMMENCING WITH THE CHARACTER '#' IS ASSUMED        COMS1280
+*        TO BE A VARYING CHARACTER STRING, AND THE FIRST 2 BYTES        COMS1290
+*        CONTAIN THE CURRENT LENGTH OF THAT STRING (AS PL1 OPTIMISER    COMS1300
+*        VARYING STRINGS)                                               COMS1310
+*                                                                       COMS1320
+* EXAMPLES OF JOLERR                                                    COMS1330
+* ASSUME THAT #TKN CONTAINED  H'03',C'VUL', AND PERHAPS BECAUSE         COMS1340
+*  IT SHOULD HAVE BEEN CODED 'VOL', JOL WOULD NOT RECOGNISE THE         COMS1350
+*  SYMBOL                                                               COMS1360
+*        JOLERR 310,'CANNOT RECOGNISE ''',#TKN,'''' WILL PRODUCE:-      COMS1370
+*        **    UJV03-10 SEVERE ERROR AT 10  (IF 10 WAS THE STATEMENT    COMS1380
+*                                           NUMBER)                     COMS1390
+*        CANNOT RECOGNISE 'VUL'                                         COMS1400
+*                                                                       COMS1410
+*              FIXED LENGTH STRINGS OF ANY LENGTH MAY BE USED, UP TO    COMS1420
+*              256 CHARACTERS. JOLERR WILL PRINT UP TO 80 CHARACTERS    COMS1430
+*              ON A LINE, AND PRINT THE REMAINDER ON THE FOLLOWING      COMS1440
+*              LINE                                                     COMS1450
+      TITLE 'JOLSTOR MACRO'                                             COMS1455
+* JOLSTOR FORMAT                                                        COMS1460
+*                                                                       COMS1470
+*        JOLSTOR 'ERROR-MESSAGE',<RECIEVE-LOCATION>,<SEND-LOCATION>,    COMS1480
+*              <OPTIONAL-TEST-NUMERIC-INDICATOR>                        COMS1490
+*                                                                       COMS1500
+* NOTES                                                                 COMS1510
+*        1. THE JOLSTOR MACRO STORES THE NAMED VARIABLES CONTENTS       COMS1520
+*              IN THE REQUESTED VARIABLE AFTER CHECKING THAT            COMS1530
+*           A) THE RECIEVE AREA IS BLANK OR ZERO                        COMS1540
+*           B) THAT THE RECIEVE AREA IS SHORTER THAN THE SEND AREA      COMS1550
+*        2. IF NUM, OR A NUMBER IS CODED AS THE 4TH PARAMETER,          COMS1560
+*              THE SENDING VARIABLE IS CHECKED TO BE NUMERIC,           COMS1570
+*              AND LESS THAN OR EQUAL TO THE NUMBER CODED               COMS1580
+*        3. VARYING LENGTH STRING MAY BE USED AS THE SEND AREA          COMS1590
+*        4. IF AN ERROR OCCURS, AN ERROR MESSAGE IS OUTPUT              COMS1600
+       TITLE  '$CALL MACRO'                                             COMS1610
+* $CALL  FORMAT                                                         COMS1620
+*        $CALL  <OPTIONAL PARAMETERS>                                   COMS1630
+*                                                                       COMS1640
+* NOTES                                                                 COMS1650
+*        1. THE $CALL MACRO IS USED IN SAME WAY AS THE IBM CALL         COMS1660
+*              MACRO.                                                   COMS1670
+*        2. ONLY 3 PARAMETERS ARE ALLOWED                               COMS1680
+*        3. IF MF=(E) IS CODED, IT IS IGNORED. ALL CALLS GENERATED      COMS1690
+*              ARE RE-ENTRANT                                           COMS1700
+*        4. INSTEAD OF GENERATING A VCON AND BRANCHING AROUND           COMS1710
+*              IT, IT GENERATES EITHER                                  COMS1720
+*           A) L    R15,=V(NAME)                                        COMS1730
+*       OR  B) L    R15,SPECIAL-NAME, WHEN IT RECOGNISES SOME SPECIAL   COMS1740
+*              ROUTINE NAMES.                                           COMS1750
+      TITLE '$LINK,$LOAD,$DELETE MACROS'                                COMS1760
+* $LOAD  FORMAT:                                                        COMS1770
+* $LINK  FORMAT:                                                        COMS1780
+*                                                                       COMS1790
+*        $LINK  NAME                                                    COMS1800
+*        $LOAD  NAME                                                    COMS1810
+* NOTES                                                                 COMS1820
+*        1.    NEITHER MACRO WILL GENERATE A PARAMETER LIST, YOU        COMS1830
+*              MUST BUILD THIS YOURSELF, AND SET R1 TO THE VALUE        COMS1840
+*        2. ONLY MODULES IN THE DATA SET POINTED TO BY 'JOLLOAD'        COMS1850
+*              ARE LOADED OR LINKED TO (THE NORMAL OS LOAD OR LINK      COMS1852
+*              MACROS MUST BE USED TO LOAD FROM STEPLIB OR THE          COMS1854
+*              SYSTEM LINKLIB).                                         COMS1856
+*                                                                       COMS1860
+         SPACE 3                                                        COMS1870
+* $DELETE FORMAT:                                                       COMS1880
+*                                                                       COMS1890
+*        $DELETE NAME                                                   COMS1900
+*                                                                       COMS1910
+* NOTES                                                                 COMS1920
+*        1.    THE NAMED LOAD MODULE'S CORE STORAGE IS MADE FREE        COMS1930
+*              FOR OTHER USES                                           COMS1940

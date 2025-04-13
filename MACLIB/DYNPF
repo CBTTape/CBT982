@@ -1,0 +1,20 @@
+         MACRO
+         DYNPF
+.*  PROCESSES VOL=REF=,VOL=SER=,LABEL=EXPDT= AND LABEL=RETPD=
+.*      AND MULTIPLE DDNAMES WITH VRB=C
+.*   REVISED NOV 77
+         GBLC  &PDCB(40),&PS,&PP
+         GBLA  &JJ
+&JJ      SETA  0            GET PARAMS INTO &PDCB
+&PDCB(2) SETC  ''
+.V7      DYNPB
+         AIF   ('&PP'EQ'').V9     FINISHED
+&JJ      SETA  &JJ+1
+&PDCB(&JJ) SETC '&PP'
+         AGO   .V7
+.V9      ANOP
+         AIF   (&JJ LE 1).V10
+         AIF   ('&PDCB(1)'(1,1) NE'(').V10
+&PDCB(1) SETC  '&PDCB(1)'(2,K'&PDCB(1)-1)    REMOVE (
+&PDCB(&JJ) SETC  '&PDCB(&JJ)'(1,K'&PDCB(&JJ)-1)    REMOVE )
+.V10     MEND

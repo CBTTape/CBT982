@@ -1,0 +1,130 @@
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1980.
+* JOL COPYRIGHT CCS-JOL 1988      1992
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0  ^     ^   0        L
+*                   J         0  O     O   0        L
+*                   J         0            0        L
+*                   J         0     V      0        L
+*                   J         0            0        L
+*                   J         0   <____>   0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         MACRO                                                    J52
+         TERMTYPE
+* Fujitsu machines only.  If run on IBM, Register 15 is set ^0    J52
+         CNOP  0,4                                                J52
+         SR    R1,R1                                              J52
+         LA    R0,2                                               J52
+         SLL   R0,24                                              J52
+         LNR   R0,R0                                              J52
+         SVC   94                                                 J52
+         MEND
+*                                                                 J52
+*                                                                 J52
+         SPACE 3
+         PRINT OFF                                                J50
+         COPY  JOLCOM
+*      COPY CPY/JOLCOMD.CPY
+         PRINT ON                                                 J50
+*        COPY  P28PARMS                                           J50
+*
+* This small module initialises the jol panel areas.
+*
+*It is called from UJI00MN ONCE at the start of JOL.
+*
+*
+********************************************************************
+*
+*
+*       int          ujp27pop()
+*
+P27INIT  JOLSAVE CSECT=P27INIT
+         L    R10,P27GBL
+         USING PANELWRK,R10
+         TERMTYPE                Fujitsu only macro               J50
+         LTR   R15,R15           Did it return 0 (Fujitsu only)   J50
+         BNZ   P29IBM            Assume an IBM machine            J52
+*
+         CLM   R0,1,=X'08'       9525/3270 STYLE TERMINAL?        J52
+         BNE   NOTTERM           NO: KILL IT                      J52
+         STCM  R1,2,SCRNTYPE     STORE TERMINAL TYPE FLAGS        J50
+P29NTT   DS    0H                                                 J50
+         LA    R0,80                                              J50
+         ST    R0,SCRNCOLS                                        J50
+         LA    R0,24                                              J50
+         ST    R0,SCRNROWS                                        J50
+         GTTERM  PRMSZE=SIZE1,                                    J50  .
+               ALTSZE=SIZE2,                                      J50  .
+               ATTRIB=DWORD,                                      J50  .
+               MF=(E,CALLAREA)                                    J50
+         LTR   R15,R15                                            J50
+         BNZ   P29NGT                                             J50
+         SLR   R0,R0                                              J50
+         IC    R0,SIZE2                                           J50
+         ST    R0,SCRNROWS                                        J50
+         IC    R0,SIZE2+1                                         J50
+         ST    R0,SCRNCOLS                                        J50
+         TM    DWORD+3,X'01'     Read Partition (Query) allowed?  J50
+         BZ    P29NOEXT          No, so don't use extended streamsJ50
+* Set up FAL terminal codes                                       J52
+         OI    SCRNTYPE,X'01'    EXTENDED DATA STREAM             J50
+         MVI   VIDSFE,X'1B'      FUJITSU SFE CODE                 J51
+         MVI   VIDSFEC,X'0F'     FUJITSU SET Count Field          J51
+         MVI   VIDSA,X'0E'       FUJITSU SET ATTRIBUTE CODE       J51
+         MVC   MONOSCRN,ZERO     TELL US COLOR (EVEN IF NOT!!)    J51
+P29NOEXT DS    0H
+         JOLRETN
+P29IBM   DS    0H
+         LA    R0,80                                              J50
+         ST    R0,SCRNCOLS                                        J50
+         LA    R0,24                                              J50
+         ST    R0,SCRNROWS                                        J50
+         GTTERM  PRMSZE=SIZE1,                                    J50  .
+               ALTSZE=SIZE2,                                      J50  .
+               ATTRIB=DWORD,                                      J50  .
+               MF=(E,CALLAREA)                                    J50
+*        GTTERM  PRMSZE=SIZE1,ALTSZE=SIZE2,ATTRIB=DWORD,MF=(E,CALLAREA)
+         LTR   R15,R15                                            J50
+         BNZ   P29NGT                                             J50
+         SLR   R0,R0                                              J50
+         IC    R0,SIZE2                                           J50
+         ST    R0,SCRNROWS                                        J50
+         IC    R0,SIZE2+1                                         J50
+         LA    R0,80                                              J60
+         ST    R0,SCRNCOLS                                        J50
+         GTTERM  ATTRIB=DWORD,                                    J50  .
+               MF=(E,CALLAREA)                                    J50
+         TM    DWORD+3,X'01'     Read Partition (Query) allowed?  J50
+         BZ    P29NOEXT          No, so don't use extended streamsJ50
+* Set up IBM terminal codes                                       J52
+         OI    SCRNTYPE,X'01'    EXTENDED DATA STREAM             J52
+         MVI   VIDSFE,X'29'      IBM SFE CODE                     J52
+         MVI   VIDSFEC,X'0F'     FUJITSU SET Count Field          J52
+         MVI   VIDSA,X'28'       IBM SET ATTRIBUTE CODE           J52
+         MVC   MONOSCRN,ZERO     TELL US COLOR (EVEN IF NOT!!)    J52
+P29NGT   DS    0H
+         JOLRETN
+NOTTERM  DS    0H                                                 J51
+         JOLRETN RC=16
+         LTORG
+         DC  S(*,*,*,*)          Zap Space                        J52
+         DC  S(*,*,*,*)          Zap Space                        J52
+         DC  S(*,*,*,*)          Zap Space                        J52
+         DC  S(*,*,*,*)          Zap Space                        J52
+         DC  S(*,*,*,*)          Zap Space                        J52
+         DC  S(*,*,*,*)          Zap Space                        J52
+         DC  S(*,*,*,*)          Zap Space                        J52
+         DC  S(*,*,*,*)          Zap Space                        J52
+         DC  S(*,*,*,*)          Zap Space                        J52
+         DC  S(*,*,*,*)          Zap Space                        J52
+         DC  S(*,*,*,*)          Zap Space                        J52
+

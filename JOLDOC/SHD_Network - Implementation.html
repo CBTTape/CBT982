@@ -1,0 +1,443 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Implementation</title>
+  <meta content="Clement Clarke" name="author">
+  <meta content="Part of Jol Scheduling Manual" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="RIGHT" valign="TOP" width="487"><font size="4"><b><i><u><big><big>Implementation</big></big><br>
+      <br>
+      </u></i></b></font> </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">
+      <ol id="mozToc">
+<!--mozToc h1 1 h2 2 h3 3 h4 4 h5 5 h6 6-->
+        <li><a href="#mozTocId227249">Language</a>
+          <ol>
+            <li><a href="#mozTocId810427">Data Sets Required for
+NETWORKING</a></li>
+            <li><a href="#mozTocId25342">Data Sets Required for
+SCHEDULING</a></li>
+            <li><a href="#mozTocId122311">Method of Operation</a>
+              <ol>
+                <li><a href="#mozTocId916196">The NETWORK Command</a></li>
+                <li><a href="#mozTocId37151">The SUBMIT Command</a></li>
+                <li><a href="#mozTocId625192">The ENDNET Command</a></li>
+                <li><a href="#mozTocId680005">The CHECKNET Command</a></li>
+                <li><a href="#mozTocId838088">The NETSUB Command</a></li>
+              </ol>
+            </li>
+            <li><a href="#mozTocId277415">Documented Example</a></li>
+          </ol>
+        </li>
+      </ol>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h2><a class="mozTocH2" name="mozTocId227249"></a><b>Language</b></h2>
+      </td>
+      <td align="LEFT" valign="TOP">So that the Jol
+Networking and Scheduling system can be made available on a wide
+variety of computers, the system is implemented using the tools
+available in Jol. Because it is written in high level Jol, should your
+installation desire to change any part of the facility, the Jol code
+may be changed with the standard editing facility. </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h2><a class="mozTocH2" name="mozTocId810427"></a><small><b>Data
+Sets Required <i>for
+NETWORKING</i></b></small></h2>
+      </td>
+      <td align="LEFT" valign="TOP">For mainframe computers, three
+Partitioned Sets must be allocated before use: The MS/DOS version
+allocates and frees the data sets as necessary. Two data sets are used
+by the Networking Facility. These are:-
+      <ol>
+        <li><b>SYS2.JOLNET.STATUS </b>Contains the current status of
+the Network and can be viewed using SPF to determine the status of any
+network. Members names are the same as the name of the network coded on
+the NETWORK command.
+          <p>Each member contains symbolic variables as shown below.</p>
+          <p> </p>
+        </li>
+        <li><b>SYS2.JOLNET.CODE</b> Contains the <b>IF</b> and <b>SUBMIT</b>
+statements necessary to drive the network.
+          <p>Members names are the same as the name of the network
+coded on the NETWORK command.</p>
+          <p>You should allocate these data sets with the same DCB
+information as your primary Jol <b>INCLUDE </b>and <b>CMDLIB </b>data
+sets,
+and
+they
+          <u>must be large enough to run all the jobs throughout
+the day as data is constantly written to them when jobs are submitted.</u>
+If the data sets fill, the jobs being networked must be restarted. You
+can temporarily delay Networked jobs to compress the files should you
+wish.</p>
+          <p>As a starting point, it is suggested that you allocate 5
+cylinders for the <b>STATUS</b> data set, and 2 cylinders for the <b>CODE</b>
+data set. You can examine them at the end of the day, and free any
+unused storage.</p>
+        </li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h2><a class="mozTocH2" name="mozTocId25342"></a><small><b><i>Data
+Sets Required for
+SCHEDULING</i></b></small></h2>
+      <small> </small></td>
+      <td align="LEFT" valign="TOP">When Jol is installed, a data set
+called <b>SYS2.JOL.SCHEDULE</b> is loaded on to your system. Depending
+on the number of jobs you have in your daily schedule, you may have to
+reallocate it with more storage. The Scheduling System uses <b>SYS2.JOL.SCHEDULE</b>
+for INPUT only when you run the <b>SCHEDULE </b>Clist, and therefore
+the data set will fill only when you edit it with ISPF or PFD; should
+it become filled, use your standard recovery methods. </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h2><a class="mozTocH2" name="mozTocId122311"></a><b>Method of
+Operation</b></h2>
+      </td>
+      <td align="LEFT" valign="TOP">To use the Network Facility, five
+Jol commands are required. These are:
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; NETSUB</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SUBMIT</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; NETWORK</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; CHECKNET</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ENDNET</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP"><font size="3">The following
+process occurs when the macros are executed:</font> </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId916196"></a><b>The NETWORK
+Command</b></h3>
+      </td>
+      <td align="LEFT" valign="TOP">The <b>NETWORK</b> instruction
+first checks the variable <b>%SYSNET</b>. If <b>%SYSNET</b> is not
+blank, then a <span style="font-weight: bold;">NETWORK</span>
+instruction has been executed without an <b>ENDNET</b> instruction,
+and an error message is issued.
+      <p>Otherwise, it sets <b>%SYSNET</b> to the name of the network
+and opens the <b>STATUS</b> and <b>CODE</b> data sets, using the name
+of the network as a member name. The <b>SUBMIT</b> command will copy
+information into these members. Both data sets are used at execution
+time, and checked at the end of every job in the network.</p>
+      <p><font size="3">It also sets an indicator that is used by the <b>SUBMIT</b>
+command to determine if the <b>SUBMIT</b> is a networked, or
+non-networked command.</font></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId37151"></a><b>The SUBMIT
+Command</b></h3>
+      </td>
+      <td align="LEFT" valign="TOP">When a <b>SUBMIT</b> command is
+executed, it does the following:
+      <ul>
+        <li>If the indicator mentioned above is not set, the <b>SUBMIT</b>
+instruction operates as usual. That is, the job is submitted to the
+operating system for execution.</li>
+      </ul>
+Otherwise, the <b>SUBMIT</b> takes special actions for controlling the
+network.<br>
+      <ul>
+        <li>If the <b>SUBMIT</b> is an unconditional <b>SUBMIT</b>
+instruction (it does not contain an <b>AFTER</b> clause), the names of
+the jobs are copied to the work data as symbolic variables, initialized
+to '<b>SUBMITTED</b>'.</li>
+      </ul>
+      <ul>
+        <li>If the <b>SUBMIT</b> is a conditional <b>SUBMIT</b>
+instruction (that is, it <i>does </i>contain an <b>AFTER</b>
+clause), then:</li>
+      </ul>
+      <div style="margin-left: 40px;">* The <b>AFTER</b> is converted
+to a series of IF instructions similar to:</div>
+      <div style="margin-left: 80px;"><b>IF %JOB1='ENDED' THEN SUBMIT
+...</b></div>
+      <div style="margin-left: 40px;">* The names of the jobs in the
+network are copied to the <b>STATUS</b> data set as symbolic variables
+initialized to '' or null.</div>
+      <ul>
+        <li>The <b>SUBMIT</b> instruction then creates a <b>NETSUB</b>
+command, and copies it to the <b>CODE</b> data set. </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId625192"></a><b>The ENDNET
+Command</b></h3>
+      </td>
+      <td align="LEFT" valign="TOP">The <b>ENDNET</b> instruction
+performs various checks, sets <b>%SYSNET</b> to null, places a <b>CHECKNET</b>
+instruction in the <b>CODE</b> data set, closes the <b>STATUS</b> and
+      <b>CODE</b> data sets, and exits. </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId680005"></a><b>The CHECKNET
+Command</b></h3>
+      </td>
+      <td align="LEFT" valign="TOP"><b>CHECKNET</b> runs at execution
+time. It uses the instructions and data in the <b>CODE</b> and <b>STATUS</b>
+data sets work file as input to Jol. Jol reads the work file, alters
+the appropriate null symbolic variable to '<b>ENDED</b>', and rewrites
+the file. Then Jol reads the file again, and this time submits other
+jobs, if the required conditions are met. </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId838088"></a><b>The NETSUB
+Command</b></h3>
+      </td>
+      <td align="LEFT" valign="TOP"><b>NETSUB</b> also runs at
+execution time. It submits any required jobs for execution. It also
+adds <b>CHECKNET</b> instructions to any jobs it submits. Therefore
+when any job in the network<b> </b>terminates, it issues a <b>CHECKNET</b>
+instruction, and the <b>CHECKNET</b> determines if any other jobs in
+the network can be submitted. </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h2><a class="mozTocH2" name="mozTocId277415"></a><b>Documented
+Example</b></h2>
+      </td>
+      <td align="LEFT" valign="TOP">The following example shows how the
+Networking Facility operates. In this example, <b>JOB1</b> and <b>JOB2</b>
+may proceed in parallel. The other jobs must execute in the following
+sequence:
+      <ul type="disc">
+        <li><b>JOB3</b> can commence processing after <i>either </i><b>JOB1</b>
+or <b>JOB2</b> have ended.
+          <p> </p>
+        </li>
+        <li><b>JOB4</b> cannot commence until <i>both </i><b>JOB1</b>
+and <b>JOB2</b> have finished.
+          <p> </p>
+        </li>
+        <li><b>JOB5</b> must wait for <b>JOB2</b> to end before it can
+start.
+          <p> </p>
+        </li>
+        <li><b>JOB6</b> must wait for <b>JOB3, JOB4 and JOB6</b>
+before it can start.
+          <p> </p>
+        </li>
+        <li><b>JOB7</b> must wait for <b>JOB6</b> to end, and it is to
+be executed <i>only on Fridays</i>.
+          <p>If the job is coded as:</p>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" bgcolor="#cccccc" valign="TOP"><br>
+      <div style="margin-left: 40px;"><br>
+      <b>NETWORK TWO;</b><br>
+      <div style="margin-left: 40px;"><b>SUBMIT JOB1;</b><br>
+      <b>SUBMIT JOB2;</b><br>
+      <b>SUBMIT JOB3 </b><b>AFTER JOB1 OR JOB2 ENDED;</b><br>
+      <b>SUBMIT JOB4 </b><b>AFTER JOB1 AND JOB2 ENDED;</b><br>
+      <b>SUBMIT JOB5 </b><b>AFTER JOB2 ENDED;</b><br>
+      <b>SUBMIT JOB6 </b><b>AFTER JOB3 &amp; JOB4 &amp; JOB5 ENDED;</b><br>
+      <b>IF %DAY='FRIDAY' THEN</b><br>
+      <div style="text-align: left; margin-left: 40px;"><b>SUBMIT JOB7 </b><b>AFTER
+JOB6
+ENDED;</b><br>
+      </div>
+      </div>
+      <b>ENDNET;<br>
+      <br>
+      </b></div>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">then after the Jol Compiler has
+read these statements, it submits the first job which effectively
+contains only a <b>CHECKNET</b> instruction. This first <b>CHECKNET</b>
+instruction starts the network by submitting the first two jobs. In
+addition, the <b>CODE</b> and <b>STATUS</b> data sets will be set up
+as follows:<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" bgcolor="#e5e5e5" valign="TOP"><br>
+      <div style="margin-left: 40px;">In member <b>TWO</b> of the <b>SYS2.JOLNET.STATUS</b>
+data set will be the following:-</div>
+      <div style="text-align: left; margin-left: 80px;">
+      <div style="text-align: left;"><b>%JOB1=''</b><br>
+      </div>
+      <b>%JOB2='';</b><br>
+      <b>%JOB3='';</b><br>
+      <b>%JOB4='';</b><br>
+      <b>%JOB5='';</b><br>
+      <b>%JOB6='';</b><br>
+      <b>%JOB7='';<br>
+      <br>
+      </b></div>
+      <div style="margin-left: 40px;">and in member <b>TWO</b> of the <b>SYS2.JOLNET.CODE</b>
+data set will be the following:-<br>
+      <br>
+      <div style="margin-left: 40px;"><b>INCLUDE TWO;</b> /* Read the
+status of the Job names */<br>
+      <br>
+      <b>IF %JOB1='ENDED'</b><br>
+      <b>&amp;</b> <b>%JOB2='ENDED'</b><br>
+      <b>THEN NETSUB JOB3</b> <b>syms etc;</b><br>
+      <b><br>
+IF %JOB1='ENDED'</b><br>
+      <b>|</b> <b>%JOB2='ENDED'</b><br>
+      <b>THEN NETSUB JOB4</b> <b>syms etc;</b><br>
+      <b><br>
+IF %JOB2='ENDED'</b><br>
+      <b>THEN NETSUB JOB5</b> <b>syms etc;</b><br>
+      <b><br>
+IF %JOB3='ENDED'</b><br>
+      <b>&amp;</b> <b>%JOB4='ENDED'</b><br>
+      <b>&amp;</b> <b>%JOB5='ENDED'</b><br>
+      <b>THEN NETSUB JOB3</b> <b>syms etc;</b><br>
+      <b><br>
+IF %JOB6='ENDED'</b><br>
+      <b>THEN SUBMIT JOB7</b> <b>syms etc;</b><br>
+      <b><br>
+SAVESYMS JOB1,JOB2, JOB3, JOB4, JOB5, JOB6, JOB7</b><br>
+      <b>IN 'SYS2.JOLNET.STATUS(TWO)';<br>
+      <br>
+      </b></div>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">After <b>JOB1</b> has run, the <b>CHECKNET</b>
+command is executed. It reads the member <b>TWO</b> of the <b>SYS2.JOLNET.STATUS</b>
+data set, and alters it as shown below:- </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" bgcolor="#cccccc" valign="TOP"><br>
+      <div style="margin-left: 40px;"><b>%JOB1='ENDED'</b><br>
+      <b>%JOB2='SUBMITTED';</b><br>
+      <b>%JOB3='';</b><br>
+      <b>%JOB4='';</b><br>
+      <b>%JOB5='';</b><br>
+      <b>%JOB6='';</b><br>
+      <b>%JOB7='';<br>
+      <br>
+      </b></div>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p>The Jol Compiler now reads the <i>updated </i>members, and
+processes the instructions. In this case, no other jobs will be
+submitted.</p>
+      <p>After <b>JOB2</b> has run, the <b>CHECKNET</b> command is
+again executed. It reads the member <b>TWO</b> of the status data set,
+and alters it as shown below:-</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" bgcolor="#e5e5e5" valign="TOP"><br>
+      <div style="margin-left: 40px;"><b>%JOB1='ENDED'</b><br>
+      <b>%JOB2='ENDED';</b><br>
+      <b>%JOB3='';</b><br>
+      <b>%JOB4='';</b><br>
+      <b>%JOB5='';</b><br>
+      <b>%JOB6='';</b><br>
+      <b>%JOB7='';<br>
+      <br>
+      </b></div>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">The Jol Compiler now reads the <i>updated
+
+
+
+      </i>member, and processes the instructions. In this case, <u>other
+jobs
+will
+be
+submitted</u>.
+      <p>This process continues until all the jobs have been run.</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>
+</p>
+</body>
+</html>

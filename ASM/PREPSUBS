@@ -1,0 +1,716 @@
+PREPSUBS   TITLE 'JOL SUBROUTINES'                                74303
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974,1975
+* COPYRIGHT CCS 1976
+* COPYRIGHT CCS 1980
+* COPYRIGHT CCS 1982
+* FIX AUG 29   JOL30027 FIX DOUBLE QUOTE IN REPLACE
+* FIX JULY 4   JOL30067  SYMBOLIC REPLACE FIX
+* FIX JULY 4   JOL30068X  ALLOW @$# TO BE USED AS SYMBOLIC NAMES
+* FIX OCT 21,1982 PUT '+' IN SPLIT CARD FILE FOR CLISTS.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+         PRINT OFF
+         COPY JOLCOM
+           TITLE 'OUTPUT DATA CARD AFTER REPLACING SYMBOLICS'
+         PRINT ON,DATA
+           JOLSAVE CSECT=UJS02OP,SIZE=154                         75128
+           USING S02SAVE,R13                                      75128
+* THIS CSECT RECEIVES A PARAMETER LIST CONTAINING:-
+*    1.    ADDRESS OF A DCB TO BE USED FOR OUTPUTTING
+*          FB LRECL=80 RECORDS
+*    2.    ADDRESS OF A VARYING LENGTH CHARACTER STRING WHICH IS TO BE
+*              OUTPUT AND WHICH MAY HAVE TO BE SPLIT OVER SEVERAL CARDS
+           SPACE 3
+* IF THE LENGTH OF THE STRING IS LONGER THAN WHAT WOULD FIT ON ONE DASD
+*    CARD, THEN THE STRING IS BROKEN INTO TWO OR MORE CONTINUED CARDASD
+*    EACH OF WHICH END WITH A COMMA AND HAVE AN 'X' IN COLUMN 72   DASD
+   SPACE
+           LM  R8,R9,0(R1)     BETTER LOAD A FEW PARAMETERS
+           USING #S02TOBE,R9
+           CLEAR S02CRDOP              CLEAR BUFFER                DASD
+           CLC #S02OP,=H'0'            IF STRING LEN IS ZERO       DASD
+           BE S02RETN0                 THEN RETURN WITH RC=0       DASD
+         LH    R7,#S02OP               IF STRING LEN               DASD
+         CH    R7,=H'71'                 IS <= 71                  DASD
+         BH    S02GT71                                             DASD
+         BCTR  R7,0                  THEN PUT THE CARD             DASD
+         EX    R7,S02MUV1               IMAGE IN THE BUFFER        DASD
+         BAL   R10,S02PUTIT              AND WRITE IT OUT          DASD
+S02RETN0 JOLRETN RC=0                  RETURN WITH RC=0            DASD
+         SPACE 3                                                   DASD
+S02GT71  LA    R3,72(R9)               STRING LEN > 71 SO          DASD
+         LH    R4,=H'-1'               SCAN BACKWARDS FROM         DASD
+         LA    R5,1(R9)                COL 71 FOR THE FIRST COMMA  DASD
+         SPACE 2                                                   DASD
+S02NXT01 CLI   0(R3),C','                                          DASD
+         BE    S02FND01                                            DASD
+         BXH   R3,R4,S02NXT01                                      DASD
+         SPACE 2                                                   DASD
+         MVC   S02CRDOP(71),2(R9)      NO COMMA ON CARD SO BREAK   DASD
+         MVI   S02CRDOP+71,C'+'        IT AT COL 71, PUT + IN 72   DASD
+         BAL   R10,S02PUTIT            AND WRITE IT OUT            DASD
+         LA    R9,73(R9)               REPOINT POINTER             DASD
+         SH    R7,=H'71'               DECR LENGTH                 DASD
+         B     S02CONT                 AND CONTINUE                DASD
+         SPACE 2                                                   DASD
+S02FND01 LR    R6,R3                   FOUND A COMMMA SO SPLIT     DASD
+         SR    R6,R5                   THE CARD THERE              DASD
+         SR    R7,R6                   DECR LENGTH                 DASD
+         BCTR  R6,0                                                DASD
+         EX    R6,S02MUV1              SHIFT CARD IMAGE TO BUFFER  DASD
+         MVI   S02CRDOP+71,C'+'        PUT CONT CHAR IN 72         DASD
+         BAL   R10,S02PUTIT            AND WRITE IT OUT            DASD
+         LA    R9,1(R3)                REPOINT THE POINTER         DASD
+         SPACE 2                                                   DASD
+S02CONT  CLEAR S02CRDOP                CLEAR THE CARD BUFFER       DASD
+         CH    R7,=H'56'               IF REMAINING STRING LEN     DASD
+         BNH   S02LE56                 IS > 56 THEN                DASD
+         SPACE 2                                                   DASD
+         LA    R3,55(R9)               SCAN BACKWARDS FROM COL 71  DASD
+         LR    R5,R9                   FOR A COMMA TO BREAK THE    DASD
+         BCTR  R5,0                    CONTINUATION CARD AT        DASD
+         SPACE 2                                                   DASD
+S02NXT02 CLI   0(R3),C','                                          DASD
+         BE    S02FND02                                            DASD
+         BXH   R3,R4,S02NXT02                                      DASD
+         MVC   S02CRDOP+15(56),0(R9)   NO COMMA ON THE CARD SO     DASD
+         MVI   S02CRDOP+71,C'+'        SHIFT IN 56 CHARS, PUT A    DASD
+         BAL   R10,S02PUTIT            CONT CHAR IN 72 AND WRITE ITDASD
+         LA    R9,56(R9)               REPOINT THE POINTER         DASD
+         SH    R7,=H'56'               DECR REMAINING LENGTH       DASD
+         B     S02CONT                 AND CONTINUE                DASD
+         SPACE 2                                                   DASD
+S02FND02 LR    R6,R3                   FOUND A COMMA SO BREAK THE  DASD
+         SR    R6,R5                   CARD THERE TO BE OUTPUT     DASD
+         SR    R7,R6                   DECR REMAINING LENGTH       DASD
+         BCTR  R6,0                                                DASD
+         EX    R6,S02MUV2              SHIFT THE CARD IMAGE IN     DASD
+         MVI   S02CRDOP+71,C'+'        PUT CONT CHAR IN 72         DASD
+         BAL   R10,S02PUTIT            AND WRITE IT OUT            DASD
+         LA    R9,1(R3)                REPOINT THE POINTER         DASD
+         B     S02CONT                 AND CONTINUE                DASD
+         SPACE 2                                                   DASD
+S02LE56  BCTR  R7,0                    LESS THAN 57 BYTES LEFT     DASD
+         EX    R7,S02MUV2              SO SHIFT IT INTO BUFFER     DASD
+         BAL   R10,S02PUTIT            AND WRITE IT OUT            DASD
+         B     S02RETN0                RETURN WITH RC=0            DASD
+         SPACE 2                                                   DASD
+S02PUTIT PUT   (8),S02CRDOP            OUTPUT THE CARD IMAGE       DASD
+         BR    R10                     AND RETURN TO THE CALLER    DASD
+         SPACE 3                                                   DASD
+S02MUV1  MVC   S02CRDOP(*-*),2(R9)     EX'ED TO MOVE 1-70 BYTES    DASD
+S02MUV2  MVC   S02CRDOP+15(*-*),0(R9)  EX'ED TO MOVE 1-55 BYTES    DASD
+         SPACE 2                                                   DASD
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           LTORG
+S02SAVE    DSECT                                                  75128
+           DS  18F             SAVE AREA                          75128
+S02CRDOP   DS  CL82            WORK AREA                          75128
+           DROP R13                                               75128
+#S02TOBE   DSECT
+#S02OP     DS  H
+           TITLE 'UJS19RSM:RE-ORGANISE SYMBOLIC PARAMATER TABLE'
+           JOLSAVE CSECT=UJS19RSM  REORG-SYMS
+* THIS ROUTINE WILL REORGANISE THE SYMBOLIC PARAMETER TABLE.
+*    IT IS CALLED WHEN AN ASSIGNMENT OR A DECLARE IS PROCESSED WHEN
+*    THERE IS INSUFFICIENT ROOM IN THE TABLE FOR A NEW ENTRY,
+*    AND WHEN AN END STATEMENT IS PROCESSED
+* THE FORMAT OF THE TABLE IS THIS:-
+*    1. A SERIES OF 8 BYTE CHARACTER STRINGS WITH NAMES FOLLOWED BY
+*          THE ADDRESS AND LEVEL NUMBER
+*    2. AT THE END OF THE TABLE HELD AS VARYING CHARACTER STRINGS ARE
+*          THE VALUES OF THE SYMBOLIC PARAMETERS.
+* NOW WHAT THIS CSECT MUST DO IS TO
+*    1. WHIZZ DOWN THE TABLE DELETING ANY NAMES WHOSE LEVEL IS LESS
+*          THAN THE CURRENT LEVEL
+*    2. SHIFT UP ANY NAMES THAT ARE LEFT TO FORM A CONTIGUOUS STRING
+*          OF NAMES
+*    3. RESET THE 'NOSYMS' FIELD
+*    4. IF THERE IS LESS THAN 100 DYTES LEFT IN THE TABLE,IT MUST BE
+*          RE-ORGANISED
+*          TO RE-ORGANISE THE TABLE,THE ADDRESS TABLE IS AGAIN GONE
+*          THROUGH AND ITEMS (VALUES) MOVED UP THE TABLE
+*          'ANEXTSYM' MUST BE RESET,AS MUST THE COUNTER SHOWING THE
+*          NUMBER OF TIMES THE TABLE WAS RE-ORGANISED.
+           SPACE 3
+           USING JOLCOM,R2
+           L   R3,ASYMTBL                      GET ADDRESS OF THE TABLE
+           USING SYMOVLY,R3
+           LH  R15,NOSYMS      NUMBER IN TABLE
+           MH  R15,=H'12'      LENGTH OF ENTRIES
+           AR  R15,R3          STOP ADDRESS
+           LA  R14,12          INCREMENT
+           SR  R15,R14         SET STOP ADDRESS CORRECTLY         87150
+S19LUP1    CLC SYMLEVEL,LEVEL+1 IS THIS SYMBOLIC NAME> CURRENT LEVEL ?
+           BH  S19DEL          YES,SO NOW ENTER THE SLOWER LOOP WHICH
+*                              SHIFTS ITEMS AROUND
+           BXLE R3,R14,S19LUP1
+           B   S19TSPAC        NOW TEST IF VALUES HAVE TO BE SHUFFLED
+           SPACE 3
+S19DEL     EQU *
+* A PARAMETER WAS FOUND WHOSE LEVEL IS > CURRENT LEVEL
+           LR  R4,R3           R3 POINTS TO NAME WHICH IS DEFUNCT
+* NOW CONTINUE LOOPING BUT MOVE ALL THE REST OF THE NON-DELETED
+*    ITEMS UPWARDS
+S19DEL2    EQU *                                                  75311
+           LH  R0,NOSYMS       READJUST
+           SH  R0,=H'1'            NUMBER
+           BM  S19ERR1                 OF
+           STH R0,NOSYMS                   SYMBOLIC PARMS
+S19TDEL    BXH R3,R14,S19END1  SKIP DELETED ITEM,BRANCH IF END
+           CLC SYMLEVEL,LEVEL+1
+           BH  S19DEL2                                            75311
+* HERE WE DON'T DELETE ITEM,BUT MOVE IT UP TO ADDRESS IN R4
+           MVC 0(12,R4),SYMNAME
+           LA  R4,12(R4)
+           B   S19TDEL         TEST LEVELS AGAIN AFTER BXH
+           SPACE 3
+S19END1    EQU *
+*          LH  R0,NOSYMS       READJUST
+*          AH  R0,=H'1'            NUMBER
+*          STH R0,NOSYMS                   SYMBOLIC PARMS
+S19TSPAC   EQU *
+* NOW WE MUST CHECK IF THERE IS ROOM FOR ONE MORE SYMBOLIC PARAMETER
+*    IF THERE ISN'T,WE MUST RE-ARRANGE THE VALUE TABLE
+           L   R14,ASYMTBL     GET ADDRESS OF TABLE
+           AH  R14,SYMLEN      ADD ITS LENGTH
+           SH  R14,=H'253'     -253 (MAX LENGTH SYMBOLIC PARAMETER)
+           C   R14,ANEXTSYM
+           BH  S19RETNO        OK,THERE IS 253 BYTES LEFT,SO GO BACK
+* ADD 1 TO RE-ORG COUNTER
+           LH  R15,RORGSYMT
+           LA  R15,1(R15)
+           STH R15,RORGSYMT
+* NOW REORG THE VALUE TABLE. THIS IS NO DOUBT A PRETTY SLOW OLD
+*    PROCESS.
+           L   R3,ASYMTBL
+           LH  R15,NOSYMS
+           MH  R15,=H'12'      LENGTH ENTRIES
+           AR  R15,R3          STOP ADDRESS
+           LA  R14,12
+           SR  R15,R14         SET STOP ADDRESS CORRECTLY         87150
+* CALCULATE STARTING ADDRESS OF VALUES PART OF TABLE
+           LH  R4,MAXSYMS
+           MH  R4,=H'12'
+           AR  R4,R3
+           FIX  'REMOVE NEXT I NSTRUCTION'
+*          LA R3,12(R3)    COS 1ST POSN NEVER USED            75051
+* RIGHT,R15=STOP ADDRESS OF LOOP
+*       R14=INCREMENT
+*       R3 =START ADDRESS OF LOOP
+*       R4 =START ADDRESS OF VALUE PART OF TABLE
+* NOW THE BEST WAY TO RE-ORG (OR COMPRESS,IN FACT) THE TABLE IS   75049
+* TO MERELY SHIFT ALL THE VALUES INTO ONE CONTIGUOUS LUMP OF CORE.75049
+*TO DO THIS,WE MUST SCAN DOWN THE NAME TABLE AND SWAP THE ADDRESS 75049
+* PART WITH THE CURRENT LENGTH OF THE STRING,THEN,GO DOWN THE     75049
+* VALUE TABLE,AND SHIFT THE VALUES (ONE AT A TIME) UP THE VALUE   75049
+* TABLE.                                                          75049
+* THIS IMMEDITATLEY RAISES A PROBLEM. WE DON'T KNOW HICH ENTRIES  75049
+* ARE STILL ACTIVE,SO WHEN WE ARE SWAPPING THE ADDRESS AND        75049
+* LENGTHS, WE SHALL MARK THE TOP BYTE WITH AN X'80' TYPE PATTERN  75049
+* AND,AS THERE ARE ONLY TWO BYTES AVAILABLE IN THE LENGTH PART    75049
+* OF THE VALUE,WE'LL POP IN THE OFFSET OF THE TABLE ENTRY.        75049
+*  GOT THE PICTUR? ******                                         75049
+           SPACE 1
+           L   R8,ASYMTBL     FOR CALCULATING OFFSETS             75049
+S19LUP2    L   R5,SYMADDR
+           LA  R5,0(R5)        DROP SYMLEVEL BYTE
+           MVC SYMADDR+2(2),0(R5)  SHIFT LENGTH OF STRING TO ADDR 75049
+           LR  R7,R3               SAVE A(TABLE ENTRY)            75049
+           SR  R7,R8               =OFFSET TO TABLE ENTRY         75049
+           STH R7,DBL              SO NO 0C6                      75049
+            OI DBL,X'80'            MARK X'80'                   75049
+           MVC 0(2,R5),DBL         SHIFT TO WHERE LENGTH WAS      75049
+           BXLE R3,R14,S19LUP2     AND ON TO NEXT TABLE ENTRY     75049
+* NOW WE HAVE TO GO DOWN THE VALUE PART OF THE STACK AND COMPRESS 75049
+* EVERYTHING WITH A LENGTH THAT HAS THE TOP BIT TURNED ON         75049
+           SPACE 1                                                75049
+* R4 CURRENTLY POINTS TO THE BEGINNING OF THE TABLE,SO AWAY WE    75049
+* GO.                                                             75049
+          LR   R5,R4           R4=OUTPUT ADDRESS,R5=CURRENT VALUE 75049
+*                              WE ARE LOOKING AT                  75049
+S19LUP3   TM   0(R5),X'80'     IS ENTRY ACTIVE ?                  75049
+          BO   S19ACTIV        YEP -> AWAY AND FIX                75049
+* HERE THE ENTRY IS NOT ACTIVE,SO ALL WE HAVE TO DO IS ADD THE    75049
+* LENGTH OF THIS STRING+2,AND WE POINT TO THE NEXT ENTRY IN THE   75049
+* STACK.                                                          75049
+          MVC  DBL(2),0(R5)    NO OC6 AGAIN,PLEASE                75049
+S19TEND3  LH   R15,DBL                                            75049
+          LA    R5,2(R15,R5)   +2 FOR LENGTH INDICATOR            75049
+S19TEND4  C     R5,ANEXTSYM    REACHED END OF TABLE ?             75049
+          BL   S19LUP3                                            75049
+* WE APPEAR TO HAVE ENDED.                                        75049
+          ST   R4,ANEXTSYM     RESET A(NEXTSYM)                   75049
+          JOLRETN RC=0                                            75049
+S19ACTIV  EQU  *                                                  75049
+* WE HAVE AN ACTIVE VALUE PART IN THE TABLE                       75049
+          MVC  DBL(2),0(R5)    SHIFT TABLE OFFSET ADDRESS TO DBL  75049
+          NI   DBL,X'FF'-X'80' TURN OFF TOP BIT                   75049
+          LH   R3,DBL          LOAD TABLE OFFSET                  75049
+          A    R3,ASYMTBL      R3=A(TABLE ENTRY),AND STILL A      75049
+*                              USING FOR IT                       75049
+          LH   R6,SYMADDR+2    GET LENGTH OF STRING               75049
+          STH  R6,DBL                                             75049
+          MVC  0(2,R5),DBL     BETTER PUT LENGTH BACK,EH ??       75049
+          LTR   R6,R6                                             75128
+           BM  S19ERR2                TUT,TUT
+           LA  R6,1(R6)        +1 FOR ACTUAL RECORD LENGTH
+           EX  R6,S19MVC1      SHIFT IT TO ITS NEW HOME
+           ST  R4,DBL
+           MVC SYMADDR+1(3),DBL+1              REPLACE ADDRESS
+           LA  R4,1(R6,R4)     CALC NEW ADDRESS FOR MOVING DATA
+            LA R5,1(R5,R6)   RESET R5                            75051
+          B    S19TEND4            CALC NEW R5,TEST IF END ETC    75049
+           SPACE 3
+S19RETNO   JOLRETN
+S19RETNF   JOLRETN RC=4
+           SPACE 3
+S19ERR1  JOLERR 501,'NUMBER SYM PARMS<0'
+           B   S19RETNF
+S19ERR2  JOLERR 502,'LENGTH SYM PARM<0'
+           B   S19RETNF
+S19MVC1    MVC 0(*-*,R4),0(R5)                 ****** EXECUTED
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+            DROP R3
+         LTORG                                           JOL30027 76200
+         EJECT                                           JOL30027 76200
+S20SAVE  DSECT                                           JOL30027 76200
+         DS    18F            SAVE AREA                  JOL30027 76200
+S20QUOTI DS    CL1            SET ^=' ' IF IN QUOTED STRGJOL30027 76200
+S20SAVEL EQU   *-S20SAVE                                 JOL30027 76200
+         TITLE 'REPLACE SYMBOLICS'
+         JOLSAVE CSECT=UJS20REP,SIZE=S20SAVEL            JL30027 76200
+         USING S20SAVE,R13                               JL30027 76200
+         CLEAR S20QUOTI                                  JOL30027 76200
+* THE FOLLOWING SECTION OF CODE REPLACES THE OLD MODULE CALLED
+*    UJS20REP,WHICH IS USED TO REPLACE SYMBOLIC PARAMETERS
+*    IN A STRING
+* R1 POINTS TO THE INPUT STRING ADDRESS,WHICH MUST BE A VARYING
+*    LENGTH STRING
+* THE OUTPUT STRING ALWAYS GOES TO #WORK.
+           SPACE 1
+* DATE 74303
+           SPACE 1
+* LETS DO A LITTLE INITIALISATION,SHALL WE ?
+           SR  R15,R15
+           STH R15,#WORK
+* CHECK THAT THE INPUT STRING IS NOT ZERO (NO WORK FOR US)
+           L   R5,0(R1)        LOAD A(INPUT)
+           CH  R15,0(R5)       INPUT STRING 0 ?
+           BNZ S20INIT2
+           JOLRETN RC=0        GO HOME,NO WORK.
+* NOW SET UP A LITTLE BXLE LOOP SCANNING DOWN THE INPUT STRING.
+*    R5 MUST EQUAL THE ADDRESS OF THE FIRST DATA BYTE
+*    R7 MUST EQUAL THE ADDRESS OF THE LAST DATA BYTE
+*    R6 MUST EQUAL 1,THE INCREMENT.
+S20INIT2   LH  R7,0(R5)        LOAD CURRENT LENGTH OF STRING.
+           LA  R7,1(R7,R5)     R7= STOP ADDR (ACTUAL,IE LAST BYTE)
+           LA  R5,2(R5)        SKIP LENGTH HALFWORD
+           LA  R6,1            R6= INCREMENT NOW.
+           LA  R9,WORK         A(OUTPUT STRING)
+* NOW WE CAN START GOING DOWN THE INPUT STRING TILL WE FIND
+*    A % (START OF SYMBOLIC)
+S20MAIN    LR  R1,R5           SAVE STARTING POSITION FOR THE
+*                              MOMENT,AS WE WILL MOVE THE LENGTH
+*                              OF THE STRING WITH-OUT SYMBOLICS
+*                              TO THE OUTPUT STRING.
+           CR  R5,R7           REACHED END OF STRING ?
+           BNH S20FINDP        NO -> FIND A %
+* HERE WE HAVE REACHED THE END OF THE STRING
+           MVC 0(10,R9),BLANKS   PUT SOME BLANKS ON THE END       J52
+           LA  R1,WORK         GET THE START ADDRESS OF OUTPUT
+           SR  R9,R1           R9=LENGTH OF STRING
+           STH R9,#WORK        STORE IT.
+           JOLRETN RC=0        RETURN TO CALLER.
+           SPACE 2
+S20FINDP   EQU *
+           CLI 0(R5),C'%'      IS CHARACTER A % ?
+           BE  S20GOTP         YES ->
+         CLI   0(R5),C''''    QUOTE (START   END) ?      JOL30027 76200
+         BNE   S20BXLE1       NO, CARRY ON               JOL30027 76200
+* WE HAVE A QUOTE.                                       JOL30027 76200
+         IFNULL S20QUOTI,S20SETQU                        JOL30027 76200
+* OK,WE ARE ALREADY IN A QUOTED STRING.                  JOL30027 76200
+         CLI   1(R5),C''''    DOUBLE QUOTES ?            JOL30027 76200
+         BNE   S20CLRQU       NOPE, CLEAR QUOTE IND      JOL30027 76200
+* '' FOUND IN QUOTED STRING.                             JOL30027 76200
+         AR    R5,R6          SKIP QUOTE 1               JOL30027 76200
+         B     S20BXLE1       GO SKIP 2ND NOW            JOL30027 76200
+S20CLRQU CLEAR S20QUOTI       CLEAR QUOTEIND             JOL30027 76200
+         B     S20BXLE1                                  JOL30027 76200
+S20SETQU MVI   S20QUOTI,C'1'  SET QUOTE INDICATOR        JOL30027 76200
+S20BXLE1 EQU   *                                         JOL30027 76200
+           BXLE R5,R6,S20FINDP NO,CONTINUE SCANNING.
+* HERE WE HAVE REACHED THE END OF THE INPUT STRING.
+* R5 POINTS TO THE END CHARACTER
+* R7 POINTS TO THE END CHARACTER AS WELL
+* R1 POINTS TO THE START OF THE STRING
+S20MOVE    LR  R15,R5          R15=R5 =END CHARACTER.
+           SR  R15,R1          R15=1 LESS THAN # CHARS TO MOVE
+           BM  S20ERR6         -VE ? WHAT'S THIS THEN ?
+* R9 CONTAINS ADDRESS TO WHICH DATA MUST BE MOVED
+           LR  R14,R9          R14= CURRENT OUTPUT POSITION.
+           AR  R14,R15         FINAL ADDRESS IF WE DO THE MOVE
+           LA  R10,WORK                                          80290
+           A   R10,LWORK                                         80290
+           CR  R10,R14         CHECK FINAL ADDRESS WITH END OF WORK
+           BNH S20ERR7         ERROR,WON'T FIT IF WE MOVE STRING
+           CH  R15,=H'250'     MOVE THAN 250 BYTES TO MOVE ?
+           BH  S20BIGMV
+           EX  R15,S20MUVDT    MOVE DATA IN.
+           AR  R9,R15      RESET NEW LOCATION
+           B   S20MAIN         BACK TO MAIN LOOP.
+           SPACE 2
+S20BIGMV   MVC 0(250,R9),0(R1)
+           LA  R9,250(R9)
+           LA  R1,250(R1)
+           B   S20MOVE
+S20MUVDT   MVC 0(*-*,R9),0(R1)
+           SPACE 3
+S20GOTP    EQU *
+* R5 POINTS TO A % SIGN. IF R1=R5,THEN THERE IS NO RESIDUE DATA
+*    TO MOVE TO THE OUTPUT STRING,OTHERWISE THERE IS.
+           CR  R1,R5
+           BE  S20REALP        OK,GO PROCESS SYMBOLIC PARM.
+* HERE,WE'LL HAVE TO SHIFT THE OLD DATA TO THE OUTPUT STRING.
+           B   S20MOVE
+           SPACE 1
+S20REALP   EQU *
+         MVI   THISPRNT,C' '     SET TO BLANK FOR BETTER ERRORS   J52
+* OK,WE HAVE R5 POINTING TO A % AND ALL OTHER DATA HAS
+*    BEEN MOVED TO THE OUTPUT STRING.
+* NEW FEATURE 3.0                                                 75128
+*  IF %% IS CODED, WE WILL PASS ONE THROUGH                       75128
+*                                                                 75128
+         CLI   1(R5),C'%'     2%'S ?                              75128
+         BNE   S200NEPE       ONE PERCENT                         75128
+         MVI   0(R9),C'%'     SHIFT 1 PERCENT                     75128
+         LA    R9,1(R9)       SET OUTPUT STRING ONE HIGHER        75128
+         LA    R5,2(R5)       SKIP BOTH %'S ON INPUT STRING       75128
+         B     S20MAIN                                            75128
+         SPACE 2                                                  75128
+S200NEPE EQU   *                                                  75128
+           BAL R12,S20SETUP    SETS UP SYMBOLIC NAME IN CALLAREA+32
+           CLC =CL8'LIST',CALLAREA+32 IS IT 'LIST'
+           BE  S20LIST         YES,REQUIRES SPECIAL PROCESSING.
+             CLC =CL8'CARD',CALLAREA+32 ISIT CARD?                75128
+            BE  S20LIST         YES,IT TOO WANTS SPECIAL PROCESSIN75128
+S20GETIT   BAL R12,S20FINDN    FIND THE SYMBOLIC PARM.
+           LTR R15,R15         DID WE FIND IT ?
+           BZ  S20GOTS1        YES.
+S20ERR2    LA  R12,CALLAREA+32
+           USING S20NAME,R12
+           CLC =C'IF ',ICOMMAND  WAS IT AN IF STATEMENT ?
+           BE  S20IF
+* NEW FEATURE 3.0                                                 75128
+*  %SYSSTMT RETURNS A 4 CHARACTER STRING CONTAINING THE CURRENT   75128
+*        STATEMENT NUMBER.                                        75128
+         SPACE 1                                                  75128
+         CLC   =C'SYSSTMT ',S20NAME IS MISSING NAME %SYSTMT ?     75128
+         BNE   S20GIVE2       NO, ISSUE ERROR MESSAGE NUMBER 2    75128
+         MVC   0(4,R9),STMT   SHIFT CURRENT STATEMENT NUMBER      75128
+         OC    0(4,R9),=C'0000' ADD LEADING ZEROES                75128
+         LA    R9,4(R9)       RESET OUTPUT STRING ADDRESS         75128
+         B     S20MAIN        BACK TO MAIN LOOP NOW               75128
+         SPACE 1                                                  75128
+S20GIVE2 EQU   *                                                  75128
+         JOLERR 402,'CANNOT FIND ''%',S20NAME,''' SET TO NULL'
+           B   S20MAIN         CONTINUE EVER ONWARDS
+S20IF      MVI 0(R9),0         *** SPECIAL FOR IF STATEMENT ***
+           AR  R9,R6           ADD 1 TO R9
+           B   S20MAIN
+           SPACE 2
+S20LIST    EQU *
+           CLEAR INST,INEST    USED AS WORK AREA ONLY *********   75311
+***THIS IS TO ALLOW FOR %LIST(1+%2-%X) TYPE CODE                  75311
+* A %LIST AND %CARD ITEM REQUIRES VERY SPECIAL ATTENTION.         75128
+*    IT MAY BE %LIST(NUMBER) OR %LIST(%NAME).
+*    IF NO ( ) FOLLOW,IT IS ASSUMMED TO BE A %LIST PROPERLY DECLARD5049
+* NOW WE HAVE A PROBLEM COS WE HAVE HAVE TO SAVE THE 'LIST' | 'CARD'
+* AND I AM HAVING TROUBLE DETERMINING WHERE TO PUT IT.
+*** IT GOES IN 'AUVALID', WHICH IS ONLY USED IN THE COMPILE
+* PHASE.
+           MVC  AUVALID,CALLAREA+32
+S20FBRAC   CLI 0(R5),C'('
+           BE  S20GOTB1
+           CLI 0(R5),C' '
+          BNE  S20GETIT            ASSUME %LIST                   75049
+           BXLE R5,R6,S20FBRAC
+          B    S20GETIT            ASSUME %LIST                   75049
+           SPACE 1
+S20GOTB1   EQU *
+* NOW FIND IF NEXT CHARACTER IS A <NUMBER> | ANOTHER SYMBOLIC.
+           BXLE R5,R6,*+8      SKIP '('
+           B   S20ERR5         NOTHING AFTER IT -> ERROR
+           CLI 0(R5),C' '      FIND NEXT NON-BLANK
+           BNE *+12            GO FIND OUT WHAT IT IS
+           BXLE R5,R6,*-8      SKIP BLANKS
+           B   S20ERR5         NOTHING AFTER '('
+* HERE WE HAVE A NON-BLANK AFTER THE BRACKET
+           CLI 0(R5),C'+'                                         75311
+           BE  S20SIGN                                            75311
+           CLI 0(R5),C'-'                                         75311
+           BNE S20TSYM9                                           75311
+S20SIGN    MVC INEST(1),0(R5)  SAVE '+' | '-'                     75311
+           B          S20GOTB1 SKIP TO NEXT NON-BLANK CHAR        75311
+           SPACE 2
+S20TSYM9   CLI 0(R5),C'%'      ANOTHER SYMBOLIC ?
+           BNE S20TNUM         NO,SHOULD BE A <NUMBER>
+           BAL R12,S20SETUP    SET UP NAME PROPERLY IN CALLAREA
+           BAL R12,S20FINDN    NOW FIND NAME IN TABLE
+           LTR R15,R15
+           BNZ S20ERR2         COULDN'T FIND IT,ERROR
+           USING SYMOVLY,R1
+           L   R15,SYMADDR     GET ADDRESS OF SYMBOLIC VARIABLE
+           MVC CALLAREA(2),0(R15) SHIFT LENGTH SO NO 0C6
+           LH  R0,CALLAREA
+           LA  R1,2(R15)       R1=ADDRESS
+           CLI 0(R1),C''''     MAY HAVE QUOTES AROUND IT
+           BNE S20NOTL1
+           AR  R1,R6           ADD 1 TO ADDRESS TO SKIP '
+           SH  R0,=H'2'        REDUCE LENGTH BY 2 (DROP QUOTES)
+           BM  S20ERR5         NOT NUMERIC ERROR
+S20NOTL1   L   R15,ATNUM      GET ADDRESS OF TEST NUM RTN        75311
+           BALR R14,R15        CONVERT TO NUMERIC
+           LTR R15,R15         DID IT ?
+           BNZ  S20ERR5         DIDN'T GO MY FRIEND
+           CLI INEST,C'-'      DO WE HAVE TO SUBTRACT THE NUMBER  75311
+           BNE *+6                                                75311
+           LNR R1,R1                                              75311
+           AH  R1,INST         ADD THE NUMBER WE HAVE BEEN        75311
+*                              ACCUMULATING TIL NOW               75311
+           SPACE 1                                                75311
+           STH R1,INST                                            75311
+* NOW BEFORE BRANCHING BACK TO FIND THE SYMBOLIC,LETS SKIP THE
+*    ')' IF THERE IS ONE.
+S20SKIPC   CLI 0(R5),C' '      BLANK ?
+           BNE S20TCLOS        NO,TEST IF ')'
+           BXLE R5,R6,*-8      SKIP BLANK.
+          B    S20GETLI        END OF STRING,NO ')':- WHO CARES?  75049
+S20TCLOS   CLI 0(R5),C')'      ')'
+           BE  S20SKIPY        SKIP CLOSE BRACKET THEN            75311
+           CLI 0(R5),C'-'      MORE ARITHMETIC ?                  75311
+           BE  S20SIGN         YES                                75311
+           CLI 0(R5),C'+'      MORE ARITHMETIC ?                  75311
+           BE  S20SIGN         YES                                75311
+* HERE, TIS NOT A ')' | '+' | '-' , SO IGNORE WHATEVER IT IS NOW  75311
+           B   S20GETLI        GO GET THE LIST (OR CARD) ITEM     75311
+S20SKIPY   EQU *                                                  75311
+           BXLE R5,R6,S20GETLI
+S20GETLI  EQU  *
+           LH  R1,INST         GET THE BINARY SUBSCRIPT NUMBER    75311
+           LTR R1,R1                                              75311
+           BM  S20ERR8         -VE, ERROR                         75311
+           CVD R1,DBL          MAKE PACKED                        75311
+           UNPK CALLAREA+36(4),DBL UNPACK NOW                     75311
+           OI   CALLAREA+39,C'0'   FIX LAST DIGIT                 75311
+           MVC CALLAREA+32(4),AUVALID SHIFT IN 'LIST' | 'CARD'   75311
+* HERE WE HAVE A %LIST ITEM TO GET
+          BAL  R12,S20FINDN   FIND THE SYMBOLIC PARM
+          LTR  R15,R15        DID WE GET IT ?
+          BNZ  S20ERR2        NO -> ERROR
+* NOW CHECK THAT THE LEVELS ARE THE SAME,IF NOT,COULD BE INNER
+*        MACRO GETTING WRONG LIST ITEM.
+          CLC  LEVEL+1(1),SYMLEVEL
+          BE   S20GOTS1       ALL WELL,GO SHIFT PARM VALUE NOW
+          B    S20ERR2        WRONG LEVEL,GIVE ERROR MESSAGE
+           SPACE 2
+S20TNUM    EQU *
+* AFTER ( A NON-%SYMBOL FOUND. IT HAD BETTER BE NUMERIC.
+           CLI 0(R5),C'0'
+           BL  S20ERR4
+           CLI 0(R5),C'9'
+           BH  S20ERR4
+           LR  R1,R5           SAVE START ADDRESS OF STRING
+           BXLE R5,R6,S20TNUM2
+           B  S20ENDN          END NUMBER
+S20TNUM2   CLI 0(R5),C'0'
+           BL  S20ENDN         ENDNUM
+           CLI 0(R5),C'9'
+           BH  S20ENDN
+           BXLE R5,R6,S20TNUM2
+S20ENDN    EQU *
+           LR  R0,R5
+           SR  R0,R1
+           B   S20NOTL1        CONVERT,TEST,FIND LISTNNNN.
+S20ERR4  JOLERR 404,'%LIST|%CARD SUBSCRIPT NOT NUMERIC OR TOO LARGE'
+S20SKIPZ   CLI 0(R5),C' '      ' ' ?
+           BNE S20TCL2
+           BXLE R5,R6,S20SKIPZ SKIP BLANKS
+           B   S20MAIN         END OF STRING -> MAIN
+S20TCL2    CLI 0(R5),C')'
+           BNE S20MAIN
+           AR  R5,R6           SKIP ')'
+           B   S20MAIN
+           SPACE 2
+S20SETUP   EQU *
+* THIS ROUTINE WILL FIND THE END OF A SYMBOLIC NAME AND STORE
+*    THE SYMBOLIC IN CALLAREA+32.
+           SPACE 1
+* R5 POINTS TO THE '%'
+           CLI 0(R5),C'%'      JUST CHECK
+           BNE S20LR1
+           BXLE R5,R6,*+8
+           B   S20MAIN         FORGET IT (NO MESSAGE BUT ).
+S20LR1     LR  R1,R5           LOAD START OF NAME
+S20NMLUP CLI   0(R5),C'@'                                JOL30083 76200
+         BE    S20SYMNO                                  JOL30083 76200
+         CLI   0(R5),C'$'                                JOL30083 76200
+         BE    S20SYMNO                                  JOL30083 76200
+         CLI   0(R5),C'#'                                JOL30083 76200
+         BE    S20SYMNO                                  JOL30083 76200
+         CLI   0(R5),X'81'     LOWERCASE 'A'             JOL30083 87150
+           BL  S20ENDNM
+           CLI 0(R5),C'9'
+           BH  S20ENDNM
+S20SYMNO EQU   *                                         JOL30083 76200
+           BXLE R5,R6,S20NMLUP
+S20ENDNM   LR  R15,R5
+           SR  R15,R1
+           CH  R15,=H'8'
+           BH  S20ERR1         NAME TOO LONG
+           SR  R15,R6          -1
+           BM  S20MAIN         TWAS A % ON ITS OWN-IGNORE IT.
+           MVC CALLAREA+32(8),BLANKS CLEAR IT FIRST
+           EX  R15,S20MUVNM
+           OC  CALLAREA+32(8),BLANKS  CONVERT TO UPPERCASE        87150
+           BR  R12             BACK TO CALLER
+S20MUVNM   MVC CALLAREA+32(*-*),0(R1)
+           SPACE 2
+           USING SYMOVLY,R1
+S20FINDN FINDSYM CALLAREA+32   USE NEW BINARY SEARCH FOR SYMBOLICS87150
+         LR    R1,R0           SET R1 TO RETURNED POINT IN THE TABLE
+         BR    R12             BACK TO CALLER                     87150
+           LNR R14,R1           -12 TO R8
+           MH  R1,NOSYMS       NOSYMS X 12
+           L   R15,ASYMTBL      START OF TABLE
+           AR  R1,R15           END
+           AR  R15,R14     SUBTRACT 12
+           LA  R1,12(R1)
+S20BXH     BXH R1,R14,S20TEST
+           LR  R15,R6          LOAD WITH A '1' (ANY NON-ZERO WILL DO)
+           BR  R12             BACK TO CALLER WITH ERROR CODE.
+S20TEST    CLC SYMNAME,CALLAREA+32
+           BNE S20BXH          ROUND LOOP AGAIN
+           SR R15,R15
+           BR  R12             BACK TO CALL:- ALL IS WELL
+           SPACE 2
+S20GOTS1   EQU *
+* WE HAVE A SYMBOLIC TO MOVE TO THE OUTPUT STRING.
+           LR  R14,R9          R9=STRING OUTPUT
+           L   R15,SYMADDR     LOAD ADDRESS OF SYMBOLIC VARIABLE
+           MVC CALLAREA(2),0(R15) SHIFT LENGTH OF STRING.
+           LH  R8,CALLAREA     LOAD INTO R8
+* THIS ERROR CORRECTS AN ERROR NOTICED BY SHELL - 2.6.
+* IT WAS FIXED ONCE BEFORE BUT IT CREPT IN AGAIN WITH 2.7, AND
+* WAS PICKED UP BY STANDARD - 3.0. HOPEFULLY, THIS WILL FIX IT
+* FOR ALL TIME.
+         SPACE 1                                         JOL30067 76200
+         LTR   R8,R8          ANY DATA TO MOVE?          JOL30067 76200
+         BZ    S20MAIN        NO ->                      JOL30067 76200
+         SPACE 1                                         JOL30067 76200
+           CLI 2(R15),C''''    HAS SYM VAR GOT QUOTES ?
+           BNE S20NOTQ1        NO.
+           AR  R15,R6          YES,ADD 1 TO ADDRESS
+           SH  R8,=H'2'        AND REDUCE LENGTH BY 2
+           BZ  S20MAIN         NOTHING TO MOVE
+S20NOTQ1   AR  R14,R8          FIX TOTAL LENGTH
+           LA  R0,WORK                                          80290
+           A   R0,LWORK                                         80290
+           CR  R14,R0
+           BH  S20ERR7         WON'T FIT
+* THE FOLLOWING CODE CORRECTS AN ERROR NOTICED BY SHELL
+*   JOL26
+         SPACE 1
+         LTR   R1,R8          LOAD AND TEST R1
+         BZ    S20MAIN        NO DATA TO MOVE, SKIP TO MAIN LOOP
+         BCTR  R1,0           SUBTRACT 1 FROM R1
+         EX    R1,S20MUVSY    SHIFT SYMBOLIC TO OUTPUT AREA
+         IFVALUE S20QUOTI,S20SETR9 NOT IN '' STRING      JOL30027 76200
+* HERE WE ARE NOT IN A QUOTED STRING, SO WE MUST NOW SEE JOL30027 76200
+*  IF THE STRING WE MOVED TO THE OUTPUT AREA HAD DOUBLE  JOL30027 76200
+*  QUOTES, AND IF SO, WE MUST REPLACE DOUBLE QUOTES WITH JOL30027 76200
+*  SINGLE QUOTES.                                        JOL30027 76200
+* R9-> START OF REPLACED SECTION                         JOL30027 76200
+* R8 CONTAINS LENGTH REPLACED                            JOL30027 76200
+* R1 =R8-1                                               JOL30027 76200
+         LR    R14,R6         SET R14 TO 1               JOL30027 76200
+         LA    R15,0(R9,R1)   SET END ADDRESS            JOL30027 76200
+         MVI   1(R15),C' '    FIX DBL QUOTE PROBLEM WHEN          J52
+* A STMT WAS LEFT IN STORAGE (A MOST PECULIAR THING)              J52
+         LR    R1,R9          SET R1 TO START OF STRING  JOL30027 76200
+S20TWOQU CLC   0(2,R1),=C'''''' DOUBLE QUOTES ?          JOL30027 76200
+         BE    S20DBLQU       YES                        JOL30027 76200
+S20BXLE2 BXLE  R1,R14,S20TWOQU LOOP ROUND                JOL30027 76200
+S20SETR9 EQU   *                                         JOL30027 76200
+           AR  R9,R8           RESET
+           B   S20MAIN
+S20DBLQU EQU   *                                         JOL30027 76200
+         LR    R0,R8          PUT R8 IN TO WORK REGISTER JOL30027 76200
+         S     R0,ONE         SUBTRACT ONE               JOL30027 76200
+         BNP   S20SETR9       NOT POSITIVE -> OUT (ERROR?JOL30027 76200
+         LR    R8,R15         LOAD STOP ADDRESS TO R1    JOL30027 76200
+         SR    R8,R1          SUBTRACT R1=LENGTH TO MOVE JOL30027 76200
+         EX    R8,S20MVCQ     SHIFT STRING BACK A BYTE   JOL30027 76200
+         LR    R8,R0          RESET R8                   JOL30027 76200
+         B     S20BXLE2       BACK TO BXLE LOOP          JOL30027 76200
+S20MVCQ  MVC   0(*-*,R1),1(R1) DROP QUOTE EXECUTED MVC   JOL30027 76200
+         SPACE 3
+S20ERR8    JOLERR 408,'LIST OR CARD SUBSRIPT NEGATIVE:-IGNORED'   75311
+           B   S20SKIPZ                                           75311
+S20ERR1    MVC CALLAREA+32(8),0(R1)                               75311
+         LA    R12,CALLAREA+32                                    87150
+         USING S20NAME,R12
+         JOLERR 401,'SYMBOLIC NAME COMMENCING ''',S20NAME,             *
+               ''' IS TOO LONG'                             FIX-X 76200
+           JOLRETN RC=4
+S20ERR5  JOLERR 405,'%LIST SUBSCRIPT NOT NUMERIC OR TOO LARGE'
+           JOLRETN RC=4
+S20ERR6  JOLERR 506,'STRING -VE'
+           JOLRETN RC=4
+S20ERR7  JOLERR 407,'STRING TOO LARGE AFTER REPLACING SYMBOLICS'
+           MVC #WORK,=AL2(L'WORK)
+           JOLRETN RC=4
+S20MUVSY   MVC 0(*-*,R9),2(R15) SHIFT TO OUTPUT STRING
+           DROP R1,R12
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+           LTORG
+PREPSUBS CSECT
+         DC   D'0' KILL ALL WHO COME HERE
+XX001      DSECT
+S20NAME    DS  CL8
+         END

@@ -1,0 +1,316 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Mozilla SeaMonkey">
+  <title>Stop</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=ISO-8859-1">
+  <title></title>
+  <meta name="GENERATOR" content="OpenOffice.org 3.1  (Win32)">
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=ISO-8859-1">
+  <title></title>
+  <meta name="GENERATOR" content="OpenOffice.org 3.1  (Win32)">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="RIGHT" valign="TOP" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="RIGHT">
+      <style type="text/css">
+	<!--
+		@page { margin: 2cm }
+		H1 { margin-bottom: 0.11cm }
+		H1.western { font-family: "Arial", sans-serif; font-size: 16pt }
+		H1.cjk { font-family: "Arial Unicode MS"; font-size: 16pt }
+		H1.ctl { font-family: "Tahoma"; font-size: 12pt; font-weight: normal }
+		P { margin-bottom: 0.21cm }
+	-->
+	</style>
+      </h1>
+      <h1 class="western" align="RIGHT"><font size="5"><u>STOP</u></font><font
+ size="5"> - </font><font size="5"><i><span
+ style="font-weight: normal;">Immediate and Execute Instruction</span></i></font></h1>
+      <font size="5"><i><u><span style="font-weight: normal;"></span></u></i></font>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Purpose</h4>
+      </td>
+      <td align="LEFT" valign="TOP">The <span
+ style="font-weight: bold;">STOP</span> instruction is used to
+terminate a job immediately and place a message on the Job's Log. The
+message is also displayed on the <span style="font-weight: bold;">Operator's
+Console</span>. <br>
+      <br>
+After execution of the <span style="font-weight: bold;">STOP</span>
+instruction, the remainder of the job is flushed, and no further
+processing is possible. The<span style="font-weight: bold;"> IF ERROR</span>
+does not receive control. <br>
+      <br>
+In <span style="font-style: italic; font-weight: bold;">execute</span>
+mode, the job is terminated immediately. In <span
+ style="font-weight: bold; font-style: italic;">compiler mode</span>,
+the job is not allowed to start execution. <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <div style="margin-left: 40px;">&nbsp;&nbsp; </div>
+      <div style="font-weight: bold;">
+      <div style="margin-left: 40px;">STOP&nbsp;&nbsp;&nbsp; { <span
+ style="font-style: italic;">number</span> | <span
+ style="font-style: italic;">'message'</span> } ;<br>
+      </div>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+You may wish to skip steps in a job because: <br>
+      <ul>
+        <li>You are restarting the job at some point other than the
+beginning. </li>
+        <li>You have a long job containing steps that are normally run
+monthly (for example), and you do not want to run all the program steps
+on a daily basis. </li>
+        <li>You may be testing an individual program in a job, and the <span
+ style="font-weight: bold;">STARTAT</span> and <span
+ style="font-weight: bold;">STOPAT</span> instructions will allow you
+to execute an isolated segment of your Jol program. The <span
+ style="font-weight: bold;">STARTAT</span> instruction can be used to
+skip over all the steps you do not want to execute. </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP">
+      <style type="text/css">
+	<!--
+		@page { margin: 2cm }
+		P { margin-bottom: 0.21cm }
+	-->
+	</style>
+      <p
+ style="margin-top: 0.25cm; margin-bottom: 0cm; font-weight: normal;"> </p>
+      <p
+ style="margin-top: 0.21cm; margin-bottom: 0cm; widows: 0; orphans: 0; page-break-after: avoid;">
+      </p>
+      <ol>
+        <li><span style="font-weight: normal;">The message must be less
+than 100 characters. </span></li>
+        <li><span style="font-weight: normal;">If the <span
+ style="font-weight: bold;">STOP</span> is executed after an execution <span
+ style="font-weight: bold;">IF </span>statement, the job will be
+terminated at that point. For example: </span></li>
+      </ol>
+      <span style="font-weight: normal;"></span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">&nbsp;&nbsp;&nbsp;
+
+
+      <span style="font-weight: bold;">IF SORT = 16 THEN STOP 'SORT
+RETURNED 16';</span> </span></div>
+      <ol start="3">
+        <li><span style="font-weight: normal;">If the <span
+ style="font-weight: bold;">STOP</span> is executed unconditionally or
+after a preprocessor<span style="font-weight: bold;"> IF</span>, the
+message will be output as a Jol Compiler message. The job will not be
+allowed to commence execution unless the compiler option <span
+ style="font-weight: bold;">LET</span> has been specified. This can
+save valuable machine resources. For example: </span></li>
+      </ol>
+      <span style="font-weight: normal;"></span>
+      <div style="margin-left: 80px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">IF %NUMBER&lt;8 | %NUMBER&gt;35 </span></span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN STOP '%NUMBER IS OUT OF
+RANGE:- RESUBMIT WITH CORRECT VALUE'; </span><br>
+      </div>
+      <span style="font-weight: normal;">&nbsp;&nbsp;&nbsp; <br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">If
+
+
+      <span style="font-weight: bold;">%NUMBER</span> is not 8-35, the
+job is not allowed to start.</span><span style="font-weight: normal;"><br>
+      <br>
+      </span></div>
+      <ol start="4">
+        <li><span style="font-weight: normal;">Jol automatically
+terminates a job when any return code of 16 or greater than 2000 is
+detected. Thus, whenever a program returns a code of 16 or more than
+2000, the job is terminated. The <span style="font-weight: bold;">STOP</span>
+          <span style="font-weight: bold;">WHEN</span> instruction may
+be used to alter the default of 16 or greater than 2000. </span></li>
+      </ol>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">In
+
+
+      <span style="font-weight: bold;">PL1</span>, the <span
+ style="font-weight: bold;">EXIT</span> or <span
+ style="font-weight: bold;">STOP</span> instructions will terminate a
+program and return greater than 2000, thus terminating the job. </span></div>
+      <ol start="5">
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">IF ERROR</span> is not actioned if a job is
+terminated by a <span style="font-weight: bold;">STOP</span>
+instruction.</span></li>
+      </ol>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;"><br>
+      </span></span></div>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP"><span
+ style="font-weight: bold;"></span>1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; STOP 'SIMPLE EXAMPLE OF STOP'; <br>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">After
+executing
+the
+      <span style="font-weight: bold;">STOP</span>, the message<span
+ style="font-weight: bold;"> 'SIMPLE EXAMPLE OF STOP'</span> will be
+displayed with the Jol Compiler Error Messages (if any); the job will
+not be allowed to start to execute unless the compiler option <span
+ style="font-weight: bold;">LET</span> has been specified. </span><br>
+      <br style="font-weight: normal;">
+      </div>
+      <span style="font-weight: bold;">2
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RUN SORT 'CORE=MAX'; </span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+SORT
+^=
+0 </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;
+THEN
+STOP
+'SORT FAILED-CHECK AND RESUBMIT'; </span><br
+ style="font-weight: normal;">
+      </div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+program
+or
+step <span style="font-weight: bold;">SORT</span> is <span
+ style="font-weight: bold;">RUN</span> with a parameter of <span
+ style="font-weight: bold;">'CORE=MAX'</span>. If it fails for any
+reason other than an <span style="font-weight: bold;">ABEND</span>, it
+will return a non-zero, and the instruction after the IF instruction
+will be executed; this is a <span style="font-weight: bold;">STOP</span>
+and so the message <span style="font-weight: bold;">'SORT FAILED-CHECK
+AND RESUBMIT'</span> will be displayed on the Operator's Console and
+the Job Log, and the job will be terminated. </span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: bold;">3
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; RUN VALIDATE; </span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">IF
+VALIDATE
+=
+0 </span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN DO; </span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+CATALOG NEWTRANS; </span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+SUBMIT UPDATE; </span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">END; </span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">ELSE STOP 'ERROR IN VALIDATE
+JOB, CORRECT AND RESUBMIT'; </span><br style="font-weight: normal;">
+      </div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+
+
+      <span style="font-weight: bold;">VALIDATE</span> program is
+executed; if it runs without errors, the data set <span
+ style="font-weight: bold;">NEWTRANS</span> is cataloged and the next
+job <span style="font-weight: bold;">UPDATE</span> is submitted for
+execution. </span><br>
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">However, if <span
+ style="font-weight: bold;">VALIDATE</span> fails, then a message is
+given to the operator requesting him to make corrections and then
+resubmit the job. </span><br style="font-weight: normal;">
+      </div>
+      <span style="font-weight: normal;"><br>
+      <span style="font-weight: bold;">4
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; IF %DAY='SATURDAY' | %DAY =
+'SUNDAY' </span></span><br style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">THEN
+
+
+      </span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">&nbsp;&nbsp;&nbsp;
+STOP
+'THIS
+JOB DOES NOT RUN ON %DAY'; </span><br style="font-weight: normal;">
+      </div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+Jol
+statements
+above simply test the initialized special variable <span
+ style="font-weight: bold;">%DAY</span>; if it is <span
+ style="font-weight: bold;">SATURDAY</span> or <span
+ style="font-weight: bold;">SUNDAY</span>, the <span
+ style="font-weight: bold;">STOP</span> instruction is executed, thus
+prohibiting the job ever starting execution. </span><br
+ style="font-weight: normal;">
+      </div>
+      <span style="font-weight: normal;"><br>
+      </span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">If
+it
+is
+not a Saturday or Sunday, the <span style="font-weight: bold;">STOP</span>
+will not be interpreted, and, if no other errors were found, the job
+would be submitted to the system for execution. </span><br>
+      </div>
+      <div style="margin-left: 80px;">&nbsp;<br>
+      </div>
+      <div style="text-align: center;">---000---<br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

@@ -1,0 +1,9 @@
+          MACRO
+&NAME     JOLCONV
+          TNUM      &SYSLIST(1)
+          LTR       R15,R15
+          BZ        #&SYSNDX
+          WTO       'JOLPC: &SYSLIST(1): CONVERSION ERROR: NOT NUMERIC'
+          LA        R15,4
+#&SYSNDX  DS        0H
+          MEND

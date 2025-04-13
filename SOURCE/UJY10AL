@@ -1,0 +1,88 @@
+UJY10AL TITLE 'OPEN FILE AND OUT PUT DATA '
+        PRINT OFF
+        COPY  JOLCOM
+        PRINT ON,GEN,DATA
+* THIS ROUTINE IS USED FOR SAVESYMS. IT ALLOCATES AN OUTPUT
+*    DATA SET AND WHEN CALLS ARE MADE TO UJY11OP, THE
+*    CARDS OR DATA SPECIFIED IS COPIED TO THAT DATA SET.
+*
+* A CALL TO UJY12E CLOSES AND FREES THE DATA SET.
+*
+* THEY WILL NOT BE DOCUMENTED AS THEY WILL BE REPLACED LATER
+* BY MORE CONVENTIAL ROUTINES.*******
+          JOLSAVE CSECT=UJY10AL
+* ALLOCATION ROUTINE ONLY
+          L    R8,ADCBS
+          USING DCBS,R8
+           LA    R9,SPRDCB5
+           USING  IHADCB,R9
+           MVI   DCBRECFM,0
+           MVC   DCBLRECL,=H'0'
+           MVC   DCBBLKSI,=H'0'
+          L    R8,ADCBS
+          USING DCBS,R8
+* NOW ALLOCATE OUTPUT FILE FOR BUILDJOB OUTPUT TO GO TO
+*
+           GETTKN 2
+           BAL   R14,DROPQUOT
+           MVC  #WORK(50),#TKN   SAVE DSNAME
+           GETTKN 3              GET MEMBER NAME
+* DSNAME IS IN #WORK(50)
+* MEMBER NAME IS IN #TKN (IF PRESET)
+          DYNPARM DDNAME=SPARE5,DISP=(SHR),DSN=(44,#WORK),        ++++++
+               MEMB=(10,#TKN)
+          DROP  R8
+          LTR  R15,R15
+          BZ   Y10OK1
+           JOLERR 202,'CANNOT ALLOCATE DSN ''',#WORK,''' MEMBER ',  ++++
+               #TKN,''''
+          JOLRETN RC=16
+Y10OK1    L    R8,ADCBS
+          USING DCBS,R8
+*         OPEN  (SPRDCB5,(OUTPUT))
+          LA   R1,SPRDCB5
+          ST   R1,CALLAREA
+          MVI  CALLAREA,X'8F'
+          LA   R1,CALLAREA
+          SVC  19
+          LTR  R15,R15
+          BZ   R100
+          JOLERR 101,'CANNOT OPEN OUTPUT DSN ''',#WORK,''''
+          LA   R15,4
+R100      DS   0H
+R100      JOLRETN RC=(15)
+          DROP  R8
+          EJECT
+          JOLSAVE CSECT=UJY11OP
+          L    R8,ADCBS
+          USING DCBS,R8
+* THIS ROUTINE SIMPLY PUTS A CARD IMAGE TO THE DCB 'SPRDCB2'
+          L    R8,ASPR5DCB
+          GETTKN  3
+          CLI   TKN,C' '    IS IT BLANK?
+          BE    Y11OK1
+          JOLERR 101,'TOO MANY PARAMETERS ON UJY11P ''',#TKN,''''
+          JOLRETN  RC=4
+Y11OK1    GETTKN 2
+          CLC   =H'80',#TKN
+          BH    Y11OK2
+          JOLERR 102,'LENGTH OF TOKEN ''',#TKN,''' > 80 CHARS'
+Y11OK2    BAL   R14,DROPQUOT
+          PUT   (R8),TKN
+          JOLRETN
+          JOLSAVE  CSECT=UJY12END
+          L    R8,ADCBS
+          USING DCBS,R8
+*         CLOSE (SPRDCB5,(REREAD))
+          LA   R1,SPRDCB5
+          ST   R1,CALLAREA
+          MVI  CALLAREA,X'80'
+          LA   R1,CALLAREA
+          SVC  20
+          FREEPOOL SPRDCB5
+          DYNPARM DDNAME=SPARE5,VRB=UN
+          DROP  R9
+          JOLRETN
+          LTORG
+          DCBD DSORG=PS,DEVD=DA
+          END

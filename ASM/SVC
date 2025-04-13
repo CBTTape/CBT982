@@ -1,0 +1,22 @@
+SVC      CSECT
+R1       EQU   1
+R14      EQU   14
+         USING SVC,15
+*
+*  CHECK FOR PGM NAME TO BE PLACED HERE
+*
+         LTR   R1,R1         CHECK IF TO TURN ON AUTH
+         BZ    AUTH          YES SO AUTHORISE-SUP MODE,KEY 0
+         MODESET KEY=NZERO,MODE=PROB
+*
+* NOW SHOULD BE IN PROGRAM MODE AND NOT KEY 0
+*
+         BR    R14           RETURN
+AUTH     EQU   *
+         MODESET KEY=ZERO,MODE=SUP
+*
+* NOW SHOULD BE IN SUPVR MODE AND KEY 0
+*
+         BR    R14           RETURN
+*
+         END

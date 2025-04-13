@@ -1,0 +1,175 @@
+UJG01SPL TITLE 'SPOOL COPY OF JOL LISTING TO UJEINIT TO PRINT'   84023
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE/JOL 1984.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+         PRINT OFF
+         COPY JOLCOM
+         PRINT ON
+         PRINT DATA                                               84023
+         TITLE 'READ FROM PRINT SUB-FILE AND COPY TO JCL'
+G01SAVE  DSECT
+         DS    18F
+* THE FOLLOWING AREA IS USED TO READ THE PRINT FILE DATA.         84023
+G01RECA  DS    CL300           MAX LENGTH OF PRINT LINE, PLUS SOME
+G01SAVEL EQU   *-G01SAVE
+         JOLSAVE CSECT=UJG01SPL,SIZE=G01SAVEL
+         L     R9,ADCBS
+         USING DCBS,R9
+         USING G01SAVE,R13
+         USING JOLCOM,R2
+* SET UP THE MEMBER HEADING RECORD FOR'UJEINIT'
+         MVC DATAMEM,=CL8'$$JPRINT' MEMBER NAME
+         MVC DATAMEM5,=CL5' 1000' BLKSIZE
+         PUT   JCL
+         MVC   0(80,R1),BLANKS
+         MVC   0(60,R1),DATAMEM1
+         SPACE 2                                                75311
+         L     R10,ACATCNTL                                       76200
+         USING CATX,R10                                           75128
+         MVC   P$LASTL,=X'7FFF'   SET OFFSET IN BLOCK VERY HIGH   84023
+         MVC   P$BLKN,ZERO  SET CURRENT BLOCK NO=ZERO             84023
+         L     R15,P$CNTL                                         84023
+         MVC   0(4,R15),ZERO  CLEAR CURRENT BLOCKLENGTH
+* INITIALISATION COMPLETE - NOW READ A PRINT RECORD
+*
+* WE MUST READ THE NEXT RECORD FROM THE BSAM FILE INTO            75128
+*  THE READ AREA                                                  84023
+G01RDAGN EQU   *                                                  84023
+         L     R0,AP$CNTL                                         84023
+         LA    R1,G01RECA                                         84023
+        $CALL  UJS31IN        READ THE RECORD INTO THE AREA       75128
+         LTR   R15,R15        EOF ?
+         BNZ   JRETN0         YES -> RETURN NORMALLY              84023
+* NOW FINALLY OUTPUT THE REQUIRED PRINT LINE
+* NOW WE MAY HAVE TO SPLIT THE CARD UP
+         LA    R5,G01RECA                                         84023
+         LH    R6,0(R5)    GET LENGTH
+G01OPJCL PUT   JCL
+         MVC   0(80,R1),BLANKS
+         LR    R4,R1       SAVE BUFFER ADDRESS
+*    R5  POINTS TO CURRENT RECORD PART
+*    R6  CONTAINS THE LENGTH
+         CH    R6,=H'79'
+         BH    G01MUV80
+         LR    R1,R6
+         BCTR  R1,0
+         EX    R1,G01MVC89                                        75128
+         B     G012NDCD
+G01MUV80 MVC   0(80,R4),0(R5)
+G012NDCD LA    R5,80(R5)
+         SH    R6,=H'80'
+         BP    G01OPJCL
+         B     G01RDAGN
+         JOLRETN
+         DROP  R10                                                75128
+G01MVC89 MVC   0(*-*,R4),0(R5)      ***** EXECUTED                84027
+         LTORG
+         TITLE 'GET A RECORD SEQUENTIALLY FROM THE WORK FILE'
+         JOLSAVE CSECT=UJS31IN,SIZE=S31DSIZE
+* THIS CSECT IS CALLED WHEN IT IS NECESSARY TO READ A RECORD
+*  FROM THE WORKFILE, IN A SEQUENTIAL MANNER.
+         SPACE
+* ON ENTRY, R0 -> CONTROL AREA
+*           R1 -> RECEIVE AREA
+*
+* THE CONTROL AREA IS THE SAME ONE AS USED FOR UJS30OP ABOVE
+         LR    R4,R0          CHANGE REGISTERS
+         LR    R5,R1          CHANGE REGISTERS
+         USING JOLCOM,R2
+         USING S30PARM,R4
+         USING S30OP,R5
+         USING S31SAVE,R13
+* NOW I HAVE TO KNOW
+*  1. THE BLOCKLENGTH
+*  2. THE OFFSET IN THE BLOCK OF THE LAST READ RECORD
+*
+* THE MAIN CONTROLLING MODULES WOULD HAVE SET THE CURRENT
+* BLOCKLENGTH TO 0, THE OFFSET IN THE BLOCK VERY HIGH,
+* AND THE CURRENT BLOCKNO TO -1 FOR THE VERY FIRST READ.
+*
+*
+         L     R7,S30ABUF     LOAD ADDRESS OF THE BUFFER
+         LR    R8,R7          SAVE IT
+         CLC   S30LASTL,0(R8) WILL WE RUN OVER THE BLOCK ?
+         BL    S31MUV         NOPE,-> MERELY SHIFT THE RECORD
+         SPACE 3
+* HERE WE HAVE TO READ A NEW BLOCK INTO STORAGE, IF THERE ARE
+*  ANY LEFT
+         SPACE
+         LH    R14,S30BLKNO   LOAD CURRENT BLOCK NUMBER
+         A     R14,ONE        ADD  1 TO IT
+         CH    R14,S30MAXBL   IS THIS BLOCK THE LAST ONE ?
+         BNH   S31MORE        NO STILL MORE(PROBABLY)              DASD
+*        BL    S31MORE        NO, STILL MORE (PROBABLY)            DASD
+S31EOF   JOLRETN RC=4         EOF
+         SPACE 2
+S31MORE  STH   R14,S30BLKNO   RESET BLOCK NUMBER
+         SLL   R14,2          MULT BY 4
+         LA    R15,S30TTR1-4(R14) LOAD A(TTR OF BLOCK)
+         CLC   0(4,R15),ZERO  IS IT EMPTY (IE LAST BLOCK WAS LAST
+*                             OF DATA?)
+         BE    S31EOF         EOF, RETURN A 4
+         L     R14,AWORKFIL
+         POINT (R14),(R15)    POINT TO THE TTR
+         READ  WORKINDB,SF,,(8),MF=E READ IT
+         CHECK WORKINDB       WAIT FOR IT
+         MVC  S30LASTL,=H'4'    SET OFFSET TO FIRST RECORD TO 4
+         SPACE 3
+S31MUV   EQU   *
+         AH    R7,S30LASTL    ADD OFFSET TO POINT TO THIS RECORD
+* HERE ALL WE HAVE TO DO IS SHIFT THE RECORD TO THE AREA
+*  SPECIFIED, AND RETURN
+         LR    R1,R5          LOAD R1 WITH A(RECEIVE)
+         LR    R0,R7          LOAD SEND ADDRESS
+         BAL   R14,MOVEDATA   SHIFT IT (LOOKS AFTER > 256 BYTES)
+         LH    R1,S30LASTL
+         MVC   S31WORK,0(R7)  SHIFT LAST RECORD LRECL SO NO 0C6
+         AH   R1,S31WORK      CALC NEW OFFSET
+         STH   R1,S30LASTL    RESET OFFSET IN BLOCK
+         JOLRETN
+         LTORG
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         DC    S(*,*,*,*)
+         SPACE 3
+S31SAVE  DSECT
+         DS    18F
+S31WORK  DS    H
+         DS    H
+S31DSIZE EQU   *-S31SAVE
+S30PARM    DSECT
+S30ABUF    DS  A               ADDRESS OF BUFFER
+S30LBUF    DS  H               LENGTH OF BUFFER
+S30BLKNO   DS  H               CURRENT BLOCK NUMBER
+S30MAXBL   DS  H               MAX NO OF BLOCKS
+S30LASTL   DS  H               LAST BLOCK LENGTH
+S30TTR1    DS  A               TTRS OF BLOCKS
+S30OP      DSECT
+#S30REC    DS  H               LENGTH OF RECORD TO GO OUT
+S30REC     DS  CL1             RECORD
+           END

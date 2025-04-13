@@ -1,0 +1,1086 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns:st1="urn:schemas-microsoft-com:office:smarttags"
+xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta name=ProgId content=Word.Document>
+<meta name=Generator content="Microsoft Word 10">
+<meta name=Originator content="Microsoft Word 10">
+<link rel=File-List href="COMPOPTS_files/filelist.xml">
+<title>Jol Compiler Options</title>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="State"/>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="City"/>
+<o:SmartTagType namespaceuri="urn:schemas-microsoft-com:office:smarttags"
+ name="place"/>
+<!--[if gte mso 9]><xml>
+ <w:WordDocument>
+  <w:SpellingState>Clean</w:SpellingState>
+  <w:GrammarState>Clean</w:GrammarState>
+  <w:BrowserLevel>MicrosoftInternetExplorer4</w:BrowserLevel>
+ </w:WordDocument>
+</xml><![endif]--><!--[if !mso]><object
+ classid="clsid:38481807-CA0E-42D2-BF39-B33AF135CC4D" id=ieooui></object>
+<style>
+st1\:*{behavior:url(#ieooui) }
+</style>
+<![endif]-->
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:Wingdings;
+	panose-1:5 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:2;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:0 268435456 0 0 -2147483648 0;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{mso-style-parent:"";
+	margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:Arial;
+	mso-fareast-font-family:"Times New Roman";}
+h1
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	mso-outline-level:1;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:Arial;
+	font-weight:normal;}
+h2
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	mso-outline-level:2;
+	text-autospace:none;
+	font-size:12.0pt;
+	font-family:Arial;
+	font-weight:normal;}
+span.SpellE
+	{mso-style-name:"";
+	mso-spl-e:yes;}
+span.GramE
+	{mso-style-name:"";
+	mso-gram-e:yes;}
+@page Section1
+	{size:612.0pt 792.0pt;
+	margin:72.0pt 90.0pt 72.0pt 90.0pt;
+	mso-header-margin:35.4pt;
+	mso-footer-margin:35.4pt;
+	mso-paper-source:0;}
+div.Section1
+	{page:Section1;}
+ /* List Definitions */
+ @list l0
+	{mso-list-id:981541252;
+	mso-list-template-ids:-4578730;}
+@list l0:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:36.0pt;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;
+	mso-ansi-font-size:10.0pt;
+	font-family:Symbol;}
+@list l1
+	{mso-list-id:1635984233;
+	mso-list-template-ids:1289782866;}
+@list l1:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:36.0pt;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;
+	mso-ansi-font-size:10.0pt;
+	font-family:Symbol;}
+ol
+	{margin-bottom:0cm;}
+ul
+	{margin-bottom:0cm;}
+-->
+</style>
+<!--[if gte mso 10]>
+<style>
+ /* Style Definitions */
+ table.MsoNormalTable
+	{mso-style-name:"Table Normal";
+	mso-tstyle-rowband-size:0;
+	mso-tstyle-colband-size:0;
+	mso-style-noshow:yes;
+	mso-style-parent:"";
+	mso-padding-alt:0cm 5.4pt 0cm 5.4pt;
+	mso-para-margin:0cm;
+	mso-para-margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:"Times New Roman";}
+table.MsoTableGrid
+	{mso-style-name:"Table Grid";
+	mso-tstyle-rowband-size:0;
+	mso-tstyle-colband-size:0;
+	border:solid windowtext 1.0pt;
+	mso-border-alt:solid windowtext .5pt;
+	mso-padding-alt:0cm 5.4pt 0cm 5.4pt;
+	mso-border-insideh:.5pt solid windowtext;
+	mso-border-insidev:.5pt solid windowtext;
+	mso-para-margin:0cm;
+	mso-para-margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	text-autospace:none;
+	font-size:10.0pt;
+	font-family:"Times New Roman";}
+</style>
+<![endif]-->
+</head>
+
+<body lang=EN-US style='tab-interval:36.0pt'>
+
+<div class=Section1>
+
+<table class=MsoNormalTable border=0 cellspacing=0 cellpadding=0
+ style='margin-left:5.4pt;border-collapse:collapse;mso-padding-alt:0cm 0cm 0cm 0cm'>
+ <tr style='mso-yfti-irow:0'>
+  <td width=601 colspan=2 valign=top style='width:450.75pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h1 align=right style='margin-bottom:3.0pt;text-align:right;page-break-after:
+  avoid'><span class=SpellE><b><u><span style='font-size:18.0pt'>Jol</span></u></b></span><b><u><span
+  style='font-size:18.0pt'> Compiler Options</span></u></b></h1>
+  <p class=MsoNormal align=right style='text-align:right'><b><span
+  style='font-size:18.0pt'>&nbsp;</span></b></p>
+  <p class=MsoNormal align=right style='text-align:right'><b><span
+  style='font-size:11.0pt'>&nbsp;</span></b></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:1'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span class=SpellE><span
+  style='font-size:10.0pt'>Jol</span></span><span style='font-size:10.0pt'>
+  Compiler Options available may be used to:</span></p>
+  <ul type=disc>
+   <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+       auto;mso-list:l1 level1 lfo1;tab-stops:list 36.0pt;text-autospace:ideograph-numeric ideograph-other'><span
+       style='font-size:10.0pt'>Initialize Symbolic Variables.</span><o:p></o:p></li>
+   <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+       auto;mso-list:l1 level1 lfo1;tab-stops:list 36.0pt;text-autospace:ideograph-numeric ideograph-other'><span
+       style='font-size:10.0pt'>Alter default Compiler Options</span><span
+       style='font-size:10.0pt;font-family:"Times New Roman"'>.</span><span
+       style='font-family:"Times New Roman"'><o:p></o:p></span></li>
+  </ul>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:2'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:3.0pt;page-break-after:avoid'><b><i><span
+  style='font-size:11.0pt'>Compiler Options</span></i></b></h2>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt'>When
+  <span class=SpellE>Jol</span> was installed on your system, certain default
+  values for the options will have been specified by your system programmer.</span></p>
+  <p class=MsoNormal style='margin-top:6.0pt'><span style='font-size:10.0pt'>The
+  <span class=SpellE>Jol</span> compiler offers a number of optional facilities
+  that may be selected by including the appropriate keywords when using the
+  command processor, in the <b>PARM</b> parameter of the <b>EXEC</b> statement
+  that invokes it, on the <b>* JOL</b> card which separates <span class=SpellE>Jol</span>
+  procedures when using the <b>Batched Compilation Facilities,</b> or on the <b>JOLOPT</b>
+  instruction.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:3'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:3.0pt;page-break-after:avoid'><b><i><span
+  style='font-size:11.0pt'>Initializing Symbolic Variables</span></i></b></h2>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal style='margin-top:6.0pt;margin-right:0cm;margin-bottom:
+  6.0pt;margin-left:0cm'><span style='font-size:10.0pt'>Facilities also exist
+  that allow you to initialize Symbolic Variables through the <b>PARM</b>
+  field, or the <b>* JOL</b> card, thus allowing <span class=SpellE>Jol</span>
+  to be <span class=SpellE><b>START</b>ed</span> by the Computer Operator and
+  have certain Symbolic Variables initialized as though they had been input as
+  Assignment statements<b>,</b> or Declare statements.</span></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt'>Compiler
+  options and initial values of symbolic variables may be specified through:</span></p>
+  <ul type=disc>
+   <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+       auto;mso-list:l0 level1 lfo2;tab-stops:list 36.0pt;text-autospace:ideograph-numeric ideograph-other'><span
+       style='font-size:10.0pt'>The <span class=SpellE>Jol</span> Command
+       Processor.</span><o:p></o:p></li>
+   <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+       auto;mso-list:l0 level1 lfo2;tab-stops:list 36.0pt;text-autospace:ideograph-numeric ideograph-other'><span
+       style='font-size:10.0pt'>The Compiler Parameter field.</span><o:p></o:p></li>
+   <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+       auto;mso-list:l0 level1 lfo2;tab-stops:list 36.0pt;text-autospace:ideograph-numeric ideograph-other'><span
+       style='font-size:10.0pt'>On the <b>* JOL</b> card.</span><o:p></o:p></li>
+   <li class=MsoNormal style='mso-margin-top-alt:auto;mso-margin-bottom-alt:
+       auto;mso-list:l0 level1 lfo2;tab-stops:list 36.0pt;text-autospace:ideograph-numeric ideograph-other'><span
+       style='font-size:10.0pt'>By using the <b>JOLOPT</b> instruction</span><span
+       style='font-size:10.0pt;font-family:"Times New Roman"'>.</span><span
+       style='font-family:"Times New Roman"'><o:p></o:p></span></li>
+  </ul>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:4'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;border:solid windowtext 1.0pt;
+  padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt'>&nbsp;
+  <b><i>Syntax</i></b></span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><b><span style='font-size:10.0pt'>JOL</span></b><span
+  style='font-size:10.0pt'> <i>data-set-name options </i>[<b>SYMS</b>(<i>symbolic-name</i>=<i>value
+  </i>...)]</span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><b><span style='font-size:10.0pt'>CALL JOL</span></b><span
+  style='font-size:10.0pt'> <i>options </i>[<b>SYMS</b>(<i>symbolic-name</i>=<i>value
+  </i>...)]</span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><b><span style='font-size:10.0pt'>* JOL</span></b><span
+  style='font-size:10.0pt'> <i>options </i>[/ <i>symbolic-name=value </i>[<span
+  class=GramE>,...</span>]];</span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><b><span style='font-size:10.0pt'>JOLOPT</span></b><span
+  style='font-size:10.0pt'> [<i>options</i>] [/ <i>symbolic-name=value </i>[<span
+  class=GramE>,...</span>]];</span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><b><span style='font-size:10.0pt'>// EXEC JOL<span
+  class=GramE>,PARM</span></span></b><span style='font-size:10.0pt'>='<i>options/symbolic-name=value
+  </i>[,..]'</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:5'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:6'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:3.0pt;page-break-after:avoid'><b><i><span
+  style='font-size:11.0pt'>Example of the TSO Command Processor</span></i></b></h2>
+  <p class=MsoNormal><span style='font-size:11.0pt'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt'>To call <span class=SpellE>Jol</span>
+  under TSO, you code the name <b>JOL</b> followed by the name of the input
+  data or an *, followed by any other options you require. For example:</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:7'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;border:solid windowtext 1.0pt;
+  padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><b><span style='font-size:10.0pt'>&nbsp;</span></b></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:48.3pt;text-indent:-27.0pt'><b><span style='font-size:10.0pt'>JOL
+  (PAYROLL) NOCAT SYMS('DOLLVAR=1.25,RESTART=STEP2')</span></b></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:8'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:9'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span class=SpellE><span style='font-size:10.0pt'>Jol</span></span><span
+  style='font-size:10.0pt'> is invoked in the foreground, and instructed to
+  read member <b>PAYROLL</b> from the users <b>&quot;<span class=SpellE><i>sysuid</i>.JOL</span>&quot;</b>
+  data set.&nbsp; In addition <b>NOCAT</b> is specified as an option (this
+  tells <span class=SpellE>Jol</span> not to search the catalog for data sets)
+  and the symbolic variables <span class=SpellE>q<b>DOLLVAR</b></span> and <b>RESTART</b>
+  are initialized.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:10'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:3.0pt;page-break-after:avoid'><b><i><span
+  style='font-size:11.0pt'>Example of Executing <span class=SpellE>Jol</span>
+  in Background</span></i></b></h2>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt'>Suppose you have a job
+  called <b>SALES,</b> and it required a symbolic called <b>%INPUT</b> to be
+  set to <b>'SALES.INPUT.DAY16.MONTH</b> <b>11'</b> before execution. You could
+  execute the job by:</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:11'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;border:solid windowtext 1.0pt;
+  padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt'>START
+  JOL,JOB=SALES,</span></b></p>
+  <p class=MsoNormal style='margin-left:64.8pt'><b><span style='font-size:10.0pt'>SYMS='INPUT=''SALES.INPUT.DAY16.MONTH11''</span></b><span
+  style='font-size:10.0pt'>'</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><i><span style='font-size:10.0pt'>or&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></i><b><span style='font-size:10.0pt'>// EXEC JOL,JOB=SALES,</span></b></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt'>//
+  SYMS='INPUT=''SALES.INPUT.DAY16.MONTH11''</span></b><span style='font-size:
+  10.0pt'>'</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><i><span style='font-size:10.0pt'>or&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></i><b><span style='font-size:10.0pt'>//EXEC PGM=JOL,</span></b></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><span style='font-size:10.0pt'>&nbsp;
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <b>//
+  PARM='INPUT=''SALES.INPUT.DAY16.MONTH11''</b>'</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:21.6pt'><i><span style='font-size:10.0pt'>or&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></i><b><span style='font-size:10.0pt'>// EXEC JOL</span></b></p>
+  <p class=MsoNormal style='margin-left:43.2pt'><b><span style='font-size:10.0pt'>%INPUT='SALES.INPUT.DAY16.MONTH11</span></b><span
+  style='font-size:10.0pt'>';</span></p>
+  <p class=MsoNormal style='margin-left:64.8pt'><b><span style='font-size:10.0pt'>INCLUDE
+  SALES;</span></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:12'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:13'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt'>Any of the above will set <b>%INPUT
+  </b>to <b>'SALES.INPUT.DAY16.MONTH11'</b> and compile the <b>SALES</b> job.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:14'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:3.0pt'><b><i><span style='font-size:11.0pt'>The *
+  JOL Separator Card</span></i></b></h2>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt'>The <b>* JOL</b> card is
+  the <span class=SpellE>Jol</span> <b>separator card</b>.&nbsp; The <b>*</b>
+  must commence in <b>column 1</b>.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>The separator card is used
+  to separate <span class=SpellE>Jol</span> programs from each other.&nbsp;
+  Rather than execute the <span class=SpellE>Jol</span> compiler separately for
+  each <span class=SpellE>Jol</span> program, you can group together as many <span
+  class=SpellE>Jol</span> programs as you wish, then have <span class=SpellE>Jol</span>
+  compile the entire string of programs or jobs at the one time.&nbsp; So that <span
+  class=SpellE>Jol</span> can determine the start and end point of each job,
+  each must be <span class=SpellE>preceeded</span> by an <b>* JOL</b>
+  card.&nbsp; The <b>* JOL</b> card may also specify compiler options and/or
+  symbolic variables that are to be initialized before the first statement of
+  the <span class=SpellE>Jol</span> program is read.&nbsp; For example:</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:64.8pt'><b><span style='font-size:10.0pt'>*
+  JOL MVS JES2/A=10;</span></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal><span class=GramE><span style='font-size:10.0pt'>specifies</span></span><span
+  style='font-size:10.0pt'> that <span class=SpellE>Jol</span> is to produce <b>JCL</b>
+  for an <b>MVS</b> system with a <b>JES2</b> spooling package.&nbsp;
+  Additionally, <b>%A</b> is to be set to <b>10</b>.&nbsp; <b>%A</b> may then
+  be used in the <span class=SpellE>Jol</span> program.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:15'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:3.0pt'><b><i><span style='font-size:11.0pt'>The
+  JOLOPT Instruction</span></i></b></h2>
+  <p class=MsoNormal><span style='font-size:11.0pt'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:10.0pt'>The <b>JOLOPT</b>
+  instruction allows you to alter Compiler Options, Print Options etc from
+  within your <span class=SpellE>Jol</span> program.&nbsp; For example:</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal style='margin-left:64.8pt'><b><span style='font-size:10.0pt'>JOLOPT
+  PEXPAND;</span></b></p>
+  <p class=MsoNormal style='margin-left:64.8pt'><b><span style='font-size:10.0pt'>SORT
+  A TO B FIELDS=(10,10,CH,A);</span></b></p>
+  <p class=MsoNormal style='margin-left:64.8pt'><b><span style='font-size:10.0pt'>JOLOPT
+  NPEXPAND;</span></b></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal><span class=GramE><span style='font-size:10.0pt'>coded</span></span><span
+  style='font-size:10.0pt'> in the program specifies that the expanded <span
+  class=SpellE>Jol</span> instructions from the <b>SORT</b> command are to be
+  listed.&nbsp; Once they are listed, the <b>JOLOPT NPEXPAND</b> instruction
+  tells <span class=SpellE>Jol</span> not to print any more expanded macro
+  instructions.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:16'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:3.0pt'><b><i><span style='font-size:11.0pt'>The <span
+  class=SpellE>Jol</span> Compiler Parameter Field</span></i></b></h2>
+  <p class=MsoNormal><span style='font-size:11.0pt'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt'>When
+  executing <span class=SpellE>Jol</span> with <b>JCL</b> or <b>TSO</b>, you
+  can also specify compiler options and the initial settings of symbolic
+  variables.&nbsp; For example:</span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:64.8pt'><b><span style='font-size:10.0pt'>// EXEC JOL,PARM='MVS
+  NOPRINT'</span></b></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><i><span style='font-size:10.0pt'>or<o:p></o:p></span></i></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:65.4pt'><b><span style='font-size:10.0pt'>CALL JOL 'MVS NOPRINT'</span></b></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span class=GramE><span
+  style='font-size:10.0pt'>specifies</span></span><span style='font-size:10.0pt'>
+  that the job(s) is to execute on an <b>MVS</b> system.&nbsp; The <b>NOPRINT</b>
+  option states that <i>no</i> <span class=SpellE>Jol</span> statements are to
+  be printed unless an error occurs.</span></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt'>The
+  table on the following page shows the options that may be used, and the
+  default options.</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:17;mso-yfti-lastrow:yes'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:11.0pt'>&nbsp;</span></p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:11.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+</table>
+
+<p class=MsoNormal><span style='font-size:11.0pt'>&nbsp;</span></p>
+
+<table class=MsoNormalTable border=0 cellspacing=0 cellpadding=0
+ style='margin-left:5.4pt;border-collapse:collapse;mso-padding-alt:0cm 0cm 0cm 0cm'>
+ <tr style='mso-yfti-irow:0'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;border:solid windowtext 1.0pt;
+  padding:0cm 5.4pt 0cm 5.4pt'>
+  <table class=MsoTableGrid border=1 cellspacing=0 cellpadding=0
+   style='border-collapse:collapse;border:none;mso-border-alt:solid windowtext .5pt;
+   mso-yfti-tbllook:480;mso-padding-alt:0cm 5.4pt 0cm 5.4pt;mso-border-insideh:
+   .5pt solid windowtext;mso-border-insidev:.5pt solid windowtext'>
+   <tr style='mso-yfti-irow:0'>
+    <td valign=top style='border:solid windowtext 1.0pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>COMPILER OPTIONS</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border:solid windowtext 1.0pt;border-left:none;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>ABBREVIATED OPTIONS</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border:solid windowtext 1.0pt;border-left:none;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>STANDARD OPTIONS</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:1'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:2'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>MVS,F4,X8,PC,</span></b><span
+    style='font-size:10.0pt'> <b>DOS,UNIX</b><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>MVS</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:3'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>DYNAM, TSO, JCL</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'>-<o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>JCL</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:4'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal style='margin-top:6.0pt'><b><span style='font-size:10.0pt'>HASP,ASP,JES1,
+    JES2,JES3<o:p></o:p></span></b></p>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'>-<o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>JES2</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:5'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal style='margin-top:6.0pt'><b><span style='font-size:10.0pt'>CARD1</span></b></p>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>CARD2</span></b><span
+    style='font-size:10.0pt'>&nbsp; = <b>JCL</b> <i>Card</i> <o:p></o:p></span></p>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>CARD3<o:p></o:p></span></b></p>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'>-<o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'>-<o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:6'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal style='margin-top:6.0pt'><b><span style='font-size:10.0pt'>DUMPCARD<o:p></o:p></span></b></p>
+    <p class=MsoNormal style='margin-top:6.0pt'><o:p>&nbsp;</o:p></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:7'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal style='margin-top:6.0pt'><b><span style='font-size:10.0pt'>FLAG0-FLAG5</span></b></p>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>NOFLAG0-NOFLAG5</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>FLAG0</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:8'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>LET <o:p></o:p></span></b></p>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>NOLET</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:9'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>LINECNT=</span></b><i><span
+    style='font-size:10.0pt'>n</span></i><span style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>LC=</span></b><i><span
+    style='font-size:10.0pt'>n</span></i><span style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>LC=55</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:10'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>NOCAT | NOCATLOG</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>NCAT | NCATALOG</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>CAT</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:11'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>PINCL,NPINCL</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>PI,NPI,NOPI, NOPINCL</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal style='margin-top:6.0pt'><b><span style='font-size:10.0pt'>PI</span></b></p>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:12'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>PMACRO,NPMACRO</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>PMAC,PM,NPM, NOPM, NOPMACRO</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>NPM</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:13'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>PEXPAND,NPEXPAND</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><st1:place><st1:City><b><span style='font-size:10.0pt'>PEXP</span></b></st1:City><b><span
+     style='font-size:10.0pt'>,</span></b><st1:State><b><span style='font-size:
+      10.0pt'>PE</span></b></st1:State></st1:place><b><span style='font-size:
+    10.0pt'>,NPE, NOPE,</span></b><span style='font-size:10.0pt'> <b>NOPEXP</b><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>NPE</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:14'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>PJCL,NPJCL</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>PJ,NPJ,NOPJCL</span></b><span
+    style='font-size:10.0pt'> <o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>NPJ</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:15'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>POPTION,NPOPTION</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>POPI,</span></b><st1:place><b><span
+     style='font-size:10.0pt'>PO</span></b></st1:place><b><span
+    style='font-size:10.0pt'>,NPO,NOPOPT</span></b><span style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><st1:place><b><span style='font-size:10.0pt'>PO</span></b></st1:place><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:16'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>PRINT,NPRINT&nbsp;&nbsp;</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>P,NP,NOP,NO</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>PRINT</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:17'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>PCOMM,NPCOMM</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>PC,NPC,NOPC</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>PC</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:18'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>SM=(</span></b><i><span
+    style='font-size:10.0pt'>start-column, stop column, format-column</span></i><span
+    style='font-size:10.0pt'>)<o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>SM=(1, 72,73)</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:19'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>SRDR,NOSRDR</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>NSRDR</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+   <tr style='mso-yfti-irow:20;mso-yfti-lastrow:yes'>
+    <td valign=top style='border:solid windowtext 1.0pt;border-top:none;
+    mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>TEST,NOTEST</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><span style='font-size:10.0pt'><o:p>&nbsp;</o:p></span></p>
+    </td>
+    <td valign=top style='border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;
+    border-right:solid windowtext 1.0pt;mso-border-top-alt:solid windowtext .5pt;
+    mso-border-left-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+    padding:0cm 5.4pt 0cm 5.4pt'>
+    <p class=MsoNormal><b><span style='font-size:10.0pt'>NTEST</span></b><span
+    style='font-size:10.0pt'><o:p></o:p></span></p>
+    </td>
+   </tr>
+  </table>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:1'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal><span style='font-size:11.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal align=center style='text-align:center'><b><span
+  style='font-size:11.0pt'>Figure 10.</span></b><span style='font-size:11.0pt'>&nbsp;
+  <b>List of <span class=SpellE>Jol</span> Compiler Options.</b></span></p>
+  <p class=MsoNormal><span style='font-size:11.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>These options are
+  summarized here:</span></p>
+  <p class=MsoNormal><span style='font-size:11.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+ <tr style='mso-yfti-irow:2;mso-yfti-lastrow:yes'>
+  <td width=150 valign=top style='width:112.8pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <h2 style='margin-bottom:3.0pt;page-break-after:avoid'><b><i><span
+  style='font-size:11.0pt'>Summary of Compiler Options</span></i></b></h2>
+  <p class=MsoNormal><span style='font-size:11.0pt'>&nbsp;</span></p>
+  <p class=MsoNormal>&nbsp;</p>
+  </td>
+  <td width=451 valign=top style='width:337.95pt;padding:0cm 5.4pt 0cm 5.4pt'>
+  <p class=MsoNormal style='text-autospace:ideograph-numeric ideograph-other'><span
+  style='font-size:10.0pt;font-family:Symbol;mso-bidi-font-family:"Times New Roman"'>·</span><span
+  style='font-size:10.0pt;font-family:"Times New Roman"'> <b>DYNAM, TSO, BATCH</b></span><span
+  style='font-family:"Times New Roman"'> <o:p></o:p></span></p>
+  <p class=MsoNormal style='text-autospace:ideograph-numeric ideograph-other'><span
+  style='font-family:"Times New Roman"'><o:p>&nbsp;</o:p></span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:57.3pt;text-indent:-35.7pt'><b><span style='font-size:10.0pt'>BATCH</span></b><span
+  style='font-size:10.0pt'> specifies that <b>JCL</b> is to be generated for
+  execution by the Operating System in a batch region.</span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:57.3pt;text-indent:-35.7pt'><b><span style='font-size:10.0pt'>DYNAM</span></b><span
+  style='font-size:10.0pt'> specifies that dynamic allocation is to be used
+  instead of JCL. The job is then executed by the monitor in a batch region.</span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:57.3pt;text-indent:-35.7pt'><b><span style='font-size:10.0pt'>TSO</span></b><span
+  style='font-size:10.0pt'> specifies that dynamic allocation is to be used
+  instead of JCL in a background region.&nbsp; The job is then executed
+  immediately in the foreground by the monitor under <b>TSO</b> instead of in
+  the background.</span></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt;
+  font-family:Symbol'>·</span><span style='font-size:10.0pt'> <b>MVS, F4, DOS,
+  VS1, X8, HASP, ASP, JES1, JES2, JES3</b></span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt;text-indent:-1.2pt'><span style='font-size:10.0pt'>In
+  order to create the correct and most efficient instructions for each version
+  of the Operating Systems, <span class=SpellE>Jol</span> must know which
+  version it is creating instructions and which <span class=SpellE>Jes</span>
+  system is in use.</span></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt;
+  font-family:Symbol'>·</span><span style='font-size:10.0pt'> <b>NOCAT,
+  NOCATGDG</b></span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:20.4pt'><span style='font-size:10.0pt'>Code <b>NOCAT</b> to stop <span
+  class=SpellE>Jol</span> searching the catalog, and copying Volume and Unit
+  information to the executable code.</span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><span style='font-size:10.0pt'>Code <b>NOCATGDG</b> to
+  stop <span class=SpellE>Jol</span> searching the catalog for generation data
+  sets.</span></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt;
+  font-family:Symbol'>·</span><span style='font-size:10.0pt'> <b>PINCL, NPINCL</b></span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><span style='font-size:10.0pt'>Code <b>NPINCL</b> or <b>NPI</b>
+  to stop <span class=SpellE>Jol</span> printing <span class=SpellE><b>INCLUDE</b>d</span>
+  text.</span></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt;
+  font-family:Symbol'>·</span><span style='font-size:10.0pt'> <b>PEXPAND,
+  NPEXPAND</b></span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><span style='font-size:10.0pt'>Code <b>PEXPAND</b> to see
+  the code generated by any Macros.</span></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt;
+  font-family:Symbol'>·</span><span style='font-size:10.0pt'> <b>PMACRO,
+  NPMACRO</b></span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><span style='font-size:10.0pt'>Code <b>PMACRO</b> or <b>PM</b>
+  to have <span class=SpellE>Jol</span> print the Macro statements as they are
+  interpreted.&nbsp; After the macro is debugged it is recommended that the
+  default - <b>NPMACRO</b> - be used.</span></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt;
+  font-family:Symbol'>·</span><span style='font-size:10.0pt'> <b>PJCL, NPJCL</b></span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><span style='font-size:10.0pt'>Code <b>PJCL</b> to have <span
+  class=SpellE>Jol</span> produce generated code with compiler listings. The
+  generated JCL is also produced on another file ready for submission.</span></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt;
+  font-family:Symbol'>·</span><span style='font-size:10.0pt'> <b>TEST</b></span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><span style='font-size:10.0pt'>Code <b>TEST</b> to stop <span
+  class=SpellE>Jol</span> producing messages to the Operator if <span
+  class=SpellE>Jol</span> errors were detected.&nbsp; For Production jobs it is
+  recommended that this option not be used.</span></p>
+  <p class=MsoNormal style='margin-bottom:6.0pt'><span style='font-size:10.0pt;
+  font-family:Symbol'>·</span><span style='font-size:10.0pt'> <b>LINECNT = <span
+  class=SpellE>nn</span></b></span></p>
+  <p class=MsoNormal style='margin-top:0cm;margin-right:0cm;margin-bottom:6.0pt;
+  margin-left:21.6pt'><span style='font-size:10.0pt'>The <b>LINECNT</b> option
+  specifies the number of lines per page of the Compiler printed output.</span></p>
+  <p class=MsoNormal><span style='font-size:10.0pt'>&nbsp;</span></p>
+  </td>
+ </tr>
+</table>
+
+<p class=MsoNormal>&nbsp;</p>
+
+<span style='font-size:12.0pt;font-family:"Times New Roman";mso-fareast-font-family:
+"Times New Roman";mso-ansi-language:EN-US;mso-fareast-language:EN-US;
+mso-bidi-language:AR-SA'><br clear=all style='page-break-before:always'>
+</span>
+
+<p class=MsoNormal>&nbsp;</p>
+
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=windows-1252">
+  <meta name="Generator" content="Microsoft Word 97">
+  <title>Jol Download and Install</title>
+  <meta name="Template"
+ content="C:\PROGRAM FILES\MICROSOFT OFFICE\OFFICE\html.dot">
+</head>
+<body style="background-color: rgb(255, 255, 255);" link="#0000ff"
+ vlink="#800080">
+<font size="6" color="#008000" face="Arial">
+<p align="CENTER">Jol Download and Installation </p>
+</font>
+<p>The Jol program files are Pkzipped XMIT data sets. After you
+download the file, it must be unzipped and transferred to the
+mainframe. </p>
+<ul>
+  <li>Download <i><u>Jol60.ZIP</u></i> file. Move it to a
+separate directory, say JOL60. </li>
+  <li>Unzip the <i><u>.XMI </u></i>files. You can use PKZIP or
+WinZip to do this. </li>
+</ul>
+<dir>
+<dir>
+<p>For example: </p>
+<p>PKUNZIP -d Jol60.zip </p>
+<p>This will create these files: </p>
+</dir>
+</dir>
+<left>
+<table style="width: 436px;" border="0" cellpadding="7" cellspacing="0">
+  <tbody>
+    <tr>
+      <td valign="TOP" width="49%">
+      <p><b><font size="2">IBM60INS.HTM</font></b> </p>
+      </td>
+      <td valign="TOP" width="51%">
+      <p><font size="2">Set of instructions to be followed after
+loading the files to MVS (as detailed in this document)</font> </p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="TOP" width="49%">
+      <p><b><font size="2">JOL60.LOAD.XMI</font></b><font size="2"> </font></p>
+      </td>
+      <td valign="TOP" width="51%">
+      <p><font size="2">Load Module Data Set.</font> </p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="TOP" width="49%">
+      <p><b><font size="2">JOL60.CMDLIB.XMI</font></b><font size="2"> </font></p>
+      </td>
+      <td valign="TOP" width="51%">
+      <p><font size="2">Jol Macro Commands, e.g. SORT</font> </p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="TOP" width="49%">
+      <p><b><font size="2">JOL60.INCLUDE.XMI</font></b> </p>
+      </td>
+      <td valign="TOP" width="51%">
+      <p><font size="2">Some Sample Jol jobs.</font> </p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="TOP" width="49%">
+      <p><b><font size="2">JOL60.SOURCE.XMI</font></b><font size="2"> </font></p>
+      </td>
+      <td valign="TOP" width="51%">
+      <p><font size="2">Some of the Jol Source Code</font> </p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="TOP" width="49%">
+      <p><b><font size="2">JOL60.MACLIB.XMI</font></b><font size="2"> </font></p>
+      </td>
+      <td valign="TOP" width="51%">
+      <p><font size="2">ASM Macros to assemble the above</font> </p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="TOP" width="49%">
+      <p><b><font size="2">JOL60.PTFS.XMI</font></b><font size="2"> </font></p>
+      </td>
+      <td valign="TOP" width="51%">
+      <p><font size="2">Some PTF's (none apply to Jol 6.0)</font> </p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="TOP" width="49%">
+      <p><b><font size="2">JOL60.PROCLIB.XMI</font></b><font size="2"> </font></p>
+      </td>
+      <td valign="TOP" width="51%">
+      <p><font size="2">Some cataloged procedures for Jol</font> </p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="TOP" width="49%">
+      <p><b><font size="2">JOL60.USER.CMDLIB.XMI</font></b><font
+ size="2"> </font></p>
+      </td>
+      <td valign="TOP" width="51%">
+      <p><font size="2">User contributed Jol macro Commands</font> </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<dir>
+<dir>
+<p align="CENTER">&nbsp; </p>
+</dir>
+</dir>
+<ul>
+  <li>Transfer the above files to the mainframe using a <font
+ color="#ff0000">binary</font> file transfer method (no CRLF or ASCII
+translation) and make sure that the MVS dataset created is
+LRECL=80,RECFM=F,DSORG=PS. &nbsp; Note that you can upload into a PDS
+if you want as long as it is FB80.</li>
+  <li>Receive the 8 <i>name.XMI</i> files on MVS </li>
+  <ul>
+    <li>Issue the command: TSO RECEIVE INDATASET(<i>name.XMI</i>) </li>
+    <li>When prompted by message "INMR906A Enter restore parameters or
+'DELETE' or 'END' +": </li>
+  </ul>
+</ul>
+<dir>
+<dir>
+<p><b>Enter:</b> DA(<i>name.of.your.library</i>) UNIT(<i>unit</i>)
+VOLUME(<i>volume</i>) </p>
+<p>Note: The UNIT() and VOLUME() operands are optional but shown in
+case your installation puts RECEIVE files on work packs by default. </p>
+</dir>
+</dir>
+<ul>
+  <li>Now print out the small <b>IBM60INS.HTML</b> file, and run the
+MVS jobs as detailed in the document. </li>
+</ul>
+<dir>
+<dir>
+<p>Jol will now be installed and can be used with or instead of the IBM
+Job Control Language (JCL). </p>
+<p>Note that the Jol scripting language is designed to be used on a
+variety of computers. It contains a data base of data set attributes so
+that DDNAMES and DCB information can be "hidden" - Jol will add the
+DDNAMES and other required information on systems that require it. </p>
+<p>The Linux version will be available before the end of the year. </p>
+<p>&nbsp; </p>
+<p><font size="1">Thanks to Sam Goleb, </font><a
+ href="http://home.pacbell.net/mcleary/freeware.html"><font size="1">Mike
+Cleary</font></a><font size="1"> and </font><a
+ href="http://www.planetmvs.com/"><font size="1">David Alcock</font></a><font
+ size="1"> from whom I borrowed an outline and a thought or two in
+writing the above directions.&nbsp; </font></p>
+</dir>
+</dir>
+<table border="0" cellspacing="0" width="773">
+  <tbody>
+    <tr>
+      <td valign="MIDDLE">
+      <p align="CENTER"><font size="1">Copyright © Clem Clarke
+2001.&nbsp;&nbsp; All rights reserved.<br>
+All trademarks are properties of their respective owners.</font></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</left>
+</body>
+</html>

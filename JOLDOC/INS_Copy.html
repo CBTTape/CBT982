@@ -1,0 +1,353 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Copy</title>
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>COPY</u></font><font size="5"><u><span
+ style="font-weight: normal;"> </span></u></font><u>- </u><font
+ size="5"><i><u><span style="font-weight: normal;">Execute Command</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">COPY</span> command copies data
+from one data set to another.&nbsp; The data may be Sequential, VSAM,
+Indexed Sequential, or a Library (Partitioned Data Set).<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top"> <b><br>
+      </b>
+      <div style="margin-left: 40px;"><b>&nbsp;&nbsp;&nbsp; COPY { dsid
+| dsname }</b><br>
+      <b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; TO { dsid | dsname } </b><br>
+      <b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [ </b><span
+ style="font-style: italic;">options</span><b> ] ; </b><br>
+      <br>
+      </div>
+&nbsp; The default if no options are specified is a <span
+ style="font-style: italic;">sequential dataset copy</span>. <br>
+      <b><br>
+      </b>
+      <div style="margin-left: 40px;"><b>&nbsp; </b><span
+ style="font-style: italic;">options </span><br>
+      </div>
+      <b><br>
+      </b>
+      <div style="margin-left: 40px;"><b>&nbsp;&nbsp;&nbsp; [OLD] |
+[SHR] | [MODS] | [EXTEND] </b><br>
+      </div>
+      <b><br>
+      </b>
+      <div style="margin-left: 40px;"><b>&nbsp; For Vsam Data Sets,
+code: </b><br>
+      </div>
+      <b>&nbsp;&nbsp;&nbsp; <br>
+      </b>
+      <div style="margin-left: 80px;"><b>VSAM </b><br>
+      </div>
+      <b>&nbsp; <br>
+      </b>
+      <div style="margin-left: 40px;"><b>For Indexed Sequential Data
+Sets, code: </b><br>
+      </div>
+      <div style="margin-left: 80px;"><b>ISAM | IS </b><br>
+      <b>[PRIME = prime-dsid] </b><br>
+      <b>[INDEX = index-dsid] </b><br>
+      <b>[OFLOW = oflow-dsid] </b><br>
+      <br>
+      </div>
+      <div style="margin-left: 40px;"><b>For Partitioned Data Sets,
+code: </b><br>
+      </div>
+      <b><br>
+      </b>
+      <div style="margin-left: 80px;"><b>PDS | PO </b><br>
+      <b>{ SELECTING | SELECT | S }&nbsp;&nbsp;&nbsp; member </b><br>
+      <b>&nbsp;MEMBERS&nbsp;&nbsp;&nbsp; | MEMBER | M
+(member-name-list) </b><br>
+      <b>{ REPLACE | R }<br>
+      <br>
+      </b></div>
+      <div style="margin-left: 40px;"><b>&nbsp; The default is
+Sequential, but you may code: </b><br>
+      </div>
+      <b>&nbsp;&nbsp;&nbsp; <br>
+      </b>
+      <div style="margin-left: 80px;"><b>SEQ </b><br>
+      <br>
+      </div>
+      <div style="margin-left: 40px;"><b>&nbsp; </b><span
+ style="font-style: italic;">where:<br>
+      </span>
+      <table style="text-align: left; width: 100%;" border="1"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-style: italic;">input-dsid or dsname</span></td>
+            <td style="vertical-align: top;">is the data to be copied. </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-style: italic;">output-dsid or dsname</span></td>
+            <td style="vertical-align: top;">is the data set in which
+the copied data is to be placed. Unless OLD
+is coded, new space will be allocated, that is the data set is assumed
+to be NEW. </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-style: italic;">prime-dsid, index-dsid, and oflow,
+oflow-dsid</span></td>
+            <td style="vertical-align: top;">are areas of an Indexed
+Sequential data set. </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><span
+ style="font-style: italic;">member or member-name-list</span></td>
+            <td style="vertical-align: top;">is the name or names of
+members in the library to be copied.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>OLD</b></td>
+            <td style="vertical-align: top;">specifies that the "to"
+data set already exists. </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SHR</b></td>
+            <td style="vertical-align: top;">specifies that the "to"
+data set already exists. It also specifies
+that the operating system will not request exclusive use of the data
+set, that is, other users may read the data set while it is being
+updated. Use this parameter with caution. </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>MODS | EXTEND</b></td>
+            <td style="vertical-align: top;">specifies that the data
+being copied to the data set will be
+placed after any existing data set. The data set is extended with the
+new data. If the data set does not already exist it will be created,
+but unless a <span style="font-weight: bold;">KEEP</span> or a <span
+ style="font-weight: bold;">CATALOG</span> instruction is executed
+referring to
+that data set it will be deleted at the end of the job.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>ISAM or IS <br>
+            </b></td>
+            <td style="vertical-align: top;"> specifies that the data
+set is an Indexed Sequential data set. <br>
+            <span style="font-weight: bold;">PDS or PO</span>
+&nbsp;&nbsp;&nbsp; specifies that the "from" data set is a library. If
+the
+"to" dsid is a tape, an unload function takes place; if the "to" dsid
+is a direct access data set and the "from" dsid is a tape created from
+a library with a COPY command, then the library will be reloaded.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SEQ</b></td>
+            <td style="vertical-align: top;">specifies a sequential
+copy. </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SELECT</b></td>
+            <td style="vertical-align: top;">specifies a name or names
+of the members of the library that are
+to be copied. If the names already exist in the "to" data set, they
+will not be <span style="font-weight: bold;">REPLACED</span> unless
+the <span style="font-weight: bold;">REPLACE</span> option is
+specified.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>REPLACE</b></td>
+            <td style="vertical-align: top;">specifies that if members
+are already in the "to" data set, they are to be replaced by the
+members in the "from" data set.</td>
+          </tr>
+        </tbody>
+      </table>
+      <span style="font-style: italic;"></span></div>
+      <b><br>
+&nbsp;&nbsp;&nbsp;&nbsp; </b><b>&nbsp; &nbsp;&nbsp; &nbsp; </b> </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      </td>
+      <td align="left" valign="top">
+      <p><br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td align="left" valign="top">
+      <ol>
+        <li>The data in the data set referenced by the first
+data-set-identifier is copied to the data set referenced by the second
+data-set-identifier.</li>
+        <li>If you wish to overwrite the information in the second data
+set, or if you wish to add to an existing Partitioned Data Set or
+Library, code the <span style="font-weight: bold;">OLD</span> keyword.</li>
+        <li>If you are not copying a Sequential Data Set, or <span
+ style="font-weight: bold;">SELECT</span>ing members for a Partitioned
+Data Set copy, you must specify the type of data set being copied by
+using the <span style="font-weight: bold;">ISAM, IS, PDS</span> or <span
+ style="font-weight: bold;">PO</span> keywords.</li>
+        <li>The Default is a <span style="font-weight: bold;">SEQUENTIAL</span>
+copy.</li>
+      </ol>
+      <div style="margin-left: 40px;">Code <span
+ style="font-weight: bold;">IS</span> or <span
+ style="font-weight: bold;">ISAM</span> for an Indexed Sequential Data
+Set.</div>
+      <div style="margin-left: 40px;">Code <span
+ style="font-weight: bold;">PO</span> or <span
+ style="font-weight: bold;">PDS</span> for a Partitioned Data Set.</div>
+      <ol start="5">
+        <li>To copy <span style="font-weight: bold;">SELECT</span>ed
+members from a Partitioned Data Set code the <span
+ style="font-weight: bold;">SELECT</span> or <span
+ style="font-weight: bold;">MEMBER</span> keywords, followed by the
+member name(s) you wish to copy.</li>
+        <li>If you wish to overwrite existing members of the name(s)
+you are copying, you must code the <span style="font-weight: bold;">REPLACE</span>
+or <span style="font-weight: bold;">R</span> keyword.</li>
+        <li>If there is insufficient space to hold the members, the <span
+ style="font-weight: bold;">COMPRESS</span> command may be used to
+reorganize the library.</li>
+        <li>The <span style="font-weight: bold;">PRIME, INDEX</span>
+and <span style="font-weight: bold;">OFLOW</span> parameters are used
+when copying an ISAM data set which requires <span
+ style="font-weight: bold;">PRIME, INDEX</span> and <span
+ style="font-weight: bold;">OFLOW</span> data sets.</li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      <ol>
+        <li><span style="font-weight: normal;"><span
+ style="font-style: italic; font-weight: bold;"></span><span
+ style="font-weight: bold;">COPY INPUT TO OUTPUT;</span></span></li>
+      </ol>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;"></span>The data from the <span
+ style="font-weight: bold;">DSID</span> called<span
+ style="font-weight: bold;"> INPUT</span> is copied to the data set
+specified by the <span style="font-weight: bold;">DSID OUTPUT</span>.&nbsp;
+The default is a sequential copy.</span><br style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <ol start="2" style="font-weight: bold;">
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">COPY</span> <span
+ style="font-weight: bold;">TEST.PROCLIB</span></span></li>
+      </ol>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">TO
+SYS1.PROCLIB OLD</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">SELECTING (PAYROLL,ARPROC)</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">REPLACE;</span><br
+ style="font-weight: bold;">
+      </div>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;"><span
+ style="font-weight: bold;">TEST.PROCLIB</span> is the input data set,
+and members <span style="font-weight: bold;">PAYROLL</span> and <span
+ style="font-weight: bold;">ARPROC</span> are to be copied into the
+system data set <span style="font-weight: bold;">SYS1.PROCLIB</span>.&nbsp;
+If members <span style="font-weight: bold;">PAYROLL</span> and <span
+ style="font-weight: bold;">ARPROC</span> are already in <span
+ style="font-weight: bold;">SYS1.PROCLIB</span>, they are to be
+replaced with the members from <span style="font-weight: bold;">TEST.PROCLIB</span>.</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <ol style="font-weight: bold;" start="3">
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">DCL</span> <span style="font-weight: bold;">X
+DS TAPE</span></span></li>
+      </ol>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">COPY.PRODUCTN.PROGS(+1);</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">COPYONE:</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">COPY PROD.LIB TO X PDS;</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">IF COPYONE = 0</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN CATALOG X;</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">ELSE STOP 'COPY OF PRODUCTION
+PROGRAMS FAILED';</span><br style="font-weight: bold;">
+      </div>
+      <br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+declare of X specifies a Tape data set called <span
+ style="font-weight: bold;">COPY.PRODUCTN.PROGS</span>.&nbsp; The <span
+ style="font-weight: bold;">COPY</span> statement with the label <span
+ style="font-weight: bold;">COPYONE</span> copies the library <span
+ style="font-weight: bold;">PROD.LIB</span> to<span
+ style="font-weight: bold;"> X</span> (the <span
+ style="font-weight: bold;">COPY.PRODUCTN.PROG(+1)</span> data
+set).&nbsp; The <span style="font-weight: bold;">COPY</span> has <span
+ style="font-weight: bold;">PDS</span> specified, and so the <span
+ style="font-weight: bold;">COPY</span> will create an unloaded version
+of the library on the tape.</span><br style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">The <span
+ style="font-weight: bold;">IF</span> statement then tests the stop <span
+ style="font-weight: bold;">COPYONE</span>.&nbsp; If it returned a
+zero, the copy data set is cataloged, otherwise a message is passed to
+the operator.</span><br style="font-weight: normal;">
+      </div>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

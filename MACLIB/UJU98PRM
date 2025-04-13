@@ -1,0 +1,5 @@
+U98JOB   DS    CL8
+U98PGM   DS    CL8
+U98SSI   DS    XL4
+U98PLIST DS    A
+U98CC    DS    H

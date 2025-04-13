@@ -1,0 +1,1110 @@
+     DYNAMIC: PROC OPTIONS(MAIN);
+      DCL 1 DYNAMIC_ALLOCATION_VARIABLES STATIC,
+
+   /* ALLOCATION UNIT FOR DDNAM */
+        2 DDNAM_HEADER,
+         3 DDNAM_KEY_VALUE
+              BIN FIXED(15) INIT(1), /* HEX '0001' */
+         3 DDNAM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DDNAM  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR DSNAM */
+        2 DSNAM_HEADER,
+         3 DSNAM_KEY_VALUE
+              BIN FIXED(15) INIT(2), /* HEX '0002' */
+         3 DSNAM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DSNAM  CHARACTER(44) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR MEMBR */
+        2 MEMBR_HEADER,
+         3 MEMBR_KEY_VALUE
+              BIN FIXED(15) INIT(3), /* HEX '0003' */
+         3 MEMBR_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 MEMBR  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR STATS */
+        2 STATS_HEADER,
+         3 STATS_KEY_VALUE
+              BIN FIXED(15) INIT(4), /* HEX '0004' */
+         3 STATS_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 STATS  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR NDISP */
+        2 NDISP_HEADER,
+         3 NDISP_KEY_VALUE
+              BIN FIXED(15) INIT(5), /* HEX '0005' */
+         3 NDISP_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 NDISP  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR CDISP */
+        2 CDISP_HEADER,
+         3 CDISP_KEY_VALUE
+              BIN FIXED(15) INIT(6), /* HEX '0006' */
+         3 CDISP_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 CDISP  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR TRK */
+        2 TRK_HEADER,
+         3 TRK_KEY_VALUE
+              BIN FIXED(15) INIT(7), /* HEX '0007' */
+         3 TRK_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR CYL */
+        2 CYL_HEADER,
+         3 CYL_KEY_VALUE
+              BIN FIXED(15) INIT(8), /* HEX '0008' */
+         3 CYL_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR BLKLN */
+        2 BLKLN_HEADER,
+         3 BLKLN_KEY_VALUE
+              BIN FIXED(15) INIT(9), /* HEX '0009' */
+         3 BLKLN_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 BLKLN  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR PRIME */
+        2 PRIME_HEADER,
+         3 PRIME_KEY_VALUE
+              BIN FIXED(15) INIT(10), /* HEX '000A' */
+         3 PRIME_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 PRIME  BIN FIXED(23) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR SECND */
+        2 SECND_HEADER,
+         3 SECND_KEY_VALUE
+              BIN FIXED(15) INIT(11), /* HEX '000B' */
+         3 SECND_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 SECND  BIN FIXED(23) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR DIR */
+        2 DIR_HEADER,
+         3 DIR_KEY_VALUE
+              BIN FIXED(15) INIT(12), /* HEX '000C' */
+         3 DIR_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DIR  BIN FIXED(23) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR RLSE */
+        2 RLSE_HEADER,
+         3 RLSE_KEY_VALUE
+              BIN FIXED(15) INIT(13), /* HEX '000D' */
+         3 RLSE_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR SPFRM */
+        2 SPFRM_HEADER,
+         3 SPFRM_KEY_VALUE
+              BIN FIXED(15) INIT(14), /* HEX '000E' */
+         3 SPFRM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 SPFRM  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR ROUND */
+        2 ROUND_HEADER,
+         3 ROUND_KEY_VALUE
+              BIN FIXED(15) INIT(15), /* HEX '000F' */
+         3 ROUND_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR VLSER */
+        2 VLSER_HEADER,
+         3 VLSER_KEY_VALUE
+              BIN FIXED(15) INIT(16), /* HEX '0010' */
+         3 VLSER_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 VLSER(15)  CHARACTER(6) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR PRIVT */
+        2 PRIVT_HEADER,
+         3 PRIVT_KEY_VALUE
+              BIN FIXED(15) INIT(17), /* HEX '0011' */
+         3 PRIVT_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR VLSEQ */
+        2 VLSEQ_HEADER,
+         3 VLSEQ_KEY_VALUE
+              BIN FIXED(15) INIT(18), /* HEX '0012' */
+         3 VLSEQ_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 VLSEQ  BIN FIXED(15)  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR VLCNT */
+        2 VLCNT_HEADER,
+         3 VLCNT_KEY_VALUE
+              BIN FIXED(15) INIT(19), /* HEX '0013' */
+         3 VLCNT_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 VLCNT  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR VLRDS */
+        2 VLRDS_HEADER,
+         3 VLRDS_KEY_VALUE
+              BIN FIXED(15) INIT(20), /* HEX '0014' */
+         3 VLRDS_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 VLRDS  CHARACTER(44) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR UNIT */
+        2 UNIT_HEADER,
+         3 UNIT_KEY_VALUE
+              BIN FIXED(15) INIT(21), /* HEX '0015' */
+         3 UNIT_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 UNIT  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR UNCNT */
+        2 UNCNT_HEADER,
+         3 UNCNT_KEY_VALUE
+              BIN FIXED(15) INIT(22), /* HEX '0016' */
+         3 UNCNT_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 UNCNT  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR PARAL */
+        2 PARAL_HEADER,
+         3 PARAL_KEY_VALUE
+              BIN FIXED(15) INIT(23), /* HEX '0017' */
+         3 PARAL_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR SYSOU */
+        2 SYSOU_HEADER,
+         3 SYSOU_KEY_VALUE
+              BIN FIXED(15) INIT(24), /* HEX '0018' */
+         3 SYSOU_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 SYSOU  CHARACTER(1) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR SPGNM */
+        2 SPGNM_HEADER,
+         3 SPGNM_KEY_VALUE
+              BIN FIXED(15) INIT(25), /* HEX '0019' */
+         3 SPGNM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 SPGNM  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR SFMNO */
+        2 SFMNO_HEADER,
+         3 SFMNO_KEY_VALUE
+              BIN FIXED(15) INIT(26), /* HEX '001A' */
+         3 SFMNO_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 SFMNO  CHARACTER(4) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR OUTLM */
+        2 OUTLM_HEADER,
+         3 OUTLM_KEY_VALUE
+              BIN FIXED(15) INIT(27), /* HEX '001B' */
+         3 OUTLM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 OUTLM  BIN FIXED(23) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR CLOSE */
+        2 CLOSE_HEADER,
+         3 CLOSE_KEY_VALUE
+              BIN FIXED(15) INIT(28), /* HEX '001C' */
+         3 CLOSE_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR COPYS */
+        2 COPYS_HEADER,
+         3 COPYS_KEY_VALUE
+              BIN FIXED(15) INIT(29), /* HEX '001D' */
+         3 COPYS_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 COPYS  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR LABEL */
+        2 LABEL_HEADER,
+         3 LABEL_KEY_VALUE
+              BIN FIXED(15) INIT(30), /* HEX '001E' */
+         3 LABEL_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 LABEL  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR DSSEQ */
+        2 DSSEQ_HEADER,
+         3 DSSEQ_KEY_VALUE
+              BIN FIXED(15) INIT(31), /* HEX '001F' */
+         3 DSSEQ_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DSSEQ  BIN FIXED(15)  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR PASPR */
+        2 PASPR_HEADER,
+         3 PASPR_KEY_VALUE
+              BIN FIXED(15) INIT(32), /* HEX '0020' */
+         3 PASPR_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 PASPR  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR INOUT */
+        2 INOUT_HEADER,
+         3 INOUT_KEY_VALUE
+              BIN FIXED(15) INIT(33), /* HEX '0021' */
+         3 INOUT_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 INOUT  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR EXPDT */
+        2 EXPDT_HEADER,
+         3 EXPDT_KEY_VALUE
+              BIN FIXED(15) INIT(34), /* HEX '0022' */
+         3 EXPDT_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 EXPDT  CHARACTER(5) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR RETPD */
+        2 RETPD_HEADER,
+         3 RETPD_KEY_VALUE
+              BIN FIXED(15) INIT(35), /* HEX '0023' */
+         3 RETPD_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RETPD  BIN FIXED(15)  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR DUMMY */
+        2 DUMMY_HEADER,
+         3 DUMMY_KEY_VALUE
+              BIN FIXED(15) INIT(36), /* HEX '0024' */
+         3 DUMMY_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR FCBIM */
+        2 FCBIM_HEADER,
+         3 FCBIM_KEY_VALUE
+              BIN FIXED(15) INIT(37), /* HEX '0025' */
+         3 FCBIM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 FCBIM  CHARACTER(4) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR FCBAV */
+        2 FCBAV_HEADER,
+         3 FCBAV_KEY_VALUE
+              BIN FIXED(15) INIT(38), /* HEX '0026' */
+         3 FCBAV_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 FCBAV  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR QNAME */
+        2 QNAME_HEADER,
+         3 QNAME_KEY_VALUE
+              BIN FIXED(15) INIT(39), /* HEX '0027' */
+         3 QNAME_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 QNAME  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR TERM */
+        2 TERM_HEADER,
+         3 TERM_KEY_VALUE
+              BIN FIXED(15) INIT(40), /* HEX '0028' */
+         3 TERM_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR UCS */
+        2 UCS_HEADER,
+         3 UCS_KEY_VALUE
+              BIN FIXED(15) INIT(41), /* HEX '0029' */
+         3 UCS_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 UCS  CHARACTER(4) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR UFOLD */
+        2 UFOLD_HEADER,
+         3 UFOLD_KEY_VALUE
+              BIN FIXED(15) INIT(42), /* HEX '002A' */
+         3 UFOLD_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR UVRFY */
+        2 UVRFY_HEADER,
+         3 UVRFY_KEY_VALUE
+              BIN FIXED(15) INIT(43), /* HEX '002B' */
+         3 UVRFY_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR DCBDS */
+        2 DCBDS_HEADER,
+         3 DCBDS_KEY_VALUE
+              BIN FIXED(15) INIT(44), /* HEX '002C' */
+         3 DCBDS_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DCBDS  CHARACTER(44) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR DCBDD */
+        2 DCBDD_HEADER,
+         3 DCBDD_KEY_VALUE
+              BIN FIXED(15) INIT(45), /* HEX '002D' */
+         3 DCBDD_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DCBDD  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR SUSER */
+        2 SUSER_HEADER,
+         3 SUSER_KEY_VALUE
+              BIN FIXED(15) INIT(88), /* HEX '0058' */
+         3 SUSER_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 SUSER  CHARACTER(7) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR SHOLD */
+        2 SHOLD_HEADER,
+         3 SHOLD_KEY_VALUE
+              BIN FIXED(15) INIT(89), /* HEX '0059' */
+         3 SHOLD_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR MSVGP */
+        2 MSVGP_HEADER,
+         3 MSVGP_KEY_VALUE
+              BIN FIXED(15) INIT(94), /* HEX '005E' */
+         3 MSVGP_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 MSVGP  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR BFALN */
+        2 BFALN_HEADER,
+         3 BFALN_KEY_VALUE
+              BIN FIXED(15) INIT(46), /* HEX '002E' */
+         3 BFALN_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 BFALN  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR BFTEK */
+        2 BFTEK_HEADER,
+         3 BFTEK_KEY_VALUE
+              BIN FIXED(15) INIT(47), /* HEX '002F' */
+         3 BFTEK_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 BFTEK  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR BLKSZ */
+        2 BLKSZ_HEADER,
+         3 BLKSZ_KEY_VALUE
+              BIN FIXED(15) INIT(48), /* HEX '0030' */
+         3 BLKSZ_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 BLKSZ  BIN FIXED(15)  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR BUFIN */
+        2 BUFIN_HEADER,
+         3 BUFIN_KEY_VALUE
+              BIN FIXED(15) INIT(49), /* HEX '0031' */
+         3 BUFIN_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 BUFIN  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR BUFL */
+        2 BUFL_HEADER,
+         3 BUFL_KEY_VALUE
+              BIN FIXED(15) INIT(50), /* HEX '0032' */
+         3 BUFL_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 BUFL  BIN FIXED(15)  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR BUFMX */
+        2 BUFMX_HEADER,
+         3 BUFMX_KEY_VALUE
+              BIN FIXED(15) INIT(51), /* HEX '0033' */
+         3 BUFMX_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 BUFMX  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR BUFNO */
+        2 BUFNO_HEADER,
+         3 BUFNO_KEY_VALUE
+              BIN FIXED(15) INIT(52), /* HEX '0034' */
+         3 BUFNO_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 BUFNO  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR BUFOF */
+        2 BUFOF_HEADER,
+         3 BUFOF_KEY_VALUE
+              BIN FIXED(15) INIT(53), /* HEX '0035' */
+         3 BUFOF_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 BUFOF  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR BUFOU */
+        2 BUFOU_HEADER,
+         3 BUFOU_KEY_VALUE
+              BIN FIXED(15) INIT(54), /* HEX '0036' */
+         3 BUFOU_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 BUFOU  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR BUFRQ */
+        2 BUFRQ_HEADER,
+         3 BUFRQ_KEY_VALUE
+              BIN FIXED(15) INIT(55), /* HEX '0037' */
+         3 BUFRQ_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 BUFRQ  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR BUFSZ */
+        2 BUFSZ_HEADER,
+         3 BUFSZ_KEY_VALUE
+              BIN FIXED(15) INIT(56), /* HEX '0038' */
+         3 BUFSZ_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 BUFSZ  BIN FIXED(15)  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR CODE */
+        2 CODE_HEADER,
+         3 CODE_KEY_VALUE
+              BIN FIXED(15) INIT(57), /* HEX '0039' */
+         3 CODE_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 CODE  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR CPRI */
+        2 CPRI_HEADER,
+         3 CPRI_KEY_VALUE
+              BIN FIXED(15) INIT(58), /* HEX '003A' */
+         3 CPRI_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 CPRI  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR DEN */
+        2 DEN_HEADER,
+         3 DEN_KEY_VALUE
+              BIN FIXED(15) INIT(59), /* HEX '003B' */
+         3 DEN_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DEN  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR DSORG */
+        2 DSORG_HEADER,
+         3 DSORG_KEY_VALUE
+              BIN FIXED(15) INIT(60), /* HEX '003C' */
+         3 DSORG_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DSORG  BIT(16)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR EROPT */
+        2 EROPT_HEADER,
+         3 EROPT_KEY_VALUE
+              BIN FIXED(15) INIT(61), /* HEX '003D' */
+         3 EROPT_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 EROPT  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR GNCP */
+        2 GNCP_HEADER,
+         3 GNCP_KEY_VALUE
+              BIN FIXED(15) INIT(62), /* HEX '003E' */
+         3 GNCP_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 GNCP  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR INTVL */
+        2 INTVL_HEADER,
+         3 INTVL_KEY_VALUE
+              BIN FIXED(15) INIT(63), /* HEX '003F' */
+         3 INTVL_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 INTVL  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR KYLEN */
+        2 KYLEN_HEADER,
+         3 KYLEN_KEY_VALUE
+              BIN FIXED(15) INIT(64), /* HEX '0040' */
+         3 KYLEN_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 KYLEN  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR LIMCT */
+        2 LIMCT_HEADER,
+         3 LIMCT_KEY_VALUE
+              BIN FIXED(15) INIT(65), /* HEX '0041' */
+         3 LIMCT_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 LIMCT  BIN FIXED(23) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR LRECL */
+        2 LRECL_HEADER,
+         3 LRECL_KEY_VALUE
+              BIN FIXED(15) INIT(66), /* HEX '0042' */
+         3 LRECL_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 LRECL  BIN FIXED(15)  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR MODE */
+        2 MODE_HEADER,
+         3 MODE_KEY_VALUE
+              BIN FIXED(15) INIT(67), /* HEX '0043' */
+         3 MODE_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 MODE  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR NCP */
+        2 NCP_HEADER,
+         3 NCP_KEY_VALUE
+              BIN FIXED(15) INIT(68), /* HEX '0044' */
+         3 NCP_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 NCP  BIN FIXED(15) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR OPTCD */
+        2 OPTCD_HEADER,
+         3 OPTCD_KEY_VALUE
+              BIN FIXED(15) INIT(69), /* HEX '0045' */
+         3 OPTCD_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 OPTCD  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR PCIR */
+        2 PCIR_HEADER,
+         3 PCIR_KEY_VALUE
+              BIN FIXED(15) INIT(70), /* HEX '0046' */
+         3 PCIR_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 PCIR  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR PCIS */
+        2 PCIS_HEADER,
+         3 PCIS_KEY_VALUE
+              BIN FIXED(15) INIT(71), /* HEX '0047' */
+         3 PCIS_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 PCIS  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR PRTSP */
+        2 PRTSP_HEADER,
+         3 PRTSP_KEY_VALUE
+              BIN FIXED(15) INIT(72), /* HEX '0048' */
+         3 PRTSP_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 PRTSP  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR RECFM */
+        2 RECFM_HEADER,
+         3 RECFM_KEY_VALUE
+              BIN FIXED(15) INIT(73), /* HEX '0049' */
+         3 RECFM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RECFM  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR RSRVF */
+        2 RSRVF_HEADER,
+         3 RSRVF_KEY_VALUE
+              BIN FIXED(15) INIT(74), /* HEX '004A' */
+         3 RSRVF_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RSRVF  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR RSRVS */
+        2 RSRVS_HEADER,
+         3 RSRVS_KEY_VALUE
+              BIN FIXED(15) INIT(75), /* HEX '004B' */
+         3 RSRVS_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RSRVS  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR SOWA */
+        2 SOWA_HEADER,
+         3 SOWA_KEY_VALUE
+              BIN FIXED(15) INIT(76), /* HEX '004C' */
+         3 SOWA_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 SOWA  BIN FIXED(15)  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR STACK */
+        2 STACK_HEADER,
+         3 STACK_KEY_VALUE
+              BIN FIXED(15) INIT(77), /* HEX '004D' */
+         3 STACK_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 STACK  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR THRSH */
+        2 THRSH_HEADER,
+         3 THRSH_KEY_VALUE
+              BIN FIXED(15) INIT(78), /* HEX '004E' */
+         3 THRSH_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 THRSH  BIN FIXED(7) UNALIGNED  INIT(0),
+
+
+   /* ALLOCATION UNIT FOR TRTCH */
+        2 TRTCH_HEADER,
+         3 TRTCH_KEY_VALUE
+              BIN FIXED(15) INIT(79), /* HEX '004F' */
+         3 TRTCH_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 TRTCH  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR IPLTX */
+        2 IPLTX_HEADER,
+         3 IPLTX_KEY_VALUE
+              BIN FIXED(15) INIT(81), /* HEX '0051' */
+         3 IPLTX_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 IPLTX  CHARACTER(7) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR DIAGN */
+        2 DIAGN_HEADER,
+         3 DIAGN_KEY_VALUE
+              BIN FIXED(15) INIT(84), /* HEX '0054' */
+         3 DIAGN_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR FUNC */
+        2 FUNC_HEADER,
+         3 FUNC_KEY_VALUE
+              BIN FIXED(15) INIT(90), /* HEX '005A' */
+         3 FUNC_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 FUNC  BIT(8)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR FRID */
+        2 FRID_HEADER,
+         3 FRID_KEY_VALUE
+              BIN FIXED(15) INIT(91), /* HEX '005B' */
+         3 FRID_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 FRID  CHARACTER(4) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR PASSW */
+        2 PASSW_HEADER,
+         3 PASSW_KEY_VALUE
+              BIN FIXED(15) INIT(80), /* HEX '0050' */
+         3 PASSW_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 PASSW  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR PERMA */
+        2 PERMA_HEADER,
+         3 PERMA_KEY_VALUE
+              BIN FIXED(15) INIT(82), /* HEX '0052' */
+         3 PERMA_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR CNVRT */
+        2 CNVRT_HEADER,
+         3 CNVRT_KEY_VALUE
+              BIN FIXED(15) INIT(83), /* HEX '0053' */
+         3 CNVRT_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* ALLOCATION UNIT FOR RTDDN */
+        2 RTDDN_HEADER,
+         3 RTDDN_KEY_VALUE
+              BIN FIXED(15) INIT(85), /* HEX '0055' */
+         3 RTDDN_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTDDN  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR RTDSN */
+        2 RTDSN_HEADER,
+         3 RTDSN_KEY_VALUE
+              BIN FIXED(15) INIT(86), /* HEX '0056' */
+         3 RTDSN_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTDSN  CHARACTER(44) VARYING INIT(' '),
+
+
+   /* ALLOCATION UNIT FOR RTORG */
+        2 RTORG_HEADER,
+         3 RTORG_KEY_VALUE
+              BIN FIXED(15) INIT(87), /* HEX '0057' */
+         3 RTORG_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTORG  BIT(16)       INIT('0'B),
+
+
+   /* ALLOCATION UNIT FOR RTVOL */
+        2 RTVOL_HEADER,
+         3 RTVOL_KEY_VALUE
+              BIN FIXED(15) INIT(93), /* HEX '005D' */
+         3 RTVOL_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTVOL  CHARACTER(6) VARYING INIT(' ');
+
+
+   /* ALLOCATION UNIT FOR DDNAM */
+        2 DDNAM_HEADER,
+         3 DDNAM_KEY_VALUE
+              BIN FIXED(15) INIT(1), /* HEX '0001' */
+         3 DDNAM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DDNAM  CHARACTER(8) VARYING INIT(' '),
+
+
+      DCL 1 DYNAMIC_DEALLOCATION_VARIABLES   STATIC,
+   /* DE-ALLOCATION UNIT FOR DSNAM */
+        2 DSNAM_HEADER,
+         3 DSNAM_KEY_VALUE
+              BIN FIXED(15) INIT(2), /* HEX '0002' */
+         3 DSNAM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DSNAM  CHARACTER(44) VARYING INIT(' '),
+
+
+   /* DE-ALLOCATION UNIT FOR MEMBR */
+        2 MEMBR_HEADER,
+         3 MEMBR_KEY_VALUE
+              BIN FIXED(15) INIT(3), /* HEX '0003' */
+         3 MEMBR_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 MEMBR  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* DE-ALLOCATION UNIT FOR OVDSP */
+        2 OVDSP_HEADER,
+         3 OVDSP_KEY_VALUE
+              BIN FIXED(15) INIT(5), /* HEX '0005' */
+         3 OVDSP_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 OVDSP  BIT(8)       INIT('0'B),
+
+
+   /* DE-ALLOCATION UNIT FOR UNALC */
+        2 UNALC_HEADER,
+         3 UNALC_KEY_VALUE
+              BIN FIXED(15) INIT(7), /* HEX '0007' */
+         3 UNALC_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* DE-ALLOCATION UNIT FOR REMOV */
+        2 REMOV_HEADER,
+         3 REMOV_KEY_VALUE
+              BIN FIXED(15) INIT(8), /* HEX '0008' */
+         3 REMOV_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* DE-ALLOCATION UNIT FOR OVSNH */
+        2 OVSNH_HEADER,
+         3 OVSNH_KEY_VALUE
+              BIN FIXED(15) INIT(10), /* HEX '000A' */
+         3 OVSNH_#_KEYS
+              BIN FIXED(15) INIT(0),  /* NO PARAMETER REQUIRED */
+
+
+   /* DE-ALLOCATION UNIT FOR OVCLS */
+        2 OVCLS_HEADER,
+         3 OVCLS_KEY_VALUE
+              BIN FIXED(15) INIT(24), /* HEX '0018' */
+         3 OVCLS_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 OVCLS  CHARACTER(1) VARYING INIT(' '),
+
+
+   /* DE-ALLOCATION UNIT FOR OVSUS */
+        2 OVSUS_HEADER,
+         3 OVSUS_KEY_VALUE
+              BIN FIXED(15) INIT(88), /* HEX '0058' */
+         3 OVSUS_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 OVSUS  CHARACTER(7) VARYING INIT(' '),
+
+
+   /* DE-ALLOCATION UNIT FOR OVSHQ */
+        2 OVSHQ_HEADER,
+         3 OVSHQ_KEY_VALUE
+              BIN FIXED(15) INIT(89), /* HEX '0059' */
+         3 OVSHQ_#_KEYS
+              BIN FIXED(15) INIT(0);  /* NO PARAMETER REQUIRED */
+
+
+       DCL 1 DYNAMIC_CONCATENATION_VARIABLES  STATIC,
+   /* CONCATENATION UNIT FOR DDNAM */
+        2 DDNAM_HEADER,
+         3 DDNAM_KEY_VALUE
+              BIN FIXED(15) INIT(1), /* HEX '0001' */
+         3 DDNAM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DDNAM  CHARACTER(200) VARYING INIT(' '),
+
+
+   /* CONCATENATION UNIT FOR PERMC */
+        2 PERMC_HEADER,
+         3 PERMC_KEY_VALUE
+              BIN FIXED(15) INIT(4), /* HEX '0004' */
+         3 PERMC_#_KEYS
+              BIN FIXED(15) INIT(0);  /* NO PARAMETER REQUIRED */
+
+
+      DCL 1 DYNAMIC_DECONCATENATION_VARIABLES STATIC,
+
+   /* DE-CONCATENATION UNIT FOR DDNAM */
+        2 DDNAM_HEADER,
+         3 DDNAM_KEY_VALUE
+              BIN FIXED(15) INIT(1), /* HEX '0001' */
+         3 DDNAM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DDNAM  CHARACTER(8) VARYING INIT(' ');
+
+
+       DCL 1 DYNAMIC_REMOVE_IN_USE_VARIABLES STATIC,
+   /* REMOVE IN USE ATTRIBUTE UNIT FOR TCBAD */
+        2 TCBAD_HEADER,
+         3 TCBAD_KEY_VALUE
+              BIN FIXED(15) INIT(1), /* HEX '0001' */
+         3 TCBAD_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 TCBAD  BIN FIXED(31) UNALIGNED  INIT(0),
+
+
+   /* REMOVE IN USE ATTRIBUTE UNIT FOR CURNT */
+        2 CURNT_HEADER,
+         3 CURNT_KEY_VALUE
+              BIN FIXED(15) INIT(2), /* HEX '0002' */
+         3 CURNT_#_KEYS
+              BIN FIXED(15) INIT(0);  /* NO PARAMETER REQUIRED */
+
+
+      DCL 1 DYNAMIC_DDNAME_DUMMY STATIC ,?,
+   /* ALLOCATION (DDNAME,DUMMY) UNIT FOR DDNAM */
+        2 DDNAM_HEADER,
+         3 DDNAM_KEY_VALUE
+              BIN FIXED(15) INIT(1), /* HEX '0001' */
+         3 DDNAM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DDNAM  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* ALLOCATION (DDNAME,DUMMY) UNIT FOR RTDUM */
+        2 RTDUM_HEADER,
+         3 RTDUM_KEY_VALUE
+              BIN FIXED(15) INIT(2), /* HEX '0002' */
+         3 RTDUM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTDUM  BIT(8)       INIT('0'B);
+
+      DCL 1 DYNAMIC_INFORMATION_RETRIEVAL_VARIABLES STATIC,
+
+   /* RETURN INFORMATION UNIT FOR DDNAM */
+        2 DDNAM_HEADER,
+         3 DDNAM_KEY_VALUE
+              BIN FIXED(15) INIT(1), /* HEX '0001' */
+         3 DDNAM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DDNAM  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* RETURN INFORMATION UNIT FOR DSNAM */
+        2 DSNAM_HEADER,
+         3 DSNAM_KEY_VALUE
+              BIN FIXED(15) INIT(2), /* HEX '0002' */
+         3 DSNAM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 DSNAM  CHARACTER(44) VARYING INIT(' '),
+
+
+   /* RETURN INFORMATION UNIT FOR RTDDN */
+        2 RTDDN_HEADER,
+         3 RTDDN_KEY_VALUE
+              BIN FIXED(15) INIT(4), /* HEX '0004' */
+         3 RTDDN_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTDDN  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* RETURN INFORMATION UNIT FOR RTDSN */
+        2 RTDSN_HEADER,
+         3 RTDSN_KEY_VALUE
+              BIN FIXED(15) INIT(5), /* HEX '0005' */
+         3 RTDSN_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTDSN  CHARACTER(44) VARYING INIT(' '),
+
+
+   /* RETURN INFORMATION UNIT FOR RTMEM */
+        2 RTMEM_HEADER,
+         3 RTMEM_KEY_VALUE
+              BIN FIXED(15) INIT(6), /* HEX '0006' */
+         3 RTMEM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTMEM  CHARACTER(8) VARYING INIT(' '),
+
+
+   /* RETURN INFORMATION UNIT FOR RTSTA */
+        2 RTSTA_HEADER,
+         3 RTSTA_KEY_VALUE
+              BIN FIXED(15) INIT(7), /* HEX '0007' */
+         3 RTSTA_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTSTA  BIT(8)       INIT('0'B),
+
+
+   /* RETURN INFORMATION UNIT FOR RTNDP */
+        2 RTNDP_HEADER,
+         3 RTNDP_KEY_VALUE
+              BIN FIXED(15) INIT(8), /* HEX '0008' */
+         3 RTNDP_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTNDP  BIT(8)       INIT('0'B),
+
+
+   /* RETURN INFORMATION UNIT FOR RTCDP */
+        2 RTCDP_HEADER,
+         3 RTCDP_KEY_VALUE
+              BIN FIXED(15) INIT(9), /* HEX '0009' */
+         3 RTCDP_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTCDP  BIT(8)       INIT('0'B),
+
+
+   /* RETURN INFORMATION UNIT FOR RTORG */
+        2 RTORG_HEADER,
+         3 RTORG_KEY_VALUE
+              BIN FIXED(15) INIT(10), /* HEX '000A' */
+         3 RTORG_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTORG  BIT(16)       INIT('0'B),
+
+
+   /* RETURN INFORMATION UNIT FOR RTLIM */
+        2 RTLIM_HEADER,
+         3 RTLIM_KEY_VALUE
+              BIN FIXED(15) INIT(11), /* HEX '000B' */
+         3 RTLIM_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTLIM  BIN FIXED(15)  INIT(0),
+
+
+   /* RETURN INFORMATION UNIT FOR RTATT */
+        2 RTATT_HEADER,
+         3 RTATT_KEY_VALUE
+              BIN FIXED(15) INIT(12), /* HEX '000C' */
+         3 RTATT_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTATT  BIT(8)       INIT('0'B),
+
+
+   /* RETURN INFORMATION UNIT FOR RTLST */
+        2 RTLST_HEADER,
+         3 RTLST_KEY_VALUE
+              BIN FIXED(15) INIT(13), /* HEX '000D' */
+         3 RTLST_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTLST  BIT(8)       INIT('0'B),
+
+
+   /* RETURN INFORMATION UNIT FOR RTTYP */
+        2 RTTYP_HEADER,
+         3 RTTYP_KEY_VALUE
+              BIN FIXED(15) INIT(14), /* HEX '000E' */
+         3 RTTYP_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RTTYP  BIT(8)       INIT('0'B),
+
+
+   /* RETURN INFORMATION UNIT FOR RELNO */
+        2 RELNO_HEADER,
+         3 RELNO_KEY_VALUE
+              BIN FIXED(15) INIT(15), /* HEX '000F' */
+         3 RELNO_#_KEYS
+              BIN FIXED(15) INIT(1),  /* ONE PARAMETER */
+         3 RELNO  BIN FIXED(15)  INIT(0);
+
+     DCL STRING CHAR(5000) STATIC ;
+     DCL  P POINTER;
+     P=ADDR(STRING);
+         DCL DYNCOPY BASED(P) LIKE DYNAMIC_ALLOCATION_VARIABLES;
+     DYNCOPY=DYNAMIC_ALLOCATION_VARIABLES;
+     END;

@@ -1,0 +1,100 @@
+UJE49VOL TITLE 'GET VOLUME INFO FOR A DATASET'
+* JOL COPYRIGHT CCS-JOL PTY LTD 1988
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+         SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+* LAST SOURCE UPDATE
+*   CHANGES:-
+*     1.
+         COPY  JOLGLOBL
+         $UJEPARM
+&TYPE    SETC  'SCHED'                                           88036
+         PRINT ON,DATA
+UJECOMM  DSECT
+         USING UJECOMM,R3,R5
+         COPY  UJECOMM
+         JOLSAVE CSECT=UJE49VOL
+         L     R4,AJFCB                                          88036
+         USING INFMJFCB,R4                                       88036
+         L     R1,AFTEMP
+         USING IHADCB,R1
+         MVC   DCBDDNAM,DDDDNAME
+         CLI   DCBDDNAM,C' '
+         BNE   E49RDJF
+*        BE    JRETN0                                             J40B
+* IF THE DDNAME IS BLANK, I CAN 'T GET THE JFCB                   J40B
+*   AND  THERE'S NO TELLING WHAT'S IN EREVOL                     J40B
+         AGO   .Z                                                 J40B
+         BNE   E49RDJF
+         CLI   DDVOLUME,C' '
+         BE    E49RDJF
+         MVC   DDVOLUME,BLANKS
+         MVC   DDVOLUME(6),ERETVOL
+         MVC   #VOL(8),#ERETVOL
+.Z       ANOP                                                     J40B
+         DBGMSG 198,'I DIDN''T NEED THE JFCB FOR ',DDDDNAME,           .
+               ' ',DDDSNAME                                       J40B
+         B     JRETN0                                             76200
+         DROP  R1
+E49RDJF  DS    0H
+         DBGMSG 199,'GETTING JFCB FOR ',DDDDNAME,' ',DDDSNAME
+         OI    AFTEMP,X'80'    MARK END OF LIST                  88036
+         RDJFCB MF=(E,AFTEMP) GET DSNAME                 JOL30116 76200
+*        CLI   JFCAVOLS,X'FF'    IT SEEMS                         J40B
+         CLI   JFCBVOLS,X'FF'    IT SEEMS                         J40B
+         BE    E49TAPE            WE SHOULD OPEN IT               J40B
+         CLC   JFCBFLSQ,=H'0' TEST IF TAPE                        87150
+         BE    E49DISK        YES, SKIP OPEN FOR NEW TAPE         87150
+         CLI   JFCBNVOL,0     ANY VOLUMES ?                       87150
+         BNE   E49DISK        YES, SKIP OPEN FOR NEW TAPE         87150
+* NEW TAPE, NO VOLSER
+E49TAPE  DBGMSG 197,DDDDNAME,' ',DDDSNAME,' ',                         .
+               'IS A TAPE'                                        J40B
+         OI    AFTEMP,X'80'    MARK END OF LIST                  88036
+         OPEN  (,OUTPUT),MF=(E,AFTEMP) FORCE A TAPE TO BE MOUNTED 87150
+         CLOSE MF=(E,AFTEMP)   CLOSE IT NOW                       87150
+         RDJFCB MF=(E,AFTEMP) GET DSNAME                 JOL30116 76200
+*        CLI   JFCBNVOL,0     ANY VOLUMES ?                       87150
+*        BNE   JRETN0         NO, (HELP? ) LEAVE NOW              87150
+         MVC   DDVOLUME(L'JFCBVOLS),JFCBVOLS
+         DBGMSG 196,DDDDNAME,' ',DDDSNAME,' ',                         .
+               'IS A TAPE ON',DDVOLUME                            J40B
+E49DISK  MVC   DDVOLUME(L'JFCBVOLS),JFCBVOLS
+         DBGMSG 195,DDDDNAME,' ',DDDSNAME,' ',                         .
+               'IS DEFINITELY ON ',DDVOLUME                       J40B
+         EXTRN E00FXVOL                                           J40B
+         L     R14,=V(E00FXVOL)                                   J40B
+*        BAL   R14,E00FXVOL    SET UP VOLUME LIST IN #VOL         74365
+         BALR  R14,R14         SET UP VOLUME LIST IN #VOL         74365
+         AIF   (&X8).NX8320                                      88036
+         LA    R1,DDDDNAME
+         CALL  SRCHTIOT
+         LTR   R15,R15
+         BNZ   E49RC0
+         LA    R1,40(R1)       POINT TO UCB POINTER
+         L     R1,0(R1)        POINT TO UCB PROPER
+         MVC   DDUNIT,BLANKS   CLEAR DDUNIT
+         MVC   DDUNIT(3),13(R1) GET UNIT ADDRESS
+         MVI   DDUNITYP,X'FF'  TELLS US THAT IT IS AN ACTUAL ADDRESS
+.NX8320  ANOP                                                    88036
+E49RC0   CALL  UJE30VOL        PROPOGATE VOLUMES, FIX VOLREFS
+         B     JRETN0                                             76200
+         EJECT                                                    J40B
+         DCBD  DSORG=PS,DEVD=DA                                   J40B
+         END

@@ -1,0 +1,4 @@
+            GENSAVE  CSECT=STOPNET
+            ABEND   0
+            GENRETN
+            END

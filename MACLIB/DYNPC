@@ -1,0 +1,62 @@
+         MACRO
+         DYNPC &OPT
+.*  FINDS DCB PARAMS AND STORES IN ARRAY &PDCB
+.*   REVISED OCT 77
+         GBLC  &PDCB(40),&PS,&PP
+         GBLA  &K
+         LCLC  &C,&D
+         LCLA  &I,&J,&II
+.B1      ANOP
+&I       SETA  &I+1
+&PDCB(&I) SETC ''
+         AIF   (&I LT 40).B1
+.A       AIF   ('&PS'EQ',').F
+         DYNPB
+         AIF   ('&PP'EQ'').A
+&I       SETA  1
+.B       AIF   ('&PP'(&I,1) EQ'=').C
+&I       SETA  &I+1
+         AIF   (&I LT K'&PP).B
+&D       SETC  'DCB REF TO DSN'
+         AIF   ('&PP'(1,2) NE'*.').C1
+&PP      SETC  '&PP'(3,K'&PP-2)
+&D       SETC  'DCB REF TO DDN'
+&K       SETA  &K+1
+.C1      ANOP
+         AIF   ('&PP'(1,1) NE'(').C11
+&C       SETC  '&PP'(2,K'&PP-1)
+         DYNPB
+&PP      SETC  '&PP'(1,K'&PP-1)
+         DYNP1 (&C,&PP),&D
+         AGO   .A
+.C11     DYNP1 &PP,&D
+         AGO   .A
+.C       ANOP
+&C       SETC  '&PP'(1,&I-1)
+&J       SETA  1
+.D       AIF   ('&C'EQ'&OPT(&J)').E
+&J       SETA  &J+1
+         AIF   (&J LE N'&OPT).D
+         MNOTE 4,'** PARAM &C INVALID'
+         AGO   .A
+.E       AIF   ('&PP'(&I+1,1) NE'(').E03
+         AIF   ('&PP'(K'&PP,1) NE')').E1
+         AIF   ('&PP'(K'&PP-1,1) NE ')').E01
+&PDCB(&J) SETC '&PP'(&I+2,K'&PP-&I-2)
+         AGO   .A
+.E01     ANOP
+&II      SETA  &I+2
+.E02     AIF   (K'&PP LT &II).E03
+         AIF   ('&PP'(&II,1) EQ '(').E1
+&II      SETA  &II+1
+         AGO   .E02
+.E03     ANOP
+&PDCB(&J) SETC '&PP'(&I+1,K'&PP-&I)
+         AGO   .A
+.E1      AIF   (K'&PP EQ &I+1).E2
+&PDCB(&J) SETC '&PP'(&I+2,K'&PP-&I-1)
+.E2      DYNPB
+         AIF   (K'&PP LE 1).A
+&PDCB(&J+1) SETC '&PP'(1,K'&PP-1)
+         AGO   .A
+.F       MEND

@@ -1,0 +1,352 @@
+UJS03UCT CSECT
+*
+**********************************************************************
+*
+*   OSIV/X8 ROUTINE UNCATALOG A SPECIFIED DSN USING SVC 111
+*
+*         INPUT PARM POINTED TO BY R1 ON ENTRY
+*
+*             ID                  DS  F
+*             DSN POINTER         DS  F
+*             UNKNOWN AREA        DS  F
+*             WORK AREA PTR       DS  F
+*             CVOL PTR            DS  F
+*
+*
+*         OUTPUT PARM POINTED TO BY R1 ON RETURN IS THE SAME AS
+* THE INPUT PARM
+*           THE WORK AREA CONTAINING THE FOLLOWING : (DEPENDANT
+*           ON THE CONDITION CODE IN REG 15)
+*
+*    REG15=0   UNCATALOG SUCCESSFULL
+*
+*
+*
+*    REG15 NE 0    THEN WORK AREA HAS THE FOLLOWING
+*
+*        2 FULLWORDS OF BINARY 0
+*        126 CHARACTER MESSAGE
+*
+         SPACE 4
+*
+*
+*    IF THE SVC 111 RETURNS WITH NON ZERO IN REG15 THEN THE FOLLOWING
+*      ARE THE POSSIBLE CODES
+*
+*         R15=4              MODE ERROR
+*         R15=8              PARAMETER ERROR
+*         R15=12             ABEND - ERRET HAS BITS SET TO INDICATE
+*                                THE CAUSE
+*
+*     ERRET BIT SETTINGS
+*    BIT     HEX  RC      REASON
+*     0     8000  18    PARAMETER ERROR OR INEFFECTIVE PROCESSING
+*     1     4000  18    CATALOG IS LOCKED
+*     2     2000  18
+*     3     1000  08    FILE NAME NOT IN CATALOG
+*     4     0800  18
+*     5     0400  0C    REFERRED TO GDG GROUP NAME
+*     6     0200  18
+*     7     0100  18
+*     8     0080  18    HARDWARE ERROR
+*     9     0040  18
+*    10     0020  14    ERROR IN DESCRIBING FILE NAME
+*    11     0010  18
+*    12     0008  18    PLSQA INSUFFICIENT
+*    13     0004  18    REQUESTED FILE NAME BEING PROCESSED
+*    14     0002  18
+*    15     0001  18
+*
+**********************************************************************
+         EJECT
+**********************************************************************
+*
+*   WRITTEN BY :
+*
+*              ODTAA PTY LIMITED
+*                PO BOX 500,
+*                CANBERRA CITY
+*                ACT  2601
+*                AUSTRALIA
+*
+*   FOR :
+*
+*         CLARKE COMPUTER SOFTWARE PTY LTD
+*           105 COLLINS ST
+*            MELBOURNE
+*            VICTORIA
+*            AUSTRALIA
+*
+*
+**********************************************************************
+*
+*    JOL COPYRIGHT CLARKE COMPUTER SOFTWARE
+*
+*
+*
+*
+*
+*     VERSION 1 LEVEL 0    16-05-82
+*
+*
+**********************************************************************
+         EJECT
+**********************************************************************
+*
+*
+*
+         SAVE  (14,12),,*    SAVE ALL
+         LR    R10,R15       SET UP BASE
+         USING UJS03UCT,R10
+         LR    R2,R1         SAVE AREA ADDRESS
+         GETMAIN R,LV=GETLEN
+         LR    R14,R1        SETUP CLEAR
+         LA    R15,GETLEN
+         SLR   R3,R3
+         MVCL  R14,R2        CLEAR THE AREA
+         SPACE 2
+         ST    R13,4(R1)     SET UP POINT BACK
+         ST    R1,8(R13)
+         LR    R13,R1
+         USING WORKA,R13     MAP WORKAREA
+*                            SAVE VITAL INFO
+*                              FOR EASY
+         ST    R2,INPARM         FINDING
+         L     R11,4(R2)      LOAD ADDR OF DSN
+         L     R9,12(R2)      LOAD ADDR OF PARMBACK
+         USING PARMBACK,R9       MAP RETURN PARM AREA
+         USING DSNLIST,R11       MAP DSN
+*
+*
+*
+**********************************************************************
+         EJECT
+**********************************************************************
+*
+*
+*
+SETUP    EQU   *
+         MVC   PARALST1,PMODE1 MOVE IN X'4501'
+         MVI   NODSN,X'01'    ONE DSN
+         MVC   CATPA,=C'CATP' MOVE 'CATP'
+         LA    R3,CITEMP
+         ST    R3,CITEMPA     MOVE ADDR OF CITEMP
+         MVC   STATUS,=X'2000' SIGNAL UNCATALOG
+         LA    R3,FNT
+         ST    R3,ADFNT       MOVE ADDR OF FNT
+         MVC   DSNI,DSN       MOVE DSN
+*
+*
+*
+         LA    R1,PARM        POINT AT PARM
+         SVC   111            ISSUE SVC
+*
+*
+*
+         LTR   R15,R15        TEST FOR CLEAN RETURN
+         BZ    RETURN
+PROBS    EQU   *
+         S     R15,=F'8'     WHAT RETURN CODE?
+         BZ    RC8           RC=8
+         BM    RC4           RC=4
+         LA    R1,ENDER      LOAD END OF ERROR ADDRESS
+         LA    R2,ERRORS     LOAD START ADDR OF ERRORS
+LOOPE    EQU   *
+         CLC   ERRET,0(R2)   CHECK THIS ERROR CODE
+         BE    FOUNDER
+         LA    R2,LENER(R2)  UP POINTER
+         CR    R2,R1         ARE WE AT THE END
+         BNH   LOOPE
+FOUNDER  EQU   *
+         MVC   RC+3,2(R2)      MOVE RETURN CODE
+         MVC   PARMBACK(8),ZERO ZERO TO 1ST 2 FULLWORDS
+         MVC   PARMBACK+7(128),3(R2) MOVE IN MESSAGE
+         EJECT
+*
+*
+*
+RETURN   EQU   *
+         L     R15,RC         SET UP RETURN CODE
+         LR    R1,R13
+         L     R13,4(,R13)    ADDRESS OLD SAVE AREA
+         ST    R15,16(,R13)   SAVE RETURN CODE
+         FREEMAIN R,LV=GETLEN,A=(1)
+         LM    R14,R12,12(R13)   GO HOME
+         BR    R14
+*
+         EJECT
+*
+*
+*
+*
+RC8      EQU   *
+         MVC   RC+3,RC8ER       MOVE IN RC
+         MVC   PARMBACK(8),ZERO ZERO TO 1ST 2 FULLWORDS
+         MVC   PARMBACK+7(128),RC8ER+1 MOVE MESSAGE
+         B     RETURN
+*
+*
+*
+RC4      EQU   *
+         MVC   RC+3,RC4ER       MOVE IN RC
+         MVC   PARMBACK(8),ZERO ZERO TO 1ST 2 FULLWORDS
+         MVC   PARMBACK+7(128),RC4ER+1 MOVE MESSAGE
+         B     RETURN
+*
+*
+         EJECT
+*
+ERRORS   EQU   *
+ER0      DC    X'8000',X'18'
+         DC    CL128'PARAMETER ERROR OR INEFFECTIVE PROCESSING'
+ER1      DC X'4000',X'18',CL128'CATALOG IS LOCKED             '
+ER2      DC X'2000',X'18',CL128'UNDEFINED PROBLEM         '
+ER3      DC X'1000',X'08',CL128'FILE NAME NOT IN CATALOG      '
+ER4      DC X'0800',X'18',CL128'UNDEFINED ERROR           '
+ER5      DC X'0400',X'0C',CL128'REFERRED TO GDG GROUP NAME    '
+ER6      DC X'0200',X'18',CL128'UNDEFINED ERROR           '
+ER7      DC X'0100',X'18',CL128'UNDEFINED ERROR           '
+ER8      DC X'0080',X'18',CL128'HARDWARE ERROR                '
+ER9      DC X'0040',X'18',CL128'UNDEFINED ERROR           '
+ER10     DC X'0020',X'14',CL128'ERROR IN DESCRIBING FILE NAME '
+ER11     DC X'0010',X'18',CL128'UNDEFINED ERROR           '
+ER12     DC X'0008',X'18',CL128'PLSQA INSUFFICIENT            '
+ER13     DC X'0004',X'18',CL128'REQUESTED FILE NAME BEING PROCESSED'
+ER14     DC X'0002',X'18',CL128'UNDEFINED ERROR           '
+ER15     DC X'0001',X'18',CL128'UNDEFINED ERROR           '
+LENER    EQU   *-ER15
+ENDER DC X'0000',X'18',CL128'UNDEFINED ERROR           '
+RC8ER DC X'18',CL128'PARAMETER ERROR           '
+RC4ER DC X'18',CL128'MODE ERROR           '
+*
+         EJECT
+*
+ZERO     DC    2F'0'
+ONE      DC    F'1'
+PMODE1   DC    X'4501'
+REQVOL   DC    X'8000'
+         LTORG
+         DC    C'UNCATALOG ROUTINE USING SVC 111 '
+         DC    C'&SYSDATE &SYSTIME'
+*
+         EJECT
+*
+**********************************************************************
+*
+*
+*        EQUATES HERE
+*
+*
+***********************************************************************
+*
+*        REGS
+R0       EQU   0
+R1       EQU   1
+R2       EQU   2
+R3       EQU   3
+R4       EQU   4
+R5       EQU   5
+R6       EQU   6
+R7       EQU   7
+R8       EQU   8
+R9       EQU   9
+R10      EQU   10
+R11      EQU   11
+R12      EQU   12
+R13      EQU   13
+R14      EQU   14
+R15      EQU   15
+**********************************************************************
+*
+*
+         EJECT
+*
+**********************************************************************
+*
+*
+*        DSECTS  HERE
+*
+*
+***********************************************************************
+*
+*
+WORKA    DSECT
+SAVEA    DS    18F
+DSNL     DS    F
+INPARM   DS    F
+R14S     DS    F
+RC       DC    F'0'
+*
+*
+*
+PARALST  DS    0F
+CATPA    DS    CL4            PASSWORD SO AS NOT TO NEED AUTH AND SUP
+PARM     DS    0C
+PARALST1 DS    CL2            X'4501'
+NODSN    DS    CL1            NUMBER OF CITEMPS
+         DS    CL10
+PARAERRA DS    CL3
+CITEMPA  DS    CL4            ADDRESS OF CITEMP
+         DS    CL4
+PARML    EQU   *-PARM
+*
+*
+*
+CITEMP   DS    0C
+STATUS   DS    CL2            X'8000'
+ERRET    DS    CL2            ERROR RETURN CODES
+ADFNT    DS    CL4            ADDRESS OF THE FILE NAME TABLE
+         DS    CL4
+CITEMPL  EQU   *-CITEMP
+*
+*
+*
+FNT      DS    0C             FILE NAME TABLE
+VETAD    DS    CL4            VET ADDRESS
+DSNI     DS    CL26           DSN PADDED WITH X'40'
+CATSENT  DS    CL1
+CATCHNG  DS    CL1
+CATDAY   DS    CL4            CATALOGED DATE
+RETNDSN  DS    CL26           RETURNED DSN INCL G0000V00
+CATFLRNO DS    CL1
+CATPSW   DS    CL1
+CATSTAS  DS    CL1
+CATFST   DS    CL1
+CA       DS    CL1
+CB       DS    CL1
+ASTANAM  DS    CL1
+NOWNAME  DS    CL1
+FNTLEN   EQU   *-FNT
+*
+         EJECT
+*
+GETLEN   EQU   *-WORKA
+*
+*
+*
+DSNLIST  DSECT
+DSN      DS    CL44
+*
+*
+*
+PARMBACK DSECT
+NOVOLS   DS    CL2
+DEVTYPE  DS    CL4
+VOLSER   DS    CL6
+LABEL    DS    CL2
+DEVTYPEA DS    CL4
+VOLSERA  DS    CL6
+LABELA   DS    CL2
+DEVTYPEB DS    CL4
+VOLSERB  DS    CL6
+LABELB   DS    CL2
+DEVTYPEC DS    CL4
+VOLSERC  DS    CL6
+LABELC   DS    CL2
+DEVTYPED DS    CL4
+VOLSERD  DS    CL6
+LABELD   DS    CL2
+*
+         EJECT
+*
+         END

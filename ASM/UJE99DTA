@@ -1,0 +1,372 @@
+UJE99DTA TITLE 'CREATE CONTROL DATASET FOR MONITOR/SCHEDULER'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973
+* JOL COPYRIGHT CCS-JOL 1984.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         SPACE 3
+* THIS CSECT GETS CONTROL DURING THE INITIALISATION PHASE OF'JOL'
+*    ITS PURPOSE IS TO CREATE A PDS CONTAINING THE DATA CARDS INPUT TO
+*    JOL.
+* THE FIRST CARD CONTAINS INFORMATION THAT IS CHECKED TO SEE THAT THE
+*    RIGHT FILE IS BEING INPUT.
+* FOLLOWING THE HEADING RECORD IS A MEMBER HEADING RECORD WHICH
+*    CONTAINS THE MEMBER NAME AND OPTIONALLY DCB INFORMATION.
+*    THE DCB MAY BE FB OR VB WITH A MAXIMUM BLKSIZE BEING THE MAXIMUM
+*    THE DEVICE CAN HOLD.
+         SPACE 3
+         COPY  JOLGLOBL
+         LCLC  &C
+         $UJEPARM
+&C       SETC  'JOLPRINT' (1-&X8)'$$PRINT'
+* US39AA,US39BA ABD US39CA ARE USED TO OUTPUT THE DATA
+           SPACE 3
+           GENSAVE CSECT=UJE99DTA
+*
+* 75128
+*  CHANGE TO USE DDNAME JOLPRINT FOR PRINT MESSAGE FILE,
+*    ALSO VA, NOT VBA
+*
+*        L     R4,=V(SYSPRINT)
+         USING IHADCB,R4
+*        MVC   DCBDDNAM,=CL8'&C'
+*        NI    DCBRECFM,X'FF'-X'10' TURN OFF BLOCKING
+*
+*
+         DROP  R4
+*
+*
+* NOW FIRST OFF WE SHALL OPEN SYSIN AND CHECK THE HEADING RECORD
+         #PRINT 'JOL SYSIN DATA SET CREATION AND JOB INITIALISATION'
+         FINDDD =CL8'$$JCL',ERRET=NOJCL                           J40B
+         MVC   SYSIN+DCBDDNAM-IHADCB(8),=CL8'$$JCL'               J40B
+NOJCL    DS    0H                                                 J40B
+         OPEN (SYSIN,INPUT)
+         TM    SYSIN+48,X'10'
+         BO    SYSINOPN
+         #PRINT 'UJE9901 NO SYSIN CARD,JOB TERMINATED'
+         WTO      'UJE9901 NO SYSIN CARD,JOB TERMINATED'
+BADRETN  L     R2,=V(SYSPRINT)
+         CLOSE ((2))
+         FREEPOOL (2)
+         GENRETN RC=4
+         TITLE 'TEST FIRST CARD TO BE VALID'
+SYSINOPN DS    0H
+* NOW GET THE FIRST CARD AND CHECK ITS VALIDITY
+         GET   SYSIN,CARD
+         CLC   J1HEAD(75),HEADDETS
+         BE    SYSINOK
+         #PRINT 'UJE9902 FIRST RECORD IS INVALID,RUN TERMINATED'
+         WTO      'UJE9902 FIRST RECORD IS INVALID,RUN TERMINATED'
+         B     BADRETN
+SYSINOK  GET   SYSIN,CARD                      GET THE FIRST MEMBER
+*                                              HEADING RECORD
+         LR    R4,R1
+         CLC   M1HEAD(23),MEMSTRT1
+         BE    FIRSTMEM
+         #PRINT 'UJE9903 INVALID CARD FOUND IN INPUT STREAM'
+         WTO      'UJE9903 INVALID CARD FOUND IN INPUT STREAM'
+         B     BADRETN
+         TITLE 'OPEN SYSUT2 AND CHECK'
+FIRSTMEM DS    0H
+         LA    R4,SYSUT2
+         USING IHADCB,R4
+* NOW OPEN SYSUT2
+         MVI   DCBMACR2,X'50'           FOOL MY OPEN ROUTINE
+         MVC   SAVDSORG,SYSUT2+26
+         MVC   SAVPUT,SYSUT2+3                                    J40B
+         MVI   SYSUT2+26,X'00'                 CLEAR DSORG COS QSAM DCB
+* LINE ABOVE *'D OUT FOR X8 CVC                                 84027
+*                                              IS BEING USED.
+         LA    R1,SYS2PARM
+         L     R15,=V(US39AA)
+         BALR  R14,R15
+         LTR   R15,R15                                           88036
+         BZ    *+8                                               88036
+         EX    0,*                                               88036
+         MVC   SYSUT2+49(3),=AL3(US39BA)
+*        TM    DCBDSORG,2
+*        BO    ISPO
+*        #PRINT 'UJE9904 OUTPUT DATA SET IS NOT PARTITIONED, RUN ENDED'
+*        WTO   'UJE9904 OUTPUT DATA SET IS NOT PARTITIONED, RUN ENDED'
+*        B     BADRETN
+ISPO     EQU   *
+         MVC   DEFBLKSI,DCBBLKSI
+         MVC   DEFLRECL,DCBLRECL
+NEWMEM   EQU   *
+         SR    R6,R6                      NO RECORDS OUTPUT
+         MVC   STOWMEM,M3MEM   MOVE IN MEMBER NAME FOR STOW
+         CLC   =C'      ',M5RECFM
+         BE    DEFAULT
+         CLC   =C'FB',M5RECFM
+         BE    FB
+         CLC   =C'VB',M5RECFM
+         BE    VB
+         #PRINT 'UJE9905 RECORD FORMAT ',M5RECFM,' NOT SUPPORTED,FIXED .
+               BLOCKED IS BEING USED'
+FB       MVI   DCBRECFM,B'10010000'            FB
+         CLC   M6BLKSZE,=C'    '
+         BNE   FBBLK
+         MVC   DCBBLKSI,DEFBLKSI
+TFBLREC  CLC   M7LRECL(4),=C'    '
+         BNE   FBLRECL
+         MVC   DCBLRECL,DEFLRECL
+         B     GOMAN
+FBBLK    TNUM M6BLKSZE
+         LTR   R15,R15
+         BNZ   BLKERRFB                                           75128
+         STH   R1,DCBBLKSI                                        75128
+         B     TFBLREC
+FBLRECL  TNUM M7LRECL
+         LTR   R15,R15
+         BNZ   LRECLERR                                           75128
+         STH   R1,DCBLRECL                                        75128
+         B     GOMAN
+         SPACE 3
+VB       MVC   DCBLRECL,=H'84'
+         MVC   VBCARD,=H'84'
+         MVI   DCBRECFM,B'01010000'            VB
+         CLC   M6BLKSZE(4),=C'    '
+         BNE   VBBLK
+VBDEF1   MVC   DCBBLKSI,DEFBLKSI
+         B     GOMAN
+VBBLK    TNUM M6BLKSZE
+         LTR   R15,R15
+         BNZ   BLKERRVB                                           75128
+         STH   R1,DCBBLKSI                                        75128
+         B     GOMAN
+BLKERRVB #PRINT 'UJE9906 ERROR OCCURRED CONVERTING VB BLKSIZE,DEFAULT B.
+               LKSIZE IS TO BE USED'
+         B     VBDEF1
+BLKERRFB #PRINT 'UJE9907 ERROR OCCURRED CONVERTING FB BLKSIZE,DEFAULT B.
+               LKSIZE IS TO BE USED'
+         MVC   DCBBLKSI,DEFBLKSI
+         B     TFBLREC
+LRECLERR #PRINT 'UJE9908 ERROR OCCURRED CONVERTING FB LRECL, DEFAULT IS.
+                TO BE USED'
+         MVC   DCBLRECL,DEFLRECL
+         B     GOMAN
+DEFAULT  MVI   DCBRECFM,B'10010000'
+         CLC   =C'$$INST',STOWMEM  INSTRUCTION FROM JOL ?
+         BNE   USEDEFBL
+         MVC   DCBBLKSI,DCBBUFL                SHIFT IN BUFFER LEN
+* SO THAT INSTRUCTIONS MAY BE PERFORMED WITH MINIMUM EXCPS
+         B     FIXLRECL
+USEDEFBL DS    0H
+         MVC   DCBBLKSI,DEFBLKSI
+FIXLRECL DS    0H
+         MVC   DCBLRECL,DEFLRECL
+         TITLE 'PUMP OUT DATA CARDS'
+OLDCONT  EQU   *                          COMES HERE WHEN THE SAME
+*                                         MEMBER TO BE CONTINUED
+*                                         BUT A NEW BLOCK WAS
+*                                         REQUIRED
+   SPACE
+GOMAN    GET   SYSIN,CARD                      GET DATA CARD
+         CLC   M1HEAD(23),MEMSTRT1        START OF A NEW MEMBER?
+         BE    STOW                                                DASD
+         CLC     =C'$$INST',STOWMEM ARE WE BUILDING THE INSTRUCT FIDASD
+         BNE     $$CONT             NOPE DONT DELETE DEAD MACROS THDASD
+*     ALL THIS NEXT BIT OF CODE IS ABOUT TO DO IS                  DASD
+*     REMOVE DEAD (MACRO;END) STATEMENTS FROM THE $$INST MEMBER    DASD
+*     TO KEEP THE NUMBER OF TABLE ENTRIES DOWN FOR CONDITION CODE  DASD
+*     TESTING IN $JOLSH31 WHICH HAS A LIMIT OF 134 ENTRIES.        DASD
+* ABEND U0001 IN $JOLSH31.                                         DASD
+         CLC   M3MEM-4(5),=CL5'MACRO'                      *       DASD
+         BNE   $$CONT                                      *       DASD
+         MVC   $$SAVE1(80),CARD                            *       DASD
+         GET   SYSIN,CARD                                  *       DASD
+         GET   SYSIN,CARD                                  *       DASD
+         CLC   M3MEM-4(3),=CL3'END'                        *       DASD
+         BNE   $$NMCND                                     *       DASD
+         SR    R6,R6                                       *       DASD
+         GET   SYSIN,CARD                                  *       DASD
+         B     GOMAN                                       *       DASD
+$$NMCND  MVC   $$SAVE2(80),CARD                            *       DASD
+         TM    DCBRECFM,X'50'                              *       DASD
+         BO    $$VBPUTS                                    *       DASD
+         LA    R12,CARD                                    *       DASD
+         B     $$DOWN                                      *       DASD
+$$VBPUTS LA    R12,VBCARD                                  *       DASD
+$$DOWN   MVC   CARD(80),$$SAVE1                            *       DASD
+         PUT   SYSUT2,(12)                                 *       DASD
+         LA    R1,SYSUT2                                   *       DASD
+         L     R15,=V(US39CA)                              *       DASD
+         BALR  R14,R15                                     *       DASD
+         MVC   CARD(80),$$SAVE2                            *       DASD
+         PUT   SYSUT2,(12)                                 *       DASD
+         LA    R6,2(R6)                                    *       DASD
+         B     GOMAN                                       *       DASD
+$$SAVE1  DS    CL80                                        *       DASD
+$$SAVE2  DS    CL80                                        *       DASD
+$$CONT   EQU   *                                                  84027
+         CLC   =C'$$JPRINT',STOWMEM                               84027
+         BNE   R$$CONT                                            84027
+         CALL  UJE99PRT    COPY SYSIN TO PRINT FILE TILL NEW MEM  84027
+         B     NEWMEM                                             84027
+         SPACE 3
+R$$CONT  EQU   *
+           LA R6,1(R6)                    ADD 1 TO THE RECORD COUNTDASD
+           TM  DCBRECFM,X'50'
+           BO  VBDS
+           PUT SYSUT2,CARD
+           B   GOMAN
+VBDS       PUT SYSUT2,VBCARD
+           B   GOMAN
+STOW       EQU  *
+           LTR R6,R6                      SEE IF ANY RECORDS TO GO OUT
+           BZ NODUMP                      SO WE DON'T DUMP BLOCKS
+           LA  R1,SYSUT2                       DUMP OUT ANY REMAINING
+*                                              BLOCKS OF INFORMATION
+           L   R15,=V(US39CA)
+           BALR R14,R15
+           SPACE 3
+NODUMP     TM SYSIN+48,X'10'              SYSIN STILL OPEN ?
+           BZ REALSTOW                    NO,REALLY DO STOW
+           CLC STOWMEM,M3MEM              SAME MEMBER ?
+           BE OLDCONT                     YES WELL HE REALLY ONLY
+*                                         WANTED  A NEW BLOCK
+REALSTOW DS    0H
+         STOW SYSUT2,STOWBLK,A
+         LTR   R15,R15
+         BZ    STOWOK
+         STH   R15,DEFLRECL
+         #PRINT 'UJE9908 ERROR OCCURRED IN STOW,RETURNED ',DEFLRECL
+         WTO      'UJE9908 ERROR OCCURRED IN STOW'
+         B     BADRETN
+STOWOK   DS    0H
+         #PRINT 'MEMBER ',STOWMEM,' INSERTED'
+         TM    SYSIN+48,X'10'    SYSIN OPEN OR CLOSED ?
+         BO    NEWMEM
+         L     R1,SYSUT2+88
+         L     R0,0(R1)
+         FREEMAIN R,LV=(0),A=(1)
+         AIF   (&X8).X8010
+         FREEPOOL SYSUT2
+         AGO   .NX8010                                            J40B
+.X8010   ANOP
+         MVC   SYSUT2+26(1),SAVDSORG
+         MVC   SYSUT2+49(3),SAVPUT                                J40B
+.NX8010  ANOP
+         CLOSE (SYSUT2)
+         LTR   R2,R15                                             J40B
+         BZ    ZED                                                J40B
+         WTO   'CLOSE ERROR FOR JOLCATLG'                         J40B
+         DC    H'0'                                               J40B
+ZED      DS    0H                                                 J40B
+         L     R2,=V(SYSPRINT)
+         CLOSE ((2))
+         FREEPOOL (2)
+         GENRETN
+EOFSYSIN CLOSE (SYSIN)
+         FREEPOOL SYSIN
+         B      STOW
+&C       SETC  (&X8)'AD'.(1-&X8)'OUTPUT'
+SYS2PARM OPEN  (SYSUT2,&C),MF=L     OPEN THE FILE
+         EXTRN US39BA
+         SPACE 3
+         LTORG
+         SPACE 3
+STOWBLK  DS    0D
+STOWMEM  DS    CL8
+TTR      DS    XL3
+C        DC    X'00'
+DEFBLKSI   DS  H               MOVED FROM DCB AFTER OPENING
+DEFLRECL   DS  H               MOVED FROM DCB AFTER OPENING
+HEADDETS   DC  8X'FF'
+           DC  3C'JOL'
+           DC  8X'FF'
+           DC  70X'00'
+MEMSTRT1   DC  8X'FF'
+MEMSTRT2   DC  C'JOLMEMSTART$$##'
+VBCARD     DC  H'84',H'0'
+CARD       DS  0CL80
+J1HEAD     DS  CL8             CONTAINS HEX F'S
+J2JOL      DS  CL9             CONTAINS 'JOLJOLJOL'
+J3HEAD     DS  CL8             CONTAINS HEX F'S
+J4ZEROES   DS  CL70            CONTAINS HEX 0'S
+J5DATE     DS  CL5             CONTAINS THE DATE THE DATA SET WAS CREAT
+*                              -ED
+           ORG CARD
+M1HEAD     DS  CL8             CONTAINS HEX F'S
+M2JOL      DS  CL15            CONTAINS 'JOLMEMSTART$$##'
+M3MEM      DS  CL8             CONTAINS THE MEMBER NAME
+M4JOL      DS  CL4             CONTAINS '##$$'
+M5RECFM    DS CL2              CONTAINS 'VB' OR 'FB'
+M6BLKSZE   DS  CL5             CONTAINS BLOCKSIZE IN CHARACTER FORM
+M7LRECL    DS  CL5             CONTAINS LRECL IN CHARACTER FORM,NOT THA
+*                                              IT IS VERY MUCH USE AS A
+*                                              CARD IS ONLY 80 BYTES
+*                                              AFTER ALL ALTHOUGH SOME-
+*                                              ONE MAY HAVE A REQUIREM-
+*                                              ENT FOR A DIFFERUNT
+*                                              RECORD LENGTH I GUESS
+         ORG
+SAVDSORG DS    X
+SAVPUT   DS    AL3                                                J40B
+&C       SETC  (&X8)'SYSIN'.(1-&X8)'SYSIN'
+SYSIN    DCB   DDNAME=&C,DSORG=PS,EODAD=EOFSYSIN,MACRF=GM,DEVD=DA
+SYSUT2   DCB   DDNAME=JOLCATLG,DSORG=PS,MACRF=PM,BUFL=2000       88036
+         DCB   DDNAME=SYSUT2,DSORG=PO,MACRF=W,BUFL=2000
+         EXTRN UJEINIT
+         GENSAVE CSECT=UJE99PRT,BASE=10                           84027
+* NEW, VERSION 3.5, 27TH JAN, 1984
+* THIS CODE COPIES TO SYSPRINT UNTIL A NEW MEMSTART RECORD IS
+*   FOUND.
+* ON ENTRY, CARD CONTAINS THE FIRST PART OF THE PRINT LINE TO GO OUT.
+         OPEN (PRTFILE,OUTPUT)
+E99TLEN  CLC  CARD(2),=H'80'
+         BH   E99DBL         PRINT LINE EXPANDED TO 2 CARDS
+         PUT  PRTFILE,CARD   OUTPUT IT TO THE PRINT FILE
+E99PGET  GET  SYSIN,CARD     GET THE NEXT RECORD OR CARD IMAGE
+         CLC  M1HEAD(23),MEMSTRT1 START OF NEW SUB FILE?
+         BNE  E99TLEN        NO, PRESS ON
+         CLOSE (PRTFILE)     YES, CLOSE DOWN
+         FREEPOOL PRTFILE
+         GENRETN  ,          RETURN TO CALLER
+E99DBL   EQU  *              HERE IT IS A LONG LINE
+         MVC  PRTLINE(80),CARD SAVE IT
+         GET  SYSIN,CARD     GET SECOND PART
+         MVC  PRTLINE+80(80),CARD
+         PUT  PRTFILE,PRTLINE OUTPUT IT
+         B    E99PGET        GET NEXT CARD IMAGE
+&C       SETC  'PRTFILE'
+PRTFILE  DCB   DDNAME=&C,DSORG=PS,MACRF=PM,RECFM=VBA,EXLST=PRTEX,      .
+               BUFNO=5            A CONCESSION TO PERFORMANCE    88036 .
+               LRECL=150,         THESE ARE COMMENTS NOW               .
+               BLKSIZE=1330
+PRTEX    DC    A(*+X'85000004')                                  88036
+         DROP  ,                                                 88036
+         USING PRTFIX,R15                                        88036
+         USING IHADCB,R1                                         88036
+PRTFIX   OC    DCBLRECL,DCBLRECL                                 88036
+         BNZ   PRTFIX10                                          88036
+         MVC   DCBLRECL,H126                                     88036
+PRTFIX10 DS    0H                                                88036
+         LA    R0,4                                              88036
+         AH    R0,DCBLRECL                                       88036
+         CH    R0,DCBBLKSI                                       88036
+         BNH   PRTFIX20                                          88036
+         STH   R0,DCBBLKSI                                       88036
+PRTFIX20 DS    0H                                                88036
+         BR    R14                                               88036
+H126     DC    H'126'                                            88036
+PRTLINE  DS    CL200         (126 WOULD DO, MAX PRINT LINE)
+         TITLE 'DATA CONTROL BLOCK'                              88036
+         DCBD DSORG=PS
+         END    UJEINIT

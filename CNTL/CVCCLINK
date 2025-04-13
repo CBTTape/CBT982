@@ -1,0 +1,38 @@
+//CLARKE2 JOB (0000,0000),NAME,NOTIFY=JOL60,REGION=1024K,
+// MSGCLASS=X TYPRUN=SCAN
+//COPYSYS  EXEC PGM=IEBCOPY
+//SYSPRINT DD  SYSOUT=X
+//LOADIN   DD  DSN=JOLDIST.JOL60.LOAD,DISP=SHR
+//LOADOUT  DD  DSN=ADCD.ZOSV14S.LINKLIB,DISP=SHR
+//***************************************************************
+//***************************************************************
+//**************                                 ****************
+//*********                                           ***********
+//*********   COPY LOAD MODULES TO AUTHORISED LIBRARY ***********
+//*********                                           ***********
+//*********                                           ***********
+//*********   DO MODIFY LLA,REFRESH ON CONSOLE, TOO   ***********
+//*********                                           ***********
+//**************                                 ****************
+//***************************************************************
+//***************************************************************
+//SYSINA DD *
+   COPY INDD=LOADIN,OUTDD=LOADIN
+   COPY INDD=LOADOUT,OUTDD=LOADOUT
+//SYSINX  DD *
+   COPY INDD=LOADIN,OUTDD=LOADOUT
+   SELECT MEMBER=(($MONIT60,$JOLMN60,R))  EXECUTE MONITOR
+   SELECT MEMBER=(($SCHED60,$JOLSH60,R))  EXECUTE SCHEDULER
+//SYSIN  DD *
+   COPY INDD=LOADIN,OUTDD=LOADOUT
+   SELECT MEMBER=(($JOLIN60,,R))          EXECUTE INITIALISATION
+   SELECT MEMBER=(($JOLCP60,,R))          COMPILER MAIN LINE
+//SYSINZZ DD *
+   COPY INDD=LOADIN,OUTDD=LOADOUT
+   SELECT MEMBER=(($DYNMN60,,R))          DYNAMIC SCHEDULER
+   SELECT MEMBER=(($DYNSH60,,R))          DYNAMIC SCHEDULER
+   SELECT MEMBER=((UJM00COM,,R))          DYNAMIC SCHEDULER
+   SELECT MEMBER=(($JOLX8MI,,R))          DYNAMIC SCHEDULER
+   SELECT MEMBER=(($JOLX860,,R))          DYNAMIC SCHEDULER
+   SELECT MEMBER=(($JOLDY60,,R))          DYNAMIC SCHEDULER
+//

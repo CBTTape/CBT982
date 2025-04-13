@@ -1,0 +1,41 @@
+         MACRO                                                          JRETN010
+&NAME    JOLRETN &RC=0                                                  JRETN020
+.*       AIF   (T'JOLCOM EQ 'U').UJE                              88036
+         LCLC    &WORK                                            74303 JRETN030
+         AIF   ('&SYSLIST(1)' NE '').GENCDE                             JRETN040
+         AIF   ('&RC' EQ '0' OR '&RC' EQ '4' OR '&RC' EQ '8').BRANCH    JRETN050
+         AIF   ('&RC' EQ '12' OR '&RC' EQ '16').BRANCH                  JRETN060
+         AIF   ('&RC' EQ '(15)').BRET15                           74303 JRETN070
+*        AIF   ('&RC'(1,1) EQ 'C').REGRET                         74303 JRETN080
+         AIF   ('&RC'(1,1) EQ '(').REGRET                         74303 JRETN080
+.* HERE,THE RETURN CODE IS NOT A REGISTER RETURN,SO LOAD 15 WITH  74303 JRETN090
+.* RETURN CODE,AND BRANCH TO THE RETURN ROUTINE IN 'JOLOM'        74303 JRETN100
+&NAME    LA    15,&RC          LOAD SPECIFIED RETURN CODE         74303 JRETN110
+.BRET15  B     JRETN           BRANCH TO RETURN ROUTINE           74303 JRETN120
+         MEXIT                                                    74303 JRETN130
+.REGRET  ANOP                                                     74303 JRETN140
+.* RK    SETC '&RC'(2,K'&RC-2)    DROP BRACKETS                   74303 JRETN150
+         AIF   ('&NAME' EQ '').NOLB                               J50
+&NAME    DS    0H                                                       JRETN160
+.NOLB    ANOP                                                     J50
+         AIF   ('&RC(1)' EQ 'R15').R15                            J50
+         AIF   ('&RC(1)' EQ '15').R15                             J50
+         LR    15,&RC(1)       LOAD REGISTER WITH RETURN CODE     74303 JRETN160
+.R15     ANOP                                                     J50
+         B     JRETN           BRANCH TO RETURN ROUTINE           74303 JRETN170
+         MEXIT                                                    74303 JRETN180
+         AGO   .GENCDE                                                  JRETN190
+.BRANCH  ANOP                                                           JRETN200
+&NAME    B     JRETN&RC        BRANCH TO APPROPRIATE RETURN ROUTINE     JRETN210
+         MEXIT                                                          JRETN220
+.GENCDE  ANOP                                                           JRETN230
+         MNOTE *,'IN LINE RETURN GENERATED'                      74303  JRETN240
+&NAME    L     R13,4(R13)      RESET SAVE ADDRESS                       JRETN250
+         AIF ('&SYSLIST(1)' EQ '').R1412                                JRETN260
+         RETURN &SYSLIST(1),T,RC=&RC                                    JRETN270
+         MEXIT                                                          JRETN280
+.R1412   RETURN (14,12),T,RC=&RC                                        JRETN290
+         MEXIT                                                    88036
+.UJE     ANOP                                                     88036
+&NAME    UJERETN RC=&RC                                                 JRETN020
+         MEND                                                           JRETN300

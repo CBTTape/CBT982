@@ -1,0 +1,138 @@
+           GENSAVE CSECT=VS1RDR
+* THIS PROGRAM DOES THE FOLLOWING:-
+*    1. READS CARDS FROM A CARD READER
+*    2. IF IT FINDS AN OS TYPE JOB CARD, IT WILL COPY THE JCL STREAM
+*       OT A WORK FILE, THEN CALL IN THE VS1 READER TO TRANSFER
+*       THE DATA TO THE SYSTEM JOB QUEUE.
+*    3. IF AN * JOL CARD IS FOUND, JOL IS LINKED TO AND THE JCL
+*       IT PRODUCES IS PASSED THROUGH TO THE VS1 READER.
+*
+* THE PARAMETERS PASSED TO THIS PROGRAM ARE THOSE USED BY THE VS1
+*    READER.
+* THE PARAMETERS PASSED TO JOL ARE ASSEMBLED IN THIS CSECT.
+           LR  R4,R1           SAVE ORIGINAL PARAMETERS.
+MAINLOOP   SR  R5,R5           INDICATOR TO SAY JCL COPIED
+           SR  R6,R6           INDICATOR TO SAY JCL COPIED
+           OPEN (SYSIN,(INPUT),                CARD READER             *
+               $$JCL,(OUTPUT),                 JOL JCL OUTPUT          *
+               WORK1,(OUTPUT),                 JCL COPIED THERE        *
+               $$JIN,(OUTPUT))                 JOL INPUT STREAM
+           SPACE 3
+* NOW GET A CARD
+SKIPTHIS   GET SYSIN,CARD      READ A CARD FROM THE CARD READER
+           CLC CARD(2),=C'//'  JCL CARD ?
+           BNE TJOLCARD        NO, TEST IF A JOL CARD THEN.
+* HERE JCL CARD
+NEWJCLJB   LM  R7,R9,=A(CARD,1,CARD+L'CARD-1-8)
+           CLI 0(R7),C' '      END OF NAME ?
+           BE  NAMEEND         YES, NOW FIND ' JOB '
+           BXLE R7,R8,*-8      NO, ROUND LOOP
+           B   JCLFLUSH        FLUSH TILL NEXT JOB CARD FOUND, OR *JOL
+           SPACE 2
+NAMEEND    EQU   *
+           CLEAR JOBNAME
+           LA  R1,CARD+3
+           LR  R15,R7
+           SR  R15,R1
+           MVC COPYMSSG+12(8),BLANKS
+           EX  R15,MVCJOBNM
+           WTO MF=(E,COPYMSSG) TELL OPERATOR WE ARE COPYING
+PUTWORK1   PUT WORK1,CARD      COPY JCL CARD TO WORK FILE
+* NOW WE ENTER A COPY LOOP TILL WE GET '//' | *JOL | NEW JOBCARD.
+           GET SYSIN,CARD      GET NEXT CARD
+           CLC =C'//',CARD     JCL CARD ?
+           BE  JCL2CARD        GO TEST '//' | NEW JOBCARD
+           CLI CARD,C'*'       * JOL MAYBE ?
+           BE  TJOL2           GO TEST JOL CARD
+           B   PUTWORK1        GO PUT, GET NEXT CARD
+           SPACE 2
+JCL2CARD   CLC =CL71'// ',CARD NULL CARD (EOF?)
+           BE  PUTWORK1        YES, COPY THRU, CHECK NEXT
+* TEST NEW JOB CARD
+TNEWJCLJ   LM  R7,R9,=A(CARD,1,CARD+70)
+           CLI 0(R7),C' '      END OF NAME ?
+           BE  END2NM
+           BXLE R7,R8,*-8
+           B   PUTWORK1        NOT A JOB CARD ANYWAY
+           SPACE 2
+END2NM     CLC =C' JOB ',0(R7) JOB ?
+           BE  NEWJCLJB        YES, GOT A NEW JCL CARD
+           BXLE R7,R8,*-10
+           B   PUTWORK1        NOT A JOB CARD, COPY IT THROUGH
+           SPACE 3
+TJOLCARD   CLI CARD,C'*'       * JOL ?
+           BNE JCLFLUSH        NOPE, AND NOT A JCL CARD EITHER,FLUSH IT
+TJOL2      LM  R7,R9,=A(CARD,1,CARD+70)
+           CLC =C'JOL',0(R7)
+           BE  ISJOL
+           BXLE R7,R8,*-10
+* NOT JOL HERE. EASIEST THING IS TO JUST COPY IT THROUGH
+JCLFLUSH   EQU  *
+JOBFLUSH   B   PUTWORK1
+           SPACE 3
+ISJOL      LA  R6,1            SET JOL INDIC ON
+           PUT $$JIN,CARD      PUT OUT TO JOL INPUT FILE
+           GET SYSIN,CARD
+           CLC =C'//',CARD     JCL CARD ?
+           BE  JCL3CARD        YES
+           B   ISJOL           NO, GO TO COPY LOOP
+           SPACE 3
+JCL3CARD   CLC =CL71'// ',CARD IS IT ONLY A NULL CARD
+           BE  SKIPTHIS       YES.
+           B   TNEWJCLJ        NO, TEST IF JOB CARD THEN (JCL)
+           SPACE 3
+EOFSYSIN   EQU *
+         CLOSE (SYSIN,,$$JCL,,WORK1,,$$JIN)
+         FREEPOOL SYSIN
+         FREEPOOL $$JCL
+         FREEPOOL WORK1
+         FREEPOOL $$JIN
+           LTR R6,R6           ANY JOL JOBS TO COMPILE ?
+           BZ  USERDR          NO, GO USE VS1 READER THEN
+           XC  TASKECB,TASKECB CLEAR RETURN ECB
+           ATTACH EP=$JOLCP30,PARAM=JOLPARM,ECB=TASKECB,VL=1
+           LR  R6,R1           SAVE NEW TCB ADDRESS
+           WAIT ECB=TASKECB    WAIT FOR JOL TO END
+           TM  X'1D'(R6),X'80' ABEND ?
+           BO  JOLABEND
+           DETACH (R6)
+USERDR     XC  TASKECB,TASKECB CLEAR ECB
+*          ATTACH EP=IEFVMA,PARAM=(4),ECB=TASKECB
+           ATTACH EP=UT49AA,PARAM=(4),ECB=TASKECB
+           LR  R6,R1           SAVE NEW TCB ADDRESS
+           WAIT ECB=TASKECB    WAIT FOR VS1 READER TO END
+           TM  X'1D'(R6),X'80' ABEND ?
+           BO  VS1RDRAB        VS READER ABENDED ...
+           CLC TASKECB+1(3),=F'0' DID IT RETURN 0 ?
+           BNE VS1NON0         NO, NO 0
+           DETACH (R6)         DETATCH IT
+         GENRETN
+           B   MAINLOOP
+JOLABEND   ABEND 1,DUMP,STEP
+VS1RDRAB   ABEND 2,DUMP,STEP
+VS1NON0    LR  R10,R15
+           ABEND 3,DUMP,STEP
+TASKECB    DS  F               ECB FOR JOL, READER
+CARD       DS  CL80
+MVCJOBNM   MVC COPYMSSG+12(*-*),CARD+2
+COPYMSSG   WTO 'JOLRDR:          BEING COPIED',ROUTCDE=(11),MF=L
+JOLPARM    DC AL2(L'JOLPARMC)
+JOLPARMC   DC C'NOSRDR'
+JOBNAME    DS CL8
+BLANKS     DC  CL80' '
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+           DC  S(*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*)
+           PRINT NOGEN
+           ENTRY SYSIN,$$JCL,WORK1,$$JIN
+SYSIN      DCB DDNAME=SYSIN,EODAD=EOFSYSIN,DSORG=PS,MACRF=GM,DEVD=DA
+$$JCL      DCB DDNAME=$$JCL,DSORG=PS,MACRF=PM
+WORK1      DCB DDNAME=JCLSPOOL,DSORG=PS,MACRF=PM
+$$JIN      DCB DDNAME=$$JIN,DSORG=PS,MACRF=PM
+           PRINT GEN
+           LTORG
+           END

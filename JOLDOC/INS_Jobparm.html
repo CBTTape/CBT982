@@ -1,0 +1,277 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>JobParm</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=ISO-8859-1">
+  <title></title>
+  <meta name="GENERATOR" content="OpenOffice.org 3.1  (Win32)">
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=ISO-8859-1">
+  <title></title>
+  <meta name="GENERATOR" content="OpenOffice.org 3.1  (Win32)">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>JOBPARM</u></font><font size="5"><u><span
+ style="font-weight: normal;"> </span></u></font><u>- </u><font
+ size="5"><i><u><span style="font-weight: normal;">Execute Command </span></u></i><u><span
+ style="font-weight: normal;">(</span></u><u><span
+ style="font-weight: normal;"><span style="font-weight: bold;">Jes2 Only</span>)<br>
+      </span></u></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">JOBPARM</span> Command specifies extra job
+information.&nbsp; You may specify the expected elapsed time of your
+job, and other details like the maximum number of printed lines the job
+is allowed to produce.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <p><b>&nbsp;<br>
+      </b></p>
+      <div style="margin-left: 40px;"><b>JOBPARM&nbsp; &nbsp;&nbsp; </b><span
+ style="font-style: italic;">options<span style="font-weight: bold;"> ;</span></span><b>
+      <br>
+      <br>
+where </b><span style="font-style: italic;">options </span><span
+ style="font-weight: bold;">are:<br>
+      </span><b>&nbsp;&nbsp;&nbsp; </b><br>
+      </div>
+      <table
+ style="width: 416px; height: 285px; text-align: left; margin-left: auto; margin-right: auto;"
+ border="1" cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="font-weight: bold; text-align: right;">CARDS<br>
+            </td>
+            <td> = <span style="font-style: italic;">maxcards</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold; text-align: right;">COPIES</td>
+            <td>= <span style="font-style: italic;">copies</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold; text-align: right;">ELAP or
+TIME<br>
+            </td>
+            <td> = <span style="font-style: italic;">expected-elapsed-time</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold; text-align: right;">FORMS</td>
+            <td> = <span style="font-style: italic;">form-number</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold; text-align: right;">LINECNT</td>
+            <td> = <span style="font-style: italic;">lines-per-page</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold; text-align: right;">LINES<br>
+            </td>
+            <td>= <span style="font-style: italic;">max-lines</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold; text-align: right;">ROOM</td>
+            <td> = <span style="font-style: italic;">room-number</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold; text-align: right;">BOX<br>
+            </td>
+            <td> = <span style="font-style: italic;">box-number</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold; text-align: right;">SYSTEM</td>
+            <td> = <span style="font-weight: bold;">* | ANY |</span> <span
+ style="font-style: italic;">system-number</span></td>
+          </tr>
+          <tr style="font-weight: bold;">
+            <td style="text-align: right;">NOLOG</td>
+          </tr>
+        </tbody>
+      </table>
+      <p><b><br>
+      </b></p>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top; font-weight: bold;">where:</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td
+ style="vertical-align: top; background-color: rgb(204, 204, 204);"><br>
+      <table style="width: 100%;" border="1" cellpadding="2"
+ cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;">CARDS </td>
+            <td> is the maximum number of cards the job is allowed to
+produce.</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">COPIES </td>
+            <td> specifies the number of copies or any printed output
+that is to be produced.</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">ELAP or TIME</td>
+            <td> specifies the expected elapsed time of the job, in
+minutes.</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">FORMS</td>
+            <td> specifies print and punch forms on to which printed
+and
+punched cards are to be placed. If FORMS are specified on the PRINTER
+definition,it overrides the FORM specified here.</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">LINECNT</td>
+            <td> specifies the maximum number of lines to be printed on
+a page. Code from 0 to 255.</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">LINES</td>
+            <td> specifies, in thousands, the maximum number of printed
+lines the job will produce.</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">NOLOG</td>
+            <td> specifies that you do not want a copy of the Jol and
+OS
+messages. Remember, that all Jol Catalog, Scratch,etc., messages will
+be lost if you specify NOLOG.</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold;">ROOM or BOX</td>
+            <td> specifies data to be printed on the job's separator
+pages. This assists the operator to get results back to the programmer
+quickly.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top; font-weight: bold;"
+ colspan="1" rowspan="1">SYSTEM</td>
+            <td colspan="1" rowspan="1"> specifies the systems to be
+eligible to process the job<br>
+            <br>
+* specifies the system which read the job.<br>
+            <br>
+            <span style="font-weight: bold;">ANY </span> means any
+system in the JES2 multi-access spool <br>
+            <br>
+configuration.system number is a four digit number, specifying a
+particular system.</td>
+          </tr>
+          <tr>
+          </tr>
+          <tr>
+          </tr>
+          <tr>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td align="left" valign="top">
+      <p><br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td align="left" valign="top">
+      <style type="text/css">
+	<!--
+		@page { margin: 2cm }
+		P { margin-bottom: 0.21cm }
+	-->
+	</style>
+      <ol>
+        <li>Many of the
+details above may also be specified on the <span
+ style="font-weight: bold;">JOB</span> statement. Any
+details specified in the JOBPARM command override those used
+on the Job statement.</li>
+        <li>If the <span style="font-weight: bold;">JOBPARM</span>
+command is executed on a JES3 or ASP system, the <span
+ style="font-weight: bold;">MAIN</span>
+command will be executed with the parameters specified in the <span
+ style="font-weight: bold;">JOBPARM</span>
+command.</li>
+        <li>The <span style="font-weight: bold;">JOBPARM</span>
+command may be
+coded anywhere in the Jol program.</li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <style type="text/css">
+	<!--
+		@page { margin: 2cm }
+		P { margin-bottom: 0.21cm }
+	-->
+	</style>
+      <p style="margin-left: 0.76cm; margin-bottom: 0cm;"><b>JOBPARM
+ELAP
+10, COPIES 2,</b></p>
+      <p style="margin-left: 3.05cm; margin-bottom: 0cm;"><b>ROOM 1024;</b></p>
+      <p
+ style="margin-left: 0.76cm; margin-bottom: 0cm; font-weight: normal;">The
+JOBPARM
+command
+specifies
+that the job is expected to run for 10 minutes. Two
+copies of any output are requested to be sent to Room 1024.</p>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

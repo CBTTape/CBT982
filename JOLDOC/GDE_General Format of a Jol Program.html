@@ -1,0 +1,473 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>General Program Format</title>
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>General Format of a Jol Program</u></font><font size="5"><u><span
+ style="font-weight: normal;"></span></u></font><font size="5"><i><u><span
+ style="font-weight: normal;"></span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4><br>
+      </h4>
+      </td>
+      <td align="left" valign="top">In essence, a Jol job is made up of
+one or more statements, instructions, or commands.&nbsp;&nbsp;&nbsp;
+Statements may <span style="font-weight: bold;">DECLARE</span> or <span
+ style="font-weight: bold;">DEFINE</span>&nbsp; variables, datasets,
+programs, etc. Instructions and Commands cause some action to be taken
+with the items <span style="font-weight: bold;">DECLARED </span>or <span
+ style="font-weight: bold;">DEFINED </span>.<br>
+      <br>
+With Jol, like with all other high level languages, you divide your
+data set and program declaration part of your program from the logic
+part.&nbsp; This allows others, who do not know your Jol program, to
+see the logic very quickly.&nbsp; Jol will allow you to intermix
+Declarations and Commands.&nbsp; However, this is not a desirable
+practice as reading the program then becomes more difficult.<br>
+      <br>
+In general the following procedure is followed:<br>
+      <ol>
+        <li>Code all symbolic variable definitions with their initial
+values.</li>
+        <li>Code all the dataset and program definitions.&nbsp; These
+do not have to be in any particular order.&nbsp; For example, even
+though you specify that a program is going to read or write a data set,
+the data set definition can appear after the program definition uses it.</li>
+        <li>Code the instructions and commands to manipulate the
+defined data.</li>
+      </ol>
+      <div style="margin-left: 40px;">These commands may appear in any
+order, but if you are reading a data set, ensure that any program that
+creates it <span style="font-weight: bold;">RUN</span>s first.</div>
+      <ol start="4">
+        <li>Symbolic Variable processing can appear anywhere within the
+program.</li>
+      </ol>
+      <br>
+Remember that Jol is basically a SERIAL Compiler. Jol will execute
+commands in the order they are written.<br>
+      <br>
+The examples below how a Jol job can be layed out and documented. Both
+Jol programs perform the same work, but the second example shows how
+Jol programs can be documented with comments.<br>
+      <br>
+The Jol programs in below sort a data set called <span
+ style="font-weight: bold;">INPUT.SORT</span>&nbsp; in character
+format, starting at column or character position 69 for 2 characters,
+and place the sorted file in a data set <span
+ style="font-weight: bold;">OUTPUT.SORT</span> . If the <span
+ style="font-weight: bold;">SORT</span> is successful, the sorted data
+set is <span style="font-weight: bold;">CATALOG</span>ed and <span
+ style="font-weight: bold;">PRINT</span>ed.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td
+ style="vertical-align: top; background-color: rgb(153, 255, 255);"><br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">SORTJOB
+: &nbsp;&nbsp;&nbsp; JOB ACCT='(1,000,SYS,,,1)'</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 120px;"><span style="font-weight: bold;">NAME=JOLUSER
+CLASS=A ;</span><br style="font-weight: bold;">
+      </div>
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">DCL INPUT &nbsp;&nbsp;&nbsp; DS
+DSN=INPUT.SORT ;</span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">DCL OUTPUT &nbsp;&nbsp;&nbsp; DS
+DSN=OUTPUT.SORT</span><br style="font-weight: bold;">
+      <div style="margin-left: 120px;"><span style="font-weight: bold;">FB
+80,800 5 TRKS</span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 120px;"><span style="font-weight: bold;">SYSDA
+VOL=WORK01 ;</span><br style="font-weight: bold;">
+      </div>
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">STEP010:</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">SORT
+INPUT TO OUTPUT FIELDS = (69,2,CH,A) ;</span><br
+ style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">IF
+STEP010 = 0</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">THEN DO ;</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">CATLG
+OUTPUT ;</span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">PRINT
+OUTPUT ;</span><br style="font-weight: bold;">
+      </div>
+      <span style="font-weight: bold;">END ;</span><br>
+      </div>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td
+ style="vertical-align: top; text-align: center; font-weight: bold;">Figure
+4. A condensed Jol Job Example</td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"> <br
+ style="font-weight: normal;">
+      <div style="margin-left: 80px;"><span style="font-weight: normal;">/*&nbsp;&nbsp;&nbsp;
+This job performs a sort on the data set</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">'input.sort'&nbsp;&nbsp; and
+produces a data set</span><br style="font-weight: normal;">
+      <span style="font-weight: normal;">called 'output.sort'.</span><br
+ style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">Note: &nbsp;&nbsp;&nbsp; The
+';' sign indicates the end of a statement</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp; in
+Jol.&nbsp;&nbsp; This and the above statements</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">&nbsp;&nbsp;&nbsp; are
+examples of coding comments in Jol */</span><br
+ style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">/*&nbsp;&nbsp;&nbsp; Define
+the jobcard */</span><br>
+      </div>
+      <div style="margin-left: 80px;"><br>
+      <span style="font-weight: normal;">Sortjob: Job&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* sortjob&nbsp; is the&nbsp;&nbsp; jobname&nbsp;&nbsp; */</span><br
+ style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">acct
+= '(1,000,sys,,,1)'&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; /*&nbsp;
+accounting information */</span><br style="font-weight: normal;">
+      <span style="font-weight: normal;">name = joluser
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/*&nbsp; programmer name */</span><br style="font-weight: normal;">
+      <span style="font-weight: normal;">class = a &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/*&nbsp; allocates the job class */</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">user = '??????'
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* provides userid for racf */</span><br style="font-weight: normal;">
+      <span style="font-weight: normal;">password = '????????' ;
+&nbsp;&nbsp; /*&nbsp; racf password */</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">/*&nbsp;&nbsp;&nbsp; define
+data set information */</span><br style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">declare input dataset&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/* input is the data set id&nbsp;&nbsp; */</span><br
+ style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">dsn
+= input.sort ;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp;&nbsp; /*&nbsp; specifies the data set name&nbsp; */</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">declare output dataset&nbsp;
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; /*&nbsp; output
+is the data set id */</span><br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">dsn
+= output.sort&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; /*&nbsp; data set name for output */</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">fb 80,800 &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/*&nbsp;&nbsp; record format&nbsp;&nbsp;&nbsp;&nbsp; */</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">5 tracks &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/*&nbsp;&nbsp; space allocation&nbsp;&nbsp; */</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">unit = sysda
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+/*&nbsp; unit type&nbsp;&nbsp;&nbsp; */</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">volume = work01 ;
+&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /*&nbsp; volume
+name */</span><br style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">/*&nbsp;&nbsp;&nbsp;
+Instruction and command section */</span><br
+ style="font-weight: normal;">
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">step10:&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+/*&nbsp;&nbsp; stepname&nbsp;&nbsp; */</span><br
+ style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">sort
+input to output&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;
+/*&nbsp;&nbsp;&nbsp; sort the
+dsid's&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+*/</span><br style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">fields
+= (69,&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+/*&nbsp;&nbsp;&nbsp; start of field */</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">2, &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; &nbsp; /*&nbsp;&nbsp;&nbsp; length&nbsp;&nbsp; */</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">ch,&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; &nbsp; /*&nbsp; character */</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">a) ; &nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; &nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; /*&nbsp; ascending */</span><br
+ style="font-weight: normal;">
+      </div>
+      <br style="font-weight: normal;">
+      <span style="font-weight: normal;">if step10 = 0&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; /* sort ok? */</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">then do ;</span><br
+ style="font-weight: normal;">
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">catlg
+output ; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; /*&nbsp;&nbsp; catalog
+the data set&nbsp; 'output.sort' */</span><br
+ style="font-weight: normal;">
+      <span style="font-weight: normal;">print output ;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; /* now print it */</span><br
+ style="font-weight: normal;">
+      </div>
+      <span style="font-weight: normal;">end;</span><br
+ style="font-weight: normal;">
+      </div>
+      </div>
+      <br>
+      <br>
+      <br>
+      <b></b><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">
+      <h4>Notes on the Jol Examples<br>
+      </h4>
+      </td>
+      <td style="vertical-align: top;"><span style="font-weight: bold;"></span>The
+above examples highlight a number of features in preparing a Jol job:<br>
+      <br>
+      <ol>
+        <li>In the above example, "<span style="font-weight: bold;">INPUT</span>"
+and "<span style="font-weight: bold;">OUTPUT</span>" are known as Data
+Set Identifiers, or <span style="font-weight: bold;">DSID</span>s.&nbsp;
+Dataset identifiers or <span style="font-weight: bold;">DSID</span>s
+can be allocated to all dataset definitions.</li>
+      </ol>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">DSID</span>s
+can be used in instructions, commands, and program definitions, for
+example in Catalog Instructions, SORTs and other Commands.&nbsp; Thus
+details about a Data Set need only be defined once - any reference to
+the <span style="font-weight: bold;">DSID</span>&nbsp; automatically
+picks up the required information.<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;">A DSID&nbsp; defines the Data Set
+Name, Volume, Unit and any other information that may be necessary,
+such as Record Format. You do not specify on whether the DSID is to be
+used for Input or Output; this is done in the Program Definition , or
+implied in some instructions such as SORT .<br>
+      </div>
+      <br>
+      <ol start="2">
+        <li>Comments can be coded anywhere in the jobstream where a
+blank space is allowed.</li>
+        <li>If you wanted to print the output on two part stationary,
+the PRINT&nbsp; instruction could be coded as:</li>
+      </ol>
+      <br>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">PRINT
+OUTPUT ON 2 PART;</span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">&nbsp;or&nbsp;&nbsp;&nbsp; PRINT
+OUTPUT 2 PART ;</span><br style="font-weight: bold;">
+      </div>
+      <br>
+      <ol start="4">
+        <li>The <span style="font-weight: bold;">CATLG </span>statement
+at the end of the above job catalogs the output data, otherwise it
+would be DELETEd at the end of the job.</li>
+      </ol>
+      <br>
+      <div style="margin-left: 40px;">&nbsp;It is good practice to put
+all the <span style="font-weight: bold;">CATLG , KEEP , DELETE</span>,
+and <span style="font-weight: bold;">SCRATCH </span>instructions at
+the end of all the smaller jobs.&nbsp; If an error occurs, you can then
+rerun the job in its entirety without having to recreate data sets or
+adjust the catalog.<br>
+      </div>
+      <br>
+      <ol start="5">
+        <li>You will notice that there are no tests for an error
+condition above.&nbsp; Jol automatically aborts the job if a return
+code of 16 or greater than 2000 is returned by any program.&nbsp; This
+occurs, unless you override the Jol default condition code testing with
+the STOP WHEN condition(s)&nbsp; instruction.</li>
+      </ol>
+&nbsp;<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Further notes about Jol Programs</h4>
+      </td>
+      <td align="left" valign="top">
+      <div style="text-align: center;"> </div>
+      <div style="text-align: left;">
+      <ol>
+        <li>Definitions, instructions, and commands can be
+intermixed.&nbsp; However, clarity is greatly improved if the suggested
+method is followed.</li>
+        <li>Symbolic variable processing can be performed anywhere in
+the job.</li>
+        <li>All declarations can be placed in a library for use by all
+your Programmers and Operators.</li>
+      </ol>
+      <br>
+      <div style="margin-left: 40px;">Like other high level languages,
+defined variables such as data sets, programs and symbolic variables do
+not have to be used in any instructions.&nbsp;&nbsp;&nbsp; This allows
+them to be placed in a member of a library and <span
+ style="font-weight: bold;">INCLUDE</span>d , and used much like an<span
+ style="font-weight: bold;"> INCLUDE</span>&nbsp; in <span
+ style="font-weight: bold;">PL/I</span> or a <span
+ style="font-weight: bold;">COPY</span> statement in <span
+ style="font-weight: bold;">COBOL</span> is used to copy variable
+definitions in programming languages.<br>
+      <br>
+By having the Definitions for all the data sets and programs in a
+central library system testing for a set of jobs can be made much
+easier.&nbsp; You can use an <span style="font-weight: bold;">INCLUDE </span>to
+copy the program and data set definitions, and then follow the <span
+ style="font-weight: bold;">INCLUDE</span>&nbsp; with appropriate
+instructions for the particular part of the system you are testing.<br>
+      <br>
+This facility is explained in greater detail in the Techniques&nbsp;
+section of the <span style="font-style: italic;">General Information
+Manual</span><br>
+      </div>
+      <br>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Use of Dsnames and DSIDs</h4>
+      </td>
+      <td align="left" valign="top">Generally any Data Sets are
+declared as <span style="font-style: italic;">Data Set Identifiers</span>
+(<span style="font-weight: bold;">DSID</span>s).&nbsp; For example:<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">DCL
+INPUT DS DSN=TEST.DATA;</span><br>
+      </div>
+      <br>
+This is a <span style="font-weight: bold;">DSID</span> called <span
+ style="font-weight: bold;">INPUT</span>.&nbsp; This <span
+ style="font-weight: bold;">DSID</span> may be used in many ways, but a
+listing of the contents of the data set referred to by the <span
+ style="font-weight: bold;">DSID INPUT</span> could be performed with:<br>
+      <br>
+      <div style="margin-left: 40px; font-weight: bold;">LIST INPUT;<br>
+      </div>
+      <br>
+The <span style="font-weight: bold;">LIST</span> Command could have
+been written<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">LIST
+'TEST.DATA';</span><br>
+      </div>
+      <br>
+which would have the same effect as the two previous instructions.<br>
+      <br>
+This facility is particularly useful for "one off" jobs; for example, <span
+ style="font-weight: bold;">LIST</span>ing or <span
+ style="font-weight: bold;">PRINT</span>ing a data set.<br>
+      <br>
+However, in a production job or a system test, it is highly
+preferable&nbsp; to use the DSID form of using Data Sets because:<br>
+      <br>
+      <ol>
+        <li>The Dsname, Record Format and other details need only be
+specified once no matter how often it is referenced.</li>
+        <li>All the details about the data set may be seen at a glance.</li>
+        <li><span style="font-style: italic;">Over-rides</span> may be
+performed once only to effect changes whenever the DSID is used.</li>
+        <li>Volume, Space, Unit and DCB information may be declared in
+a Data Set Declare.</li>
+      </ol>
+      <br>
+N. B.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Most Commands or Macros
+assume that the DSNAME&nbsp; provided&nbsp; is of the type
+'name1.name2', that is they contain at least one Index Level.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      <span style="font-weight: normal;"><span
+ style="font-style: italic; font-weight: bold;"></span></span><br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

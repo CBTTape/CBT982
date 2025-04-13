@@ -1,0 +1,245 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Mozilla SeaMonkey">
+  <title>Write</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>WRITE</u></font><font size="5"><u><span
+ style="font-weight: normal;"> </span></u></font><u>- </u><font
+ size="5"><i><u><span style="font-weight: normal;">Immediate Instruction</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">WRITE</span> Instruction is used to write a
+message to a terminal when running Jol interactively, or to write data
+to a file previously opened with the <span style="font-weight: bold;">OPENFILE</span>
+instruction.&nbsp; Records are written one at a time from the symbolic
+variable to the terminal or to the named file.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <p><b>&nbsp;<br>
+      </b></p>
+      <div style="margin-left: 80px;"><b><br>
+WRITE&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; '</b><span
+ style="font-style: italic;">message</span><b>' [ AT <span
+ style="font-style: italic;">row,column</span> ]&nbsp; ;<br>
+      </b></div>
+      <div style="margin-left: 40px;">or<br>
+      </div>
+      <div style="margin-left: 80px;"><b>WRITE FILE (</b><span
+ style="font-style: italic;">filename</span><b>) FROM (</b><span
+ style="font-style: italic;">symbolic variable</span><b>);<br>
+      </b></div>
+      <div style="margin-left: 40px;">or<br>
+      </div>
+      <div style="margin-left: 80px;"><b>WRITE FILE (</b><span
+ style="font-style: italic;">filename</span><b>) FROM (</b><span
+ style="font-style: italic;">'literal string'</span><b>);<br>
+      </b><b><br>
+      <br>
+&nbsp; &nbsp;&nbsp; &nbsp; </b></div>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      </td>
+      <td align="left" valign="top">
+      <p><br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>General Notes</h4>
+      </td>
+      <td align="left" valign="top">
+      <ol>
+        <li>The maximum text length that may be written is 253
+characters.</li>
+        <li>The names do not have the <span style="font-weight: bold;">%</span>
+symbol preceding them; this allows a <span style="font-weight: bold;">WRITE</span>
+instruction to be coded with a symbolic variable containing the name of
+another symbolic variable - after replacement the correct symbolic
+variable will have the value written to the terminal or the file.</li>
+      </ol>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">
+      <h4>Specific Notes for TERMINAL Output</h4>
+      </td>
+      <td style="vertical-align: top;">
+      <ol>
+        <li>A <span style="font-weight: bold;">WRITE</span>
+Instruction is usually used to write a message to an interactive
+terminal; a <span style="font-weight: bold;">READ</span>&nbsp;
+Instruction is then used to accept data back from the user.&nbsp;
+Decisions can then be made on that data.</li>
+      </ol>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">
+      <h4>Specific Notes for FILE Output</h4>
+      </td>
+      <td style="vertical-align: top;">
+      <ol>
+        <li>The file must have been previously <span
+ style="font-weight: bold;">OPEN</span>ed with the Jol <span
+ style="font-weight: bold;">OPENFILE</span> instruction.</li>
+        <li><span style="font-weight: bold;">%LASTCC</span> is set to
+zero if a record was written successfully, otherwise it is set non-zero.</li>
+        <li>The <span style="font-weight: bold;">PUTFILE</span>
+instruction may also be used to write data to a file.</li>
+        <li>The file will only contain character information.&nbsp;
+Binary fixed, decimal, and floating point numbers are not yet supported.</li>
+        <li>If the data is enclosed in quotes (<span
+ style="font-weight: bold;">TYPE = 'LIT'</span>), the quotes are
+removed before output.</li>
+        <li>If the Record Format of the file is Variable or Variable
+Blocked, the record length is set equal to the length of the symbolic
+variable.</li>
+        <li>For Fixed length record files, the symbolic variable is
+padded with blanks if the length is less than the file's record or
+length, or truncated if it is too long to be contained in one record.</li>
+        <li>The <span style="font-weight: bold;">GOTO</span>
+instruction may be used to copy the entire contents of the file.&nbsp;
+Files may be copied with a combination of <span
+ style="font-weight: bold;">READ, WRITE</span> and <span
+ style="font-weight: bold;">REDO</span> Instructions, with processing
+on the contents of the file being performed.</li>
+        <li>See also the <span style="font-weight: bold;">ALLOC,
+OPENFILE, READ, GETFILE, PUTFILE, CLOSFILE </span>and <span
+ style="font-weight: bold;">FREE</span> Instructions.</li>
+      </ol>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples of Output to a Terminal</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      <span style="font-weight: normal;"><span
+ style="font-style: italic; font-weight: bold;"></span></span>1
+&nbsp;&nbsp; &nbsp;&nbsp; WRITE 'THIS TERMINAL IS LOGGED ON AS %SYSUID';<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">If
+the
+terminal
+is logged in as '<span style="font-weight: bold;">SYSMAINT</span>'
+then
+the message:</span><br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;">'THIS TERMINAL IS LOGGED ON AS
+SYSMAINT'<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">will
+be
+displayed.</span><br>
+      </div>
+      <br>
+      <br>
+2 &nbsp;&nbsp; &nbsp;&nbsp; IF %SOURCE = ''<br>
+      <div style="margin-left: 40px;">THEN DO;<br>
+      <div style="margin-left: 40px;">WRITE 'ENTER SOURCE STATEMENT
+LIBRARY';<br>
+READ SOURCE;<br>
+      </div>
+END;<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px; font-weight: normal;">If the
+symbolic parameter <span style="font-weight: bold;">SOURCE</span> is
+null (that is, empty) or blank, then the <span
+ style="font-weight: bold;">WRITE</span> Instruction will write a
+message to the terminal.&nbsp; The <span style="font-weight: bold;">READ</span>
+Instruction will then wait until the user has entered the data and
+store the data into the symbolic variable <span
+ style="font-weight: bold;">SOURCE</span>.<br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">
+      <h4>Examples of Output to a File</h4>
+      </td>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">1.&nbsp;&nbsp;&nbsp;&nbsp;
+OPENFILE
+FILEOUT
+OUTPUT;&nbsp;&nbsp; /* </span>Open the file for OUTPUT<span
+ style="font-weight: bold;"> */</span><br style="font-weight: bold;">
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">%VAR
+=
+'THIS
+IS DATA TO BE WRITTEN';</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">WRITE FILE(FILEOUT) FROM(VAR);</span><br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;">The data from the symbolic
+variable <span style="font-weight: bold;">VAR</span> is written to the
+file <span style="font-weight: bold;">FILEOUT</span>.<br>
+      </div>
+      <br>
+      <span style="font-weight: bold;">2.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+OPENFILE FILEOUT OUTPUT;</span>&nbsp;&nbsp; /* Open the file for OUTPUT
+*/<br>
+      <div style="margin-left: 40px;"><span style="font-weight: bold;">WRITE
+FILE(FILEOUT)</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">FROM('THIS IS DATA WRITTEN ON
+%DAY');</span><br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;">The data from the literal data in
+quotes.&nbsp; Because <span style="font-weight: bold;">%DAY</span> is
+included in the string, it is changed to the current day before the
+data is written to the file <span style="font-weight: bold;">FILEOUT</span>.<br>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

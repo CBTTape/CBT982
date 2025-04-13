@@ -1,0 +1,8 @@
+* THIS WILL GENERATE THE JOL INSTRUCTION TABLES.
+* THIS IS VIRTUALLY THE SAME AS PINST
+* SOMETHING HAS HAPPENED TO THE ASSEMBLER, TYPE ISN'T PASSED THRU J60
+         GBLC  &TYPE                                              J60
+&TYPE    SETC  'C'                                                J60
+CJOLINST CSECT                                                    J51
+         DEFJOLIN
+         END

@@ -1,0 +1,309 @@
+***  FCO1:MAS - ENSURE SERIAL USE OF HASP INTERNAL READERS  ***********
+*                                                                     *
+*    FUNCTION:                                                        *
+*                                                                     *
+*         THE BOSS MONITOR, HANDLING JOBCLASS S, ONLY USES ITS HASP   *
+*         INTERNAL READER SPORADICALLY.  BOSS THEREFORE DEALLOCATES   *
+*         THE DEVICE TO ALLOW OTHER JOBS TO USE IT IN THE MEANTIME.   *
+*         WHEN BOSS WANTS TO RESUME CONTROL OF THE DEVICE, IT LINKS   *
+*         TO US26ENQ TO ISSUE AN ENQUEUE, AND THEN STARTS WRITING.    *
+*         TO AVOID MIXING BOSS OUTPUT WITH THEIR OWN, OTHER USERS     *
+*         MUST ALSO LINK TO US26ENQ BEFORE ATTEMPTING TO USE THEIR    *
+*         INTERNAL READER.  THEN AT END OF FILE, ALL USERS MUST LINK  *
+*         TO US26DEQ TO ISSUE A DEQUEUE. THE INTERNAL READER DATASET  *
+*         MUST NOT BE OPEN AT EITHER CALL.  THIS ENSURES THAT ALL     *
+*         *******************************                             *
+*         DATA HAS BEEN TRANSMITTED.                                  *
+*                                                                     *
+*         THESE SUBROUTINES TAKE NO ACTION UNLESS THE DDNAME PASSED   *
+*         AS A PARAMETER REFERS TO A DEVICE THAT IS AN INTERNAL       *
+*         READER.  A PROGRAM WHOSE OUTPUT FILE OCCASIONALLY GOES TO   *
+*         AN INTERNAL READER, SHOULD LINK TO THESE ROUTINES           *
+*         REGARDLESS AND LET US26 DECIDE WHETHER ACTION IS REQUIRED.  *
+*                                                                     *
+*    LINKAGE:                                                         *
+*                                                                     *
+*         INVOKED BY LINK, XCTL ETC. FROM ASSEMBLER.                  *
+*         ON ENTRY, REGISTERS CONTAIN:                                *
+*                                                                     *
+*         R1  - A(PARAMETER)   THE DDNAME FOR THE OUTPUT JCL          *
+*         R13 - A(SAVE AREA)                                          *
+*         R14 - RETURN ADDRESS                                        *
+*         R15 - A(ENTRY POINT)                                        *
+*                                                                     *
+*         ON RETURN, REGISTERS 0 - 14 ARE UNCHANGED.                  *
+*         REGISTER 15 CONTAINS A RETURN CODE :                        *
+*         FOR ENTRY POINT US26ENQ                                     *
+*                                                                     *
+*         RC = 0   CONTROL OF RESOURCE HAS BEEN ASSIGNED OR NO        *
+*                  INTERNAL READER IS IDENTIFIED FOR THE DDNAME.      *
+*                                                                     *
+*         RC = 4   APPLICABLE ONLY FOR BACKGROUND TASKS.              *
+*                  CONTROL OF THE RESOURCE HAS BEEN ASSIGNED,         *
+*                  BUT THE TASK WAITED FOR THE RESOURCE TO            *
+*                  BECOME AVAILABLE.                                  *
+*                  THE OPERATOR WAS INFORMED THAT THE TASK WAITED     *
+*                  AND THAT PROCESSING SUBSEQUENTLY CONTINUED.        *
+*                                                                     *
+*         RC = 8   A PREVIOUS REQUEST FOR THE RESOURCE HAS BEEN       *
+*                  MADE. THIS REQUEST IS IGNORED.                     *
+*                                                                     *
+*         RC = 12  APPLICABLE ONLY TO FOREGROUND TASKS.               *
+*                  CONTROL OF THE RESOURCE WAS NOT ASSIGNED           *
+*                  BECAUSE THE TASK WOULD HAVE WAITED FOR CONTROL     *
+*                  OF THE RESOURCE.                                   *
+*                  THE FOREGROUND USER WAS INFORMED THAT THE          *
+*                  RESOURCE WAS NOT IMMEDIATELY AVAILABLE.            *
+* NOTE:            IT IS UP TO THE MODULE INVOKING US26ENQ TO         *
+* *****            DECIDE WHAT ACTION IS TO BE TAKEN.                 *
+*                                                                     *
+*         RC = 16  CATASTROPHIC ERROR HAS OCCURED.                    *
+*                  E.G. DDNAME WAS NOT FOUND IN TIOT.                 *
+*                                                                     *
+*         FOR ENTRY POINT US26DEQ                                     *
+*                                                                     *
+*         RC = 0   CONTROL OF THE RESOURCE HAS BEEN RELEASED OR NO    *
+*                  INTERNAL READER IS IDENTIFIED FOR THE DDNAME.      *
+*                                                                     *
+*         RC = 4   APPLICABLE ONLY TO BACKGROUND TASKS.               *
+*                  CONTROL OF THE RESOURCE IS NOT RELEASED AS THE     *
+*                  TASK IS CURRENTLY WAITING FOR CONTROL OF THE       *
+*                  RESOURCE.                                          *
+*                                                                     *
+*         RC = 8   TASK HAS NO REQUESTS FOR CONTROL OF THE RESOURCE.  *
+*                                                                     *
+*         RC = 16  A CATASTROPHIC ERROR HAS OCCURED.                  *
+*                  E.G. DDNAME WAS NOT FOUND IN THE TIOT.             *
+*                                                                     *
+*    MODULE ATTRIBUTES:                                               *
+*                                                                     *
+*         RE-ENTERABLE.                                               *
+*                                                                     *
+***********************************************************************
+US26     TITLE 'ENSURE SERIAL USE OF HASP INTERNAL READERS'
+*        WORK DSECT
+         SPACE
+WORK     DSECT
+SAVE     DS    18F                 SAVE AREA
+LTIMESUP EQU   X'14'               LENGTH OF STIMER EXIT ROUTINE
+*                                  SHOULD = EXITLNTH
+TIMESUP  DS    0F                  STIMER EXIT ROUTINE
+         ORG   *+LTIMESUP
+EXENQ    ENQ   (,,E,3,SYSTEM),RET=HAVE,MF=L
+MAXLMSG  EQU   X'2D'               LENGTH OF LONGEST MESSAGE OUTPUT
+*                                  MAXIMUM LENGTH OF TSOMSG,WTO1,WTO2
+MSGAREA  DS    0F                  TPUT/WTO MESSAGE SPACE
+         DS    CL(MAXLMSG)
+JOBNAME  DS    CL8                 JOBNAME (FROM TIOT = TIOTNJOB)
+RNAME    DS    CL3                 EBCDIC UNIT NAME
+OPNFRMD  DS    CL1                 FLAG SHOWING THAT STIMER EXIT
+*                                  WAS ENTERED
+LNTHWRK  EQU   *-WORK              LENGTH OF WORK AREA
+R0       EQU   0
+R1       EQU   1
+R2       EQU   2
+R3       EQU   3
+R4       EQU   4
+R5       EQU   5
+R6       EQU   6
+R7       EQU   7                   PARAMETER ADDRESS -> DDNAME
+R8       EQU   8                   STORES RETURN CODE DURING EXECUTION
+R9       EQU   9                   IF 0 THEN THIS IS NOT A TSO TASK
+*                                  IF 1 THEN THIS IS A TSO TASK
+R10      EQU   10                  SVC NUMBER FOR ENQ/DEQ
+*                                  = 1 THEN ENTRY POINT IS US26ENQ
+*                                  = 0 THEN ENTRY POINT IS US26DEQ
+R11      EQU   11                  BASE REGISTER FOR BULK OF PROGRAM
+R12      EQU   12
+R13      EQU   13                  DSA ADDRESS
+R14      EQU   14
+R15      EQU   15
+         SPACE 3
+US26ENQ  CSECT
+         ENTRY US26DEQ
+         USING WORK,R13
+         USING *,R15
+         SAVE  (14,12),,UUPD#XXX   SAVE CALLER'S REGISTERS
+         ORG   US26ENQ+5           REDEFINE PROGRAM EYEBALL
+         DC    C'US26'
+         ORG
+         LA    R10,1               SET ENQ ENTRY POINT INDICATOR
+         B     START
+US26DEQ  STM   R14,R12,12(R13)     SAVE CALLER'S REGISTERS
+         SR    R10,R10             SET DEQ ENTRY POINT INDICATOR
+         SPACE 2
+*    PROLOGUE
+         SPACE 1
+START    EQU   *
+         DROP  R15
+         LR    R7,R1               SAVE ADDRESS OF DDNAME
+         BALR  R11,0
+         USING *,R11               CHANGE BASE TO REGISTER 11
+*    OBTAIN MAIN STORAGE WORK AREA
+         LA    R0,LNTHWRK          SET LENGTH IN REG 0
+         GETMAIN R,LV=(0)
+         ST    R1,8(R13)           STORE FORWARD CHAIN ADDRESS
+         ST    R13,4(R1)           STORE BACK CHAIN ADDRESS
+         LR    R13,R1              INITIALISE DSA ADDRESS
+         SR    R0,R0
+         SR    R9,R9               CLEAR TSO INDICATOR
+         SR    R8,R8               CLEAR RETURN CODE
+         L     R2,16
+         L     R2,0(R2)
+         L     R2,4(R2)            GET TCB ADDRESS VIA THE CVT
+*    IS THIS A TSO TASK?
+         TM    TCBTSFLG(R2),X'80'
+         BZ    NOTSO
+         LA    R9,1                SET TSO TASK FLAG ON
+NOTSO    EQU   *
+         L     R2,12(R2)           GET TIOT ADDRESS FROM TCB
+         MVC   JOBNAME,TIOCNJOB(R2)  STORE TASK NAME
+         SPACE 2
+*    FIND DDNAME IN TIOT AND CHECK FOR INTERNAL READER
+         SPACE 1
+SEARCH   AR    R2,R0
+         IC    R0,24(R2)           GET ENTRY LENGTH
+         LTR   R0,R0               END OF TIOT?
+         BZ    SETRC16             DDNAME NOT FOUND RETURN 16
+         CLC   TIOEDDNM(8,R2),0(R7)  RIGHT ENTRY YET?
+         BNE   SEARCH              KEEP LOOKING
+         LH    R1,42(R2)           POINT TO UCB
+         LTR   R1,R1               DD DUMMY?
+         BZ    RETURN              OKAY NOT AN INTERNAL READER
+         CLC   INTDEVT,18(R1)      INTERNAL READER DEVICE?
+         BNE   RETURN              OKAY NOT AN INTERNAL READER
+         SPACE 1
+*   DDNAME POINTS TO AN INTERNAL READER DEVICE
+         SPACE 1
+         MVC   RNAME,UCBNAME(R1)   STORE UNIT ADDRESS
+         LTR   R10,R10             ENQ OR DEQ ENTRY
+         BZ    DEQUEUE             WAS US26DEQ
+         SPACE 1
+*    ENQUEUE ON INTERNAL READER
+         SPACE 1
+         MVC   EXENQ(ENQLNTH),ENQ  SET UP LIST
+         ENQ   (,RNAME),MF=(E,EXENQ)  TRY RET = USE
+         LTR   R15,R15             ENQ'D OK?
+         BZ    RETURN              YES ALL'S WELL
+         IC    R8,3(R15)           PICK UP ENQ RETURN CODE
+         C     R8,=F'8'            WHAT HAPPENED?
+         BE    RETURN              ALREADY HAD IT
+         BH    SETRC16             DON'T KNOW WHAT HAPPENED
+         SPACE 1
+*   MUST BE RETURN CODE = 4
+*   WE WOULD HAVE HAD TO WAIT FOR OUR ENQUEUE TO BE PROCESSED
+         SPACE 1
+         LTR   R9,R9               ARE WE RUNNING UNDER TSO?
+         BNZ   PUTMSG              YES WRITE MESSAGE TO SCREEN & RETURN
+*                                  TO INVOKING PROGRAM.
+         SPACE 1
+*   FOR BACKGROUND TASKS WE WILL ENQUEUE WITH RET=HAVE BUT WITH THE
+*   INTERVAL TIMER RUNNING. IF WE WAIT FOR MORE THAN 2 MINUTES THE
+*   OPERATOR WILL BE INFORMED THAT WE ARE WAITING. WHEN WE KICK OFF
+*   THE OPERATOR WILL BE INFORMED THAT WE HAVE RESUMED PROCESSING.
+         SPACE 1
+         MVC   TIMESUP(EXITLNTH),TIMERXIT  SET UP TIMER EXIT CODE IN
+*                                          WORKING STORAGE
+         MVC   MSGAREA(LNTHWTO1),WTO1  SET UP WTO TEXT AND CODE
+*                                      IN MESSAGE WORK LOCATION
+         MVC   MSGAREA+MJOBNME(L'JOBNAME),JOBNAME  SET UP JOB & UNIT
+         MVC   MSGAREA+MWTORDR(L'RNAME),RNAME      NAMES IN WTO MESSAGE
+         MVI   OPNFRMD,X'00'       CLEAR WTO1 ISSUED FLAG
+         STIMER REAL,TIMESUP,BINTVL=TWOMINS  START ELAPSED TIMER TO
+*              RUN FOR 2 MINUTES SO THAT WE CAN SEE HOW LONG WE HAVE
+*              BEEN WAITING FOR OUR ENQUEUE TO BE PROCESSED.
+         ENQ   ,RET=HAVE,MF=(E,EXENQ)  TRY ENQ WITH RET=HAVE
+         LR    R6,R15              SAVE ENQ RETURN CODE, IF ANY
+         TTIMER CANCEL             REMOVE STIMER IF STILL ACTIVE
+         TM    OPNFRMD,X'80'       WAS WTO1 ISSUED?
+         BZ    NOTMADE             NO SET RETURN CDE AND RETURN TO USER
+         SPACE 1
+*   TELL OPERATOR THAT WE ARE RUNNING AGAIN
+         SPACE 1
+         MVC   MSGAREA(LNTHWTO2),WTO2
+         MVC   MSGAREA+MJOBNME(L'JOBNAME),JOBNAME
+         WTO   MF=(E,MSGAREA)
+         SPACE 1
+*   ALL MESSAGES HAVE BEEN OUTPUT TO THE OPERATOR
+*   INVESTIGATE RETURN CODE FROM ENQ
+         SPACE 1
+NOTMADE  EQU   *
+         LTR   R6,R6               ANY RETURN CODE FROM ENQ?
+         BZ    SETRC4              NO, SET RETCODE =4 'COS WE WAITED
+         IC    R8,3(R6)            WHAT HAPPENED?
+         C     R8,=F'8'
+         BE    RETURN              ALREADY HAD IT(?!)
+         BH    SETRC16             DON'T KNOW WHAT HAPPENED
+SETRC4   LA    R8,4                SET RETURN CODE = 4
+         B     RETURN
+         SPACE 3
+*   RETURN CODE FROM FIRST ENQ WAS = 4 AND WE ARE RUNNING UNDER TSO
+         SPACE 1
+PUTMSG   EQU   *
+         MVC   MSGAREA(L'TSOMSG),TSOMSG  SET UP TPUT MESSAGE
+         LA    R1,MSGAREA          PREPARE FOR TPUT
+         MVC   TSORDR(L'RNAME,R1),RNAME  AND COMPLETE MESSAGE
+         LA    R0,L'TSOMSG
+         TPUT  (1),(0),R           TELL THE UNFORTUNATE USER
+*                                  WHAT HAPPENED
+SETRC12  LA    R8,12               SET RETURN CODE = 12
+         B     RETURN
+         SPACE 3
+*    DEQUEUE OFF PREVIOUSLY ASSIGNED INTRDR
+         SPACE 1
+DEQUEUE  EQU   *
+         MVC   EXENQ(DEQLNTH),DEQ  SET UP DEQ PARAMETERS
+         DEQ   (,RNAME),MF=(E,EXENQ)
+         LTR   R15,R15             ANY RETURN CODE ISSUED?
+         BZ    RETURN              RETURN CODE = 0.
+         IC    R8,3(R15)           PICK UP NON-ZERO RETURN CODE
+RETURN   EQU   *
+         LR    R1,R13              PREPARE TO FREEMAIN
+         L     R13,4(R13)          RESTORE REG 13
+         ST    R8,16(R13)          SET RETURN CODE IN SAVED REG 15 SLOT
+         LA    R0,LNTHWRK          SET SIZE OF STORAGE TO BE FREED
+         FREEMAIN R,LV=(0),A=(1)
+         RETURN (14,12)
+SETRC16  LA    R8,16               SET RETURN CODE 16
+         B     RETURN
+         SPACE  3
+*    STIMER EXIT ROUTINE - HANDLES LONG ENQUEUE WAITS
+         SPACE 1
+         USING TIMESUP,R15
+TIMERXIT SAVE  (14,12)
+         MVI   OPNFRMD,X'80'       SET STIMER EXIT ENTERED FLAG
+         WTO   MF=(E,MSGAREA)      TELL THE OPERATOR WE ARE WAITING
+         RETURN (14,12)
+EXITLNTH EQU   *-TIMERXIT
+         DROP  R15
+         SPACE 3
+*    CONSTANTS
+         SPACE 1
+ENQ      ENQ   (QNAME,,E,3,SYSTEM),RET=USE,MF=L
+         ORG   *-4
+ENQLNTH  EQU   *-ENQ
+DEQ      DEQ   (QNAME,,3,SYSTEM),RET=HAVE,MF=L
+         ORG   *-4
+DEQLNTH  EQU   *-DEQ               LENGTH OF DEQ LIST
+TWOMINS  DC    F'12000'            TIMER INTERVAL OF 2 MINUTES
+INTDEVT  DC    X'0805'             INTRDR DEVICE TYPE
+QNAME    DC    CL8'INTRDR'         MAJOR QUEUE NAME
+TSOMSG   DC    C'US26: INTERNAL READER NNN IN USE'
+TSORDR   EQU   22                  OFFSET TO RDR VALUE IN TSOMSG
+WTO1     WTO   'US26: XXXXXXXX WAITING FOR INTRDR NNN',                *
+               ROUTCDE=(2),DESC=(7),MF=L
+LNTHWTO1 EQU   *-WTO1
+MJOBNME  EQU   10                  OFFSET FOR JOBNAME TEXT IN WTO MSGS
+MWTORDR  EQU   38                  OFFSET FOR RDR TEXT IN WTO1 MESSAGE
+WTO2     WTO   'US26: XXXXXXXX CONTINUES',                             *
+               ROUTCDE=(2),DESC=(7),MF=L
+LNTHWTO2 EQU   *-WTO2
+         SPACE 1
+*   EQUATES FOR FIELDS IN SYSTEM CONTROL BLOCKS
+         SPACE 1
+TCBTSFLG EQU   148                 OFFSET OF FLAGS INTO TCB
+TIOCNJOB EQU   0                   OFFSET OF JOBNAME INTO TIOT
+TIOEDDNM EQU   28                  OFFSET OF DDNAME IN TIOT(1ST ENTRY)
+UCBNAME  EQU   13                  OFFSET FOR UCBNAME WITHIN UCB
+         LTORG
+         END

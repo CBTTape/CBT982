@@ -1,0 +1,5 @@
+         MACRO
+&NAME    $DELETE &A
+&NAME    LA    0,=CL8'&A'    LOAD R0 = A(NAME TO GO)
+         SVC   9             DELETE THE CSECT
+         MEND

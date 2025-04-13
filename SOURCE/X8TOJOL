@@ -1,0 +1,1014 @@
+ /* OSII/VS JCL TO JOL LANGUAGE CONVERTER                     */
+ /*   COPYRIGHT 1980 CLARKE COMPUTER SOFTWARE                 */
+ /*               105 COLLINS STREET                          */
+ /*               MELBOURNE                                   */
+ /*               AUSTRALIA 3000                              */
+1OSIIJOL: PROC(PARM) OPTIONS(MAIN);
+    /* THE INPUT TO THIS PROGRAM IS AN OS II/VS JOBSTREAM            */
+    /* THE INPUT JOBSTREAM SHOULD CONSIST OF A SUITE OF PROGRAMS     */
+    /* ALL OF WHICH USE LIKE DATA SETS                               */
+0   /* THE OUTPUT WILL THEN BE A SET OF JOBS THAT ALL                */
+    /* INCLUDE A MEMBER FROM THE CCS JOL INCLUDE LIBRARY             */
+    /* IT IS ASSUMED THAT THE INCLUDE MEMBER WILL BE HEAVILY EDITED  */
+    /* TO CONVERT INVALID X8  FILE NAMES TO CORRECT OS NAMES         */
+0   /* ANOTHER JOB OUTPUT WIL COPY ALL THE X8  DATA SETS TO AN       */
+    /* OS PACK, AND CATALOG THE DATASETS IN THE OS CATALOG           */
+    /* THIS THEN ALLOWS CCS TO ASSUME THAT ALL THE DATASETS ARE      */
+    /* OLD FOR THE PURPOSE OF CONVERSION. FINE TUNING IS DONE LATER  */
+1   DCL TIME BUILTIN;
+0   DCL 1 DSSTACK (1000),
+         2 DSID    CHAR (8),
+         2 DSNAME  CHAR (44) VARYING,
+         2 VOL     CHAR (30) VAR,
+         2 UNIT    CHAR (8),
+         2 BLKSIZE CHAR (5),
+         2 DSTYPE  CHAR (1), /* S, D(A), I(SAM), V(SAM) */
+         2 OVFLOW  CHAR (4),
+         2 RETAIN  CHAR (5),
+         2 SIZE    CHAR (4) VAR,
+         2 INCR    CHAR (4) VAR,
+         2 ALTYP   CHAR (4), /* CYLS OR TRKS */
+         2 CONT    CHAR (1), /* Y = YES, N = NO   */
+         2 FILENO  CHAR (3),
+         2 GDG     CHAR (4),
+         2 VERSION CHAR (2);
+0   DCL DSSTACKNO BIN FIXED INIT (0);
+    DCL IGNORE_COIN FIXED BIN (15);
+    DCL NO_SCAN FIXED BIN (15);
+    DCL DLBL_TLBL_FOUND FIXED BIN INIT (0);
+    DCL STEP_NO   PIC '99999' STATIC INIT(1);
+    DCL DSIDNO    PIC '9999' STATIC INIT (5);
+   DCL SAVEIF CHAR(200) VAR;
+    DCL EOFSYSIN BIT (1);
+    DCL PARM CHAR (100) VAR;
+    DCL CARD CHAR (80) STATIC;
+    DCL DSIDTBL CHAR (8) STATIC;
+    DCL JOLSTACK (500) CHAR (200) VAR;
+    DCL JOLSTACK_CNTL FIXED BIN INIT (1);
+    DCL DD_INDEX FIXED BIN;
+    DCL STEPNO                    PIC '9999' INIT (1);
+    DCL CARD_SAVE                 CHAR (80);
+0   DCL 1 PROGDETS STATIC,
+         2 PGMNAME CHAR (8),
+         2 LIBRARY CHAR (46) VAR,
+         2 (COND_1, COND_2) CHAR (4) VAR,
+         2 STEPROOT CHAR (7) VAR,
+         2 PARM_FIELD CHAR (140) VAR,
+         2 NODDS   BIN FIXED,
+         2 X(100),
+           3 DDNAME               CHAR (8) , /* WAS VAR */
+           3 DSID                 CHAR (8),
+           3 DISP (3)             CHAR (6) ,  /* WAS VAR  */
+           3 UNIT_TYPE            CHAR (2) ,  /* WAS VAR  */
+           3 TYPE                 CHAR (6) ,  /* WAS VAR */
+           3 ISAM_FLAG            FIXED BIN (15);
+1    DCL CARD_NO                  PIC '99999' INIT (1);
+0    DCL 1 CARD_OPTIONS,
+       2 COL_1 CHAR (1),
+       2 LABEL CHAR (8) VAR,
+       2 OPCODE CHAR (8) VAR,
+       2 FIRST_TOKEN CHAR (20) VAR,
+       2 TOKEN (20)  CHAR (50) VAR,
+       2 NO_OF_TOKENS FIXED BIN;
+     DCL CONTINUE                  CHAR (1);
+     DCL END_MARK                  CHAR (2) VAR;
+     DCL WORK_CHAR                 CHAR (1);
+     DCL COMP_STRING               CHAR (4);
+     DCL FOUND_INDEX               FIXED BIN;
+     DCL STACK_INDEX               FIXED BIN;
+     DCL 1 SUBTOKEN_STRUCTURE,
+          2 SEARCH_TOKEN           CHAR (7) VAR,
+          2 TOKEN_INDEX            FIXED BIN,
+          2 NO_OF_SUBTOKENS        FIXED BIN,
+          2 SUBTOKEN (3)           CHAR (50) VAR;
+     DCL TOKEN_STRING              CHAR (50) VAR;
+     DCL (IN_DDNAME, OUT_DDNAME)   CHAR (8) VAR;
+     DCL (IN_DSID, OUT_DSID)       CHAR (8) VAR;
+     DCL SORTKEYS                  CHAR (80) VAR;
+0   DCL JOL FILE STREAM OUTPUT;
+    DCL SYSIN FILE RECORD INPUT;
+1/*START OF PROGRAM.   MAIN LINE */
+    IF PARM¬='' THEN  PUT EDIT('PARMETER IS ',PARM)(A);
+    PUT SKIP(2);
+    PROGDETS = '';
+    SAVEIF='';
+    JOLSTACK = '';
+    NO_SCAN, IGNORE_COIN = 0;
+0   DO JJ = 1 TO 1000; DSSTACK (JJ) = ''; END;
+0   EOFSYSIN = '0'B;
+0/* BUILD UNIQUE MEMBERNAME  FOR JOL INCLUDE MEMBER */
+    DSIDTBL = 'T' || SUBSTR (TIME, 1, 7);
+0   OPEN FILE (SYSIN), FILE (SYSPRINT), FILE (JOL);
+0   ON ENDFILE (SYSIN) BEGIN;     CALL EOJ;   GOTO WRAP_END; END;
+0   DO WHILE (¬EOFSYSIN);
+         CALL SCANCARD;
+      IF OPCODE = 'FD'     THEN DO; CALL FDPROC ; GOTO ENDREAD; END;
+     IF  SAVEIF¬='' THEN CALL JOLEXEC(SAVEIF);
+      IF OPCODE = 'DEFINE' THEN DO; CALL DEFINE ; GOTO ENDREAD; END;
+      IF OPCODE = 'IF'     THEN DO; CALL IFPROC ; GOTO ENDREAD; END;
+      IF OPCODE = 'JOBG'   THEN DO; CALL JOBG   ; GOTO ENDREAD; END;
+      IF OPCODE = 'FIN'    THEN DO; CALL FINPROC; GOTO ENDREAD; END;
+ /*IF OPCODE = 'JEND'   THEN DO; CALL EOJ    ; GOTO ENDREAD; END;*/
+      IF OPCODE = 'JOB'    THEN DO; CALL JOB    ; GOTO ENDREAD; END;
+      IF OPCODE = 'EX'     THEN DO; CALL EXPROC;
+               SAVEIF='';
+               GOTO ENDREAD;
+               END;
+      IF OPCODE = 'NOP'    THEN DO; CALL NOP    ; GOTO ENDREAD; END;
+      IF OPCODE = 'SKIP'   THEN DO; CALL SKIPL  ; GOTO ENDREAD; END;
+      IF OPCODE = 'DEFEND' THEN DO; CALL DEFEND ; GOTO ENDREAD; END;
+      IF OPCODE = 'SW'     THEN DO; CALL FDPROC ; GOTO ENDREAD; END;
+      IF OPCODE = 'JGEND'  THEN DO; CALL JGEND  ; GOTO ENDREAD; END;
+      IF OPCODE = 'PARA'   THEN DO; CALL PARA   ; GOTO ENDREAD; END;
+      IF OPCODE = './'   THEN DO; CALL WRAPUP ; GOTO ENDREAD; END;
+         PUT EDIT (' ',OPCODE,'  NOT CONVERTED') (A);
+     SAVEIF='';
+ ENDREAD:
+    END;
+0WRAP_END:
+    CALL WRAPUP;
+    RETURN; /*TO OS*/
+1JOBG: PROC;
+     PUT FILE (JOL) SKIP EDIT ('  /* ', SUBSTR (CARD_SAVE,1,60),'*/')
+                                   (A);
+     RETURN;
+     END JOBG;
+-NOP: PROC;
+     PUT FILE (JOL) SKIP EDIT (LABEL,'R:   NOP;')
+                                   (A);
+     RETURN;
+     END NOP;
+-JGEND: PROC; CALL JOBG; RETURN; END JGEND;
+-SKIPL: PROC;
+     PUT FILE (JOL) SKIP EDIT (        LABEL,
+      '  STARTAT   ',FIRST_TOKEN,';'  ) (A);
+     END SKIPL;
+1JOB: PROC;
+     CALL TOKENIZE;
+     DO WHILE (CONTINUE ¬= ' ');
+          CALL GETCARD;
+          CALL TOKENIZE;
+     END;
+     FOUND_INDEX = 0;
+     DO I = 1 TO NO_OF_TOKENS;
+          IF (SUBSTR (TOKEN (I), 1, 5)) = 'ACCT='
+          THEN DO;
+               PUT FILE (JOL) SKIP EDIT
+                     (FIRST_TOKEN,': JOB ',TOKEN(I),';') (A);
+              GOTO LEAVE_SCAN;
+         END;
+     END;
+     PUT FILE (JOL) SKIP EDIT (FIRST_TOKEN, ': JOB ;') (A);
+ LEAVE_SCAN:
+     END JOB;
+-DEFEND: PROC;
+     PUT FILE (JOL) SKIP EDIT (' END;') (A);
+     RETURN;
+     END DEFEND;
+1FDPROC:PROC;
+     IF OPCODE = 'SW' THEN PUT EDIT
+                 ('** SWITCHED FILE. PLS CHECK.') (A);
+     IF SAVEIF¬='' THEN DO;
+         PUT SKIP EDIT ('        ',SAVEIF)(A) FILE(JOL);SAVEIF='';
+         PUT EDIT('    CHECK IF LOGIC')(A);
+     END;
+     CALL TOKENIZE;
+     DO WHILE (CONTINUE ¬= ' ');
+          CALL GETCARD;
+          CALL TOKENIZE;
+     END;
+     NODDS = NODDS +1;
+     I = INDEX (FIRST_TOKEN, '=');
+     DDNAME (NODDS) = SUBSTR (FIRST_TOKEN, 1, I - 1);
+     UNIT_TYPE (NODDS) = SUBSTR (FIRST_TOKEN, I + 1);
+     IF UNIT_TYPE (NODDS) = '*' | UNIT_TYPE (NODDS) = '+'
+     THEN DO;
+          IF IGNORE_COIN = 1 & DDNAME (NODDS) = 'COIN' THEN
+               DO;
+               NODDS = NODDS - 1;
+               RETURN;
+               END;
+          X.DSID (NODDS) = 'CD'|| DSIDNO;
+          DSIDNO = DSIDNO + 5;
+          TYPE (NODDS) = 'READS';
+          PUT FILE (JOL) SKIP EDIT
+               (' DCL ', X.DSID (NODDS), '* REPLACE PRINTALL;')(A);
+ NEXT:    CALL SCANCARD;
+          IF COL_1 ¬= '$'
+          THEN DO;
+  TOKLUP7:     I98=INDEX(CARD_SAVE,'$');
+               IF I98¬=0 THEN DO;
+                 CARD_SAVE=SUBSTR(CARD_SAVE,1,I98-1)||'%'
+                 ||SUBSTR(CARD_SAVE,I98+1);
+                 GOTO TOKLUP7;
+               END;
+
+ TOKLUP8:      I98=INDEX(CARD_SAVE,'*');
+               IF I98¬=0 THEN DO;
+                  CARD_SAVE=SUBSTR(CARD_SAVE,1,I98-1)
+                  ||SUBSTR(CARD_SAVE,I98+1);
+                  GOTO TOKLUP8;
+               END;
+               PUT FILE (JOL) SKIP EDIT (CARD_SAVE) (A);
+               GOTO NEXT;
+               END;
+          PUT FILE (JOL) SKIP EDIT ('EOF;') (A);
+          NO_SCAN = 1;
+          GOTO QUIT_FDPROC;  END;
+     SEARCH_TOKEN = 'SOUT=';
+     CALL TOKNSCAN;
+ /*  IF TOKEN_INDEX = 0
+     THEN DO TOKEN_INDEX=1 TO NO_OF_TOKENS;
+         ICVC=INDEX(TOKEN(TOKEN_INDEX),'SOUT=') ;
+         IF ICVC¬=0 THEN DO;
+             TOKEN(TOKEN_INDEX)=SUBSTR(TOKEN(TOKEN_INDEX),ICVC);
+             ICVC=INDEX(TOKEN(TOKEN_INDEX),',');
+             IF ICVC¬=0 THEN DO;
+                SUBTOKEN(2)=SUBSTR(TOKEN(TOKEN_INDEX),ICVC);
+             END;
+             GOTO GOTSOUT;
+         END;
+     END;
+     TOKEN_INDEX = 0;
+ GOTSOUT:*/
+     IF TOKEN_INDEX ¬= 0
+     THEN DO;
+          IF INDEX(TOKEN(TOKEN_INDEX),',')¬= 0
+          THEN DO;
+              X.DSID (NODDS) = 'PR' || DSIDNO;
+              DSIDNO = DSIDNO + 5;
+              TYPE (NODDS) = 'WRITES';
+              PUT FILE (JOL) SKIP EDIT (' DCL ', X.DSID (NODDS),
+                  ' PRINTER B FORM ',SUBTOKEN(2),' NODEF;') (A);
+              PUT EDIT('  FORM NUMBER ',SUBTOKEN(2),' FOUND')(A);
+              GOTO QUIT_FDPROC;
+          END;
+          ELSE DO;
+              X.DSID (NODDS) = 'PRINTER';
+              TYPE (NODDS) = 'WRITES';
+              GOTO QUIT_FDPROC;
+          END;
+     END;
+     SEARCH_TOKEN = 'FILE=';
+     CALL TOKNSCAN;
+     IF TOKEN_INDEX ¬= 0
+     THEN DO;
+              DO I = 1 TO DSSTACKNO;
+              IF DSNAME (I) = SUBTOKEN (1)
+              THEN DO;
+                 STACK_INDEX = I;
+                 X.DSID (NODDS) = DSSTACK.DSID (I);
+                 IF SUBTOKEN (2) = 'OT' THEN TYPE (NODDS) = 'WRITES';
+                                        ELSE TYPE (NODDS) = 'READS';
+                 GOTO FILLOUT_STACK;
+                 END;
+              END;
+          X.DSID (NODDS) = 'DS' || DSIDNO;
+          DSIDNO = DSIDNO + 5;
+          DSSTACKNO = DSSTACKNO + 1;  STACK_INDEX = DSSTACKNO;
+          DSSTACK.DSID (DSSTACKNO) = X.DSID (NODDS);
+          DSSTACK.DSNAME (DSSTACKNO) = SUBTOKEN (1);
+          IF SUBTOKEN (2) = 'OT' THEN TYPE (NODDS) = 'WRITES';
+               ELSE TYPE (NODDS) = 'READS';
+          GOTO FILLOUT_STACK;
+          END;
+     ELSE DO;
+          X.DSID (NODDS) = 'WK' || DSIDNO;
+          DSIDNO = DSIDNO + 5;
+          DSSTACKNO = DSSTACKNO + 1;  STACK_INDEX = DSSTACKNO;
+          DSSTACK.DSID (DSSTACKNO) = X.DSID (STACK_INDEX);
+          TYPE (NODDS) = 'WRITES';
+          GOTO FILLOUT_STACK;
+          END;
+0FILLOUT_STACK:
+     SEARCH_TOKEN = 'VOL=';
+     CALL TOKNSCAN;
+     IF TOKEN_INDEX ¬= 0
+      THEN DSSTACK.VOL (STACK_INDEX) = SUBTOKEN (1);
+0    SEARCH_TOKEN = 'RETPD=';
+     CALL TOKNSCAN;
+     IF TOKEN_INDEX ¬= 0 THEN DSSTACK.RETAIN (STACK_INDEX) =
+          SUBTOKEN (1);
+0    SEARCH_TOKEN = 'FCYL='; CALL TOKNSCAN;
+     IF TOKEN_INDEX ¬= 0
+     THEN DO;
+          ALTYP (STACK_INDEX) = 'CYLS';
+          SIZE (STACK_INDEX) = SUBTOKEN (1);
+          INCR (STACK_INDEX) = SUBTOKEN (2);
+          END;
+0    SEARCH_TOKEN = 'CYL='; CALL TOKNSCAN;
+     IF TOKEN_INDEX ¬= 0
+     THEN DO;
+          ALTYP (STACK_INDEX) = 'CYLS';
+          SIZE (STACK_INDEX) = SUBTOKEN (1);
+          INCR (STACK_INDEX) = SUBTOKEN (2);
+          END;
+0    SEARCH_TOKEN = 'TRK='; CALL TOKNSCAN;
+     IF TOKEN_INDEX ¬= 0
+     THEN DO;
+          ALTYP (STACK_INDEX) = 'TRKS';
+          SIZE (STACK_INDEX) = SUBTOKEN (1);
+          INCR (STACK_INDEX) = SUBTOKEN (2);
+          END;
+0    SEARCH_TOKEN = 'DISP=';  CALL TOKNSCAN;
+     IF TOKEN_INDEX ¬= 0
+     THEN DO;
+          IF SUBTOKEN (1) = 'CONT' THEN CONT = 'Y';
+               DO JJ = 1 TO NO_OF_SUBTOKENS;
+               DISP (NODDS, JJ) = SUBTOKEN (JJ);
+               END;
+          IF SUBTOKEN(1)='CAT' THEN TYPE (NODDS) = 'WRITES';
+          IF SUBTOKEN(1)='KEEP' THEN TYPE (NODDS) = 'WRITES';
+     END;
+     IF UNIT_TYPE (NODDS) = 'MT' & UNIT (STACK_INDEX) = 'TAPE'
+     THEN GOTO NOERR;
+     IF UNIT_TYPE (NODDS) = 'DA' & UNIT (STACK_INDEX) = 'DISK'
+     THEN GOTO NOERR;
+     IF UNIT (STACK_INDEX) = '    '  THEN GOTO NOERR;
+        PUT EDIT('DIFFERENT TYPE OF FILE')(A);
+   NOERR:
+     IF UNIT_TYPE (NODDS) = 'MT' THEN UNIT (STACK_INDEX) = 'TAPE';
+     IF UNIT_TYPE (NODDS) = 'DA' THEN UNIT (STACK_INDEX) = 'DISK';
+0    SEARCH_TOKEN ='ISF=';  CALL TOKNSCAN;
+     IF TOKEN_INDEX ¬= 0 THEN ISAM_FLAG (NODDS) = 1;
+     I=STACK_INDEX;
+         IF DSSTACK.UNIT (I) = 'TAPE'
+         THEN DO;
+              PUT SKIP FILE (JOL) EDIT
+                  (' DCL ', DSSTACK.DSID (I),' DS DSN ',
+                   DSSTACK.DSNAME(I),'  TAPE ') (A);
+              IF DSSTACK.VOL (I) ¬= ''
+              THEN PUT      FILE (JOL) EDIT (' VOL ',
+                   DSSTACK.VOL (I)) (A);
+              IF DSSTACK.FILENO (I) = '1' | DSSTACK.FILENO (I) = ''
+              THEN;
+              ELSE PUT      FILE (JOL) EDIT
+                   (' FILENO ',DSSTACK.FILENO (I), ' ') (A);
+              IF DSSTACK.BLKSIZE (I) ¬= ''
+              THEN PUT FILE (JOL) EDIT
+                   (' BLOCK ',DSSTACK.BLKSIZE (I)) (A);
+              PUT FILE (JOL) EDIT (';') (A);
+         END;
+         IF DSSTACK.UNIT (I) ¬= 'TAPE'
+         THEN DO;
+              IF UNIT(I)='*' |   DSSTACK.DSID(I)=' '
+              | UNIT(I)=' '  THEN GO TO IGNR;
+              IF DSSTACK.DSNAME (I) ¬= ''
+              THEN PUT SKIP FILE (JOL) EDIT
+                        (' DCL ', DSSTACK.DSID (I),' DS SYSDA DSN ',
+                        DSSTACK.DSNAME(I)     ) (A);
+              ELSE PUT SKIP FILE (JOL) EDIT
+                        (' DCL ', DSSTACK.DSID (I),' DS SYSDA ') (A);
+           /* IF DSSTACK.VOL (I) ¬= ''
+              THEN PUT      FILE (JOL) EDIT (' VOL ',
+                    DSSTACK.VOL (I)) (A);*/
+              IF DSSTACK.BLKSIZE (I) ¬= ''
+              THEN PUT SKIP FILE (JOL) EDIT
+                   ('   BLOCK ',DSSTACK.BLKSIZE (I), ' ') (A);
+              IF DSSTACK.DSTYPE (I) = 'I' THEN PUT FILE (JOL)
+                   EDIT (' IS ') (A);
+              IF DSSTACK.DSTYPE (I) = 'V' THEN PUT FILE (JOL)
+                   EDIT (' VSAM ') (A);
+              IF DSSTACK.SIZE (I) ¬= '' THEN PUT FILE (JOL)
+                   EDIT (' ',DSSTACK.SIZE (I)) (A);
+              IF DSSTACK.INCR (I) ¬= '' THEN PUT FILE (JOL)
+                   EDIT ( ',',DSSTACK.INCR (I), ' ')(A);
+               PUT FILE (JOL)  EDIT
+                       (DSSTACK.ALTYP (I), ' ') (A);
+              IF DSSTACK.RETAIN (I) ¬= ''
+                   THEN PUT FILE (JOL) SKIP EDIT
+                   ('      RETAIN FOR ',
+                   DSSTACK.RETAIN (I), ' DAYS ')(A);
+              PUT FILE (JOL) EDIT (' ;') (A);
+    IGNR:     END;
+0QUIT_FDPROC:
+     RETURN;
+     END FDPROC;
+1PARA: PROC;
+     I_START = 1;
+     DO I_END = I_START TO 71;
+          IF SUBSTR (CARD, I_END, 1)  = ' ' THEN
+          DO;
+               PARM_FIELD = SUBSTR (CARD, I_START, I_END - I_START);
+               GOTO FIRST_PARA_SCANNED;
+          END;
+     END;
+     PARM_FIELD = SUBSTR (CARD, I_START, 71);
+ FIRST_PARA_SCANNED:
+     IF CONTINUE ¬= ' ' THEN
+     DO;
+          CALL GETCARD;
+          I_START = VERIFY (CARD, ' ');
+          I_END = INDEX (SUBSTR (CARD, I_START, 72 - I_START), ' ');
+          IF I_END = 0 THEN I_END = 72 - I_START;
+          PARM_FIELD = PARM_FIELD || SUBSTR (CARD, I_START, I_END);
+          GOTO FIRST_PARA_SCANNED;
+     END;
+ END PARA;
+1EXPROC: PROC;
+    SAVEIF='';
+     CALL EXEC;
+     IF LABEL = '' | LABEL = ' ' THEN LABEL ='ST' || STEP_NO;
+     IF LENGTH (LABEL) > 7 THEN LABEL = SUBSTR (LABEL, 1, 7);
+     STEPROOT = LABEL;
+     STEP_NO = STEP_NO + 1;
+     IF FIRST_TOKEN = 'SORT' | FIRST_TOKEN ='SORTV3'
+     THEN DO; CALL SORT; RETURN; END;
+     IF FIRST_TOKEN = 'FDLT' THEN DO; CALL FDLT; RETURN; END;
+     IF FIRST_TOKEN = 'FCPY' THEN DO; CALL FCPY; RETURN; END;
+     CALL TOKENIZE;
+     DO WHILE(CONTINUE ¬= ' ');
+           CALL GETCARD; CALL TOKENIZE; END;
+     SEARCH_TOKEN = 'FILE='; CALL TOKNSCAN;
+     IF TOKEN_INDEX ¬= 0
+     THEN LIBRARY = SUBSTR (TOKEN(TOKEN_INDEX),6);
+     SEARCH_TOKEN = 'COND='; CALL TOKNSCAN;
+     IF TOKEN_INDEX ¬= 0 THEN
+          DO;
+          COND_1 = SUBTOKEN (1);
+          IF NO_OF_SUBTOKENS > 1 THEN COND_2 = SUBTOKEN (2);
+          END;
+     IF FIRST_TOKEN = '*' THEN PGMNAME = 'IEFBR14';
+          ELSE PGMNAME = FIRST_TOKEN;
+ END EXPROC;
+1EXEC: PROC;
+     IF PGMNAME = '' THEN RETURN;
+     PUT FILE (JOL) SKIP EDIT
+     (STEPROOT, 'D: DCL ', PGMNAME, ' PROG')(A);
+  /* IF LIBRARY¬='' THEN PUT FILE (JOL)      EDIT
+              (' LIB = ', LIBRARY) (A); */
+   PUT SKIP FILE (JOL)      EDIT
+           ('          SYSOUT    WRITES  PRINTER')(A);
+   PUT SKIP FILE (JOL)      EDIT
+           ('          SYSPRINT  WRITES  PRINTER')(A);
+     DO I = 1 TO NODDS;
+          IF DDNAME (I) = 'CF' THEN
+               PUT FILE (JOL)      EDIT
+               ( ' || ', X.DSID (I)) (           A);
+               ELSE
+               IF ISAM_FLAG (I) = 1 THEN
+                    PUT SKIP FILE (JOL) EDIT
+                       ('          ', X.DDNAME (I), ' UPDATES '
+                       , X.DSID (I),
+                       '(PRIME) || ', X.DSID (I),
+                        '(INDEX) ||', X.DSID (I),'(OVFLOW)') (A);
+               ELSE PUT SKIP FILE (JOL) EDIT
+                       ('          ', X.DDNAME (I), ' ',TYPE(I),
+                        ' ' , X.DSID (I)) (A);
+     END;
+     PUT FILE (JOL) EDIT (' ;') (A);
+     IF COND_1 = '' & COND_2 = '' THEN GOTO OUTPUT_RUN;
+     IF COND_2 = '' THEN
+          DO;
+          IF SUBSTR (COND_1, 1, 1) ='-' THEN
+          CALL JOLEXEC ('IF ANY >='||SUBSTR(COND_1,2)||' THEN ');
+          ELSE
+          CALL JOLEXEC ('IF ANY <= ' || COND_1 || ' THEN  ');
+          END;
+          ELSE DO;
+               CALL JOLEXEC ('IF  ANY < ' || COND_1 ||
+             ' |   ANY > ' || COND_2 ||
+             ' THEN  DO;');
+               CALL JOLEXEC ('    RUN IEFBR14;');
+               CALL JOLEXEC ('END;');
+          END;
+ OUTPUT_RUN:
+  CALL JOLEXEC ('DO;');
+  CALL JOLEXEC(STEPROOT||':     RUN '||STEPROOT||'D PARM =''' ||
+               PARM_FIELD || ''';');
+     DO I = 1 TO NODDS;
+          DO JJ = 1 TO 3;
+          IF DISP (I, JJ) = 'DLT'
+           THEN CALL JOLEXEC('     DELETE '||X.DSID(I)||'  ;');
+          IF DISP (I, JJ) = 'CAT'
+           THEN CALL JOLEXEC('     CATLG  '||X.DSID(I)||'  ;');
+          IF DISP (I, JJ) = 'UNCAT'
+           THEN CALL JOLEXEC('     UNCAT '||X.DSID(I)||'  ;');
+          IF DISP (I, JJ) = 'KEEP'
+          THEN CALL JOLEXEC (' IF ERROR THEN CATLG '||X.DSID(I)||
+               '  ;');
+          END;
+     END;
+  CALL JOLEXEC ('END;');
+     PROGDETS = '';
+ END EXEC;
+0FINPROC:PROC; CALL JOBG; END;
+1FDLT: PROC;
+ FST:CALL SCANCARD;
+ FCT:CALL TOKENIZE;
+     IF CONTINUE ¬= ' ' THEN
+          DO;
+          CALL GETCARD;
+          GOTO FCT;
+          END;
+     IF OPCODE = 'F' | OPCODE = 'FDLT' THEN
+          DO;
+          CALL JOLEXEC ('  DELETE ' || FIRST_TOKEN || ' ;' );
+          RETURN;
+          END;
+     ELSE GOTO FST;
+ END FDLT;
+-FCPY: PROC;
+     IGNORE_COIN = 1;
+ FCS:CALL SCANCARD;
+     IF OPCODE = 'FD' | OPCODE='SW'  THEN
+         DO;
+         CALL FDPROC;
+         GOTO FCS;
+         END;
+     IF OPCODE  = 'FIN' | OPCODE='EX'
+     | OPCODE  = 'IF'
+     THEN GOTO EXIT_FCPY;
+     IF OPCODE ¬= 'FCPY' THEN GOTO FCS;
+     CALL TOKENIZE;
+     DO WHILE (CONTINUE ¬= ' '); CALL GETCARD; CALL TOKENIZE; END;
+     IF SUBSTR (FIRST_TOKEN, 1, 3) = 'IN='
+     THEN DO;
+          IN_DDNAME = SUBSTR (FIRST_TOKEN, 4);
+          OUT_DDNAME = SUBSTR (TOKEN (1), 5);
+          END;
+     ELSE DO;
+          OUT_DDNAME = SUBSTR (FIRST_TOKEN, 5);
+          IN_DDNAME = SUBSTR (TOKEN (1), 4);
+          END;
+     IN_DSID, OUT_DSID = '';
+     DO I = 1 TO NODDS;
+          IF X.DDNAME (I) = IN_DDNAME THEN IN_DSID = X.DSID (I);
+          IF X.DDNAME (I) = OUT_DDNAME THEN OUT_DSID = X.DSID (I);
+     END;
+     GOTO FCS;
+ EXIT_FCPY:
+     IGNORE_COIN = 0;
+  CALL JOLEXEC ('DO;');
+     CALL JOLEXEC ('  COPY  ' || IN_DSID||' TO '||OUT_DSID||';');
+     CALL JOLEXEC ('  CATLG ' || OUT_DSID||'  ;');
+  CALL JOLEXEC ('END;');
+     PROGDETS = '';
+ END FCPY;
+1SORT: PROC;
+     IGNORE_COIN = 1;
+ SST:CALL SCANCARD;
+     IF OPCODE = 'FD'
+     |  OPCODE = 'SW' THEN DO; CALL FDPROC; GOTO SST; END;
+ STK:CALL TOKENIZE;
+     IF CONTINUE = ' ' THEN GOTO CHECK;
+     CALL GETCARD;
+     GOTO STK;
+ CHECK: IF OPCODE = 'FIN' THEN GOTO OUTPUT;
+     IF OPCODE = 'INPUT' THEN IN_DDNAME = FIRST_TOKEN;
+     IF OPCODE = 'OUTPUT' THEN OUT_DDNAME = FIRST_TOKEN;
+     IF OPCODE = 'SORT'   THEN SORTKEYS = SUBSTR(CARD_SAVE,1,71);
+     GOTO SST;
+0OUTPUT:
+     DO I = 1 TO NODDS;
+          IF X.DDNAME (I) = IN_DDNAME THEN IN_DSID = X.DSID (I);
+          IF X.DDNAME (I) = OUT_DDNAME THEN OUT_DSID = X.DSID (I);
+     END;
+     I=INDEX(SORTKEYS,' SORT ');
+     IF I¬=0 THEN SORTKEYS=SUBSTR(SORTKEYS,I+6);
+     I =INDEX(SORTKEYS,'KEYS=');
+     IF I¬=0 THEN SORTKEYS=SUBSTR(SORTKEYS,I+4);
+  CALL JOLEXEC ('DO;');
+     CALL JOLEXEC ('  SORT ' || IN_DSID || ' TO ' || OUT_DSID ||
+          ' FIELDS ' || SORTKEYS || ' ;' );
+     CALL JOLEXEC ('  CATLG ' || OUT_DSID||'  ;');
+  CALL JOLEXEC ('END;');
+     PROGDETS = '';
+     IGNORE_COIN = 0;
+ END SORT;
+1TOKNSCAN: PROC;
+     TOKEN_INDEX = 0;
+     DO I = 1 TO NO_OF_TOKENS;
+          IF SUBSTR(TOKEN(I),1,LENGTH(SEARCH_TOKEN))=SEARCH_TOKEN
+          THEN DO;
+               TOKEN_INDEX = I;
+               TOKEN_STRING=SUBSTR(TOKEN(I),1+LENGTH(SEARCH_TOKEN));
+               IF SUBSTR (TOKEN_STRING , 1, 1)¬= '('
+               THEN DO;
+                    NO_OF_SUBTOKENS = 1;
+                    SUBTOKEN (1) = TOKEN_STRING;
+                    GOTO QUIT_TOKNSCAN;
+                    END;
+               TOKEN_STRING = SUBSTR (TOKEN_STRING, 2 ) || ')';
+               DO NO_OF_SUBTOKENS = 1 TO 3;
+                    J = INDEXER (TOKEN_STRING, ',)');
+                    SUBTOKEN(NO_OF_SUBTOKENS)
+                         =SUBSTR(TOKEN_STRING,1, J-1);
+                    IF SUBSTR (TOKEN_STRING, J, 1) = ')'
+                    THEN GOTO QUIT_TOKNSCAN;
+                    ELSE TOKEN_STRING = SUBSTR (TOKEN_STRING, 1 + J);
+               END;
+          END;
+     END;
+ QUIT_TOKNSCAN:
+ /*  PUT SKIP EDIT ('''',SEARCH_TOKEN,'''',TOKEN_INDEX) (A,A,A,F(3));
+ /*  IF NO_OF_SUBTOKENS ¬= 0 THEN
+ /*  PUT SKIP EDIT ((LENGTH (SUBTOKEN (I)), '''', SUBTOKEN (I), ''''
+ /*       DO I = 1 TO NO_OF_SUBTOKENS))
+ /*       (F(3), A, A, A);  **************************/
+     END TOKNSCAN;
+1SCANCARD: PROC;
+     CARD_OPTIONS = '';
+     CALL GETCARD;
+     IF SUBSTR (CARD, 1, 1) ¬= '$' & SUBSTR (CARD, 1, 1) ¬= '/'
+     THEN DO;
+          COL_1 = ' ';
+          RETURN;
+          END;
+     COL_1 = SUBSTR (CARD, 1, 1);
+     DO I = 2 TO 10;
+          IF SUBSTR (CARD, I, 1) = ' ' THEN
+          DO;
+               LABEL = SUBSTR (CARD, 2, I - 2);
+               GOTO FIND_OPCODE;
+          END;
+     END;
+0FIND_OPCODE:
+     CARD = SUBSTR (CARD,I);
+     DO WHILE (SUBSTR (CARD, 1, 1) = ' ' & CARD ¬= ' ');
+          CARD = SUBSTR (CARD, 2);
+     END;
+     IF CARD = ' ' THEN RETURN;
+     I = INDEX (CARD, ' ');
+     IF I = 0 THEN RETURN;
+     OPCODE = SUBSTR (CARD, 1, I - 1);
+     CARD = SUBSTR (CARD, I);
+     DO WHILE (SUBSTR (CARD, 1, 1) = ' ' & CARD ¬= ' ');
+          CARD = SUBSTR (CARD, 2);
+     END;
+     I = INDEXER (CARD, ' ,');
+     FIRST_TOKEN = SUBSTR (CARD, 1, I - 1);
+ TOKLUP5:I98=INDEX(FIRST_TOKEN,'$');
+     IF I98¬=0 THEN DO;
+        FIRST_TOKEN=SUBSTR(FIRST_TOKEN,1,I98-1)||'%'
+        ||SUBSTR(FIRST_TOKEN,I98+1);
+        GOTO TOKLUP5;
+     END;
+   /*
+ TOKLUP6:I98=INDEX(FIRST_TOKEN,'*');
+     IF I98¬=0 THEN DO;
+         IF I98=1 THEN GO TO IGNR9;
+         IF SUBSTR(FIRST_TOKEN,I98-1,1)='=' THEN GO TO IGNR9;
+         FIRST_TOKEN=SUBSTR(FIRST_TOKEN,1,I98-1)||'||'
+         ||SUBSTR(FIRST_TOKEN,I98+1);
+         GOTO TOKLUP6;
+   IGNR9:
+     END;*/
+     CARD = SUBSTR (CARD, I + 1);
+     IF SUBSTR (CARD, 1, 1) = ',' THEN CARD = SUBSTR (CARD, 2);
+ /*  PUT SKIP EDIT ('F', CARD) (A);
+ /*  PUT SKIP EDIT ('''',LABEL,'''',OPCODE,'''',FIRST_TOKEN, '''')
+ /*       (A);          ********************/
+     RETURN;
+     END SCANCARD;
+-GETCARD: PROC;
+     IF NO_SCAN = 1
+          THEN CARD = CARD_SAVE;
+          ELSE DO;
+  SKIPUPDTE:  READ FILE (SYSIN) INTO (CARD);
+              IF SUBSTR(CARD,1,2)='./' THEN DO;
+                 PUT SKIP FILE(JOL) EDIT(CARD)(A);
+                 PUT SKIP FILE(JOL) EDIT('./ NUMBER NEW1=10,INCR=10')
+                      (A);
+              PUT EDIT ('*****************************')(COL(80),A);
+              PUT EDIT ('*****************************')(COL(80),A);
+              PUT EDIT ('*****************************')(COL(80),A);
+                 PUT PAGE           EDIT(CARD)(A);
+                 CARD_NO = 0;
+              GOTO SKIPUPDTE;
+              END;
+              CARD_NO = CARD_NO + 1;
+              IF   PARM='TEST' THEN
+              PUT SKIP FILE(JOL) EDIT (CARD) (A);
+              IF INDEX(CARD,' EX ')¬=0 THEN PUT SKIP(2) EDIT(' ')
+                     (A);
+              PUT SKIP EDIT (CARD_NO, ' ', CARD) (A);
+              IF SUBSTR (CARD, 1, 1) ='$' THEN DO;
+                  ICVC=INDEX(CARD,'SOUT=');
+                  IF ICVC¬=0 THEN DO;
+                      ICVC2=INDEX(CARD,',');
+                      IF ICVC2¬=0 THEN DO;
+                          SUBSTR(CARD,ICVC2+1)=SUBSTR(CARD,ICVC);
+                      END;
+                  /*  PUT SKIP EDIT (CARD_NO, ' ', CARD) (A);
+                      PUT   EDIT (' FIXED') (A);*/
+                  END;
+              END;
+          END;
+     NO_SCAN = 0;
+     CARD_SAVE = CARD;
+     CONTINUE = SUBSTR (CARD, 72, 1);
+     SUBSTR (CARD, 72, 1) = ' ';
+     IF SUBSTR (CARD, 1, 1) ='$' | SUBSTR (CARD, 1, 1) = '/'
+          THEN SUBSTR (CARD, 72) = ' ';
+     END GETCARD;
+1TOKENIZE: PROC;
+     IF CARD = ' ' THEN GOTO QUIT_SCAN;
+     DO WHILE (SUBSTR (CARD, 1, 1) = ' ');
+          CARD = SUBSTR (CARD, 2);
+          END;
+ CHECK_LAST_TOKEN:
+     IF SUBSTR (CARD, 1, 1) = ' ' THEN GOTO QUIT_SCAN;
+     NO_OF_TOKENS = NO_OF_TOKENS + 1;
+     I = INDEXER (CARD, ' ,''(');
+ /*  PUT SKIP EDIT ('I =',I) (A,F(3));        ********************/
+     WORK_CHAR = ' ';
+ CAT:TOKEN(NO_OF_TOKENS)=TOKEN(NO_OF_TOKENS)||SUBSTR(CARD,1,I-1);
+     IF WORK_CHAR = '''' THEN I = I + 1;
+     WORK_CHAR = SUBSTR (CARD, I, 1);
+     IF WORK_CHAR=')' THEN TOKEN(NO_OF_TOKENS)=TOKEN (NO_OF_TOKENS)
+                    || ')';
+     CARD = SUBSTR (CARD, I + 1);
+     IF WORK_CHAR = ''''
+     THEN DO;
+          I = INDEX (CARD, '''');
+          GOTO CAT;
+          END;
+     IF WORK_CHAR = '('
+     THEN DO;
+          TOKEN (NO_OF_TOKENS) = TOKEN (NO_OF_TOKENS) || '(';
+          I = INDEX (CARD, ')');
+          GOTO CAT;
+          END;
+     IF WORK_CHAR = ')' THEN GOTO CAT;
+     IF WORK_CHAR = ' ' | WORK_CHAR = ','
+     THEN DO;
+          GOTO CHECK_LAST_TOKEN;
+          END;
+ QUIT_SCAN:
+  /* IF NO_OF_TOKENS ¬= 0 THEN
+     PUT SKIP EDIT((LENGTH(TOKEN(I)),'''',TOKEN(I),''''
+      DO I = 1 TO NO_OF_TOKENS))
+          (F(3), A, A, A);*/
+    IF NO_OF_TOKENS=0 THEN RETURN;
+    DO  I99=1 TO NO_OF_TOKENS;
+ TOKLUP1:I98=INDEX(TOKEN(I99),'$');
+         IF I98¬=0 THEN DO;
+              TOKEN(I99)=SUBSTR(TOKEN(I99),1,I98-1)||'%'
+              ||SUBSTR(TOKEN(I99),I98+1);
+              GOTO TOKLUP1;
+         END;
+
+         IF TOKEN(I99)='UIN=*' THEN GO TO IGNR4;
+ TOKLUP2:I98=INDEX(TOKEN(I99),'*');
+         IF I98¬=0 THEN DO;
+              IF I98=1  THEN GO TO IGNR4;
+              IF SUBSTR(TOKEN(I99),I98-1,1)='='
+              THEN GO TO IGNR4;
+              IF SUBSTR(TOKEN(I99),I98+1,1)='$'
+              |  SUBSTR(TOKEN(I99),I98+1,1)='.' THEN
+              TOKEN(I99)=SUBSTR(TOKEN(I99),1,I98-1)
+              ||SUBSTR(TOKEN(I99),I98+1);
+            ELSE
+              TOKEN(I99)=SUBSTR(TOKEN(I99),1,I98-1)||'||'
+              ||SUBSTR(TOKEN(I99),I98+1);
+             GOTO TOKLUP2;
+         END;
+  IGNR4:  END;
+     END TOKENIZE;
+1INDEXER: PROC (STRING_1, STRING_2) RETURNS(FIXED BIN);
+     DCL STRING_1 CHAR (120) VAR;
+     DCL STRING_2 CHAR (9)   VAR;
+     JK = 1000;
+     DO JJ = 1 TO LENGTH (STRING_2);
+          JS = INDEX (STRING_1, SUBSTR (STRING_2, JJ, 1));
+          IF JS ¬= 0 THEN JK = MIN (JS, JK);
+     END;
+     IF JK = 1000 THEN RETURN (0);
+     RETURN (JK);
+ END INDEXER;
+1EOJ: PROC;
+    CALL EXEC;
+    DCL EOJCALLED BIN FIXED STATIC INIT(0);
+    IF  EOJCALLED¬=0 THEN RETURN;
+    EOJCALLED=1;
+    PUT SKIP FILE (JOL) EDIT(' ') (A);
+    PUT SKIP FILE (JOL) EDIT(' ') (A);
+    PUT SKIP FILE (JOL) EDIT(' /*  RUN LOGIC  */ ') (A);
+    PUT SKIP FILE (JOL) EDIT(' ') (A);
+    PUT SKIP FILE (JOL) EDIT(' ') (A);
+    DO I = 1 TO JOLSTACK_CNTL;
+      /* IF LENGTH (JOLSTACK (I)) < 71 - 10 */
+         IF INDEX(JOLSTACK(I),':')¬= 0 THEN
+          PUT SKIP FILE (JOL) EDIT (JOLSTACK (I)) (COL (2), A);
+         ELSE PUT SKIP FILE (JOL) EDIT (JOLSTACK (I)) (COL (10), A);
+      /* ELSE DO;
+              DO WHILE (JOLSTACK (I) ¬= '');
+                   DO IE=MIN(LENGTH(JOLSTACK(I)),71-10) TO 1 BY -1;
+                        IF SUBSTR (JOLSTACK(I), IE, 1) = ' '
+                        THEN DO;
+                             PUT FILE (JOL) SKIP EDIT
+                             (SUBSTR (JOLSTACK(I),1,IE))(COL(10),A);
+                             JOLSTACK(I)= SUBSTR(JOLSTACK(I),IE+1);
+                        END;
+                   END;
+              END;
+         END;  */
+    END;
+    PUT SKIP FILE (JOL)  EDIT (' /*            */ ') (A);
+    PUT SKIP FILE (JOL)  EDIT (' /*            */ ') (A);
+    PUT SKIP FILE (JOL)  EDIT (' /* END OF JOB */ ') (A);
+    PUT SKIP FILE (JOL)  EDIT (' /* END OF JOB */ ') (A);
+    PUT SKIP FILE (JOL)  EDIT (' /* END OF JOB */ ') (A);
+    END EOJ;
+1DEFINE:PROC;
+         DCL FIRST FIXED BIN STATIC INIT (0);
+   /*    IF FIRST = 0
+         THEN DO;
+              FIRST = 1;
+              IF PARM = ' '
+              THEN PUT SKIP EDIT('//JOLX8  JOB CLASS=A')(A)FILE(JOL);
+              ELSE PUT SKIP EDIT ('//',PARM) (A) FILE (JOL);
+              PUT SKIP EDIT ('//UP EXEC PGM=IEBUPDTE') (A) FILE (JOL);
+              PUT SKIP EDIT ('//SYSPRINT DD SYSOUT=A') (A) FILE (JOL);
+              PUT SKIP EDIT ('//SYSUT1 DD DSN=JOL32.INCLUDE,')
+                            (A) FILE (JOL);
+              PUT SKIP EDIT ('//       DISP=SHR') (A) FILE(JOL);
+              PUT SKIP EDIT ('//SYSUT2 DD DSN=JOL32.INCLUDE,') (A)
+                                 FILE (JOL);
+              PUT SKIP EDIT ('//       DISP=SHR') (A) FILE(JOL);
+         END;   */
+         PROGDETS = '';
+         STEP_NO = 1;
+         DSIDNO  = 5;
+         DLBL_TLBL_FOUND = 0;
+         JOLSTACK_CNTL = 1;
+    SAVEIF='';
+    JOLSTACK = '';
+    NO_SCAN, IGNORE_COIN = 0;
+    DO JJ = 1 TO 1000; DSSTACK (JJ) = ''; END;
+      /*PUT SKIP EDIT ('./ ADD NAME=',FIRST_TOKEN) (A) FILE (JOL);*/
+      /* PUT SKIP EDIT ('*JOL;') (A) FILE (JOL);*/
+
+ TOKENZ:CALL TOKENIZE; IF CONTINUE = ' ' THEN GOTO MAC_LOOP;
+     CALL GETCARD; GOTO TOKENZ;
+ MAC_LOOP:DO I = 1 TO NO_OF_TOKENS;
+               J = INDEX (TOKEN (I), '=');
+               IF J = 0 | SUBSTR (TOKEN (I), J+1, 1) = ''''
+               THEN PUT FILE (JOL) SKIP EDIT ('%',TOKEN(I),'='''';')
+                         (COL (5), A, A,A);
+               ELSE PUT FILE(JOL)
+                         EDIT('%',SUBSTR(TOKEN(I),1,J),'''',
+                         SUBSTR (TOKEN (I), J+1),''';')
+                         (COL (5), A, A, A, A, A);
+          END;
+    DCL I99       PIC '99' STATIC INIT(1);
+          DO I = 1 TO NO_OF_TOKENS;
+               I99=I; /* PICTURE OF 99 FOR BETTER LOOK (KODAK?)*/
+               J = INDEX (TOKEN (I), '=');
+               IF J = 0 | SUBSTR (TOKEN (I), J+1, 1) = ''''
+               THEN PUT SKIP FILE (JOL)      EDIT
+                    ('     IF %LIST(',I99,') THEN %',TOKEN(I99),
+                    '=''%LIST(',I99,')'';')
+                         (A);
+               ELSE PUT SKIP FILE(JOL)  EDIT
+                    ('     IF %LIST(',I99,') THEN %',
+                    SUBSTR(TOKEN(I99),1,J),
+                    '''%LIST(',I99,')'';')
+                     (A);
+          END;
+          PUT FILE (JOL) EDIT ( ' ON ERROR SNAP;') ( SKIP, A);
+   /*  PUT SKIP EDIT (' ','INCLUDE ',DSIDTBL,';') (A) FILE (JOL);*/
+       PUT SKIP EDIT ('  DCL PRINTER PRINTER NODEF;') (A) FILE (JOL);
+       PUT SKIP EDIT ('  JOBLIB ACC.LLIB;') (A) FILE (JOL);
+   /*  PUT SKIP EDIT ('  DCL %$N INIT '''';') (A) FILE (JOL);*/
+     END DEFINE;
+1IFPROC: PROC;
+     CALL TOKENIZE;
+     J = INDEX (FIRST_TOKEN, '=');
+     JJK = J - 1;
+     IF SUBSTR (FIRST_TOKEN, J+1, 1) = 'N'
+          THEN DO; COMP_STRING = ' ¬= '; J = J + 1; END;
+          ELSE COMP_STRING =  ' = ';
+     SAVEIF=
+         'IF %'||SUBSTR (FIRST_TOKEN, 1, JJK)||COMP_STRING||
+       SUBSTR(FIRST_TOKEN,J+1)||' THEN STARTAT '||TOKEN(1)||';';
+
+  /*   PUT SKIP FILE(JOL) EDIT('        ',SAVEIF)(A);*/
+     END IFPROC;
+   /*
+1FIX_DSNAME: PROC;
+    DCL LAST_CHAR CHAR (1);
+    LAST_CHAR = ' ';
+    DO I_FIX = 1 TO LENGTH (TOKEN (3));
+         IF LAST_CHAR = 'Z'
+         THEN DO;
+              IF VERIFY (SUBSTR (TOKEN (3), I_FIX, 1),
+                   'ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@0123456789') = 0
+              THEN GOTO END_DS_LOOP;
+              ELSE DO;
+                   SUBSTR (TOKEN (3), I_FIX, 1) = '.';
+                   LAST_CHAR = '.';
+                   GOTO END_DS_LOOP;
+                   END;
+              END;
+         ELSE DO;
+              IF VERIFY (SUBSTR (TOKEN (3), I_FIX, 1),
+                   'ABCDEFGHIJKLMNOPQRSTUVWXYX$#@') = 0
+              THEN DO;
+                   LAST_CHAR = 'Z';
+                   GOTO END_DS_LOOP;
+                   END;
+              ELSE DO;
+                   SUBSTR (TOKEN (3), I_FIX, 1) = '$';
+                   PUT EDIT ('   ***DSNAME FIX APPLIED') (A);
+                   LAST_CHAR = 'Z';
+                   END;
+              END;
+ END_DS_LOOP:
+         END;
+    RETURN;
+    END FIX_DSNAME;
+  */
+1JOLEXEC:PROC (PARMX);
+    DCL PARMX CHAR (200) VARYING;
+    IF JOLSTACK_CNTL < 500 THEN DO;
+         JOLSTACK (JOLSTACK_CNTL) = PARMX;
+         JOLSTACK_CNTL = JOLSTACK_CNTL + 1;
+    END;
+    ELSE PUT SKIP EDIT ('JOL STACK IS FULL. ''',PARMX,''' LOST.')
+                   (A);
+    END JOLEXEC;
+1WRAPUP: PROC;
+      /***************/      RETURN;
+    PUT SKIP FILE (JOL) EDIT('./ ADD NAME=', DSIDTBL) (A);
+    PUT SKIP FILE (JOL) EDIT(' /* DATA SET DECLARES */') (A);
+    PUT SKIP FILE (JOL) EDIT(' /* PRODUCED BY X8  TO JOL CONVERTER *')
+                        (A);
+    PUT SKIP FILE (JOL) EDIT(' /*           */ ') (A);
+    PUT SKIP FILE (JOL) EDIT(' /*           */ ') (A);
+    PUT SKIP FILE (JOL) EDIT(' /* T A P E S */ ') (A);
+    DO I = 1 TO DSSTACKNO;
+         IF DSSTACK.UNIT (I) = 'TAPE'
+         THEN DO;
+              PUT SKIP FILE (JOL) EDIT
+                  (' DCL ', DSSTACK.DSID (I),' DS DSN ',
+                   DSSTACK.DSNAME(I),'  TAPE ') (A);
+              IF DSSTACK.VOL (I) ¬= ''
+              THEN PUT      FILE (JOL) EDIT (' VOL ',
+                   DSSTACK.VOL (I)) (A);
+              IF DSSTACK.FILENO (I) = '1' | DSSTACK.FILENO (I) = ''
+              THEN;
+              ELSE PUT      FILE (JOL) EDIT
+                   (' FILENO ',DSSTACK.FILENO (I), ' ') (A);
+              IF DSSTACK.BLKSIZE (I) ¬= ''
+              THEN PUT FILE (JOL) EDIT
+                   (' BLOCK ',DSSTACK.BLKSIZE (I)) (A);
+              PUT FILE (JOL) EDIT (';') (A);
+         END;
+    END;
+1   PUT SKIP FILE (JOL) EDIT
+              (' /* D I S K    D A T A    S E T S */ ') (A);
+0   DO I = 1 TO DSSTACKNO;
+         IF DSSTACK.UNIT (I) ¬= 'TAPE'
+         THEN DO;
+              IF UNIT(I)='*' |   DSSTACK.DSID(I)=' '
+              | UNIT(I)=' '  THEN GO TO IGNR;
+              IF DSSTACK.DSNAME (I) ¬= ''
+              THEN PUT SKIP FILE (JOL) EDIT
+                        (' DCL ', DSSTACK.DSID (I),' DS DSN ',
+                        DSSTACK.DSNAME(I)     ) (A);
+              ELSE PUT SKIP FILE (JOL) EDIT
+                        (' DCL ', DSSTACK.DSID (I),' DS SYSDA ') (A);
+              IF DSSTACK.VOL (I) ¬= ''
+              THEN PUT      FILE (JOL) EDIT (' VOL ',
+                    DSSTACK.VOL (I)) (A);
+              IF DSSTACK.BLKSIZE (I) ¬= ''
+              THEN PUT SKIP FILE (JOL) EDIT
+                   ('   BLOCK ',DSSTACK.BLKSIZE (I), ' ') (A);
+              IF DSSTACK.DSTYPE (I) = 'I' THEN PUT FILE (JOL)
+                   EDIT (' IS ') (A);
+              IF DSSTACK.DSTYPE (I) = 'V' THEN PUT FILE (JOL)
+                   EDIT (' VSAM ') (A);
+              IF DSSTACK.SIZE (I) ¬= '' THEN PUT FILE (JOL)
+                   EDIT (DSSTACK.SIZE (I)) (A);
+              IF DSSTACK.INCR (I) ¬= '' THEN PUT FILE (JOL)
+                   EDIT ( ',',DSSTACK.INCR (I), ' ')(A);
+               PUT FILE (JOL)  EDIT
+                       (DSSTACK.ALTYP (I), ' ') (A);
+              IF DSSTACK.RETAIN (I) ¬= ''
+                   THEN PUT FILE (JOL) SKIP EDIT
+                   ('      RETAIN FOR ',
+                   DSSTACK.RETAIN (I), ' DAYS ')(A);
+              PUT FILE (JOL) EDIT (' ;') (A);
+    IGNR:     END;
+    END;
+   RETURN;   /************************/
+-   PUT SKIP FILE (JOL) EDIT ('./ ADD NAME=J',SUBSTR(DSIDTBL,2))(A);
+    PUT SKIP FILE (JOL) EDIT ('*JOL;') (A);
+    PUT SKIP FILE (JOL) EDIT (' /* COPY X8  FILES TO OS */ ') (A);
+    PUT SKIP FILE (JOL) EDIT (' INCLUDE ',DSIDTBL,';') (A);
+0   DO I = 1 TO DSSTACKNO;
+         IF DSSTACK.UNIT (I) ¬= 'TAPE'
+         THEN DO;
+              PUT SKIP FILE (JOL) EDIT (
+              'DOSTOOS ',DSSTACK.DSID (I), ';') (A);
+              PUT FILE (JOL) EDIT (
+              'OPCNTL ''//SYSUT1 DD UNIT=SYSDA,DISP=OLD,'';',
+              'OPCNTL ''// DSN=''''',DSSTACK.DSNAME (I),
+              ''''',VOL=SER=',DSSTACK.VOL(I),''';')
+              (SKIP,A,SKIP,A,A,A,A,A,A,A,A,A);
+         END;
+    END;
+    END WRAPUP;
+ END OSIIJOL;

@@ -1,0 +1,5 @@
+         MACRO                                                    J50
+&NAME    DATASECT   &DNAME
+.* THIS MACRO CREATES A CSECT.  THE 386 370 SIMULATOR REUQUIRES IT.
+&NAME    CSECT &DNAME
+         MEND                                                     J50

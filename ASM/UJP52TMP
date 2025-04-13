@@ -1,0 +1,32 @@
+         TITLE 'GET NEXT CHARACTER FROM INPUT STREAM(3)'          86014
+UJP52CHR CSECT                                                    86014
+* NEW CODE IS INTRODUCED FOR FASTER INPUT. IT SAVES USING A       86014
+*     SAVEAREA FOR NORMAL CHARACTER READS                         86014
+* THIS ROUTINE RETURNS THE NEXT CHARACTER FROM FILE SYSIN         86014
+         USING UJP52CHR,R15
+         CLI   EOFSYSIN,C' '
+         BNE   P52RC12        RETURN A 12
+         CLI   SYSINMDE,C'1'  ARE WE IN SYSINMODE ?             74303
+         BE    P52OLDRT
+         L     R1,AJOLGEN
+         USING GENDETS,R1
+         CLC   CP,SM2         RUN OVER CARD BOUNDARY ?
+         BNL   P52OLDRT
+         LH    R1,CP          LOAD CURRENT CHARACTER POSITION
+         LA    R15,CARD(R1)   GET ABSOLUTE ADDRESS CHAR WE WANT
+         MVC   INCHAR,0(R15)  GET REQD CHARACTER
+         LA    R1,1(R1)       ADD 1 TO CP
+         STH   R1,CP          AND RESTORE
+         SR    R15,R15
+         BR    R14
+P52RC12  MVI   EOFSYSIN,C'1'
+         MVI   INCHAR,C' '
+         LA    R15,12
+         BR    R14
+* HERE WE NEED TO GO TO THE FULL READ CHARACTER ROUTINE
+P52OLDRT L     R15,=V(UJP52OLD)                                   86014
+         BR    R15                                                74303
+         DC    10S(*)
+         LTORG
+         DROP  R15                                                74303
+         DROP  R1                                                 86014

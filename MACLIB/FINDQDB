@@ -1,0 +1,31 @@
+         MACRO
+&L       FINDQDB &ERRET=,&NRETURN=,&MF=
+         AIF   ('&MF' NE 'I').NOTI                                J40B
+         CNOP  0,4                                                J40B
+         BAL   1,*+12                                             J40B
+         DC    A(&SYSLIST(1))                                     J40B
+         DC    A(&SYSLIST(2)+X'80000000')                         J40B
+         AGO   .BALR                                              J40B
+.NOTI    ANOP                                                     J40B
+         AIF   (N'&MF EQ 1).NOTE                                  J40B
+         AIF   ('&MF(1)' NE 'E').NOTE                             J40B
+&L       IHBINNRB SF=&MF                                          J40B
+         IHBINNRA &SYSLIST(1),&SYSLIST(2)
+         STM   0,1,0(15)                                          J40B
+         LR    1,15                                               J40B
+         OI    4(15),X'80'                                        J40B
+.BALR    L     R15,=V(SRCHQDB)
+         BALR  R14,R15
+         MNOTE *,'RETURNS QDB ADDRESS IN R1'                      J40B
+         MNOTE *,'RETURNS JFCB PREFIX ADDR IN R0'                 J40B
+         AIF   (T'&ERRET EQ 'O').NERRET
+         LTR   R15,R15
+         BNZ   &ERRET
+.NERRET  ANOP
+         AIF   (T'&NRETURN EQ 'O').NNRET
+         LTR   R15,R15
+         BZ    &NRETURN
+.NNRET   ANOP
+         MEXIT                                                    J40B
+.NOTE    MNOTE 12,'FINDQDB: INVALID MF VALUE &MF'                 J40B
+         MEND

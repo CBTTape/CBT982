@@ -1,0 +1,696 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Jol - Job Networks</title>
+  <meta content="Clement Clarke" name="author">
+  <meta content="Part of Jol Scheduling Manual" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top; text-align: right;">
+      <h3><font><font><u><font size="4"><font size="5"><u>Job Networks</u></font></font></u></font></font></h3>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- -->
+      <br>
+      <h2>Job Networks</h2>
+      </td>
+      <td
+ style="vertical-align: top; text-align: left; background-color: rgb(192, 192, 192);">
+      <ul>
+        <ul>
+          <b><img alt="Simple Network" src="file:Simple%20Network.jpg"></b>
+        </ul>
+      </ul>
+      <ul>
+        <ul>
+          <ul>
+            <ul>
+            </ul>
+          </ul>
+        </ul>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td style="width: 496px; vertical-align: top; text-align: right;">
+      <p align="LEFT">This section of the manual<i> </i>discusses one
+method you can use to chain together many jobs
+to run in a particular sequence. This chapter shows how you can have
+Jol manage a network and <b>SUBMIT</b> a job or jobs after a
+particular job or group of parallel running jobs has ended. The next
+chapter demonstrates how you can <b>SUBMIT</b> a job from a currently
+executing job (<b>Dependent Job Processing</b>).</p>
+      <p align="LEFT">The major differences
+between the two methods are:</p>
+      <p align="LEFT"> </p>
+      <ul type="disc">
+        <li style="text-align: left;">With <i>Job
+Networking</i>, Jol manages the submission of jobs and controls <i>parallel
+
+
+
+
+
+
+
+
+          </i>execution of jobs and the waiting for the termination of
+jobs before submitting other jobs in the network. Basically, you code
+your Jol programs as though they are independent jobs, and then code a
+special set of Jol network instructions that then submit the jobs in
+the desired sequence for you.
+          <p>Jobs are usually submitted only when
+the current job ends, although you can force Jol to examine the status
+of the network at any time, and depending on the status, submit other
+jobs.</p>
+          <p> </p>
+        </li>
+        <li>
+          <div style="text-align: left;"><i>Dependent job processing </i>allows
+you
+to
+
+
+
+
+
+
+          <b>SUBMIT</b> a job at any time from the current job. You
+code
+the <b>SUBMIT</b> instructions at appropriate points in your Jol
+program. The <b>SUBMIT</b> commands can be coded before the job ends,
+and allows for parallel processing, but you cannot wait for two jobs to
+terminate before submitting another.</div>
+          <p align="LEFT">It is recommended that
+you be familiar with, or review, the <b>SUBMIT</b> and <b>SAVESYMS</b>
+commands. These commands, with their protocols, are explained in the <i>Jol
+Reference
+Manual
+
+
+
+
+
+
+          </i>and<i> Jol Reference Guide</i>, and in the
+Appendices of this book.</p>
+          <p align="LEFT"> </p>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h2>Job Networks</h2>
+      </td>
+      <td align="LEFT" valign="TOP">Often it is desirable to process
+two or more jobs in parallel, and after those jobs have reached
+completion, start one or more jobs.
+      <p>To prepare a Jol network is a simple task. You can use your
+previous Jol or JCL jobs without alteration. You prepare your network
+commands and place them in the <b>JOL.NETWORK</b> partitioned data set
+under the member name of the network.</p>
+      <p>A typical network job might be that jobs <b>JOB1</b> and <b>JOB2</b>
+are to run, and after both jobs have completed <b>JOB3</b> is to
+commence. This can be shown as:</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- -->&nbsp;</td>
+      <td
+ style="vertical-align: top; text-align: left; background-color: rgb(192, 192, 192);">
+      <ul>
+        <ul>
+          <b><img alt="Simple Network" src="file:Simple%20Network.jpg"></b>
+        </ul>
+      </ul>
+      <ul>
+        <ul>
+          <ul>
+            <ul>
+            </ul>
+          </ul>
+        </ul>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <h3><b>Figure 2-1: A Small Job Network</b></h3>
+      <p>This may be coded in Jol as shown on the
+following:</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><font size="3"> </font><br>
+      </td>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <ul>
+        <b>NETWORK ONE;</b><b><br>
+&nbsp;&nbsp;&nbsp; SUBMIT JOB1;</b><b><br>
+&nbsp;&nbsp;&nbsp; SUBMIT JOB2;<br>
+        <br>
+        </b><b>&nbsp;&nbsp;&nbsp; SUBMIT JOB3 AFTER JOB1 &amp; JOB2
+ENDED;</b><b><br>
+ENDNET;</b>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><br>
+Notice the Jol instructions <b>NETWORK</b> and <b>ENDNET</b>.
+The <b>NETWORK</b> instruction is followed by the <i>name </i>of a
+network. This defines a unique network so that you can submit the same
+jobs in different networks, and still allow Jol to network the correct
+jobs. The <b>ENDNET</b> informs Jol that any instructions following
+are not part of the network.</p>
+      <p>You can also use other Jol instructions such as <b>PANEL</b>
+in a network. Any instruction will be executed as normal, except for <b>SUBMIT</b>,
+which
+is
+copied
+to
+a
+work
+file
+for
+possible re-execution at the end of
+each job.</p>
+      <p>For example, the jobs above may require the Operator to
+provide Symbolic Variables for the jobs. For example:<br>
+      <br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <ul>
+        <b><br>
+PANEL</b> ('<b>ENTER TODAY''S DOLLAR
+RATE',DOLLVAL,7);</b>
+      </ul>
+      <ul>
+      </ul>
+      <ul>
+      </ul>
+      <ul>
+        <b>NETWORK ONE;</b>
+      </ul>
+      <ul>
+        <b> &nbsp;&nbsp;&nbsp; SUBMIT JOB1 SYMS('DOLLVAL=%DOLLVAL);</b><b><br>
+&nbsp;&nbsp;&nbsp; SUBMIT JOB2;</b><b><br>
+&nbsp;&nbsp;&nbsp; SUBMIT JOB3 SYMS('DAY=%DAY')</b><b><br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; AFTER JOB1 &amp; JOB2 ENDED ;</b>
+      </ul>
+      <ul>
+      </ul>
+      <ul>
+        <b>ENDNET;</b>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <h3><b>Figure</b> <b>2-2:</b> <b>A Small
+Network with PANEL and Symbolic Variables.</b></h3>
+      <p>The Panel instruction displays a data entry panel on the
+User's Screen, and allows him or her to enter the day's Dollar Exchange
+Rate.&nbsp; This is then pased through to the <span
+ style="font-weight: bold;">SUBMIT JOB1</span> instruction.<br>
+      </p>
+      <p>A more complex example is represented below:</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>
+</p>
+<p>
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BE
+
+GIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- --><!-- -- BEGIN OF WORD PRO FRAME -- --><!-- -- END OF WORD PRO FRAME -- -->&nbsp;</td>
+      <td
+ style="width: 496px; vertical-align: top; text-align: left; background-color: rgb(204, 204, 204);">
+      <ul>
+        <ul>
+        </ul>
+      </ul>
+      <div style="text-align: center;"><b><img
+ style="width: 423px; height: 373px;" alt="Advanced Network"
+ src="file:Advanced%20Network.jpg"></b><br>
+      <b> </b></div>
+      <ul>
+        <ul>
+        </ul>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <ul>
+      </ul>
+      <h3><b>Figure 2-3: An Advanced Network.</b></h3>
+      <ul>
+      </ul>
+      <p>In this example, <b>JOB1</b> and <b>JOB2</b> may
+proceed in parallel. The other jobs must execute in the following
+sequence:</p>
+      <p> </p>
+      <ul type="disc">
+        <li><b>JOB3</b> can commence processing after <i>either </i><b>JOB1</b>
+or <b>JOB2</b> have ended.
+          <p> </p>
+        </li>
+        <li><b>JOB4</b> cannot commence until <i>both </i><b>JOB1</b>
+and <b>JOB2</b> have finished.
+          <p> </p>
+        </li>
+        <li><b>JOB5</b> must wait for <b>JOB2</b> to end before it can
+start.
+          <p> </p>
+        </li>
+        <li><b>JOB6</b> must wait for <b>JOB3, JOB4</b> <i>and</i> <b>JOB6</b>
+before it can start.
+          <p> </p>
+        </li>
+        <li><b>JOB7</b> must wait for <b>JOB6</b> to end, and it is to
+be executed <i>only on Fridays</i>.
+          <p>One possible method of coding the example above is
+presented:</p>
+          <p> </p>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <p><b><br>
+&nbsp;&nbsp;&nbsp; NETWORK TWO;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SUBMIT JOB1;<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SUBMIT JOB2;</b></p>
+      <p><b>&nbsp; &nbsp; &nbsp; &nbsp; SUBMIT JOB3 <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+AFTER
+JOB1
+OR JOB2 ENDED;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SUBMIT JOB4 <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+AFTER
+JOB1
+AND JOB2 ENDED;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SUBMIT JOB5 <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+AFTER
+JOB2
+ENDED;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SUBMIT JOB6<br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp; AFTER JOB3
+&amp; JOB4 &amp; JOB5 ENDED;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; IF %DAY='FRIDAY' THEN
+      <br>
+&nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+SUBMIT JOB7&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; AFTER JOB6 ENDED;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; ENDNET;</b><xmp></xmp></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <h3><b>Figure</b> <b>2-4:</b> <b>Coding
+the
+Advanced
+Network.</b></h3>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Submitting Operating System JCL Jobs</h4>
+      </td>
+      <td align="LEFT" valign="TOP">The Jol <b>SUBMIT</b> command is
+extremely flexible: you can pass symbolic variables from job to job,
+test completion codes before submitting other jobs and other facilities
+are available.
+      <p>You can also use <b>SUBMIT</b> to submit JCL jobs by
+enclosing the JCL to be submitted in quotes. When <b>SUBMIT</b>
+detects that parameters have been coded in quotes, it passes them
+directly through to the Operating System, <i>after replacing any Jol
+Sysmbolic Variables</i>. For example:</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <p><b>&nbsp;&nbsp;&nbsp; NETWORK TWO;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; Job1:</b></p>
+      <p> <b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SUBMIT '//JOB1 JOB
+(ACCT),NAME'<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+'// EXEC VALIDATE,'<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+'// PARM=''PROG1=%DAY''';</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; Job2:</b></p>
+      <p> <b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SUBMIT '//JOB2 JOB
+(ACCT),NAME'<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+'// EXEC UPDATE'<br>
+&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+AFTER JOB1 ENDED;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SUBMIT JOB3 AFTER
+JOB1 AND JOB2 ENDED;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; ENDNET;</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><font size="3"> </font><br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><b><br>
+      </b></p>
+      <h3><b>Figure</b> <b>2-5:</b> <b>Submitting
+JCL
+in
+a
+Network.</b></h3>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Notes</h4>
+      </td>
+      <td align="LEFT" valign="TOP">Note that when you are submitting
+JCL or MS/DOS commands, you must code a Jol label (<b>Job1:</b> in the
+example above) so that Jol can identify the job in the Network. </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Submitting Dependent Jobs</h4>
+      </td>
+      <td align="LEFT" valign="TOP">In addition to the Jol <b>NETWORK</b>
+instructions, the Jol <b>SUBMIT</b> Command ensures that the correct
+order of processing interdependent jobs is observed. Other jobs may be <b>SUBMIT</b>ted
+at
+any
+time
+-
+even
+before
+the
+end
+of the current job.
+      <p>Usually, the source text for <b>SUBMIT</b>ted jobs can be
+found in a library.</p>
+      <p>Please note that ASP and JES3 have facilities allowing the
+creation of a "Job Net". Jobnets are not yet supported by Jol.</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Notes</h4>
+      </td>
+      <td style="vertical-align: top; text-align: left;">
+      <ul type="disc">
+        <li>No job is submitted more than once, even if there are two
+or more <b>SUBMIT</b>s for it. This allows you to code multiple
+conditions for a job to start.
+          <p> </p>
+        </li>
+        <li>You must code the jobs that must run <i>before </i>the
+successor jobs. However, jobs are not necessarily submitted in the
+order that they are coded - rather they are submitted as soon as Jol
+can determine that the dependencies have been satisfied.
+          <p> </p>
+        </li>
+        <li>Jobs in the network may also <b>SUBMIT</b> other jobs.
+However, these jobs, which may run in parallel with any jobs in the
+network, are not executed under control of the network manager.
+          <p> </p>
+        </li>
+        <li>If an abend occurs in a job in the network, the default
+action is to stop the network. The <b>IF ERROR</b> instruction can be
+used to determine if an abend occured, and any appropriate action can
+be taken.
+          <p> </p>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Examining the Status of a Network</h4>
+      </td>
+      <td align="LEFT" valign="TOP">The Jol Network Facility uses a <i>single
+standard
+
+
+
+
+
+
+
+      </i>Partitioned Data Set to contain information about <i>all</i>
+the Networks under its control. To review the status of any job in a
+Network, you can use ISPF or PFD to examine the data set <b>SYS2.JOLNET.STATUS</b>.
+
+
+
+
+
+
+
+
+      <p>Each member of the <b>SYS2.JOLNET.STATUS </b>data set is the
+name of a Network, and each member contains the current state of each
+job in the Network as a series of assignment statements for Jol. For
+example, in a network called <b>PAYROLL</b> there may be jobs <b>VALIDATE</b>
+and <b>UPDATE</b>. The member <b>PAYROLL </b>will contain statements
+similar to:</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <p><b>&nbsp;&nbsp;&nbsp; %VALIDATE='ENDED';</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; %UPDATE='SUBMITTED';</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><b><i><u> </u></i></b><br>
+      </td>
+      <td align="LEFT" valign="TOP"><font size="3"> </font><br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h2>Restarting a Network</h2>
+      </td>
+      <td align="LEFT" valign="TOP">Should a Networked job fail for any
+reason, correct the problem, and enter: </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <p><br>
+&nbsp;&nbsp;&nbsp; Start Jol at the terminal with:</p>
+      <h4><font size="3"> &nbsp;&nbsp;&nbsp; JOL *</font></h4>
+      <p>&nbsp;&nbsp;&nbsp; Then enter</p>
+      <p><b> &nbsp;&nbsp;&nbsp; $JOB; /* Create a Job Card */</b></p>
+      <p><b> &nbsp;&nbsp;&nbsp; CHECKNET </b><i>network-name;</i></p>
+      <p>/*</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p>This will restart the job net for you.</p>
+      <p>If you must restart at an earlier job in the network, simply
+edit the <b>SYS2.JOLNET.STATUS</b>(<i>network-name</i>) data set and
+alter the network to the status you require, and follow the
+instructions above.</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h2>Building in a Restart Job</h2>
+      </td>
+      <td align="LEFT" valign="TOP">Often, you can program restarts for
+various jobs or networks if a failure occurs. To do this, code similar
+to the following may be used: </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <p><b><br>
+&nbsp;&nbsp;&nbsp; IF ERROR /* An ABEND Occurred */<br>
+&nbsp;&nbsp;&nbsp; | MAXCC&gt;4 /* A Program Detected an
+Error */<br>
+&nbsp;&nbsp;&nbsp; THEN DO;<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; SUBMIT RESTORE; /*
+Restore Files */<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; STOPNET; /* Stop
+Current Network */<br>
+&nbsp;&nbsp;&nbsp; END;<br>
+      <br>
+      </b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><br>
+The job called <b>RESTORE</b> can restore the data sets, and
+restart the Network.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align: left; vertical-align: top;"><small> </small>
+      <h2><small>Forcing Jol to Examine the Network Status Early</small></h2>
+      <small> </small></td>
+      <td align="LEFT" valign="TOP">Usually, Jol will wait until the
+end of a job before it issues a <b>CHECKNET</b> instruction. You may
+decide that halfway through a job, you would like Jol to examine the
+Network, and start other jobs if it is able to. To do this, simply code
+a <b>CHECKNET</b> instruction at the appropriate point if the job. For
+example: </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <p><b><br>
+&nbsp;&nbsp;&nbsp; IF MAXCC&lt;4 /* Test for errors
+first */</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; THEN CHECKNET;<small><br>
+      <br>
+      </small></b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><small> </small>
+      <h2><small>Method of Operation</small></h2>
+      <small> </small></td>
+      <td align="LEFT" valign="TOP">When Jol finds a <b>NETWORK</b>
+command, it does the following:
+      <p> </p>
+      <ul type="disc">
+        <li>It opens a special work data set into which the <b>SUBMIT</b>
+command will copy information. This is checked at the end of every job
+in the network.
+          <p> </p>
+        </li>
+        <li>It sets an indicator that is used by the <b>SUBMIT</b>
+command.
+          <p>When a <b>SUBMIT</b> command is executed, it does the
+following:</p>
+          <p> </p>
+        </li>
+      </ul>
+      <ul type="disc">
+        <li>If the indicator mentioned above is not set, the <b>SUBMIT</b>
+instruction operates as usual. That is, the job is submitted to the
+operating system for execution.
+          <p>Otherwise, the <b>SUBMIT</b> takes
+special actions for controlling the network.</p>
+          <p> </p>
+        </li>
+        <li>If the <b>SUBMIT</b> is an
+unconditional <b>SUBMIT</b> instruction (it does not contain an <b>AFTER</b>
+clause), the names of the jobs are copied to the work data as symbolic
+variables, initialized to '<b>SUBMITTED</b>'.
+          <p> </p>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><font size="3"> </font><br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <ul type="disc">
+        <li>If the <b>SUBMIT</b> is a conditional <b>SUBMIT</b>
+instruction (that is, it <i>does </i>contain an <b>AFTER</b>
+clause), then:
+          <p>* The <b>AFTER</b> is converted to
+a series of IF instructions similar to:</p>
+          <p><b>&nbsp;&nbsp;&nbsp; IF %JOB1='ENDED' THEN SUBMIT ...</b></p>
+          <p>* The names of the jobs are copied
+to the work data as symbolic variables initialized to '' or null.</p>
+          <p> </p>
+        </li>
+      </ul>
+      <ul type="disc">
+        <li>The <b>SUBMIT</b> instruction then
+submits the job, but adds a <b>CHECKNET</b> instruction to the end of
+the job. <b>CHECKNET</b> uses the instructions in the work file as
+input to Jol. Jol reads the work file, alters the appropriate null
+symbolic variable to '<b>ENDED</b>', and rewrites the file. Then Jol
+reads the file again, and this time submits other jobs, if the required
+conditions are met. </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align: center;" colspan="2" rowspan="1"
+ valign="TOP"><font size="3"> </font><br>
+      <span style="font-weight: bold;">---000---</span><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</p>
+</body>
+</html>

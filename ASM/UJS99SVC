@@ -1,0 +1,50 @@
+UJS99SVC TITLE 'LOG DYNAMIC ALLOCATION CALLS'                 '
+* JOL COPYRIGHT CCS-JOL PTY LTD 1988
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+         SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+* LAST SOURCE UPDATE
+*   CHANGES:-
+*     1.
+         COPY  JOLGLOBL
+         $UJEPARM
+&TYPE    SETC  'SCHED'                                           88036
+         PRINT ON,DATA
+UJECOMM  DSECT
+         USING UJECOMM,R3,R5
+         COPY  UJECOMM
+E99WORK  DSECT                                                    J40B
+         DS    18F                                                J40B
+R0SAV    DS    F                                                 J40B
+R1SAV    DS    F                                                 J40B
+S99RC    DS    F                                                 J40B
+E99WORKS EQU   *-E99WORK                                         J40B
+         JOLSAVE CSECT=UJS99SVC,                                       .
+               SIZE=E99WORKS,                                    J40B  .
+               BASE=R11
+         USING E99WORK,R13                                       J40B
+         STM   R0,R1,R0SAV                                       J40B
+         SVC   99                                                J40B
+         ST    R15,S99RC                                         J40B
+         L     R1,R1SAV                                          J40B
+         L     R2,0(,R1)                                         J40B
+         S99DMP (R2),S99RC,TITLE='0SVC 99 TRACE'                 J40B
+         L     R15,S99RC                                         J40B
+         JOLRETN RC=(R15)                                        J40B
+         END

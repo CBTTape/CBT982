@@ -1,0 +1,19 @@
+         MACRO                                                          FINDT010
+&NAME    FINDTKN &A                                                     FINDT020
+.* THIS MACRO WILL FIND A TOKEN IF GIVEN A NAME IN THE                  FINDT030
+.*   FORM OF A LITERAL                                                  FINDT040
+.* ON RETURN R15=0 OR 4 AND R1 POINTS TO THE NEXT TOKEN NUMBER.         FINDT050
+         LCLA  &LEN                                                     FINDT060
+&LEN     SETA  K'&A-2                                                   FINDT070
+&NAME    LH    R1,TKNNO      GET NUMBER OF TOKENS                       FINDT080
+         SR    R15,R15       SET 15 TO ZERO                             FINDT090
+#&SYSNDX LR    R14,R1        SET R14 TO NUMBER OF TOKENS TOO            FINDT100
+         SLL   R14,2         MULTIPLY BY 4                              FINDT110
+         LH    R14,TKNDESC-2(R14) GET ADDRESS OF DESCRIPTION AREA       FINDT120
+         LA    R14,TKNSTRG(R14) GET START ADDRESS OF THIS TOKEN STRING  FINDT130
+         CLC   0(&LEN,R14),=C&A IS THIS ONE REQUIRED?                   FINDT140
+         BE    #OK&SYSNDX    YES ->                                     FINDT150
+         BCT   R1,#&SYSNDX   NO, LOOK AT NEXT                           FINDT160
+         LA    R15,4         SET BAD RETURN CODE                        FINDT170
+#OK&SYSNDX LA  R1,1(R1)      SET R1 TO POINT TO NEXT TOKEN ON EXIT      FINDT180
+         MEND                                                           FINDT190

@@ -1,0 +1,223 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Mozilla SeaMonkey">
+  <title>Merge</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+  <meta http-equiv="CONTENT-TYPE"
+ content="text/html; charset=ISO-8859-1">
+  <title></title>
+  <meta name="GENERATOR" content="OpenOffice.org 3.1  (Win32)">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="RIGHT" valign="TOP" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="RIGHT">
+      <style type="text/css">
+	<!--
+		@page { margin: 2cm }
+		H1 { margin-bottom: 0.11cm }
+		H1.western { font-family: "Arial", sans-serif; font-size: 16pt }
+		H1.cjk { font-family: "Arial Unicode MS"; font-size: 16pt }
+		H1.ctl { font-family: "Tahoma"; font-size: 12pt; font-weight: normal }
+		P { margin-bottom: 0.21cm }
+	-->
+	</style>
+      </h1>
+      <h1 class="western" align="RIGHT"><font size="5"><u>MERGE</u></font><font
+ size="5"> - </font><font size="5"><i><span
+ style="font-weight: normal;">Execute Command</span></i></font></h1>
+      <font size="5"><i><u><span style="font-weight: normal;"></span></u></i></font>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Purpose</h4>
+      </td>
+      <td align="LEFT" valign="TOP">The <span
+ style="font-weight: bold;">MERGE</span> command allows up to 5 data
+sets to be <span style="font-weight: bold;">MERGE</span>d into another
+data set using parameters either described in the <span
+ style="font-weight: bold;">FIELDS </span>parameter or those described
+in the dataset referenced by the <span style="font-weight: bold;">USING</span>
+parameter.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <div style="margin-left: 40px;">&nbsp;&nbsp; </div>
+      <div style="font-weight: bold;">
+      <div style="margin-left: 40px;">MERGE &nbsp;&nbsp;&nbsp; { <span
+ style="font-style: italic; font-weight: normal;">dsid | dsname</span>
+} &amp; <span style="font-weight: normal;"><span
+ style="font-weight: bold;">{</span> <span style="font-style: italic;">dsid
+|
+dsname</span><span style="font-weight: bold;"> }</span></span><span
+ style="font-style: italic; font-weight: normal;">&nbsp; </span><span
+ style="font-weight: normal;">[ &amp; ...]</span><span
+ style="font-style: italic; font-weight: normal;"> </span><br>
+      <br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; TO&nbsp;&nbsp;&nbsp; { <span
+ style="font-style: italic; font-weight: normal;">dsid | dsname</span>
+} <br>
+      <br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; MERGE FIELDS = <span
+ style="font-style: italic; font-weight: normal;">(merge parameters)</span>
+      <br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; or USING <span
+ style="font-style: italic; font-weight: normal;">{ dsid | dsname } </span><br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; <br>
+      </div>
+&nbsp;&nbsp;&nbsp; <span style="font-weight: normal;">where</span> <br>
+      <div style="margin-left: 40px;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; FIELDS = <span
+ style="font-style: italic; font-weight: normal;">( p<sub>1</sub>,m<sub>1</sub>,f<sub>1</sub>,s<sub>1</sub>,
+.
+.
+.
+p<sub>n</sub>,m<sub>n</sub>,f<sub>n</sub>,s<sub>n</sub> ) </span><br>
+      </div>
+      </div>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP">
+      <ol>
+        <li><span style="font-weight: normal;">Up to five (5) Data Sets
+may be merged with the Merge command.</span><span
+ style="font-weight: normal;"></span></li>
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">USING</span> parameter specifies that the
+data set referred to contains the <span style="font-weight: bold;">MERGE</span>
+parameters. The data set may have been created in the current job, or
+it may be an old data set. </span></li>
+        <li><span style="font-weight: normal;">The parameters must be
+in the same format as required by the <span style="font-weight: bold;">MERGE</span>.
+
+
+
+          </span></li>
+        <li><span style="font-weight: normal;">If the <span
+ style="font-weight: bold;">MERGE</span> is not successful, a non-zero
+return code will be issued. You can use an <span
+ style="font-weight: bold;">IF</span> to check for this condition. </span></li>
+        <li><span style="font-weight: normal;">The <span
+ style="font-weight: bold;">FIELDS</span> parameter specifies the <span
+ style="font-weight: bold;">FIELDS</span> to be used for sorting,
+collating and merging the input data sets. The format is: </span></li>
+      </ol>
+      <span style="font-weight: normal;"></span>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">&nbsp;&nbsp;&nbsp;
+
+
+
+      <span style="font-weight: bold;">FIELDS</span> =</span> <span
+ style="font-style: italic; font-weight: normal;">( p<sub>1</sub>,m<sub>1</sub>,f<sub>1</sub>,s<sub>1</sub>,
+.
+.
+.
+p<sub>n</sub>,m<sub>n</sub>,f<sub>n</sub>,s<sub>n</sub> ) </span><br>
+      <br>
+      <span style="font-weight: normal;">&nbsp;&nbsp;&nbsp; where </span><br>
+      <span style="font-weight: normal;"><br>
+&nbsp;&nbsp;&nbsp; <span style="font-weight: bold;">P</span>
+&nbsp;&nbsp;&nbsp;&nbsp; specifies the position within the record. </span><br>
+      <span style="font-weight: normal;">&nbsp;&nbsp;&nbsp; <span
+ style="font-weight: bold;">M</span> &nbsp;&nbsp;&nbsp; specifies the
+length of the field. </span><br>
+      <span style="font-weight: normal;">&nbsp;&nbsp;&nbsp; <span
+ style="font-weight: bold;">F</span> &nbsp;&nbsp;&nbsp;&nbsp; is the
+format of the field and may be: </span><br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;
+
+
+      <span style="font-weight: bold;">H | ZD | ID | FI |
+BI | FL | AC | CSL </span></span><br>
+      </div>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;<span style="font-weight: bold;"> | CST | CLO | CTO |
+ASL | AST | AQ </span></span><br>
+      </div>
+      <span style="font-weight: normal;">&nbsp;&nbsp;&nbsp; <span
+ style="font-weight: bold;">S</span> &nbsp;&nbsp;&nbsp; specifies the
+desired sequencing <span style="font-weight: bold;">A | D | E<br>
+      <br>
+      </span></span></div>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h4>Example</h4>
+      </td>
+      <td style="font-weight: bold;" align="LEFT" valign="TOP">
+      <ol>
+        <li>MERGE DATA1 &amp; DATA2</li>
+      </ol>
+      <div style="margin-left: 80px;">TO DATA3<br>
+      </div>
+      <div style="margin-left: 80px;">USING MERGPARM;<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+data
+referred
+to by <span style="font-weight: bold;">DATA1 </span>and <span
+ style="font-weight: bold;">DATA2 </span>DSIDs is to be
+merged and placed in the data set referred to by <span
+ style="font-weight: bold;">DATA3</span>.&nbsp; The parmeters for the <span
+ style="font-weight: bold;">MERGE </span>will be found in the data set
+referred to by the <span style="font-weight: bold;">DSID MERGPARM</span>.</span><br>
+      <br>
+      </div>
+      <ol start="2">
+        <li>MERGE SORTED.ONE &amp; SORTED.TWO</li>
+      </ol>
+      <div style="margin-left: 80px;">TO OUTPUT<br>
+      </div>
+      <div style="margin-left: 80px;">USING MERGE.CONTROL(MERG001);<br>
+      </div>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">Two
+data
+sets,
+      <span style="font-weight: bold;">SORTED.ONE</span> and <span
+ style="font-weight: bold;">SORTED.TWO</span>, are to be merged into
+the data set described by the DSID called <span
+ style="font-weight: bold;">OUTPUT</span>.&nbsp; The parameters for the
+      <span style="font-weight: bold;">MERGE </span>will be found in
+member <span style="font-weight: bold;">MERG001</span>of the data set
+called <span style="font-weight: bold;">MERGE.CONTROL.</span></span><br>
+      </div>
+      <br>
+      <br>
+      <div style="margin-left: 80px;">&nbsp;<br>
+      </div>
+      <div style="text-align: center;">---000---<br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

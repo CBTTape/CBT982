@@ -1,0 +1,352 @@
+         TITLE 'UJE21ALL: HANDLE DATASET ALLOCATION'
+         JOLSAVE CSECT=UJE21ALL
+*
+*  DYNAMIC ALLOCATION OF DATA SETS.
+*
+*  PROBLEMS:-
+*   1. SYSOUT DATA SETS GET SPUN OFF.
+*      SOLUTION: ALLOCATE WITH SYSNNN NUMBER, THEN CONCATENATE
+*                REAL DDNAME. AT END, DO NOT FREE, BUT DECONCATENATE.
+*
+*   2. TAPE SCRATCH VOLUMES WRITING LABEL 1 THEN 2 IN SAME STEP.
+*      SVC99 CAN'T RETURN VOLUME NAME.
+*      SOLUTION: ALLOCATE WITH SYSNNN NUMBER, OPEN FOR OUTPUT,
+*                ALLOCATE REAL DDNAME, FREE SYSNNN, PRESS ON.
+*
+*
+         FIX   'IF DATASET IS TO BE RE-WRITTEN, CALL DELETE NEAR HERE'
+*            AND THEN ALLOCATE AS A NEW DATASET
+         LA    R0,WORK
+         LA    R1,L'WORK
+         SLR   R15,R15
+         MVCL  R0,R14
+         CLI   DDTYPE,DDSYSOUT       IS IT A SYSOUT FILE
+         BNE   E21NPRT               NO, BYPASS CLEARING DDNAME
+         MVC   SAVEDD,DDDDNAME       COPY THE DDNAME
+         CLEAR DDNAME                WE WANT A 'SYSNNN' NUMBER
+E21NPRT  CLC   =CL8' ',DDDDNAME      Q... CONCATENATED FILE?
+         BE    E21NOTCT              A... NO
+         MVC   SAVEDD,DDDDNAME       COPY THE DDNAME
+E21NOTCT DS    0H
+         CLC   =C'PRGLIB  ',DDDDNAME Q... PRGLIB?
+         BE    E21MVDDN              A... YES
+         CLC   =C'STEPLIB ',DDDDNAME Q... STEPLIB?
+         BNE   E21X8A                A... NO
+E21MVDDN MVC   STEPLBDD,DDDDNAME      MOVE IN THE DDNAME
+E21X8A   DS    0H
+         CLI   DDTYPE,DDSYSIN      Q... SYSIN DATASET?
+         BNE   E21NSSIN            A.. NO
+         MVC   DDMBR,DDDSNAME+2    ESTABLISH MEMBER NAME
+         CLEAR DDDSNAME,DSN
+         MVC   DDDSNAME(L'DDDSNAME),SYSINDSN   COPY DSN
+         MVC   #DSN(28),#SYSINDS
+         CLEAR DDVOLUME
+         MVC   DDVOLUME(6),SYSINVOL
+         MVI   DDUSE,B'00001000'   DISP=(SHR,KEEP)
+         MVI   DDTYPE,DDMEMSPC
+         MVI   DDUNITYP,X'80'         TELL ALLOC THAT IT IS A DISK.
+         B     E21X8A4
+E21NSSIN DS    0H
+         SPACE 2
+*  BEFORE GOING ANY FURTHER, WHY NOT HAVE A LOOK AROUND TO SEE
+*   WHAT IS ALREADY AVAILABLE?
+* ****** UNLESS THIS IS A CONCATENATED FILE, IN WHICH CASE WE SHALL
+*        DO A PROPER ALLOCATION      CVC
+         CLC   =CL8' ',DDDDNAME     CONCATENATED ?
+         BE    E21NOFCT             YES, GO THROUGH NORMAL ALLOC
+         SPACE 2
+         CALL  UJD03DS1,DDDSNDET
+         MVC   #DSN,=H'26'
+         MVC   #VOL,=H'12'
+         MVC   VOL(12),DDVOLUME
+         JOLERR 005,                                                   .
+               'DSID ',DDDSID,                                         .
+               ' DDNAME ',DDDDNAME,' DSN ',#DSN,                       .
+               ' VOL ',#VOL,' ALLOC '
+         SPACE 3
+         B     E21RETN
+         SPACE 5
+E21NOFCT DS    0H
+E21X8A4  DS    0H
+         SPACE 2
+*  NOW CHECK FOR VOLREF
+         SPACE
+         CLI   DDVOLUME,C'*'         VOLREF USED?
+         BNE   E21X8A5             NO
+         BAL   R14,E21VREF         GO AND FIX VOLREF
+E21X8A5  DS    0H
+         CALL  UJD03DS1,DDDSNDET
+*        CALL UJE03X8A,(DDOSVB,CALLARE2),VL,MF=(E,CALLAREA)
+         ST    R15,TASKRETN
+         LTR   R1,R15
+         BZ    E21DDOK          ALLOCATED PROPERLY
+         CH    R15,=H'172'      FAIL BECAUSE OF NO DEVICE AVAIL?
+         BNE   U21CVCAF         NO, GIVE FAILURE MESSAGE
+         XC    ALLOCECB,ALLOCECB
+   WTOR  'WHEN A TAPE DRIVE IS AVAILABLE, PLEASE REPLY GO',ALLOCREP,   *
+               2,ALLOCECB
+         WAIT  ECB=ALLOCECB
+         B     E21X8A5          TRY AGAIN
+U21CVCAF CVD   R15,DBL
+         MVC   TASKSSI,=X'40202120'
+         ED    TASKSSI,DBL+6
+         JOLERR 406,'DSID ',DDDSID,', DDNAME ',                        .
+               DDDDNAME,', DS ',#DSN,' FAILED WITH RETURN CODE',       .
+               TASKSSI
+         CLEAR DPDATA
+         LA    R0,DPBLKL
+         SLL   R0,16
+         ST    R0,DPBLOCK
+         LA    R0,DPLINEL
+         SLL   R0,16
+         ST    R0,DPLINE
+         L     R2,CALLARE2     ADDRESS OF AREA TO DUMP
+E21LP0   DS    0H
+         ST    R2,CALLAREA
+         UNPK  DBL(9),CALLAREA(5)
+         TR    DBL,HEX
+         MVC   DPADDR,DBL+2
+         MVC   DPCHARS,0(R2)   COPY DATA IN CHARACTERS
+         TR    DPCHARS,TRTAB   REMOVE SOME HARD-TO-PRINT DATA
+         LA    R14,DPHEX       ADDRESS FOR HEX DATA
+         LA    R1,2
+E21LP1   DS    0H
+         LA    R0,4            4 SEGMENTS
+E21LP2   DS    0H
+         UNPK  DBL(9),0(5,R2)  CONVERT SOME TO HEX
+         TR    DBL,HEX
+         MVC   0(8,R14),DBL    INTO THE PRINT LINE
+         LA    R14,9(,R14)     NEXT FOR OUTPUT
+         LA    R2,4(,R2)       NEXT FOR INPUT
+         BCT   R0,E21LP2
+         LA    R14,1(,R14)    AN EXTRA SKIP IN PAGE CENTRE
+         BCT   R1,E21LP1
+         L     R1,=A(S23DECB)
+         WRITE (1),SF,,DPBLOCK,MF=E
+         L     R1,=A(S23DECB)
+         CHECK (1)
+         C     R2,CALLARE2+4   Q... ANY MORE?
+         BNH   E21LP0          A... YES
+         L     R1,TASKRETN
+         CALL  UJS45AER
+         TM    E21FLAG,E21CONT
+         BO    E21RETN
+         JOLERR 500,'RUN TERMINATED DUE TO ALLOCATION ERROR'
+         ABEND 2 ,,STEP
+E21DDOK  DS    0H
+         CLI   DDTYPE,DDSYSOUT    IS IT A SYSOUT FILE
+         BE    E21SYSO            YES SO ADJUST MSG
+         CLC   =CL6' ',DDVOLUME   IS THERE A VOLSER?
+         BE    E21PIV             NO SO PUT IN VOLUME
+E21DDOK2 MVC   VOL(12),DDVOLUME
+E21DDOK1 EQU   *
+         MVC   #DSN,=H'28'
+         MVC   #VOL,=H'12'
+         JOLERR 003,                                                   .
+               'DSID ',DDDSID,                                         .
+               ' DDNAME ',DDDDNAME,' DSN ',#DSN,                       .
+               ' VOL ',#VOL,' ALLOC '
+         B     E21RETN
+E21PIV   EQU   *
+* FIND VOLUME
+         FIX SEARCH QDB ETC
+         B     E21OSQDB
+         L     R4,ATCB           POINT AT TCB
+         L     R4,TCBJSCB-TCB(,R4) POINT AT JSCB
+         ICM   R4,7,JSCBFCTA-JSCB(R4) POINT AT FCT CHAIN
+         USING FCT,R4             MAP FCT
+E21PIV1  EQU   *
+         CLC   FCTFLN,DDDSNAME    IS IT THIS ONE?
+         BE    E21PIV2            DO WHAT IS REQUIRED
+         ICM   R4,7,FCTNFCTA      POINT AT NEXT FCT
+         BNZ   E21PIV1            LOOK AT NEXT FCT
+         B     E21DDOK2           IMPOSSIBLE TO GET HERE..BUT FOR
+*                                  SAFETY SAKE
+E21PIV2  EQU   *
+         L     R4,FCTVCT           POINT AT VCT
+         MVC   VOL(6),8(R4)        PLUG IN VOL
+         B     E21DDOK1            AND ISSUE MESSAGE
+E21SYSO  EQU   *
+* HERE WE MUST CONCATENATE THE REAL DDNAME TO THE SYSNNN DDNAME
+         MVC   #DSN,=H'1'
+         JOLERR 004,                                                   .
+               'DSID ',DDDSID,                                         .
+               ' DDNAME ',DDDDNAME,' SYSOUT=',#DSN,' ALLOC '
+E21RETN  DS    0H
+         TM    DDUNITYP,X'80'
+         BZ    E21NPROP       DON'T PROPOGATE VOLUME AS IT MAY
+*                             BE A SCRATCH TAPE (IE NO VOLUME YET)
+         CALL  UJE30VOL       PROPOGATE VOLS DOWN JOL 'JOBQ'
+E21NPROP MVI   E21FLAG,0
+         L     R15,TASKRETN
+         B     RETRN
+         SPACE 3
+*  IT IS NECESSARY TO LOCATE THE FCT FOR THE DATASET WHOSE NAME IS
+*    IN DDVOLUME, TO FIND THE CURRENT VOLUMES AND COPY THE LIST TO
+*    THE ALLOCATION REQUEST FOR THIS DATASET
+E21VREF  DS    0H
+         LR    R10,R14              SAVE RETURN ADDRESS
+         L     R4,ATCB              ADDRESS MY TCB
+         L     R4,TCBJSCB-TCB(,R4)          MY JSCB
+         ICM   R4,7,JSCBFCTA-JSCB(R4)         FIRST FCT
+         BZ    E21VNFCT              EXIT IF NONE ?!! & SSSSSSSSS
+         SPACE
+*   FOUND THE FCT CHAIN. NOW FIND THE DATASET ENTRY
+         SPACE
+         USING FCT,R4
+E21VNXTF DS    0H
+         CLC   FCTFLN,DDVOLUME+1   Q... IS THIS IT?
+         BE    E21VFFCT            A... YES, GO AND GET THE VOLUME INFO
+         SPACE
+         ICM   R4,7,FCTNFCTA         NEXT FCT
+         BNZ   E21VNXTF              GO AND TEST THE NEXT ONE
+E21VNFCT DS    0H                    END OF CHAIN, AND NOT FOUND
+         JOLERR 507,'DSID ',DDDSID,',DS ',#DSN,                        .
+               ' IS NOT ALLOCATED,',' VOLREF COULD NOT BE RESOLVED'
+E21VFFCT DS    0H
+         SPACE 3
+* NOW I HAVE FOUND THE FCT, COPY THE VOLUME SERIAL NUMBERS
+         SPACE 2
+         CLEAR DDVOLUME
+         SLR   R8,R8
+         ICM   R8,1,FCTVOLNO        LOAD VOLUME COUNT
+         BZ    E21VNFCT             EXIT IF THERE ARE NO VOLUMES
+         LA    R0,L'DDVOLUME/6      LOAD NUMBER OF VOLUMES ALLOWED
+         CR    R0,R8                CHECK THAT THE SERIAL NUMBERS FIT
+         BH    E21VOK               BE IF OK
+         JOLERR 512,'DS ',DDDSID,',',#DSN,                             .
+               ' IS NOT ALLOCATED,',' REFERS TO TOO MANY VOLUMES'
+E21VOK   DS    0H
+         L     R6,FCTVCT
+         LA    R15,DDVOLUME         ADDRESS FOR VOLUMES
+E21VNXTV DS    0H
+         MVC   0(6,R15),8(R6)       COPY THE VOLUME SERIAL NUMBER
+         LA    R15,6(,R15)          ADDRESS FOR NEXT AREA
+         L     R6,4(,R6)            ADDRESS THE NEXT VCT
+         BCT   R8,E21VNXTV          CONTINUE UNTIL ALL AREA DONE
+         SPACE 2
+*  WELL, THAT SHOULD BE ALL: NOW FREE THE ORIGINAL DATASET
+         SPACE
+         MVC   SAVEDDET,DDDSNDET
+         MVC   DDDDNAME,FCTACSN
+         MVI   DDDISP+1,C'L'      LAST USE
+         CALL  UJE14FRE           FREE THE FILE, ASSUME IT WORKED
+         MVC   DDDSNDET(DDLEN),SAVEDDET RESTORE THE ORIGINAL
+         UJE22UPD FCTFLN,DDVOLUME FIX FUTURE VOLUME REFERENCES
+         DROP  R4
+         BR    R10                  RETURN
+         SPACE 5
+         DC    20S(*)   FOR PATCHES
+TRTAB    DC    256AL1(*-TRTAB) ALL THINGS TO ALL THINGS
+         ORG   TRTAB
+         DC    64X'40'         FIX THE FIRST ONES
+         ORG   TRTAB+C'9'+1
+         DC    6C' '           AND THE LAST ONES
+         ORG
+ALLOCREP DC C'   ' FOR ALLOCATION REPLIES
+ALLOCECB DC  F'0'  FOR ALLOCATION REPLIES
+         TITLE 'CONCATENATE A FILE'
+* COPYRIGHT CCS-JOL P/L                   1986.
+*
+         PRINT  ON
+         PRINT  GEN
+         PRINT DATA                                               75128
+         IEFZB4D2
+         IEFZB4D0
+S99LEN   EQU    S99RBEND-S99RB
+         TITLE 'DYNAMICALLY CONCATENATE A FILE'
+E16LENS  EQU    *-E16SAVE
+         JOLSAVE CSECT=UJE16CON SIZE=E16LENS
+*        USING E16SAVE,R13
+         LA    R9,S99PRMS
+         USING S99RB,R9
+         XC    S99RB(S99LEN),S99RB  ZERO OUT ALL OF THE CONTROL BLOCK
+         MVI   S99RBLN,S99LEN     SET UP LENGTH
+         MVI   S99VERB,S99VRBCC   CONCATENATE FUNCTION
+         MVC   E16DDNM,SAVEDD
+         LA    R1,E16DDNMP
+         ST    R1,E16ATU1
+         MVI   E16ATU1,X'80'
+         LA    R1,E16ATU1
+         ST    R1,S99TXTPP
+         MVI   S99TXTPP,X'80'
+         SPACE 2
+* THE PARAMETER LIST HAS BEEN SET-UP, APART FROM THE PARAMETERS
+*  TO SVC 99 PROPER.
+* LEST DO THEM
+         LA    R1,S99RB
+         ST    R1,CALLAREA
+         MVI   CALLAREA,S99RBPND
+         SPACE 2
+         LA    R1,CALLAREA
+         DYNALLOC
+*
+*  CHECK TO SEE IF ERRORS OCCURED.
+*
+         ST    R15,CALLAREA+12          SAVE DYNALLOC RETURN CODE
+         LTR   R15,R15
+         BNZ   D03ERR                RETURN CODE ZERO
+         L     R0,S99ERROR           TEST ERR AND INFO CODE
+         LTR   R0,R0                 ERROR ?
+         BZ    D0399OK
+D03ERR   EQU   *
+         B     NODYNDMP
+         LA    R1,S99RB                 REQUEST BLOCK POINTER
+         LTR   R15,R15
+         BZ    NODYNDMP
+         L     R15,=V(DYNDUMP)          GET DUMP ROUTINE
+         WXTRN  DYNDUMP
+         BALR  R14,R15                  GO TO IT
+         SPACE  3
+NODYNDMP DS    0H
+         L     R1,CALLAREA+12          ADDR OF ERROR AND INFO CODES
+         LR    R15,R1
+         O     R1,=XL4'40F0'        (CONVERT
+         C     R15,=F'12'            CODES
+         BNE   *+8                      TO
+         LH    R1,=X'F1F2'                EBCDIC
+         STH   R1,D03MSGH                   FOR
+         UNPK  D03MSGI(9),S99ERROR            THE
+         NC    D03MSGI(8),=8X'0F'                ERROR
+         TR    D03MSGI(8),=C'0123456789ABCDEF'     MESSAGE)
+         LA    R1,D03MSG
+         SVC   35               WTO, ROUTCDE=11
+         LINK  EP=IKJEFF18,PARAM=(S99RB,CALLAREA+12,TSOADR,    +++++++++
+               TSOADR+4),MF=(E,CALLAREA+16)
+         LA    R0,D03MSGL
+         LA    R1,D03MSG
+         SVC   93               TPUT MESSAGE
+         JOLRETN
+D03MSG   EQU   *
+         DC    AL2(D03MSGL),X'8000'    LENGTH AND FLAGS
+         DC    C' DYNALLOC RETURN CODE '
+D03MSGH  DS    H
+         DC    C', ERROR AND INFO CODE '
+D03MSGI  DS    XL8                 SPACE FOR ERROR AND INFO CODES
+D03MSGL  EQU   *-D03MSG            LENGTH OF MESSAGE
+         DC    XL4'20'             ROUTING CODE
+TSOADR   DC    F'0'        DON'T KNOW ADDR OF IKJEFF02
+         DC    X'80'      '80' WANT WTO, '00' WANT PUTLINE
+         DC    X'32'      '32' IF SVC99 USED, '01' IF DAIR USED
+         DC    C'JL'
+D0399OK  L     R15,CALLAREA+12      RESTORE DYNALLOC RETURN CODE
+         JOLRETN
+         DC H'0'    ABEND
+         SPACE 1
+E16SAVE  DS     0F
+E16DAL   DS     F
+         DS     0D
+S99PRMS  DS     0D
+         ORG    *+S99LEN
+E16ATU1  DS     F
+E16ATU2  DS     F
+E16ATU3  DS     F
+* ***** THE NEXT FIELDS MUST BE SET UP MANUALLY.
+E16DDNMP DC     H'1'           KEY OF 1
+         DC     H'2'           COUNT OF 1
+         DC     H'8'           LENGTH OF 8
+E16DDNM  DC     CL8' '         DDNAME
+         DC     H'8'           LENGTH OF 8
+E16DDN2  DC     CL8' '         DDNAME TWO
+         DC  10S(*)
+         LTORG

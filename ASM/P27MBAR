@@ -1,0 +1,374 @@
+P27MBAR  TITLE 'UJP27BAR  FIX MENU BAR'                          J51
+***********************************************************************
+*
+*   /* This procedure prints the menu line on the top of the screen  */
+*
+*   /*The menu bar can be something like:
+*
+*           'File Sort Exec'
+*       or
+*           'File S{o}rt Exec'
+*
+*      The {} (chosen because they are on 370 mainframes) indicate that
+*      the key inside the {} is the ALT key actioned for that field.
+*
+*      This is placed on the screen like this:
+*
+*
+*           [ ] File Sort Exec
+*
+*    We need to be able to to accept a hot key that is placed in the
+*    box provided, or work out where the cursor is, and accept the
+*    item where the cursor has been placed.
+*
+*    SAA says that you can tab to the field too.
+*       This is NOT implemented yet (July 5, 91)!
+*       I think the hot key idea is easier.
+*
+*
+*    To implement this, we need the start, length and hot key of
+*    each item.  Also, if {}'s are coded, we need to remove it
+*    before displaying it.
+*
+*
+*    NOTE: THIS DOES NOT FOLLOW THE C VERSION'S METHOD !!!!
+*
+*
+***********************************************************************
+*
+* OK.  Lets suppose we have a MENUBAR like this:
+*
+*      MENUBAR('Files Dir Copy')
+*
+* then, on the screen we will have:
+*
+*      0        1
+*      1234567890123456789
+*      b< > Files Dir Copy
+*
+* and our table will look like this:
+*
+*
+*    StartPosn         Length       HotKey
+*    ---------         ------       ------
+*    |       |         |    |       |    |
+*    |   6   |         | 5  |       | F  |     Files
+*    |  12   |         | 3  |       | D  |     Dir
+*    |  16   |         | 4  |       | C  |     Copy
+*    |       |         |    |       |    |
+*    |       |         |    |       |    |
+*    ---------         ------       ------
+*
+*
+* In addition, the HOTKEY variable will be set up as FDC, so
+*    that we can pick up the correct item if a HOTKEY is entered.
+*
+* So, if the cursor is on line 1, column 7 say, we will pick the
+*    Files.
+*
+* Alternatively, if D is entered, we will pick Dir.
+*
+* Finally, if a light pen is used, we'll try and get the right item
+* (LATER!!!).
+*
+*
+*
+*
+       COPY JOLCOM
+*      COPY CPY/JOLCOMD.CPY
+*       void         Menu_Bar(char *MText)
+ZZZZ    DSECT
+UJP27BAR JOLSAVE  CSECT=UJP27BAR
+P27MBAR  TITLE 'UJP27BAR  FIX MENU BAR'                          J51
+*
+*       {
+*       int          i;
+*       int          j,k;
+*       int          Len_Text
+*
+*       static  char   *blue_ascii="\033[34;30m";  /* Black on Blue */
+*       static  char   *red_bold  ="\033[31;1m";   /* Bold Red */
+*       static  char   *red_low   ="\033[31;2m";   /* Red Ordinary */
+*       char           *blank_posn;
+*       char           *field_posn;
+*       char           *alt_posn;
+*       char           *test_bracket;
+*       static char     temp_char[2];
+*       static char     temp_char2[2];
+*       char          *Text;
+*       int            alt_column;
+*
+*
+        L       R10,P27GBL
+        USING   PANELWRK,R10
+         B       P27GO
+         TOMASM ' .data'
+P27MENE  DS    0H
+*        DC    C' '
+*        DC    X'1DE8'           BOLD, PROTECTED                  J50
+*        DC    C'{'                                               J50
+*        DC    X'1DC8'           BOLD, UN-PROTECTED               J50
+         DC    C' '              SPACE FOR USER TO ENTER          J50
+*        DC    C' '              SPACE FOR USER TO ENTER          J50
+*        DC    X'1D60'           BOLD, PROTECTED                  J50
+*        DC    C'}'                                               J50
+*        DC    C'  '                                              J50
+*        DC    X'1D60'           NORMAL                           J50
+P27MENEL EQU   *-P27MENE         -4 FOR 4 SF'S IN FIELDS
+*ENATTRS EQU   8                 8 attribute bytes
+LENATTRS EQU   0                 8 attribute bytes
+         TOMASM ' .code'
+P27GO    DS     0H
+*       WTO     'UJP27TXT Called'
+*
+* Initialise the required items.
+*
+         CLI     OUTTXT,C''''
+         BNE     NOQU
+         DROPQUSR #OUTTXT
+NOQU     DS      0H
+         MVC     #HOTKEYS,ZERO
+         MVC     HOTKEYS,BLANKS
+         MVC     ITEMCNTL,ZERO
+         XC      HOTPOSNS(60),HOTPOSNS     Clear Table            J52
+*
+*             display_str(blue_ascii);
+*
+*       push    word ptr DGROUP:d@w+224
+*       call    far ptr _display_str
+*       pop     cx
+*
+*             strcpy(Menu_Bar_Text,MText);
+*
+********************************************************************
+* This is from POPUP
+*
+*        MVI   P27HI,0           TURN OFF HIGHLIGHTS              J50
+*        MVI   P27COLOR,4        SET DEFAULT COLOUR               J50
+*       MVC     TXTROWNO,=H'1'
+*       MVC     TXTCOLNO,LHSMARG
+*       MVC     REPROWNO,=H'0'
+*       MVC     REPCOLNO,=H'0'
+*       MVC     RPLYLEN,=H'0'
+*       MVI     LITERAL,C'_'
+*       LH      R1,MAXWIDTH
+*       EX      R1,P29TOPR
+*P29TOPR MVC     LITERAL+1(*-*),LITERAL
+*       STH     R1,TXTLEN
+*        LH    R1,TXTLEN
+*       MVC    LITERAL(P27SELEL),P27SELE Select [ ] or Arrow Keys Msg
+*NO replyAH    R1,RLITLEN
+*       MVC     TXTCOLR,P27COLOR
+*        AR    R5,R1          BUMP UP TO POINT TO NEW SPOT IN TABLE
+*        LA    R5,LFIXED(R5)  POINT OVER FIXED AREA IN PARM LIST
+*       XC    DITEM(LFIXED),DITEM  Clear next item row and col numbers
+********************************************************************
+*        MVC     MENTXT(5),=CL5' [ ] '
+         MVC      MENTXT(P27MENEL),P27MENE  '< >' with attributes
+         MVC     #MENTXT,=AL2(P27MENEL)
+         MVC     MENTXT+P27MENEL(L'MENTXT-P27MENEL),OUTTXT
+*        MVC     #MENTXT,=H'1'   cvc mono screen                  J52
+*        MVC     MENTXT+1(L'MENTXT-P27MENEL),OUTTXT               J52
+         LH      R1,#MENTXT
+         AH      R1,#OUTTXT
+         STH     R1,#MENTXT
+*
+*             Text=Menu_Bar_Text;
+*
+         LA      R1,MENTXT             Get address of start of string.
+         LR      R15,R1                Copy to R15
+         AH      R15,#MENTXT           Sets a stop address for us.
+         MVC     0(2,R15),=C'  '       Put some blanks at the end
+         LA      R1,P27MENEL(R1)       Point past [ ]
+         LA      R14,1                 Increment by 1
+*
+FINDNBLK CLI     0(R1),C' '            Prepare to skip blanks.
+         BNE     GOTWRD1               Got a non blank
+         BXLE    R1,R14,FINDNBLK
+         CLC     ITEMCNTL,ZERO
+         BNE     PASS2
+         JOLERR  301,'Invalid Menu Bar'
+         JOLRETN RC=16
+*
+*
+GOTWRD1  DS      0H
+*
+* Store the offset, and calculate the length of the item.
+*
+         LR      R8,R1                 Calc offset
+         LA      R7,MENTXT
+         SR      R8,R7                 R8 is the offset
+         LH      R9,ITEMCNTL
+         SLL     R9,1                  *2
+*        SH      R8,=AL2(LENATTRS)     Real Screen Position
+         STH     R8,ITEMPOSN(R9)       Store the offset
+*
+* Now find the length
+*
+FINDLEN1 CLI     0(R1),C' '
+         BE      ENDITEM1              Got a blank, so fix length
+         BXLE    R1,R14,FINDLEN1
+*
+* This is an internal error, must be blanks! We put blanks at end
+*
+         JOLERR  502,'Internal Error in MenuBar'
+         JOLRETN RC=16
+*
+ENDITEM1 DS      0H
+         LR      R8,R1                 Calc Length of item
+         LA      R7,MENTXT
+         SR      R8,R7                 R8 is the offset of end
+         SH      R8,ITEMPOSN(R9)       Minus start offset
+         STH     R8,ITEMLEN(R9)        = length of string
+         LH      R9,ITEMCNTL           Increment items now
+         LA      R9,1(R9)
+         STH     R9,ITEMCNTL           Stored
+         BXLE    R1,R14,FINDNBLK       BXLE back to outer loop.
+*
+* Now work out the hot keys.
+*
+* We need to see if we have a CAPITAL letter or a {}
+*
+PASS2    DS      0H
+*
+         LA      R1,0                  Start at top of table
+         LA      R14,2                 Table entries of 2 bytes long
+         LH      R15,ITEMCNTL
+         AH      R15,ITEMCNTL          R15 has itemcnt *2
+         SR      R15,R14               So we don't go to far
+NEXTHOT  LH      R5,ITEMPOSN(R1)       Get offset to current item
+         LA      R5,MENTXT(R5)         Point to start of item
+         LR      R8,R5                 Save it
+         LR      R7,R5                 Prepare for BXLE
+         AH      R7,ITEMLEN(R1)        Set stop address
+         LA      R6,1                  Increment
+FINDHOT  CLI     0(R5),C'{'            Got a {
+         BE      GOTBRAC
+         CLI     0(R5),C'A'            Test for Upper Case
+         BL      LOW1                  Lower
+         CLI     0(R5),C'Z'
+         BH      LOW1                  Lower case
+         B       GOTUPP1               Got an upper
+LOW1     BXLE    R5,R6,FINDHOT
+*
+* Here, the item is all lower case.
+* Pick the first character as the hot key.
+         LR      R5,R8                 Point to 1st Character
+MAKEUPP   OC      0(1,R5),BLANKS        Convert to upper case
+*AKEUPP  MEMUPR  0(R5),1               Convert to upper case
+GOTUPP1  DS      0H                    Jump here when we have UPPER
+         B       STORHOT               Store the hot key
+*
+GOTBRAC  DS      0H
+*
+* Here, we have a {
+         LA      R1,1(R5)              Point to next character
+         B       MAKEUPP
+*
+STORHOT  DS      0H                    Store Hot Key
+*
+         LR      R8,R5                 Save position of Hot Key
+         IC      R5,0(R5)              Load the Character
+         STC     R5,THISHOT            Save, look for Duplicates
+         LA      R5,MENTXT
+         SR      R8,R5                 Position of Hot Key
+*cvc     LH      R5,ITEMCNTL
+*        AR      R5,R5                 Double it.
+         STH     R8,HOTPOSNS(R1)       Store it in table for later
+         LA      R5,HOTKEYS            Point to HOTKEY String.
+         LR      R7,R5                 Prepare for end address
+         AH      R7,#HOTKEYS           Point to end of string
+         LA      R6,1                  Increment count
+FINDDUP  CLC     THISHOT,0(R5)         Look for DUPS
+         BE      GOTDUP                Got a Duplicate
+         BXLE    R5,R6,FINDDUP
+* no dups here
+         LH      R6,#HOTKEYS           Get length of string
+         LA      R7,HOTKEYS(R6)        Point to end of it
+         MVC     0(1,R7),THISHOT       Store the character
+         LA      R6,1(R6)
+         STH     R6,#HOTKEYS           Increment the number of hotkeys
+         BXLE    R1,R14,NEXTHOT        Around we go.
+         LA      R0,#HOTKEYS
+         LA      R1,ITEMCNTL
+*        HALT
+*
+* Now add some colors for color 3270's
+*
+         LH      R1,#MENTXT            Copy to #WORK
+         LA      R1,1(R1)              +1 for length byte
+         MEMCPY  #WORK,#MENTXT,R1      Done.
+         CLI   VIDSFE,0                Can we use extensions?     J51
+         BE    CANTHILT                Can't hi light them.       J51
+         LA      R15,WORK
+         LH      R1,#WORK              Get length of #WORK
+         LA      R15,WORK(R1)          Point to end of WORK
+         LA      R1,3(R1)              Add three for SFE
+         STH     R1,#WORK              Reset length
+*        MVI     0(R15),X'0E'          Fujitsi SFE (Zappable)
+*        CLI   VIDSFE,0                Can we use extensions?     J51
+*        BE    CANTHILT                Can't hi light them.       J51
+         MVC   0(1,R15),VIDSA          Fujitsu OR IBM Set Attribute
+         MVC     1(2,R15),=X'42F4'     RedMAGENTA
+*
+* Now loop around and position the cursor and recopy out the
+*   Hot Keys. This is an easy way out for us.
+*
+* Now, we have the SCREEN position of all the hot keys and words,
+* and so all we have to do is put out a Cursor Address, and the
+* hot keys (we have already set RED up).
+*      DC      X'0F0142F1',C'COLOUR F1',X'0E42F7',C'NEW COLOUR F7'
+         LA      R7,0                  Start at top of table
+         LA      R8,0                  Hot Key Position
+NEXTHOTX DS    0H
+         LH      R5,HOTPOSNS(R7)       Get offset to current HOTKEY
+         CH      R5,=H'0'              Reached End?
+         BE      RESETDEF              Yes, so done all the colours
+*        SH    R5,=H'3'                                           J51
+         LA    R5,5(R5)                Was 4                      J60
+         GOTORC  ONE,(R5),#WORK        Set Buffer Address
+         LA      R1,HOTKEYS(R8)        Point to HOTKEY
+         IC      R5,0(R1)              Get it
+         LH      R1,#WORK              Get current length of string
+         LA      R1,1(R1)              Add 1
+         STH     R1,#WORK              Reset
+*        LA      R1,WORK-1(R1)         Point to end of string
+         STC     R5,WORK-1(R1)         Store in end of string
+         LA      R7,2(R7)              Bump to next halfword (HOTPOSNS)
+         LA      R8,1(R8)              Bump to next byte     (HOTKEYS)
+         B       NEXTHOTX              Around the loop
+*
+RESETDEF DS      0H                    Reset the colours back to normal
+         LH      R1,#WORK              Get current length of string
+         LA      R1,3(R1)              Add 3 for color reset
+         STH     R1,#WORK              Reset
+         LA      R1,WORK-3(R1)         Point to end of string
+*        MVI     0(R1),X'0E'           Fujitsi SFE (Zappable)
+         MVC   0(1,R1),VIDSA           Fujitsu OR IBM Set Attribute
+         MVC     1(2,R1),=X'4200'      BACK TO DEFAULT Colour
+         JOLRETN RC=0                  All Done... HURRAY         J52
+CANTHILT DS    0H                                                 J51
+* Make bold for mono screens                                      J52
+         MVC   #WORK,=H'2'       Set initial length               J52
+         MVC   WORK(2),=X'1DE8'  Bold, Protected.                 J52
+         MVC   MENTXT(L'MENTXT),MENTXT+1   for 370 simulator|     J52
+         LH      R1,#MENTXT            Copy to #WORK              J52
+         SH    R1,=H'1'                                           J52
+         STH     R1,#MENTXT            Copy to #WORK              J52
+         CAT   WORK,MENTXT                                        J51
+         LA    R1,WORK                                            J51
+         AH    R1,#WORK                                           J51
+         MVC   0(2,R1),=X'1D60'  Normal                           J52
+         LH    R1,#WORK                                           J52
+         LA      R1,2(R1)              +2 for length byte         J52
+         STH   R1,#WORK                                           J52
+*        MEMCPY  #WORK,#MENTXT,R1      Done.                      J52
+         JOLRETN RC=0                  All Done... HURRAY
+*
+*Now, test for duplicates (Could we do it earlier? Maybe ...)
+*
+GOTDUP   DS      0H
+         JOLERR  332,'Hot Key Duplicated:-',THISHOT
+         JOLRETN RC=16
+        LTORG
+         DC   140S(*)

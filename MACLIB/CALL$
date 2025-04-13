@@ -1,0 +1,5 @@
+         MACRO
+&NAME    CALL$  &A
+&NAME    DS    0H                                                 J50
+         $CALL &A
+         MEND

@@ -1,0 +1,20 @@
+//CLARKED  JOB ACCT,'KQCAMS',MSGCLASS=X,CLASS=A,
+//         MSGLEVEL=(2,0),NOTIFY=CLARKE
+//*
+//AMS     EXEC PGM=KQCAMS,REGION=1024K
+//SYSPRINT DD SYSOUT=*
+//SYSIN    DD *
+  DELETE CLARKE.PIC.DIR CLUSTER
+  DEFINE CLUSTER ( +
+            NAME(CLARKE.PIC.DIR) +
+            VOL(F4T303) +
+            KEYS(128 0) +
+            UNIQUE +
+            SPEED +
+            CONTROLINTERVALSIZE(4096)) +
+         DATA ( +
+            NAME(CLARKE.PIC.DIRDATA) +
+            TRACKS(60)) +
+         INDEX ( +
+            NAME(CLARKE.PIC.DIRINDEX) +
+            TRACKS(5))

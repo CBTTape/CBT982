@@ -1,0 +1,104 @@
+         LR    R1,R0           SET R1 TO RETURNED POINT IN THE TABLE
+         BR    R12             BACK TO CALLER                     87150
+           LNR R14,R1           -12 TO R8
+           MH  R1,NOSYMS       NOSYMS X 12
+           L   R15,ASYMTBL      START OF TABLE
+           AR  R1,R15           END
+           AR  R15,R14     SUBTRACT 12
+           LA  R1,12(R1)
+S20BXH     BXH R1,R14,S20TEST
+           LR  R15,R6          LOAD WITH A '1' (ANY NON-ZERO WILL DO)
+           BR  R12             BACK TO CALLER WITH ERROR CODE.
+S20TEST    CLC SYMNAME,CALLAREA+32
+           BNE S20BXH          ROUND LOOP AGAIN
+           SR R15,R15
+           BR  R12             BACK TO CALL:- ALL IS WELL
+           SPACE 2
+S20GOTS1   EQU *
+* WE HAVE A SYMBOLIC TO MOVE TO THE OUTPUT STRING.
+           LR  R14,R9          R9=STRING OUTPUT
+           L   R15,SYMADDR     LOAD ADDRESS OF SYMBOLIC VARIABLE
+           MVC CALLAREA(2),0(R15) SHIFT LENGTH OF STRING.
+           LH  R8,CALLAREA     LOAD INTO R8
+* THIS ERROR CORRECTS AN ERROR NOTICED BY SHELL - 2.6.
+* IT WAS FIXED ONCE BEFORE BUT IT CREPT IN AGAIN WITH 2.7, AND
+* WAS PICKED UP BY STANDARD - 3.0. HOPEFULLY, THIS WILL FIX IT
+* FOR ALL TIME.
+         SPACE 1                                         JOL30067 76200
+         LTR   R8,R8          ANY DATA TO MOVE?          JOL30067 76200
+         BZ    S20MAIN        NO ->                      JOL30067 76200
+         SPACE 1                                         JOL30067 76200
+           CLI 2(R15),C''''    HAS SYM VAR GOT QUOTES ?
+           BNE S20NOTQ1        NO.
+           AR  R15,R6          YES,ADD 1 TO ADDRESS
+           SH  R8,=H'2'        AND REDUCE LENGTH BY 2
+           BZ  S20MAIN         NOTHING TO MOVE
+S20NOTQ1   AR  R14,R8          FIX TOTAL LENGTH
+           LA  R0,WORK                                          80290
+           A   R0,LWORK                                         80290
+           CR  R14,R0
+           BH  S20ERR7         WON'T FIT
+* THE FOLLOWING CODE CORRECTS AN ERROR NOTICED BY SHELL
+*   JOL26
+         SPACE 1
+         LTR   R1,R8          LOAD AND TEST R1
+         BZ    S20MAIN        NO DATA TO MOVE, SKIP TO MAIN LOOP
+         BCTR  R1,0           SUBTRACT 1 FROM R1
+         EX    R1,S20MUVSY    SHIFT SYMBOLIC TO OUTPUT AREA
+         IFVALUE S20QUOTI,S20SETR9 NOT IN '' STRING      JOL30027 76200
+* HERE WE ARE NOT IN A QUOTED STRING, SO WE MUST NOW SEE JOL30027 76200
+*  IF THE STRING WE MOVED TO THE OUTPUT AREA HAD DOUBLE  JOL30027 76200
+*  QUOTES, AND IF SO, WE MUST REPLACE DOUBLE QUOTES WITH JOL30027 76200
+*  SINGLE QUOTES.                                        JOL30027 76200
+* R9-> START OF REPLACED SECTION                         JOL30027 76200
+* R8 CONTAINS LENGTH REPLACED                            JOL30027 76200
+* R1 =R8-1                                               JOL30027 76200
+         LR    R14,R6         SET R14 TO 1               JOL30027 76200
+         LA    R15,0(R9,R1)   SET END ADDRESS            JOL30027 76200
+         LR    R1,R9          SET R1 TO START OF STRING  JOL30027 76200
+S20TWOQU CLC   0(2,R1),=C'''''' DOUBLE QUOTES ?          JOL30027 76200
+         BE    S20DBLQU       YES                        JOL30027 76200
+S20BXLE2 BXLE  R1,R14,S20TWOQU LOOP ROUND                JOL30027 76200
+S20SETR9 EQU   *                                         JOL30027 76200
+           AR  R9,R8           RESET
+           B   S20MAIN
+S20DBLQU EQU   *                                         JOL30027 76200
+         LR    R0,R8          PUT R8 IN TO WORK REGISTER JOL30027 76200
+         S     R0,ONE         SUBTRACT ONE               JOL30027 76200
+         BNP   S20SETR9       NOT POSITIVE -> OUT (ERROR?JOL30027 76200
+         LR    R8,R15         LOAD STOP ADDRESS TO R1    JOL30027 76200
+         SR    R8,R1          SUBTRACT R1=LENGTH TO MOVE JOL30027 76200
+         EX    R8,S20MVCQ     SHIFT STRING BACK A BYTE   JOL30027 76200
+         LR    R8,R0          RESET R8                   JOL30027 76200
+         B     S20BXLE2       BACK TO BXLE LOOP          JOL30027 76200
+S20MVCQ  MVC   0(*-*,R1),1(R1) DROP QUOTE EXECUTED MVC   JOL30027 76200
+         SPACE 3
+S20ERR8    JOLERR 408,'LIST OR CARD SUBSRIPT NEGATIVE:-IGNORED'   75311
+           B   S20SKIPZ                                           75311
+S20ERR1    MVC CALLAREA+32(8),0(R1)                               75311
+         LA    R12,CALLAREA+32                                    87150
+         USING S20NAME,R12
+         JOLERR 401,'SYMBOLIC NAME COMMENCING ''',S20NAME,             *
+               ''' IS TOO LONG'                             FIX-X 76200
+           JOLRETN RC=4
+S20ERR5  JOLERR 405,'%LIST SUBSCRIPT NOT NUMERIC OR TOO LARGE'
+           JOLRETN RC=4
+S20ERR6  JOLERR 506,'STRING -VE'
+           JOLRETN RC=4
+S20ERR7  JOLERR 407,'STRING TOO LARGE AFTER REPLACING SYMBOLICS'
+           MVC #WORK,=AL2(L'WORK)
+           JOLRETN RC=4
+S20MUVSY   MVC 0(*-*,R9),2(R15) SHIFT TO OUTPUT STRING
+           DROP R1,R12
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+           DC  S(*),S(*),S(*),S(*)
+           LTORG
+PREPSUBS CSECT
+         DC   D'0' KILL ALL WHO COME HERE
+XX001      DSECT
+S20NAME    DS  CL8
+         END

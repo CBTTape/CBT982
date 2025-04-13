@@ -1,0 +1,215 @@
+UJG90OP    TITLE 'WRITE JCL AND DATA RECORDS, SPLITTING IF NECESSARY'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974      74303
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1982.
+* JOL CCS-JOL 1987.
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         EJECT
+         PRINT OFF SUPPRESS JOLCOM
+         COPY JOLCOM
+         PRINT DATA,ON                                            75128
+         JOLSAVE CSECT=UJG99OP
+UJG90OP  EQU   UJG99OP
+           ENTRY UJG90OP
+* THIS CSECT OUTPUTS JCL ETC CARDS TO THE JCL FILE
+*
+* IF WE  ARE R UNNING THE JOB  UNDER TSO, IT SIMPLY EXITS         87150
+*
+*    IT MUST (IF THE LENGTH OF THE STRING IS >71 CHARACTERS) OUTPUT
+*    SEVERAL CARDS,EACH ENDING IN A ',' AND A BLANK IN COLS 3-15
+*    FOR EACH CONTINUATION CARD
+*    IF THE ORIGINAL STRING INPUT DOES NOT HAVE '//' IN COLS 1&2 THEN
+*    THE CONTINUATION CARDS SHOULD BE BLANK IN COLS 1 & 2
+           LR R3,R1            LOAD ADDR OF AREA TO GO OUT        74303
+           USING JOLCOM,R2
+           USING #OUTPUT,R3
+           IFTSO G99RETN0      RUNNING DIRECTLY UNDER TSO, EXIT   87150
+* THIS IS AN EXIT REQUESTED BY SHELL TO MAKE EMERGENCY CHANGES    75311
+*  TO THE JCL JUST BEFORE IT IS OUTPUT.                           75311
+* HOPEFULLY, IT WILL NEVER BE USED, BUT ...                       75311
+         $CALL UJG91OP,((1)) CALL USER EXIT RTN                   75311
+         LTR R15,R15         DID IT RETURN NON ZERO ?             75311
+         BNZ G99RETN0        YES, DON'T OUTPUT CARD THEN          75311
+* CHECK IF THE STRING IS NULL,IF SO MERELY RETURN
+         CLC #OUTPUT,=H'0'
+         BNE G99PUTIT OUT                    NOT 0 SO MUST OUTPUT IT
+G99RETN0 JOLRETN
+         SPACE 3
+G99PUTIT DS    0H
+         ICM   R8,15,OUTPUT         LOAD FIRST BYTES
+G99MUSTO DS    0H
+* GET SPACE FOR THE RECORD
+         L     R5,ADCBS
+         USING DCBS,R5
+         PUT JCL
+         DROP R5
+         LR R5,R1
+         USING CARDOUT,R5
+         CLEAR CARDOUT
+* CHECK IF A COMMENT,IF SO OUTPUT 80 BYTES ALWAYS
+*  OF COURSE, WHAT'S A COMMENT DEPENDS ON THE OPERATING SYSTEM
+         IFOS  ¬=X8,G90NX810
+         CLM   R8,12,=C'$*'      ON X8, IT'S THIS
+         BE    G90COMM
+         CLM   R8,8,=C'$'         AND THIS IS JCL
+         BE    G99NOTCM
+         B     G90COMM
+G90NX810 DS    0H
+         CLM   R8,14,=C'//*'
+         BE    G90COMM                                            75128
+         CLM   R8,12,=C'//*'      USE SAME LITERAL, BUT NOW       75128
+*                                  CHECK IF A JCL CARD            75128
+         BE    G99NOTCM
+G90COMM  CLC   #OUTPUT,=H'71' IF COMMENT <71 O/P NORMALLY         75128
+         BL    G99NOTCM                                           74303
+         MVC   CARDOUT,OUTPUT
+G99TPRNT BAL   R10,G99PRNT
+         B     G99RETN0
+         SPACE 3
+G99NOTCM DS    0H
+* WELL,THIS ISN'T A COMMENT SO NOW WE'LL SEE IF IT IS >71 CHARS
+T99LEN     CLC #OUTPUT,=H'71'
+           BH  G99SPLIT
+           MVC DBL(2),#OUTPUT  SO WE DON'T GET 0C6'S
+           LH R1,DBL
+           BCTR  R1,0
+           EX  R1,G99MUV1
+           B   G99TPRNT                        TEST IF PRINT REQD,RETN
+           SPACE 3
+G99SPLIT DS    0H
+* NOW THE STRING IS UNFORTUNATELY GREATER THAN 71 CHARACTERS
+*    I HAVE TO FIND A COMMA IN THE STRING AND SHIFT THE (UP TO AND
+*    INCLUDING THE COMMA) INTO THE OUTPUT BUFFER.
+           LA  R6,70
+FIND99CM   LA  R7,OUTPUT(R6)   ADDRESS THE BYTE
+           CLI 0(R7),C','      ',' ?
+           BE  GOT99COM        YEP
+           BCT R6,FIND99CM     NO,CONTINUE THE LOOP
+           LA  R6,70
+           B    GOT99MVC                                           DASD
+GOT99COM   EQU *
+*******************************************************************DASD
+* CHECK FOR POSSIBLE SPLIT OF FIELD WITHIN QUOTES(JCL FLUSH ACCT FLDASD
+*******************************************************************DASD
+         BCTR  R7,0           CHECK LEFT SIDE OF COMMA             DASD
+         CLI   0(R7),C''''    FOR A QUOTE OR RIGHT PREN  IF SO     DASD
+         BE    GOT99MVC       LEAVE                                DASD
+         CLI   0(R7),C')'     IT                                   DASD
+         BE    GOT99MVC       ALONE                                DASD
+         LR    R1,R6          SAVE CURRENT DISPLACMENT             DASD
+         LA    R15,20         LOOK BACK 20 BYTES                   DASD
+GOT99CQT LA    R7,OUTPUT(R1)  POINT TO NEXT BYTE                   DASD
+         CLI   0(R7),C''''    QUOTE HERE                           DASD
+         BE    GOT99CED       YEP                                  DASD
+         CLI   0(R7),C')'    RIGHT PREN                            DASD
+         BE    GOT99MVC       YEP                                  DASD
+         SH    R15,=H'1'      DECREMENT CTR BY 1                   DASD
+         BZ    GOT99MVC       IF NOT ZERO KEEP LOOKING             DASD
+         BCT   R1,GOT99CQT    RETURN TO LOOP                       DASD
+         B     GOT99MVC       NO HIT GET                           DASD
+GOT99CED  CLI  1(R7),C','    ARE WE AT THE END INSTEAD OF THE BEGINDASD
+          BE   GOT99MVC      YEP    LEAVE IT                       DASD
+         BCTR  R1,0           BACKUP BEHIND THE QUOTE              DASD
+         LR    R6,R1          RELOAD REG-6 WITH GOOD GUY           DASD
+GOT99MVC   EX  R6,G99MUV1      SHIFT THE OLD STRING IN             DASD
+         MVI   CARDOUT+71,C'+' MARK CONT: REQD FOR X8, OK FOR OTHERS
+           BAL  R10,G99PRNT    TEST IF PRINTING REQD
+* NOW R6 CONTAINS THE LEGTH OF THE STRING JUST GONE-1
+*    THESE NEXT FEW STEPS MUST:-
+*          1.  READJST THE BASE REGISTER R3 SO THAT THE #OUTPUT DSECT
+*                  POINTS TO THE NEXT BIT OF THE STRING
+*          2.  READJUST THE LENGTH IN #OUTPUT
+*          3.  CLEAR BYTES 1-15 OF THE NEW OUTPUT STRING
+*          4.  IF THE STRING JUST OUTPUT HAD '//' IN THE FIRST 2 BYTES
+*                  THEN THE NEW STRING MUST HAVE THEM ALSO
+           SPACE 3
+* NOW THERE IS ONLY ONE THING TO BE CAREFUL OF
+*    LET'S SUPPOSE THE STRING JUST OUTPUT WAS LESS THAN 16 BYTES
+*    IN THAT CASE ,R3 (BASE REG FOR THE OUTPUT STRING) CANNOT BE RESET
+*    TO POINT TO A LOCATION BEYOND THE BEGGINNING OF THE STRING
+*    BECAUSE THAT WOULD PUT US IN SOMEBODY ELSE'S BIT OF STORAGE
+*    AND THAT COULD BE A BIT NAUGHTY.
+           SPACE
+           LA  R6,1(R6)        ADD 1 COS I TOOK ONE OFF FOR THE EX MVC
+           CH  R6,=H'16'       <16 ????
+           BL   G99LES16       YES SO LEAVE THE BASE REGISTER UNCHANGED
+*                              BUT CLEAR BYTES 2 TO LENGTH JUST OP
+           SPACE
+* NOW HERE THE STRING IS LONGER THAN 16 BYTES SO WE MUST READJUST THE
+*    BASE REGISTER AND THEN CLEAR THE REQUIRED BYTES
+           MVC DBL(2),#OUTPUT  SAVE THE LENGTH OF STRING FOR A SECOND
+*                              BUT WE HAVE TO MOVE IT TO A WORK LOCN SO
+*                              WE DON'T GET A NASTY OLS 0C6
+           LR  R4,R3           SAVE OLD BASE SO WE CAN HAVE A LOOK FOR
+*                              '//' LATER ON
+         LA    R3,0(R6,R3)     NEW BASE REG BUT IT IS A LITTLE HIGH
+       LA  R3,1(R3)   ***************
+         SH    R3,=H'16'       ADJUST NOW SO WE CAN CLEAR BYTES 1-16
+         MVC   OUTPUT(15),BLANKS
+         IFOS  =X8,G99SETLE
+         CLC   =C'//',2(R4)    WERE FIRST BYTES '//' ?
+         BNE   G99SETLE        NO,SO MERELY RESET LENGTH OF THE STRING
+         MVC   OUTPUT(2),=C'//'
+G99SETLE LH    R1,DBL          LOAD OLD LENGTH
+         LA    R1,16(R1)       +16 COS OF THE ONES WE TOOK OFF
+         BCTR  R1,0
+         SR    R1,R6           SUBSTACT LENGTH PREVIOUSLY OUTPUT
+         STH   R1,DBL
+         MVC   #OUTPUT(2),DBL
+         B     G99MUSTO        GO AND OUTPUT THE STRING
+           SPACE 3
+G99LES16   EQU *
+* THE STRING OUTPUT ON THE PREVIOUS LINE WAS < 16 BYTES.
+*    THE BASE AND THE LENGTH OF THE STRING CANNOT BE CHANGED BUT WE CAN
+*    MOST CERTAINLY CLEAR OUT THE LENGTH WHICH WAS OUTPUT
+           SH  R6,=H'3'        R6 = LENGTH PREVIOUSLY OUTPUT
+           EX R6,G99CLEAR      CLEAR FROM BYTES 3 ONWARDS
+           CLC OUTPUT(2),=C'//' LAST STRING HAD '//' ?
+           BE G99MUSTO         YES SO LEAVE THEM IN THERE
+           MVC OUTPUT(2),BLANKS
+           B G99MUSTO
+G99PRNT    EQU  *
+           L  R1,AJOLGEN
+           USING GENDETS,R1
+           TM PARMPRNT,X'10' PRINT JCL?
+            DROP R1
+         BZR   R10             NO
+         IFOS  =X8,G99PRX8
+         L     R1,APRINTLN    LOAD ADDRESS OF THE PRINT LINE      75128
+         MVC   15(80,R1),CARDOUT                                  75128
+         MVI   1(R1),80+15                                        75128
+         JOLPRINT                                                 75128
+         BR    R10
+G99PRX8  DS    0H   PRINTJCL FOR X8
+         SPACE
+* ON X8 WE DO NOT HAVE ANY JCL WORTH PRINTING,
+*  BUT WE DO HAVE A FEW FIELDS WHICH MAY BE OF INTEREST
+         SPACE
+         BR    R10
+G99CLEAR   MVC OUTPUT+2(*-*),BLANKS          ******* EXECUTED
+G99MUV1    MVC CARDOUT(*-*),OUTPUT           ******* EXECUTED
+ LTORG
+           DC   20S(*)
+           DROP R3                                                74303
+OUT        DSECT
+#OUTPUT    DS  H
+OUTPUT     DS  CL100
+OPCARD     DSECT
+CARDOUT    DS   CL80
+         END

@@ -1,0 +1,14 @@
+T        CSECT                                                   88036
+         USING T,12                                              88036
+         LR    12,15                                             88036
+         OPEN  (DUMP,OUTPUT)                                     88036
+         SNAP  SDATA=SWA,DCB=DUMP                                88036
+         LTR   15,15                                              J40B
+         BZ    *+8                                                J40B
+         EX    0,*                                                J40B
+         CLOSE DUMP                                               J40B
+         SVC   3                                                  J40B
+         DS    0D                                                88036
+DUMP     DCB   DDNAME=SNAP,DSORG=PS,MACRF=W,RECFM=VAB,          88036  .
+               LRECL=125,BLKSIZE=882
+         END   T                                                 88036

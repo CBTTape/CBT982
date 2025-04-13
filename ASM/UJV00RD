@@ -1,0 +1,155 @@
+UJV00RD TITLE 'READ DATA FROM WORK FILE INTO STORAGE'
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-C001.
+* COPYRIGHT CCS 1974,1975,1976
+* COPYRIGHT CCS 1980
+* COPYRIGHT CCS-JOL 1984
+*
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           EJECT
+*
+******************************************************************
+*
+           EJECT
+         COPY JOLCOM
+         SPACE 3
+           PRINT DATA                                             75311
+V00SAVE  DSECT
+         DS    18F
+V00SIZEM DS    A              MIN CORE REQUIRED
+V00SIZEX DS    A              MAX CORE REQUIRED
+           PRINT DATA                                             75311
+V00SAVEL EQU   *-V00SAVE
+           JOLSAVE CSECT=UJV00RD,SIZE=V00SAVEL,BASE=10            84100
+* READ ALL THE INSTRUCTIONS IN TO CORE STORAGE
+***** MAJOR CHANGE APPROX 18 MAY,1975
+*
+* PREVIOUSLY, ALL THE INSTRUCTIONS WERE WRITTEN ONTO FILE
+*    'INSTRUCT' WHICH WAS A QSAM FILE. NOW,THEY ARE WRITTEN
+*    TO 'WORKFILE' AS A BSAMDATA SET.
+* THEREFORE, WE CAN NOW READ THE BLOCKS DIRECTLY INTO CORE
+*    AND PLACE THEM WHERE WE WANT THEM.
+* THE IDEA IS TO SET UP A LARGE CONTIGUOUS AREA OF CORE STORAGE
+*    AS A TABLE, AND USE THE 2ND 2 BYTES OF THE VB RECORDS AS
+*    THE LENGTH OF THE NEXT RECORD,SO THAT OTHER ROUTINES
+*    CAN DASH UP AND DOWN THE STACK EASILY.
+*
+           USING JOLCOM,R2
+         USING V00SAVE,R13
+         CLEAR   AGOTTEN,LGOTTEN
+* THE ABOVE TWO AREAS ARE CLEARED SO THAT THE MAIN MODULE (UJM00MN)
+* CAN DETERMINE WHETHER THIS MODULE WAS SUCCESSFUL IN GAINING CORE
+* SO THAT IT CAN FREE THE OBTAINED AREA WITHOUT ABENDING S30A
+        SPACE 3
+* NOW CHECK IF THERE ARE ANY BLOCKS TO READ AT ALL.
+          L   R11,AINSCNTL                                        76200
+          USING AINSTBUF,R11                                      76200
+        IFNULL  INSTBLKN,V00NOTXT   NO RETURN WITH ERROR MESSAGE
+           LH  R9,INSTLAST     SAVE LENGTH OF LAST BLOCK          75311
+*                              SO WE CAN CALCULATE HOW MUCH EXTRA 75311
+*                              CORE IS REQUIRED TO HOLD THE TABLE 75311
+*                              IN CORE                            75311
+        SPACE 2
+           LH  R1,INSTBLKN     LOAD NUMBER OF BLOCKS              CHC
+           A   R1,ONE                                             CHC
+           FIX 'WHY DO I DO THIS ????'
+           MH  R1,LINSTBUF     * BY LENGTH OF BUFFER              CHC
+           AR  R1,R9           + LENGTH OF LAST BLOCK             CHC
+           AH  R1,=H'50'       + A LITTLE BIT IN CASE      CHC
+           ST  R1,V00SIZEM     SAVE IT FOR MIN GETMAIN     CHC
+           AH  R1,=H'5000'     + A LITTLE BIT IN CASE      CHC
+           FIX 'WHY ADD 5000??????'
+           ST  R1,V00SIZEX     SAVE IT FOR MAX GETMAIN     CHC
+* R1 CONTAINS TOTAL NO OF BYTES NEEDED FOR TABLE                  75311
+         GETMAIN VC,LA=V00SIZEM,A=AVTBLE,MF=(E,CALLAREA),SP=0     75128
+         LTR   R15,R15                                            75128
+         BNZ   V00TOOMH                                    CHC
+         SPACE                                                    75128
+V00GOTC1 EQU   *                                           CHC
+         MVC   AGOTTEN(8),AVTBLE  SAVE THESE FOR FREEMAIN LATER   75128
+         L     R1,AVTBLE                                          75128
+         LA    R1,4(R1)                                           75128
+         ST    R1,AVTBLE                                          75128
+         A     R1,LVTBLE                                          75128
+         SH    R1,=H'16'                                          75128
+         ST    R1,AVTBLEND                                        75128
+           L   R4,AVTBLE       LOAD ADDRESS OF TABLE INTO WHICH   75128
+*                              ALL THE INSTRUCTIONS ARE TO GO     75128
+* NOTE: AVTBLE ACTUALLY POINTS TO 4 BYTES HIGHER THAN THE ACTUAL  75128
+*    TABLE ADDRESS. THIS IS BECAUSE ALL THE OTHER ROUTINES THAT   75128
+*    USE THE TABLE EXPECT'AVTBLE' TO POINT TO THE FIRST RECORD    75128
+*    IN THE BLOCK,AND SO.....
+           LA  R5,1            SET R5=1 (FIRST BLOCK)             75128
+V00LUP1    LR  R1,R4           SAVE R4                            75128
+           CH  R5,INSTBLKN     IS THIS THE LAST BLOCK WE ARE READ 75128
+           BE  V00LAST         YES                                75128
+           AH  R1,LINSTBUF     ADD MAX LENGTH OF BLOCK THEN       75128
+           B   V00LASTN                                           CHC
+V00LAST    AH  R1,INSTLAST     ADD LENGTH OF LAST BLOCK           75128
+V00LASTN   C   R1,AVTBLEND     WILL TABLE OVERFLOW ?              CHC
+           BH  V00TOOMH        YES,GIVE ERROR AND RETURN          75128
+* OK,WE CAN READ THE BLOCK (NEARLY).
+* NOW,WE DON'T WANT THE BLOCK SIZE 4 BYTES,SO WE MUST READ INTO   75128
+*    THE AREA -4 BYTES                                            75128
+           SH  R4,=H'4'                                           75128
+           MVC CALLAREA(4),0(R4)                                  75128
+           LR  R15,R5           LOAD R15 WITH CURRENT BLOCK NUMBER75128
+           SLL R15,2            MULT BY 4                         75128
+         L    R7,ADCBS
+         USING DCBS,R7
+           POINT WORKFILE,INSTTTR1-4(R15) POINT TO TTR OF BLOCK   75128
+           READ WORKINDB,SF,WORKFILE,(R4),MF=(E,WORKINDB)         75128
+           CHECK WORKINDB                                         75128
+         DROP  R7
+           MVC DBL(4),0(R4)    SHIFT BLOCK DESCRIPTOR             75128
+           MVC 0(4,R4),CALLAREA RESET PREVIOUS 4 BYTES            75128
+         LA  R5,1(R5)    SET NUMBER OF BLOCKS READ UP 1           75128
+           AH  R4,DBL          ADD THIS BLOCK LENGTH.             75128
+           CH  R5,INSTBLKN     WAS THIS THE LAST BLOCK?           75128
+           BNH V00LUP1         NOPE,GET NEXT BLOCK                75128
+           XC  0(8,R4),0(R4)      CLEAR NEXT 8 BYTES              75128
+           B   V00EOF                                             75128
+V00TOOMH   EQU *                                  CHC
+           L   R1,V00SIZEM                        CHC
+* R1 CONTAINS TOTAL NO OF BYTES NEEDED FOR TABLE                  75311
+           CVD R1,DBL          CONVERT PACKED DEC                 75311
+           UNPK OP(5),DBL      NOW ZONED                          75311
+           OI  OP+4,C'0'                                          75311
+           MVC #OP,=H'5'                                          75311
+         JOLERR 401,'TOO MUCH DATA IN GENERATE PHASE:-RERUN IN LARGER R*
+               EGION: EXTRA REQD APPROX ',#OP,' BYTES'            75311
+V00RETNF   XC  0(8,R4),0(R4)      CLEAR NEXT 8 BYTES              75128
+           JOLRETN RC=16
+V00EOF     EQU *                                                  75128
+           ST  R4,TOTAVREC     SAVE LAST ADDRESS USED             75128
+* NOW WE MUST SCAN DOWN THE TABLE PUTTING THE CURRENT RECORD      75128
+*    LENGTH INTO THE NEXT 2 SPARE BYTES OF THE NEXT RECORD        75128
+           L   R1,AVTBLE       A 1ST RECORD                       75128
+V00LUP2    LH  R14,0(R1)       LOAD LENGTH OF CURRENT RECORD      75128
+           LTR R14,R14         IS IT 0 (END OF TABLE)             75128
+           BZ  V00END2         REACHED END                        75128
+           AR  R1,R14          POINT TO START OF NEXT RECORD      75128
+           STH R14,2(R1)       STORE THIS LRECL IN NEXT RECORD    75128
+           B   V00LUP2         AND ROUND AGAIN                    75128
+           SPACE 3                                                75128
+V00END2    JOLRETN
+V00NOTXT   JOLRETN  RC=16
+           LTORG
+           DC    40S(*)
+           END

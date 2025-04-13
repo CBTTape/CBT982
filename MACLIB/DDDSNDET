@@ -1,0 +1,203 @@
+        TITLE 'INTERNAL REPRESENTATION OF A DDCARD IN JOL'
+*********************************************************************
+*
+*
+*
+*    MODIFIED BY C. V. CLARKE, DEC 27TH, 1983 TO REMOVE 75311 AND
+*                              75128 DATES IN RIGHT HAND COLUMNS
+*                              AND TO LINE UP COMMENTS
+*
+*
+*********************************************************************
+         AIF   ('&TYPE' EQ 'SCHED').DDEQU
+DDDSNDET DSECT
+         AGO .DODDDS
+.DDEQU   ANOP
+DDDSNDET DS    0H
+.DODDDS  ANOP
+DDOSVB   DS    H              V B RECORD LENGTH (OS STYLE)
+         DS    H              SET TO ZERO OR PREVIOUS RECORD LENGTH
+DDDD1    DS    CL1            HOLDS A 'D'
+DDDSID   DS    CL8            THE DATA SET IDENTIFIER
+DDSTMT   DS    CL4            STMT NO OF DECLARE
+DDLEVEL  DS    CL1            LEVEL OF THIS DECLARED DSID
+DDNEST   DS    CL1
+DDTYPE   DS    AL1            THIS FIELD CONTAINS INFO ABOUT DSID 75128
+DDSYSIN  EQU   1              SYSIN DATA SET
+DDSYSOUT EQU   5              SYSOUT DATA SET
+DDSPECOU EQU   6              SPECIAL SYSOUT DATA SET, USER
+*                             CODED SYSOUT='(A,X,B),COPIES=2' ETC
+DDPUNCH  EQU   10             THIS IS A PUNCH DATA SET
+DDDSIDRF EQU   15             THE DSNAME FIELD CONTAINS D DSIDREF
+DDWORKDS EQU   25             THIS IS A WORK DATA SET, BUT SO FAR
+*                             IT HAS NOT BEEN CHECKED TO SEE IF
+*                             IT IS PASSED (SEE DDTEMPDS EQU 20)
+DDWORKPS EQU   26             THIS IS A REAL WORK DATA SET
+DDWORKPO EQU   27             THIS IS A REAL PARTITIONED WORK DATA
+DDTEMPPS EQU   30             THIS IS A TEMPORARY DATA SET
+DDTEMPPO EQU   31             THIS IS A TEMPORARY PARTITIONED DS
+DDREALDS EQU   35             THIS (OR > ON A CLI) IS A REAL DATA SET
+DDMEMSPC EQU   40             THIS DATA SET HAS A MEMBER SPECIFIED
+DDGDG    EQU   50             THIS IS A GDG ALL DATA SET
+DDGDGABS EQU   55             THIS IS AN ABSOLUTE GDG DATA SET
+DDGDGREL EQU   56             THIS IS A RELATIVE GDG DATA SET
+DDPATH   EQU   60             THIS IS A PATH HPS DATA SET           J60
+DDDDNAME DS    CL8            USERS DDNAME STORED HERE IN RUN
+DDDSNAME DS    CL44           DSNAME OR OTHER DETAILS
+DDMBR    DS    CL8            MEMBER NAME Ý GDG REL
+DDPASSW  DS    CL8            PASSWORD FOR DATA SET               80290
+         ORG   DDDSNAME
+DDSYSCLS DS    CL1            SYSOUT CLASS
+DDSYSPGM DS    CL8            PROGRAM TO BE CODED
+DDSYSFRM DS    CL8            FORM ON SYSOUT
+DDCOPIES DS    AL1            COPIES IF SPECIFIED
+DDOUTLIM DS    AL3            OUTLIM PARAMETER
+DDUCS    DS    CL4,4C         UCS PARAMETER
+DDFCB    DS    CL4,4C         FCB PARAMETER
+DDROUTE  DS    CL8            DEST Ý ROUTE
+DDALIGN  DS    CL1            ALIGNMENT REQUIRED
+DDVERIFY DS    CL1            VERIFICATION REQUIRED
+DDFOLD   DS    CL1
+         ORG   DDDSNAME
+DDDSIDR  DS    CL8
+         ORG
+DDDISP   DS    0CL3            SAME FIELD AS 'DDUSE' ABOVE
+DDUSE    DS    CL1
+*  BIT DEFINITIONS
+* XX.. ....                   00 MEANS OLD
+*                             01 MEANS NEW
+*                             10 MEANS MOD
+*                             11 MEANS USES (CREATE IF NON-EXISTANT,
+*                                USE EXISTING D/S IF IT EXISTS)   J40B
+* ..XX ....              NEXT TWO BITS MEAN
+*                             00 MEANS SHR
+*                             01 MEANS ENQ (VIA OS)
+*                             10 MEANS DYNAMIC ENQUE (BY JOL)
+* .... X...              NEXT BIT
+*                             0 MEANS PERMANENT DATA SET (IE KEEP
+*                             WAS ISSUED SOMEWHERE)
+*                             1 MEANS A TEMPORARY DATA SET
+* .... ..X.                   THE SEVENTH BIT,IF ON=DEFER
+* .... ...X                   THE EIGHT BIT,IF ON=UNITAFF
+DDDISP1  DS    C               NORMAL &                           J40B
+DDDISP2  DS    C               ABNORMAL DISPOSITION               J40B
+DDCANCEL DS    XL1            BITS ARE SET ON IF NOVOL,NOUNIT ETC ARE
+*                             CODED. SEE BELOW.
+DDNOVOL  EQU   X'80'          SET IF NOVOL CODED.                 80289
+DDNOUNI  EQU   X'40'          SET IF NOUNIT CODED.                80289
+DDNODCB  EQU   X'20'          SET IF NODCB CODED.                 80289
+DDNOXX1  EQU   X'10'          SET IF NO                           80289
+DDNOXX2  EQU   X'08'          SET IF NO                           80289
+DDNOXX3  EQU   X'04'          SET IF NO                           80289
+DDNOXX4  EQU   X'02'          SET IF NO                           80289
+DDNOXX5  EQU   X'01'          SET IF NO                           80289
+DDAEXTRA DS    A              ADDRESS OF EXTRA INFORMATION SUCH AS87150
+*                             SUBSYS, OR VOLUMES IF > 6           87150
+* NOTE DDAEXTRA IS A STORAGE ADDRESS FOR 'PATH', ELSE DISK ADDR.  J60
+DDLABTYP DS    CL1            SL,SUL,NL ETC
+*                             SL=0,SUL=1,NL=2,NUL=3,BLP=4,
+*                             ASCI=5
+DDVOLUME DS    CL44           VOLUME LIST FROM DATA SET DCL OR FROM
+*                             CATALOGUE SEARCH ROUTINES.
+*                             IF VREF CODED,CONTAINS A '-' OR '*'
+*                             SEE UJC03DS AND UJC24RUN.
+         ORG   DDVOLUME
+DDCHAR   DS    CL8            FOR 3800
+DDFLASH  DS    CL8            FLASH PARAMETER
+DDCHARS  DS    CL19           CHARS PARAMETER
+DDMODIFY DS    CL8            MOFIFY PARAMETER
+DDBURST  DS    CL1            BURST PARAMETER
+         ORG   DDVOLUME
+DDFLTYPE DS    CL8            FOR PATH (UNIX) - BINARY OR TEXT    J60
+DDPTHMDE DS    CL(44-8)       WILL BE USED FOR PATHMODE           J60
+         ORG
+DDLABEL  DS    H              USER LABEL NUMBER FOR TAPE FILES
+DDUNIT   DS    CL8            USER OR CATLG UNIT TYPE TO GO INTO
+*                             THE JCL,EG 2314 OR SYSDA.
+DDUNITNO DS    FL1            NO. OF UNITS OR P (PARALLEL MOUNTING)
+DDUNITYP DS    X              SPECIAL JOL INTERNAL UNIT INDICATORS
+*        AS FAR AS JCS CAN WORK OUT:                              88036
+*              1... ....       DISK                               88036
+*              0... ....       TAPE                               88036
+*              .1.. ....       PERM                               88036
+*              ..1. ....       PREFERRED                          88036
+*              ...X XXXX       JOL'S VERSION OF MODEL:            88036
+*                                SEE HEX UNITS FOR THE LATEST     88036
+DDUNITQU DS    XL1       BITS ARE SET AS FOLLOWS:-
+DDUNITM  EQU   X'80'          SET IF MSS                          80289
+DDUNITQ  EQU   X'40'          SET IF DD CARD HAS THE QNAME PARAM  80289
+DD3800   EQU   X'20'          SET IF DD CARD HAS CHAR, FLASH ETC  84100
+DDUNITC  EQU   X'10'          SET IF ---------                    80289
+DDUNITD  EQU   X'08'          SET IF ---------                    80289
+DDUNITE  EQU   X'04'          SET IF ---------                    80289
+DDUNITF  EQU   X'02'          SET IF ---------                    80289
+DDUNITG  EQU   X'01'          SET IF ---------                    80289
+* SEE THE JOLGEN FOR A COPY OF THE TABLE FROM WHICH
+* THIS IS SET UP.
+DDCATLGS DS    FL1            CATALOG RETURN CODE
+DDSPACE  EQU   *              START OF SPACE FIELDS
+DDPRIM   DS    H              PRIMARY SPECIFIED SPACE.
+DDSEC    DS    H                SECONDARY SPECIFIED SPACE
+DDDIRECT DS    H                DIRECTORY OR OVERFLOW SPACE
+DDCYLTRK DS    CL1              'C'=CYLS,'T' OR ' '=TRKS,'B'=BLOCKS
+DDSPECTP DS    XL1            USED FOR PRIVATE ETC
+*                             X'01' = ROUND
+*                             X'02' = ALX
+*                             X'04' = MXIG
+*                             X'08' = PRIVATE
+*                             X'10' = READONLY (PASSWORD)
+*                             X'20' = PROTECT  (PASSWORD)
+*                             X'40' = ACCEPT ERRORS
+*                             X'80' = SKIP   ERRORS
+DDSPECT2 DS    XL1            RLSE ETC GOESHERE
+*                             X'01' = VSAM
+*                             X'02' = NORLSE
+*                             X'04' = HOLD (SYSOUT) =YES (DEF=NO)
+*                             X'08' = FREE AT CLOSE =YES
+*                             X'10' = FREE AT END = YES           80290
+*                             X'20' = NODEFAULTS TO BE MADE
+*                             X'40' = TRACE (GTF)
+*                             X'80' = CONTIG ON SPACE
+DDDCB    EQU   *
+DDRECFM  DS    CL4            'VB' 'FB' ETC ETC
+DDBLKSZE DS    H              BLOCKSIZE SPECIFIED BY USER
+DDLRECL  DS    H              RECORD LENGTH SPECIFIED BY USER
+DDSIZE   DS    H                                                  74303
+DDSIZE2  DS    H
+DDAVREC  DS    H              AVERAGE RECORD SIZE WHEN SPECIFIED
+DDSIZEQ  DS    CL1            USED FOR DDAVREC BELOW
+DDBUFNO  DS    FL1            NUMBER OF BUFFERS SPECIFIED BY USER
+DDBUFL   DS    H              BUFFER LENGTH
+DDBUFNI  DS    FL1            VSAM
+DDBUFND  DS    FL1            VSAM
+DDLIMCT  DS    CL1            LIMIT SEARCH
+DDOPTCD  DS    CL6            USER SPECIFIED OPTCD FIELD
+DDDENS   DS    CL1            USER SPECIFIED DENSITY
+DDRKP    DS    FL1            RECORD KEY POSITION
+DDKEYLEN DS    FL1            RECORD KEY LENGTH
+DDOVERFL DS    FL1            CYLOFL
+DDDSORG  DS    CL3            DSORG, BLANK='PS'
+DDRETPD  DS    CL1            RETENTION PERIOD (SET TO 'R' IF RETPD
+*                             USED,BUT VALUE IS IN DDEXPDT BELOW).
+DDEXPDT  DS    CL5            EXPIRATION DATE
+DDVOLSEQ DS    FL1            VOL SEQUENCE NUMBER
+DDMAXVOL DS    FL1            MAX VOL NUMBER TO BE GENERATED
+DDCODE   DS    CL1            CODE FOR PAPER TAPE
+DDFUNC   DS    CL1            FUNCTION FOR READER PUNCH
+DDLEN    EQU   *-DDOSVB       EQUATE EQUAL TO THE LENGTH OF RECORD
+DDEXTRA  DS    CL29           WHEN 'DCBEXTRA' IS CODED, INFO GOES
+*                             HERE, AND LENGTH SET GREATER
+*
+#DDVSAML DS    H              LENGTH OF NEXT FIELD                J52
+DDVSAMXT DS    CL253          WHEN 'VSAMTXT' IS CODED, INFO GOES  J52
+*                             HERE FOR DBFADD                     J52
+         SPACE 3
+         AGO .SKIPPTH
+* THE NEXT FIELD IS ALSO USED FOR THE PATH                        J60
+         ORG   #DDVSAML
+#DDPATH  DS    H              LENGTH OF DDPATH BELOW.             J60
+DDPATH   DS    CL253          PATH NAME                           J60
+*
+DDLENLNG EQU   *-DDOSVB       EQUATE EQUAL TO THE FULL LENGTH     J60
+         ORG
+.SKIPPTH ANOP

@@ -1,0 +1,26 @@
+*************************************************************      DASD
+*  CLOSE ANY OPEN FILES BEFORE RETURNING TO THE MONITOR     *      DASD
+*        MVS  WILL ABEND-C03                                *      DASD
+*************************************************************      DASD
+         FIX 'CLOSE TOGETHER'
+UJEFILES DS    0H                                                  DASD
+*        FIX 'DON''T CLOSE'
+*        BR    R11   **** DON'T CLOSE FOR DYNAMIC SCHEDULER
+         ST    R11,CALLAREA+4
+         LA    R10,INSTRUCT                                        DASD
+         BAL   R11,UJEFCLSE                                        DASD
+         LA    R10,PRINT                                           DASD
+         BAL   R11,UJEFCLSE                                        DASD
+         LA    R10,RETN                                            DASD
+         BAL   R11,UJEFCLSE                                        DASD
+         AIF   (&X8).X8060
+         LA    R10,JOBQ                                            DASD
+         BAL   R11,UJEFCLSE                                        DASD
+.X8060   ANOP                                                    88036
+         L     R11,CALLAREA+4
+         BR    R11                                                 DASD
+UJEFCLSE DS    0H                                                  DASD
+         TM    48(R10),X'10'  IS FILE OPEN ??                      DASD
+         BZ    0(R11)         NOPE  RETURN                         DASD
+         JOLCLOSE ((R10)),MF=(E,CALLAREA) CLOSE THIS GUY           DASD
+         BR    R11            RETURN                               DASD

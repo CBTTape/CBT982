@@ -1,0 +1,249 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Mozilla SeaMonkey">
+  <title>Link</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>LINK</u></font><font size="5"><u><span
+ style="font-weight: normal;"> </span></u></font><u>- </u><font
+ size="5"><i><u><span style="font-weight: normal;">Execute Command</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">LINK </span>Command invokes the system
+Linkage Editor to convert the object text from the <span
+ style="font-weight: bold;">COB, PL1, FORTRAN</span> or <span
+ style="font-weight: bold;">ASM</span> Commands to load module
+format.&nbsp; The Load module can then be executed with the <span
+ style="font-weight: bold;">RUN</span>, <span
+ style="font-weight: bold;">EXEC</span> or similar commands<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <p><b>&nbsp;<br>
+      </b></p>
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">LINK
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;&nbsp; { </span><span style="font-style: italic;">data-set-list</span><span
+ style="font-weight: bold;"> &nbsp;&nbsp; &nbsp;}&nbsp;&nbsp; </span><span
+ style="font-style: italic;">options</span><span
+ style="font-weight: bold;"> ;</span><br style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 120px;">or<span
+ style="font-weight: bold;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; { </span><span
+ style="font-style: italic;">dsid-list&nbsp;</span><span
+ style="font-weight: bold;">&nbsp; &nbsp;}</span><br
+ style="font-weight: bold;">
+      </div>
+      <div style="margin-left: 80px;"><br style="font-weight: bold;">
+where <span style="font-style: italic;">options</span> are:<br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">LOAD &nbsp;&nbsp;&nbsp; &nbsp; </span><span
+ style="font-style: italic;">dsid | data-set-name &nbsp;</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">NAME (</span><span
+ style="font-style: italic;">program-name</span><span
+ style="font-weight: bold;">)</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">&nbsp;&nbsp; </span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">LIB&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; { </span><span
+ style="font-style: italic;">data-set-name [|| data-set-name]</span><span
+ style="font-weight: bold;">&nbsp;&nbsp; &nbsp;}</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 40px;">or&nbsp; <span
+ style="font-weight: bold;">{ </span><span style="font-style: italic;">dsid
+[||
+dsid
+...
+]&nbsp;</span><span style="font-weight: bold;">&nbsp;
+&nbsp;}</span><br>
+      </div>
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">{&nbsp; PRINT&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp; </span><span style="font-style: italic;">data-set-name</span><span
+ style="font-weight: bold;"> | </span><span style="font-style: italic;">dsid</span><span
+ style="font-weight: bold;">&nbsp; | NOPRINT &nbsp;&nbsp; &nbsp;}</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">{&nbsp; SYSOUT
+&nbsp;&nbsp;&nbsp; &nbsp;* | </span><span style="font-style: italic;">class</span><span
+ style="font-weight: bold;">&nbsp;&nbsp; &nbsp;}</span><br
+ style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">[&nbsp; PLILIB&nbsp;&nbsp;
+&nbsp; &nbsp;&nbsp; ]</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">[&nbsp; PLICMIX&nbsp;&nbsp;
+&nbsp; ]</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">[&nbsp; PLIBASE&nbsp;&nbsp;
+&nbsp;]</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">[&nbsp; FORTLIB&nbsp;&nbsp;
+&nbsp;]</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">[&nbsp; COBLIB&nbsp;&nbsp;
+&nbsp;&nbsp; ]</span><br style="font-weight: bold;">
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">INCLUDE&nbsp; &nbsp; &nbsp;
+&nbsp; {&nbsp; </span><span style="font-style: italic;">data-set-name</span><span
+ style="font-weight: bold;">&nbsp;&nbsp; [(</span><span
+ style="font-style: italic;">member-list</span><span
+ style="font-weight: bold;">)]&nbsp;&nbsp; &nbsp;}</span><br
+ style="font-weight: bold;">
+      <div style="margin-left: 80px;"><span style="font-weight: bold;">&nbsp;
+&nbsp;&nbsp;&nbsp;
+{
+
+      </span><span style="font-style: italic;">dsid</span><span
+ style="font-weight: bold;">&nbsp;&nbsp; &nbsp;}</span><br
+ style="font-weight: bold;">
+      </div>
+      <br style="font-weight: bold;">
+      <span style="font-weight: bold;">AC=0 | 1</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">SSI&nbsp;&nbsp; &nbsp;=
+&nbsp;&nbsp; &nbsp;system status information</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">SIZE &nbsp;&nbsp; &nbsp;=
+&nbsp;&nbsp; &nbsp;virtual storage size</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">DCBS &nbsp;&nbsp; &nbsp;=
+&nbsp;&nbsp; &nbsp;blocksize</span><br style="font-weight: bold;">
+      <span style="font-weight: bold;">LIST | NOLIST</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">MAP | NOMAP</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">CROSSREF | XREF</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">OVERLAY | OVLY | NOVLY</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">TEST | NOTEST</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">LET | NOLET</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">RENT | NORENT</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">REFR | NOREFR</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">NCAL | NONCAL</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">XCAL | NOXCAL</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">OL | NOOL</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">PANEL | NOPANEL</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">NE | NONE</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">DC | NODC</span><br
+ style="font-weight: bold;">
+      <span style="font-weight: bold;">SCTR | NOSCTR</span><b><br>
+&nbsp; &nbsp;&nbsp; &nbsp; </b></div>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"> <br>
+      </td>
+      <td align="left" valign="top">
+      <p><br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+        <li><span style="font-weight: normal;">Default values are
+satisfactory for most purposes.</span></li>
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">LOADGO </span>may be a faster alternative
+to <span style="font-weight: bold;">LINK</span>.</span></li>
+        <li><span style="font-weight: normal;">If no name is specified
+in the <span style="font-weight: bold;">LOAD </span>parameter, <span
+ style="font-weight: bold;">TEMPNAME </span>is the default.</span></li>
+        <li><span style="font-weight: normal;"><span
+ style="font-weight: bold;">SSI </span>defaults to the current date
+and time.&nbsp; Thus day <span style="font-weight: bold;">156</span>
+in 2009, time 14:15 will become <span style="font-weight: bold;">SSI
+91561415</span>.&nbsp; The<span style="font-weight: bold;"> SSI</span>
+will be printed when the program <span style="font-weight: bold;">RUN</span>s,
+thus
+providing
+an
+audit trail of which version of a production program
+ran.</span></li>
+        <li><span style="font-weight: normal;">If <span
+ style="font-weight: bold;">PRINT </span>is not specified the printer
+output is placed in a <span style="font-weight: bold;">SYSOUT</span>
+data set, which defaults to the <span style="font-weight: bold;">TSO </span>sysout
+class.
+This
+can
+be examined with the <span style="font-weight: bold;">OUT </span>Command.</span></li>
+        <li><span style="font-weight: normal;">If <span
+ style="font-weight: bold;">LOAD </span>is not specified, a temporary
+data set &amp;<span style="font-weight: bold;">LOAD </span>is created
+and the module stored under the name <span style="font-weight: bold;">TEMPNAME</span>.</span></li>
+      </ol>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">1
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LINK OBJ
+LOAD('PROD.LOAD(PAYUPDTE)') COBLIB;<br>
+      <br>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+object
+code
+specified
+will be linked and stored in the data set <span
+ style="font-weight: bold;">PROD.LOAD</span> as member <span
+ style="font-weight: bold;">PAYUPDTE.</span></span><br>
+      </div>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

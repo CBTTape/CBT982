@@ -1,0 +1,75 @@
+SHOWDATA DATASECT
+*CIRPARM  DSECT                                                   cvc
+CIROPT   DS    X      X'01' = Move the data                       cvc
+         DS    XL2                                                cvc
+CIRLOCRC DS    X      Locate return code                          cvc
+CIPSRCH  DS    A      Points to Level                             cvc
+CIRCVOL  DS    A      Address of CVOL or 0                        cvc
+CIRWA    DS    A      Address of User work Area (see below)       cvc
+CIRSAVE  DS    A      Address of 1 72 Byte Save Area              cvc
+CIRPSWD  DS    A      Address of 8 byte password, 0               cvc
+*UWORK   DSECT        User area for above                         cvc
+*AREALN   DS    H                                                 cvc
+*DATALIN  DS    H                                                 cvc
+*                                                                 cvc
+CIRSAREA DS    18F    Save area for IKJEHCIR                      cvc
+*                                                                 cvc
+*                                                                 cvc
+CVOLNAME DS    CL44   CVOL Name                                   J60
+*                                                                 cvc
+*                                                                 cvc
+#SELDDNM DC    H'0'
+SELDDNM  DC    CL50' '
+#RETDSN  DC    H'0'                                               J53
+RETDSN   DC    CL80' '
+SELTYPE  DC    C' '                                              cvc
+#SELMSG  DC    H'0'                                              cvc
+SELMSG   DC    CL100' '                                          cvc
+DSNFILE  DS    H
+NOROWS   DC    H'0'
+POINTERS DC    50A(0)
+DBFKEY   DC    CL44' '
+STOP2    DC    H'0'
+START2   DC    H'0'
+THISNO   DC    H'0'   *
+MAXCOL   DC    H'0'
+COUNT    DC    H'0'
+STARTPOS DC    H'0'
+NOFLSDO  DC    H'0'
+*NAMEINDX DC    512A
+OFFSET   DC    H'0'                                              cvc
+X04DS    DC    CL50' '                                           cvc
+*struct control{
+*     int noscreens;
+*     int startÝ(MAXDBF/MAX_DSNS_PER_SCREEN)+1¨;
+*     int stop Ý(MAXDBF/MAX_DSNS_PER_SCREEN)+1¨;
+*     }control;
+*
+NOSCREEN DC     H'0'                                              cvc
+CSTART   DC     20H'0'         fix on 370                         cvc
+CSTOP    DC     20H'0'         fix on 370                         cvc
+*VSAMCBS DC    A(0)                                               J50
+*UJFLAG1 DC    X'00'                                              J50
+*F1DBOPN EQU   X'80'            JOL DB OPENED                     J50
+*F1DBINP EQU   X'40'            JOL DS OPENED FOR I/P
+*F1DBERR EQU   X'20'            JOL DS DB UNUSABLE BECAUSE OF ERROR50
+*F1RESVD EQU   X'1F'            RESERVED BITS                     J50
+*JFLAG2  DC    X'00'                                              J50
+*F2RESVD EQU   X'FF'            RESERVED BITS                     J50
+AREALN   DS    H                                                  J60
+DATALIN  DS    H                                                  J60
+DSNAMES  DC    400CL45' '        dsnames¬MAXDBF¦Ý45¨;             J60
+DSNSIZE  EQU   *-DSNAMES Equate for work area size               cvc
+*DSNSIZE  EQU   MAXDBF*44  Equate for work area size              cvc
+*DSNSIZE  EQU   200        Equate for work area size               cvc
+DSNMAX   EQU   MAXDBF     Max number of DSNAMES                   cvc
+* Catalog entries read directly into above.                       cvc
+         SPACE 3
+*242SAVE DATASECT                                                 89311
+*      DS    18F                                                  89311
+*242DS   DS    0XL256          THIS IS WHERE THE DDDSNDET IS READ 89311
+*        ORG   C242DS+DDDSNAME-DDDSNDET                           J50
+*242DSN  DS    CL44            THIS IS WHERE THE DDDSNDET IS READ 89311
+         DS    (512-44)X       FROM THE VSAM DATA BASE   CVC      J50
+*242AID  DS    A
+*242SVEL EQU (*-C242SAVE)                                         75311

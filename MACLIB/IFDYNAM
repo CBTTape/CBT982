@@ -1,0 +1,11 @@
+         MACRO
+&L       IFDYNAM
+         LCLB  &B
+         LCLC  &C
+         AIF   (T'AGENDETS EQ 'U').NOTCOMP  BR IF NO JOLCOM
+         L     R14,AGENDETS
+         TM    MODEOUT-GENDETS(R14),DYNAM+IMMED+ONESTEP SVC 99 REQD ?
+         BM    &SYSLIST(1)            GO TO SPECIAL CODE FOR DYNAMIC
+         MEXIT
+.NOTCOMP MNOTE 16,'MUST HAVE ACCESS TO JOLCOM'
+         MEND

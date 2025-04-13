@@ -1,0 +1,784 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Lotus Word Pro">
+  <title>Schedule</title>
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="RIGHT" valign="TOP" width="496">
+      <h3><a class="mozTocH3" name="mozTocId118166"></a><font size="4"><font
+ size="5"><u>Scheduling Jobs by Date</u></font></font></h3>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;">
+      <ol id="mozToc">
+<!--mozToc h1 1 h2 2 h3 3 h4 4 h5 5 h6 6-->
+        <li><a href="#mozTocId118166">Scheduling Jobs by Date</a>
+          <ol>
+            <li><a href="#mozTocId725941">Scheduling</a>
+              <ol>
+                <li><a href="#mozTocId305486">Rules</a></li>
+                <li><a href="#mozTocId722075">Planning Ahead</a></li>
+                <li><a href="#mozTocId561181">How the Schedule Facility
+Starts the Required Jobs</a></li>
+                <li><a href="#mozTocId358387">Catering for Special
+Requirements not Handled by Schedule</a></li>
+                <li><a href="#mozTocId115907">Telling Jol Which Days
+are HOLIDAYS</a></li>
+                <li><a href="#mozTocId271107">Other Useful Facilities
+for Use in Scheduling</a></li>
+              </ol>
+            </li>
+          </ol>
+        </li>
+      </ol>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h2><a class="mozTocH2" name="mozTocId725941"></a>Scheduling</h2>
+      </td>
+      <td align="LEFT" valign="TOP">Jol's Scheduling System is
+extremely simple to use and written <i><u>entirely in high level Jol
+Code</u></i>; this allows you to easily make changes to the system to
+suit your installation. Using the Scheduling Facility, it is possible
+to program job schedules for days, months, or even years in advance.
+All your existing jobs can be started without changes. Furthermore, Jol
+can be used to schedule your de-bugged and already tested jobs written
+in <b>JCL</b>. Full Jol symbolic variable processing is allowed, even
+with JCL jobs.
+      <p>The Jol Schedule Data Set contains various members that can be
+used to specify which jobs are to run on <b>WORKDAYS, HOLIDAYS,
+MONDAYS, TUESDAYS</b>, etc., and jobs for particular dates such as <b>JUL12</b>.
+At
+a
+time
+suitable
+to you, Jol examines this data set and prepares all
+the appropriate jobs for execution.</p>
+      <p>Note: So that you can submit jobs on the
+day(s) before or after a Holiday, there is prototype code provided in
+member <b>SPECIAL</b> of the Schedule Data Set.</p>
+      <p>In general, to specify which jobs are to be started, code the
+name of the member containing the job in the <b>JOL.SCHEDULE</b> data
+set using the <b>PREPARE</b> command. For example, to indicate which
+jobs are to be executed daily is done by coding the names of the jobs
+in member <b>WORKDAY</b>, as shown below.</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PREPARE BACKUPS;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PREPARE ACCOUNTS;</b></p>
+      <p><b>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PREPARE PAYROLL;</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><b>Figure 4-1:</b> <b>Indicating Which
+Jobs are to Run.</b></p>
+      <p>The jobs named are submitted for
+execution on the appropriate days. Jobs may contain any Jol
+instruction, and include networking instructions. For example, even
+daily jobs can examine the Jol calender or accept information from the
+terminal and dynamically alter themselves before submission.</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId305486"></a>Rules</h3>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <ul type="disc">
+        <li>You may code more than one job name per line.
+          <p> </p>
+        </li>
+        <li>The jobs named are compiled by Jol, and then submitted for
+execution. Jobs may contain any Jol instruction, including Jol Job
+Networking instructions. For example, some jobs, even if submitted
+daily, may examine the Jol calender or accept information from the
+terminal using the Jol <b>PANEL </b>instruction and dynamically alter
+themselves before submission.
+          <p> </p>
+        </li>
+        <li>Even if a job is mentioned twice or more frequently, it
+will be submitted once only. For example, if a job is to be submitted
+on the first working day of January, but is also to be submitted on <b>MONDAY</b>,
+and
+the
+two
+coincide,
+only one job will be submitted.
+          <p> </p>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId722075"></a>Planning Ahead</h3>
+      </td>
+      <td align="LEFT" valign="TOP">Jobs in member <b>WORKDAY</b> are
+submitted on a daily basis. In addition, other members of the library
+are examined based on dates. The following members of the schedule data
+set are executed on the appropriate days: </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <table style="text-align: left; width: 100%;" border="0"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;"><b>WORKDAY</b></td>
+            <td style="vertical-align: top;">Executed only on normal
+working days.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SPECIAL</b></td>
+            <td style="vertical-align: top;">
+            <p>Executed every day, <i>see later pages for details</i></p>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>HOLIDAY</b></td>
+            <td style="vertical-align: top;">Executed only on
+non-working days.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>WEEKEND</b></td>
+            <td style="vertical-align: top;">Executed only on Weekends.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SUN</b></td>
+            <td style="vertical-align: top;">Executed on <b>SUNDAY</b>s.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>MON</b></td>
+            <td style="vertical-align: top;">Executed on <b>MONDAY</b>s.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>TUE</b></td>
+            <td style="vertical-align: top;">Executed on <b>TUESDAY</b>s.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>WED</b></td>
+            <td style="vertical-align: top;">Executed on <b>WEDNESDAY</b>s.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>THU</b></td>
+            <td style="vertical-align: top;">Executed on <b>THURSDAY</b>s.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>FRI</b></td>
+            <td style="vertical-align: top;">Executed on <b>FRIDAY</b>s.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SAT</b></td>
+            <td style="vertical-align: top;">Executed on <b>SATURDAY</b>s.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p><b>&nbsp;</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><b>Figure 4-2:</b> <b>Daily Members Examined by the Schedule
+Facility.</b></p>
+      <p>In addition, the following members of the schedule data set
+are executed <i>(if present) </i>on the specified days:</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <table style="text-align: left; width: 100%;" border="0"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;"><b>JAN01</b></td>
+            <td style="vertical-align: top;">Executed on January 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>JAN02</b></td>
+            <td style="vertical-align: top;">Executed on January 2nd.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">...</td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>FEB01</b></td>
+            <td style="vertical-align: top;">Executed on February 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>MAR01</b></td>
+            <td style="vertical-align: top;">Executed on March 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>APR01</b></td>
+            <td style="vertical-align: top;">Executed on April 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>MAY01</b></td>
+            <td style="vertical-align: top;">Executed on May 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>JUN01</b> </td>
+            <td style="vertical-align: top;">Executed on June 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>JUL01</b></td>
+            <td style="vertical-align: top;">Executed on July 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>AUG01</b></td>
+            <td style="vertical-align: top;">Executed on August 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SEP01</b></td>
+            <td style="vertical-align: top;">Executed on September 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>OCT01</b></td>
+            <td style="vertical-align: top;">Executed on October 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>NOV01</b></td>
+            <td style="vertical-align: top;">Executed on November 1st.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>DEC01</b></td>
+            <td style="vertical-align: top;"> Executed on December 1st.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Other jobs can be submitted on the last working day, the last
+day, the last working day -1 and so on. A member called <b>SPECIAL</b>
+has prototype code for these types of jobs.</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><b><br>
+Figure 4-3:</b> <b>Month and Day Members Containing Scheduling
+Information.</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><font size="3"> </font><br>
+      </td>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <table style="text-align: left; width: 100%;" border="0"
+ cellpadding="2" cellspacing="2">
+        <tbody>
+          <tr>
+            <td style="vertical-align: top;"><b>MONWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first </i>Monday
+of
+the
+year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>MONWK02</b></td>
+            <td style="vertical-align: top;">Executed on the <i>second
+            </i>Monday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>MONWK<i>nn</i></b></td>
+            <td style="vertical-align: top;">Executed on the <i>nth </i>Monday
+of
+the
+year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">...</td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>TUEWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first</i>
+Tuesday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>TUEWK<i>nn</i></b></td>
+            <td style="vertical-align: top;">Executed on the <i>nth</i>
+Tuesday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;">...</td>
+            <td style="vertical-align: top;"><br>
+            </td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>WEDWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first</i>
+Wedsnesday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>THUWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first</i>
+Thursday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>FRIWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first</i>
+Friday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SATWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first</i>
+Saturday of the year.</td>
+          </tr>
+          <tr>
+            <td style="vertical-align: top;"><b>SUNWK01</b></td>
+            <td style="vertical-align: top;">Executed on the <i>first</i>
+Sunday of the year.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Using <b>MONWK01</b> etc allows you to submit jobs every
+second week, should you so desire.</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><b>Figure 4-4:</b> <b>Week Number and Day Members to be
+Examined</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId561181"></a>How the
+Schedule Facility Starts the Required Jobs</h3>
+      </td>
+      <td align="LEFT" valign="TOP">Once a day, Jol examines the
+Schedule data set. If it is not a holiday, it examines the <b>WORKDAY</b>
+member; if it is Saturday or Sunday, the data in these members is used
+instead, otherwise member <b>HOLIDAY</b> is used. Additionally, any
+other member such as <b>JUL14</b> is also examined, if appropriate.
+      <p> </p>
+      <ul type="disc">
+        <li>The names of the jobs found are
+converted to Jol <b>INCLUDE</b> statements and copied to a working
+file, each separated by an <b>* JOL;</b> separator card.
+          <p> </p>
+        </li>
+        <li>Jol then reads the file, and executes any instructions
+found therein as usual.
+          <p> </p>
+        </li>
+        <li>The jobs are then submitted.
+          <p>Below is a sample of the <b>WORDAY </b>member of the
+Schedule Data Set.</p>
+          <p> </p>
+        </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP">
+      <pre> /* This is the normal WORKDAY member of the JOL.SCHEDULE<br>Data Set.</pre>
+      <font size="2" face="Courier New"> It is examined on WORKING DAYS
+ONLY. </font><br>
+      <font size="2" face="Courier New"> You may put in other Jol
+commands before you use the </font><br>
+      <font size="2" face="Courier New"> PREPARE verb to prepare your
+work for submission. </font><br>
+      <font size="2" face="Courier New"> See the example below for
+'SPEC'. </font><br>
+      <font size="2" face="Courier New">*/ </font><br>
+      <font size="2" face="Courier New"> </font><br>
+      <font size="2" face="Courier New"> Prepare DAILYBU; /* Prepare
+Daily Backup Job */</font><br>
+      <font size="2" face="Courier New"> PREPARE INVOICES; /* Prepare
+Daily INVOICE Job */</font><br>
+      <font size="2" face="Courier New"> <br>
+if %day='TUESDAY' /* If today is TUESDAY */</font><br>
+      <font size="2" face="Courier New"> then prepare SPEC; /* then
+prepare a SPEC job */<br>
+      <br>
+      </font> </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><b>Figure 4-5:</b> <b>Sample WEEKDAY Jobs</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId358387"></a>Catering for
+Special Requirements not Handled by Schedule</h3>
+      </td>
+      <td align="LEFT" valign="TOP">The ability to automatically submit
+jobs on every <b>WORKDAY</b>, <b>MONDAY</b> or even on <b>ODD </b>or
+
+
+
+
+      <b>EVEN</b> weeks etc is highly flexible. However, sometimes you
+also need to be able to submit work on the day before a <b>HOLIDAY</b>,
+the
+day
+after
+a
+      <b>WORKDAY</b> and so on. One way to do this is to
+place your <b>PREPARE</b> commands in the appropriate position in the <b>SPECIAL</b>
+member of the Jol Schedule file.
+      <p>Before the <b>SPECIAL </b>file is examined, an array is set
+up so that you can easily determine if today, tomorrow, or today plus
+three days is a Holiday, or a Work Day. In addition to all the usual
+Jol Calendar Variables such as <b>%DAY, %DAYNO, %MONTH </b>etc,
+another variable called <b>%LASTDAY</b> contains the number of days in
+the current month. <b>%LASTDAY </b>is correct for Leap Years.</p>
+      <p>Using Jol programming language and the variables above makes
+special coding requirements easy to cater for.</p>
+      <p>The following page shows some of the coding that you may do in
+the <b>SPECIAL</b> file.</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p>
+<table border="1" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="99">
+      <p><font size="2"><b><i><u><br>
+      </u></i></b></font></p>
+      <p><font size="2"><b><i><u><br>
+      </u></i></b></font></p>
+      <p><font size="2"><b><i><u><br>
+      </u></i></b></font></p>
+      <p><font size="2"><b><i><u><br>
+      </u></i></b></font></p>
+      <p><font size="2"><b><i><u><br>
+      </u></i></b></font></p>
+      <p><font size="2"><b><i><u><br>
+      </u></i></b></font></p>
+      <p><font size="2"><b><i><u><br>
+      </u></i></b></font></p>
+      <p><font size="2"><b><i><u><br>
+      </u></i></b></font></p>
+      <p><font size="2"><b><i><u><br>
+      </u></i></b></font></p>
+      <p><font size="2"><b><i><u><br>
+      </u></i></b></font></p>
+      <p><font size="2"><b><i><u><br>
+      </u></i></b></font></p>
+      <p><font size="2"><b><i><u><br>
+WORKDAY Group</u></i></b></font></p>
+      <p><font size="2"><b><i>Tomorrow is a Holiday</i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i>The day after tomorrow</i></b></font><font
+ size="2"><b><i> is a Holiday</i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+The day after that is a Holiday</i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+Yesterday was a</i></b></font><font size="2"><b><i> Holiday</i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+Another Method for Testing if Yesterday
+was a Holiday</i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      <br>
+Tomorrow is the last WORKDAY in the week</i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i>The day after tomorrow is the last WORKDAY</i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <p><font size="2"><b><i><br>
+      </i></b></font></p>
+      <font size="2"><b><i>The day after that</i></b></font> <br>
+      <font size="2"><b><i>is the last WORKDAY</i></b></font> </td>
+      <td align="LEFT" valign="TOP" width="524">
+      <pre><br>&nbsp;/* This is the SPECIAL member of the JOL.SCHEDULE Data Set.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00010000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00020000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; It is examined every day, and can test if TOMORROW is a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00030000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; Holiday, or yesterday and so on.&nbsp; See the examples below. */&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00040000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00050000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; if %holiday='YES'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00060000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; then do;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00070000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; write 'We could PREPARE a job here';&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00080000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; end;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00090000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00100000</pre>
+      <pre>/* See if the next few days are HOLIDAYS */&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00110000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00120000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; if %holiday='NO'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00130000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; then do;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00140000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if %list(%dayno+1)='HOL'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00150000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; then do;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* TOMORROW is a Holiday */&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00160000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; write 'We could PREPARE a job here';&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00170000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PREPARE tomorrow;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00180000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PREPARE B ;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00190000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; end;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00200000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if %list(%dayno+2)='HOL'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00210000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; then do;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* The NEXT day is a Holiday */&nbsp; 00220000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; write 'We could PREPARE a job here';&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00230000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; end;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00240000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if %list(%dayno+3)='HOL'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00250000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; then do;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* and +3 day is a Holiday */&nbsp;&nbsp;&nbsp; 00260000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; write 'We could PREPARE a job here';&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00270000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; end;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00280000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if %list(%dayno-1)='HOL'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00290000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; then do;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* YESTERDAY was a Holiday */&nbsp;&nbsp;&nbsp; 00300000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; write 'We could PREPARE a job here';&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00310000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; end;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00320000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; end;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00330000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00340000</pre>
+      <pre>/* Sample ONLY:- See if Yesterday was a Holiday, and Today is a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00350000</pre>
+      <pre>&nbsp;&nbsp; Workday.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */&nbsp;&nbsp;&nbsp; 00360000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00370000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; if %list(%dayno-1)='HOL'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* Was YESTERDAY a Holiday */&nbsp;&nbsp;&nbsp; 00380000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; &amp;&nbsp; %list(%dayno)='WORK'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* and TODAY a WORKDAY ?&nbsp;&nbsp; */&nbsp;&nbsp;&nbsp; 00390000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; then do;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00400000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; write 'We could PREPARE a job here for Yesterday''s Holiday';&nbsp;&nbsp; 00410000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PREPARE yesthol;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00420000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PREPARE B ;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00430000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; end;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00440000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00450000</pre>
+      <pre>/* See if the next few days are the END OF MONTH */&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00460000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00470000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; if %holiday='NO'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00480000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; then do;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00490000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; %work=%dayno+1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* Set WORK to TOMORROW&nbsp; */&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00500000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if %work=%lastday then do;&nbsp;&nbsp;&nbsp; /* TOMORROW is the LAST&nbsp; */&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00510000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; DAY of the month&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; */&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00520000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; write 'We could PREPARE a job here';&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00530000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PREPARE B ;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00540000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; end;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00550000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; %work=%work+1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* Check the NEXT Day&nbsp;&nbsp;&nbsp; */&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00560000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if %work=%lastday then do;&nbsp;&nbsp;&nbsp; /* The NEXT day is the&nbsp;&nbsp; */&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00570000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LAST DAY of the month */&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00580000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; write 'We could PREPARE a job here';&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00590000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PREPARE B ;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00600000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; end;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00610000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; %work=%work+1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /* Check the Day AFTER that */&nbsp;&nbsp; 00620000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if %work=%lastday then do;&nbsp;&nbsp;&nbsp; /* The NEXT day(+3) is the */&nbsp;&nbsp;&nbsp; 00630000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LAST DAY of the month */&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00640000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; write 'We could PREPARE a job here';&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00650000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PREPARE B ;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00660000</pre>
+      <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; end;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00670000</pre>
+      <pre>&nbsp;&nbsp;&nbsp; end;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00680000</pre>
+      <pre><br></pre>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</p>
+<p>
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="LEFT" valign="TOP" width="136"> <br>
+      </td>
+      <td align="LEFT" valign="TOP" width="436">
+      <p><b>Figure 4-6:</b> <b>Sample SPECIAL File.</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId115907"></a>Telling Jol
+Which Days are HOLIDAYS</h3>
+      </td>
+      <td align="LEFT" valign="TOP">The Scheduling System uses Jol's
+automatic Calendar facility to determine if the day of the week is a
+Saturday or Sunday, and automatically submits any jobs for the
+appropriate day.
+      <p>However, Jol does not know which days are holidays in your
+country for any given year, or which other days in your organization
+are holidays for special reasons such as a nine day fortnight instead
+of the more usual ten day fortnight.</p>
+      <p>So that the Jol Scheduling System can determine which days are
+Holidays, Rostered Days Off and so on, you code these special days in a
+member called <b>HOLS1988, HOLS1989 </b>etc. The format is as the
+example for <b>HOLS1987</b> shown below:</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="LEFT"
+ valign="TOP"><span style="font-family: Courier New;"><br>
+      <small><small>JAN 1&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;/*
+AUSTRALIAN HOLIDAYS&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;*/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00010000<br>
+JAN 1&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;/* NEW YEAR'S
+DAY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;*/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00020000<br>
+JAN 26&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;/* AUSTRALIA
+DAY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;*/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00030000<br>
+APR 17&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;/* GOOD
+FRIDAY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;*/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00040000<br>
+APR 18&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;/* EASTER
+SATURDAY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;*/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00050000<br>
+APR 19&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;/* EASTER
+SUNDAY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;*/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00060000<br>
+APR 20&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;/* EASTER
+MONDAY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;*/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00070000<br>
+APR 25&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;/* ANZAC
+DAY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;*/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00080000<br>
+JUN 8&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;/* QUEENS
+BIRTHDAY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;*/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00090000<br>
+DEC 25&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;/* CHRISTMAS
+DAY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+&nbsp;*/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00100000<br>
+DEC 26&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;/* BOXING
+DAY&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;*/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 00110000</small></small><br>
+      <br>
+      </span></td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"> <br>
+      </td>
+      <td align="LEFT" valign="TOP">
+      <p><b><br>
+Figure 4-7: Example of the HOLIDAY member in the Schedule
+Data Set.</b></p>
+      <p>As you can see in the example above, you code the the first
+three characters of the month, followed by at least one space and any
+optional comments. Note that each day must be on a separate line.</p>
+      <p>Because Jol uses the year as part of the member name, you can
+set up holidays for years in advance.</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP">
+      <h3><a class="mozTocH3" name="mozTocId271107"></a>Other Useful
+Facilities for Use in Scheduling</h3>
+      </td>
+      <td align="LEFT" valign="TOP">Additionally, Jol allows:
+      <p> </p>
+      <ul type="disc">
+        <li>Read and Write access to existing or new data sets at
+compile time.
+          <p><u>You may have data sets that contain other scheduling
+information or further details of work to be run on particular days, or
+under particular circumstances, or both. Using this data, Jol can
+create tailored job streams. These job streams can be created on
+finding the appropriate data in the schedule.</u></p>
+          <p> </p>
+        </li>
+        <li>Access to the system calendar. Jol allows the date (year,
+month, day) and time to be accessed. Using this data, Jol can create
+tailored job streams.
+          <p> </p>
+        </li>
+        <li>Testing for the existence of data sets. Jol can test if a
+data set exists. If a data set does exist, it is possible to submit
+other jobs to run, or take a different path through the current job.
+          <p> </p>
+        </li>
+        <li>Symbolic Parameters or Variables can be passed from Job to
+Job. </li>
+      </ul>
+      </td>
+    </tr>
+    <tr>
+      <td align="LEFT" valign="TOP"><font size="3"> </font><br>
+      </td>
+      <td style="vertical-align: top; text-align: left;"> <br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+</p>
+</body>
+</html>

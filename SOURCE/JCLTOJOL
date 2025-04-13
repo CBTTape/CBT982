@@ -1,0 +1,2290 @@
+ /*     CATALOGUED PROCEDURES TO JOL   VERSION III  11/77
+      INCORE TRANSLATOR. ALL JCL IS HELD IN ARRAY DATA. BLANKS ARE
+      REMOVED EXCEPT FOR COMMENTS. INDIVIDUAL JCL STATEMENTS ARE
+      REARRANGED INTO ONE LOGICAL STATEMENT WHERE THEY SPAN CARDS.
+      LOCATION OF STMS W/IN DATA ARE POINTED TO BY ARRAY CARD-PT.
+      SECONDARY ARRAYS POINT TO STM TYPES (IE. DD, EXEC,ETC).
+      CHAIN POINTERS TIE DD CARDS TO THEIR EXEC CARDS,ETC.
+         *** ARRAYS ***          *** CONTENTS ***
+      DATA(STRING)          LABEL OPERAND COMMENT,MORE JCL,...
+      CARD POINTER(N,4,2)   (N;IMPLAYS LAB,OPND,COMM,SEQ#,INTER,LENGTH)
+      EXEC POINTER(N)       (POINTER TO CARD)
+      DD POINTER(N,4)  (POINTER TO CARD,POINTER TO EXEC,DSID #,CHAIN)
+      COMMENT POINTER(N,3)  (PT TO CARD,PT TO EXEC,PT TO DD)
+      PROC POINTER(N)       (POINTER TO CARD)
+      WHEN ALL JCL IS DISASSEMBLED INTO ARRAYS THEN DATA SETS ARE
+      SCANNED. LIKE NAMES ARE CHAINED. CHAINS OF LIKE NAMES ARE
+      BROKEN INTO SUBCHAINS OF DATA SETS OF SAME ATTRIBUTES.
+      GENERATION THEN STARTS W/ PROC STMS TO SYMBOLIC VARIABLES,
+      DCL OF DATA SETS, DCL OF PROGS, AND LOGIC FOR RUN, IF,
+      CATALOG ,ETC.
+      THIS VERSION DOES NOT SUPPORT:
+        NON-CATALOG PROCS
+        NON-JCL,  JOB DECKS
+        MULTIPLE TRANSLATIONS IN THE SAME JOB RUN(IN THIS VERSION)
+        DISPOTA SUBSTITUTE MACRO(LOCAL OPTION)
+        DYNAMIC SIZE CHANGE FOR TABLES (NOW A PREPROSSOR CONSTANT).
+        BETTER DEBUGGING AIDS
+      JCL PARAMETERS ARE NOT TRANSLATED SINCE THEN MAY NOT BE KNOWN AT
+       COMPILE TIME. WARNING MESSAGES ARE USUALLY GIVEN.
+       3 RD DISPOSITION GIVES A MESSAGE
+       NAMING CONVENTIONS: CONTEXTUAL WHERE POSSIBLE, SUFFIX PT FOR
+       POINTER TABLES, PREFIX FOR $FB DCL'S(I,J,ETC), DOLLAR-K FOR
+       KEYWORD VALUE,  DOLLAR-KS FOR SUB-KEYWORD VALUE ETC,
+       SEE PREPROCESSOR STMS BELOW
+          COMMENT END  */
+ START:
+       PROCEDURE (PARAM) OPTIONS (MAIN);
+
+                 /*   PREPROCESSOR STATEMENTS  */
+
+  /* DOWHEN HAS THE EFFECT OF AN = TEST W/IN THE DO RANGE */
+       %DCL DOWHEN ENTRY;
+       %DOWHEN:PROC (INDEX,LIMIT,OPI,OPE)RETURNS (CHAR);
+       DCL (INDEX,LIMIT,OPI,OPE) CHAR;
+       RETURN(  'ISTR = 1;  IEND = 0;
+      DO '||INDEX||' = 1 TO '||LIMIT||' ;
+           IF '||OPI||' < '||OPE||' THEN ISTR = '||INDEX||' + 1;
+           IF '||OPI||' = '||OPE||' THEN IEND = '||INDEX||' ;
+           IF '||OPI||' > '||OPE||' THEN '||INDEX||' = '||LIMIT||' +1;
+       END;
+       DO '||INDEX||' = ISTR TO IEND;');
+       % END DOWHEN;
+
+ /*          DEBUGGING ROUTINES                          */
+ /* PRINTOUT OF ALL TABLES : DATA AND POINTERS           */
+
+
+  %DCL  SNAPDATA     CHAR;                /*  DUMP JCL DATA    */
+  %DCL  SNAPC        CHAR;                /*      CARD POINTER */
+  %DCL  SNAPE        CHAR;                /*      EXEC POINTER */
+  %DCL  SNAPDD       CHAR;                /*       DD  POINTER */
+  %DCL  SNAPP        CHAR;                /*      PROC         */
+  %DCL  SNAPCOM      CHAR;                /*    COMMENTS       */
+  %DCL  DEBUGALL     CHAR;                /*     EVERYTHING    */
+     % DCL EX1 FIXED;
+ %SNAPDATA='PUT FILE (JCLOUT) EDIT (''  RAW DATA'')   (SKIP(2),X(5),A);
+  PUT FILE(JCLOUT)EDIT( ($(DATA,I,10) DO I=1 TO IDA BY 10))
+  (SKIP(1),X(3),   10 (A(10),X(1)));';
+ %SNAPC   ='PUT FILE (JCLOUT) EDIT ('' CARD POINTER'') (SKIP(2),X(5),A);
+  PUT FILE(JCLOUT)EDIT( (((CARD_PT(I,J,K) DO K=1 TO 2)DO J=1 TO 4) DO
+       I=1 TO IC ))
+  (SKIP(1),X(3),   2 (8 F(6),X(2)));';
+ %SNAPE   ='PUT FILE (JCLOUT) EDIT ('' EXEC POINTER'') (SKIP(2),X(5),A);
+  PUT FILE(JCLOUT)EDIT( (EXEC_PT(I) DO I=1 TO IE))
+  (SKIP(1),X(3),   10 F(6));';
+ %SNAPDD  ='PUT FILE (JCLOUT) EDIT ('' DD   POINTER'') (SKIP(2),X(5),A);
+  PUT FILE(JCLOUT)EDIT( ((DD_PT(I,J) DO J=1 TO 4) DO I=1 TO IDD))
+  (SKIP(1),X(3),   4 (4 F(6),X(2)));';
+ %SNAPP   ='PUT FILE (JCLOUT) EDIT ('' PROC POINTER'') (SKIP(2),X(5),A);
+  PUT FILE(JCLOUT)EDIT( (PROC_PT(I) DO  I=1 TO IP))
+  (SKIP(1),X(3),   10 F(6));';
+ %SNAPCOM ='PUT FILE (JCLOUT) EDIT ('' COMM POINTER'') (SKIP(2),X(5),A);
+  PUT FILE(JCLOUT)EDIT( ((COMM_PT(I,J) DO J=1 TO 2) DO I=1 TO ICOM))
+  (SKIP(1),X(3),   8 (2 F(6),X(2)));';
+  %DEBUGALL ='SNAPDATA SNAPC SNAPE SNAPDD SNAPP SNAPCOM ';
+
+  /* TRACE USED TO TRACK VARIABLES DURING EXECUTION */
+
+  % DCL TRACE CHAR ;
+  % TRACE = 'PUT FILE (JOLLIST) DATA ' ;
+
+
+  /*    ASSIGN  POINTER TABLE  DIMENSIONS & SET PREPROCESSOR  BOUNDS  */
+  % DCL(DATA1,CD1,DD1,COMM1,PROC1,DATA2,MAX_LINES) FIXED ;
+  % MAX_LINES = 60 ;      /*   LINES PER PAGE FOR LISTING */
+  % DATA1 = 32700 ;       /*  SIZE OF ARRAY FOR INPPUT JCL */
+  % EX1 =  99 ;           /* TRANSLATOR WRITTEN FOR MAX OF 99 STEPS */
+  % DD1   = 800  ;        /*  TABLE SIZE , POINTERS TO DD CARDS */
+  % COMM1 = 400 ;         /*  TABLE SIZE , POINTERS TO COMMENTS */
+  % PROC1 = 5   ;         /*  TABLE SIZE , # COND CODE PROG STEPS */
+  % CD1 = EX1 + DD1 + COMM1 + PROC1 ;      /*  SIZE CARD TABLE,HA!*/
+  % DATA2 = DATA1 - 100;
+
+  /* THESE PREPROCS USED TO ENSURE TABLE SIZES ARE NOT EXCEEDED */
+
+  % DCL (CK_DA,CK_CD,CK_DD,CK_COMM,CK_PROC) CHAR;
+  % CK_DA ='IF IDA > DATA2 THEN GO TO BOUNDS_CK;';
+  % CK_CD ='IF IC > CD1  THEN GO TO BOUNDS_CK;';
+  % CK_DD ='IF IDD > DD1   THEN GO TO BOUNDS_CK;';
+  % CK_COMM='IF ICOM >COMM1 THEN GOTO BOUNDS_CK;';
+  % CK_PROC='IF IP   >PROC1 THEN GOTO BOUNDS_CK;';
+  % DCL CK_EX CHAR;
+  % CK_EX ='IF IE > EX1 THEN GO TO BOUNDS_CK;';
+
+  /* LOCALLY DEFINED PROGRAM WHICH SETS CONDITION CODES FROM PARMS */
+
+  % DCL CCPROG1 FIXED, PROG_NAME CHAR;
+  % CCPROG1 = 5;
+  % PROG_NAME = '''OPCCSET''';
+
+
+   /* FREQUENTLY USED WORDS,PHRASES,ETC  FOR SHORTHAND  */
+       %DCL ($,$I,$L,$T,$FB,$K,$KS,$IFLZ,$IFLNZ,$IFLSZ,TRUE,FALSE,
+            $IFLSNZ,SAVE,RESTORE,AND,NOTHING,STOW,SWAP,ERROR) CHAR;
+       %$ = 'SUBSTR';
+       %$I = 'INDEX';
+       %$L = 'LENGTH';
+       %$T = 'TRANSLATE';
+       %$FB = 'FIXED BINARY(15,0) STATIC';
+       %$K = '$(DATA,K1,L1)';         /* VALUE OF KEYWORD */
+       %$KS ='$(DATA,KS1,LS1)';       /* VALUE OF SUBKEY  */
+       %$IFLZ ='IF L1 = 0 THEN';
+       %$IFLNZ='IF L1 ¬= 0 THEN';
+       %$IFLSZ='IF LS1 = 0 THEN';
+       %TRUE = '''1''B';
+       %FALSE = '''0''B';
+       %$IFLSNZ='IF LS1 ¬= 0 THEN';
+       %SAVE = 'K2 = K1;  L2 = L1;';    /* SAVE POINTERS */
+       %SWAP = '$K = $T($K,''?'',''%'');';
+       %RESTORE = 'K1 = K2;  L1 = L2;';   /* RESTORE POINTERS */
+       %AND =  ' || ';               /* TO AVOID KEYPUNCH ERRORS */
+      %ERROR = 'IF $(BUFF,1,3)¬= ''***'' THEN BUFF=''*** '' AND BUFF;
+                TAB = 2;';
+
+       /*  LOGICALLY DEFINE MODEL DSCB */
+       % DCL MOD_DCB CHAR;
+       % MOD_DCB = '''PRDMDSCB''';
+
+ /* CREATE A BLANK LINE ON THE JOL OUTPUT */
+
+       %NOTHING = 'TAB = 68; BUFF = ''/* */''; CALL JOL;';
+       %STOW = 'BUFF = BUFF ||';
+
+     /*  FUNCTION TO GENERATE POINTER REFERENCES */
+     /*   I.E. $REF(DD_LAB_L,I) IS THE POINTER TO THE LABEL  */
+     /*    LENGTH OF THE I-TH DD CARD ,(EX_LAB,I) =EXEC LABEL*/
+     % DCL $REF ENTRY;
+     % $REF: PROC(TYPE,IND) RETURNS (CHAR);
+       DCL (TYPE,IND,PREFIX,SUB1,SUB2) CHAR ;
+  IF INDEX(TYPE,'DD')¬=0 THEN PREFIX='DD_PT('||IND||',1),';
+   ELSE DO; IF INDEX(TYPE,'EX')¬=0 THEN PREFIX='EXEC_PT('||IND||'),';
+    ELSE DO;IF INDEX(TYPE,'M_C')¬=0 THEN PREFIX='COMM_PT('||IND||',1),';
+     ELSE PREFIX =IND||',';
+    END;
+   END;
+   IF INDEX(TYPE,'LAB')¬=0 THEN SUB1 = '1,';
+    ELSE DO;IF INDEX(TYPE,'OP')¬=0 THEN SUB1 = '2,';
+     ELSE SUB1 = '3,';
+    END;
+    IF INDEX(TYPE,'B_L')¬=0 | INDEX(TYPE,'P_L')¬=0 |
+          INDEX(TYPE,'M_L')¬=0 THEN SUB2 = '2)';
+      ELSE   SUB2 = '1)';
+    RETURN ('CARD_PT('||PREFIX||SUB1||SUB2 );
+    % END $REF;
+
+    % DCL CHAIN ENTRY;
+    % CHAIN: PROC (INDEX) RETURNS (CHAR);
+      DCL INDEX CHAR;
+      RETURN ('DD_PT('||INDEX||',4)');
+    % END  CHAIN;
+
+    % DCL DSID ENTRY;
+    % DSID: PROC (INDEX) RETURNS (CHAR);
+      DCL INDEX CHAR;
+      RETURN ('DD_PT('||INDEX||',3)');
+    % END DSID;
+    /* END OF PREPROCESSOR STATEMENTS */
+
+    /**********                                               ********/
+    /* VARIABLE DEFINITIONS FOLLOW                                   */
+
+    DCL CARD  CHAR (80) STATIC         ;      /* CARD IMAGE         */
+    DCL CARD_1_3  CHAR (3) DEF CARD    ;      /*    COL 1 TO 3      */
+    DCL CARD_1_2  CHAR (2) DEF CARD    ;      /*    COL 1 TO 2      */
+    DCL JCLSEQ    CHAR (8) DEF CARD POS(73);  /*    COL 73 TO 80    */
+    DCL IC   INIT(0) $FB;                /*  CARD # , LOGICAL CARD #*/
+    DCL IE   INIT(0) $FB;      /*  EXEC #  PREFIX I = INTEGER VALUE */
+    DCL IDD  INIT(0) $FB;      /*  DD#                        */
+    DCL IP   INIT(0) $FB;      /*  PROC #                     */
+    DCL IDA  INIT(0) $FB;      /*  CURR LOC W/IN DATA         */
+    DCL ICD  INIT(0) $FB;      /*  CURR LOC W/IN CARD         */
+    DCL ICE  INIT(0) $FB;      /*  CURR END LOC W/IN CARD     */
+    DCL ICOM INIT(0) $FB;      /*  CURR LOC W/IN COMM BUFF    */
+    DCL TAB  INIT(0) $FB;      /*  TAB POSITION               */
+    DCL ISEQ INIT(0) FIXED BINARY(31,0) STATIC ; /* JOL SOURCE SEQNUM*/
+    DCL ALPHABET CHAR(26) INIT ('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    DCL BUFF CHAR(500) VARYING;
+    DCL DSBUFF CHAR(6) ;
+    DCL DSPBUF CHAR(3) ;
+    DCL CARD_TYPE CHAR (4) INIT('EXEC') ;  /* CURRENT CARD TYPE  */
+    DCL DATA  CHAR(DATA1) STATIC  ;  /* JCL FOR WHOLE PROC -COMPRESSED*/
+    DCL CARD_PT (CD1,4,2) $FB ;         /*  CD#,(LAB,OPN,COM,SEQ#;P/L*/
+    DCL EXEC_PT (EX1)     $FB ;         /*  -->  CARD                */
+    DCL DD_PT  (DD1,4)    $FB ;         /*  ->CARD,EX , DSID#,CHAIN  */
+    DCL COMM_PT (COMM1,3) $FB ;         /*  ->CARD,EXEC,DD           */
+    DCL PROC_PT (PROC1)   $FB ;         /*  -> CARD                  */
+    DCL MARGIN            $FB ;         /*   BEGIN OF RIGHT MARGIN   */
+    DCL LINE_CT           $FB INIT(0) ;
+    DCL PAGE_NO           $FB INIT(0) ;
+    DCL ISTR              $FB INIT(0) ;  /* USED IN DOWHEN PREPROC   */
+    DCL IEND              $FB INIT(0) ;  /* USED IN DOWHEN PREPROC   */
+    DCL PARAM  CHAR(100)  VARYING ; /* RUN TIME PARM OPTIONS         */
+    DCL NOCOMM BIT(1) ;
+    DCL LIST   BIT(1) ;
+    DCL DECK   BIT(1) ;
+    DCL TBUFF  CHAR(200) VARYING ;
+    DCL NUM    CHAR(6)VARYING ;
+    DCL MODEL_DCB CHAR(44) VARYING;
+    DCL SYM CHAR(10) VARYING;
+    DCL OP     CHAR(2)   VARYING ;
+    DCL STEP   CHAR(10)  VARYING ;
+    DCL 1 TIME_FORMAT , /* CONTAINS THE CLOCK TIME AT TRANSLATION  */
+            3 HRS  CHAR(2) ,
+            3 MINS CHAR(2) ,
+            3 SECS CHAR(2) ,
+            3 MSEC CHAR(3) ;
+    DCL 1 DATE_FORMAT , /* CONTAINS THE DATE OF TRANSLATION          */
+            3 YR   CHAR(2) ,
+            3 MO   CHAR(2) ,
+            3 DAY  CHAR(2) ;
+    DCL TIMEOUT CHAR(8) ; /* CONTAINS FORMATTED TIME HH:MM:SS        */
+    DCL DATEOUT CHAR(8) ; /*                    DATE MM/DD/YR        */
+    DCL TIME BUILTIN ;
+    DCL DATE BUILTIN ;
+    DCL D_FORMAT BASED(P) CHAR(6) ;
+    DCL T_FORMAT BASED(P) CHAR(9) ;
+    DCL K1   $FB ; /* LOCATION IN ARRAY DATA OF SOME VALUE           */
+    DCL K2   $FB ; /* A SAVE AREA FOR K1                             */
+    DCL KS1  $FB ; /* LOCATION IN DATA OF SOME SUBKEYWORD VALUE      */
+    DCL KS2  $FB ; /* A SAVE AREA FOR KS1                            */
+    DCL L1   $FB ; /* LENGTH OF KEYWORD VALUE                        */
+    DCL L2   $FB ; /* SAVE AREA FOR L1                               */
+    DCL LS1  $FB ; /* LENGTH OF SUBKEYWORD VALUE                     */
+    DCL LS2  $FB ; /* SAVE AREA FOR LS1                              */
+    DCL N    $FB ; /* GLOBAL INDEX OR INDICATOR                      */
+    DCL IC_MAX   $FB ; /* MAX VALUE OF INDEX IN CARD_PT ARRAY        */
+    DCL IE_MAX   $FB ; /*                       EXEC_PT ARRAY        */
+    DCL IDD_MAX  $FB ; /*                       DD_PT ARRAY          */
+    DCL ICOM_MAX $FB ; /*                       COMM_PT ARRAY        */
+    DCL IP_MAX   $FB ; /*                       PROC_PT ARRAY        */
+    DCL IDSN     $FB ;
+    DCL ANY_COMM BIT(1) ; /* SWITCH FOR EXISTENCE OF COMMENTS        */
+    DCL OPND_C   BIT(1) ; /*            CONTINUED OPERANDS           */
+    DCL COMM_C   BIT(1) ; /*            CONTINUED COMMENTS           */
+    DCL CCPROG (CCPROG1) $FB ; /* FOR CCPROG W/NO COND %             */
+
+    /********************** DEFINE FILES *****************************/
+    DCL    JCLIN   FILE STREAM ; /* INPUT JCL CATALOGUE PROCEDURE    */
+    DCL    JOLCODE FILE STREAM OUTPUT ENV(FB,RECSIZE(80)) ;
+                        /* JOL GENERATED SOURCE FROM JCL CAT PROC    */
+    DCL    JOLLIST FILE STREAM PRINT ; /* LIST OF JOL CODE & MESSAGES*/
+    DCL    JCLOUT  FILE STREAM PRINT ; /* LIST OF INPUT JCL & MSGS   */
+    /* END OF FILE DEFINITIONS                                       */
+    DCL CAT_NO CHAR(8) INIT ('        ') ;/* NAME OF THE CAT PROC    */
+    DCL COMM CHAR(200) VARYING ;/* TEMP HOLD AREA FOR COMMENTS      */
+    DCL JOLSEQ PICTURE '99999999' ; /* SEQUENCE # OF JOL SOURCE      */
+    DCL LBL CHAR(8) VARYING ;       /* USED TO TAG POINT OF TRACE    */
+  INITIALIZE:
+    OPEN FILE (JCLIN);
+    IDA = 1 ;
+    OPEN FILE (JCLOUT);
+                  /*  CHECK OPTIONS DESIRED AND SET RIGHT MARGIN */
+      N=$I(PARAM,'MARGIN=');
+               IF N = 0 THEN MARGIN = 73 ;
+               ELSE DO ; N = N+7 ; L1 = $I($(PARAM,N),',')  ;
+                   $IFLNZ GET STRING ($(PARAM,N,L1-1))
+                         EDIT (MARGIN) (F(L1-1)) ;
+                    ELSE  GET STRING ($(PARAM,N,$L(PARAM)-N+1))
+                         EDIT (MARGIN) (F($L(PARAM)-N+1));
+               END ;
+    /* ALLOW MODEL DCB TO BE AN EXEC PARAMETER WITH GEN DEFAULT */
+       N = $I(PARAM,'MODDCB=');
+       IF N ¬= 0 THEN DO;            /* IS AN EXEC PARAMETER  */
+           N = N + 7 ;
+           K = $I($(PARAM,N),',');
+           IF K = 0 THEN K = $L(PARAM) -N +1 ;
+               ELSE K = K - 1 ;
+           IF $(PARAM,N) = '''' THEN DO ;
+               K = K - 2 ;           /* LENGTH OF MODEL DCB   */
+               N = N + 1 ;           /* START OF MODEL DCB    */
+           END;
+           MODEL_DCB = $(PARAM,N,K) ;
+       END;
+       ELSE MODEL_DCB = MOD_DCB ;    /* DEFAULT VALUE         */
+       IF $I(PARAM,'NOCOMM') =0 THEN NOCOMM =  FALSE ;
+            ELSE NOCOMM =  TRUE ;
+       IF $I(PARAM,'NOLIST')  ¬= 0 THEN LIST =  FALSE;
+            ELSE DO; LIST =  TRUE  ; OPEN FILE(JOLLIST);  END;
+       IF $I(PARAM,'NODECK') ¬= 0 THEN DECK =  FALSE;
+            ELSE DO; DECK =  TRUE  ; OPEN FILE(JOLCODE);  END;
+      IF DECK = FALSE & LIST = FALSE THEN DO;
+      PUT FILE (JCLOUT) EDIT ('***  IF NO JOL AND NO LIST THEN',
+            ' MIGHT AS WELL TERMINATE THE RUN ***')
+             (SKIP(2),X(10),A,A);
+           STOP;
+          END;
+
+          IC,IE,IDD,IP,ICD,ICE,ICOM,TAB,ISEQ = 0 ;
+          LINE_CT = MAX_LINES;
+          PAGE_NO = 1;
+          CCPROG(*) = 0;
+     /*    READ JCL AND DETERMINE STM TYPES. STMS ARE COUNTED AND
+           COUNTS USED AS POINTERS                */
+  READ:
+    GET FILE (JCLIN) EDIT (CARD) (A(80));
+    ON ENDFILE (JCLIN) GO TO  EOF_INPUT ;
+    CALL LIST_JCL;
+    CARD =  $T (CARD,'%','&');
+ /* TEST TYPE OF JCL CARD */
+    IF CARD_1_3 = '// ' THEN GO TO NO_LABEL;
+    IF CARD_1_3 = '//*' THEN GO TO COMM_CARD;
+    IF CARD_1_2 = '//'  THEN GO TO JCL_CARD;
+    IF CARD_1_2 = '/*'  THEN GO TO READ;
+      PUT FILE (JCLOUT)EDIT('* * * BAD JCL CARD,IGNORED * * *')
+                  (SKIP(1),X(7),A);
+        LINE_CT =LINE_CT + 1;
+       GO TO READ;
+
+  JCL_CARD:
+    IC = IC + 1; CK_CD ;               /* CHECK BOUNDS OF CARD #  */
+    L =  $I(CARD,' ') - 3;             /* LENGTH OF LABEL         */
+    $(DATA,IDA,L) = $(CARD,3,L);       /* DOLLAR SIGN='SUBSTR'    */
+    $REF(LAB,IC)=IDA;  $REF(LAB_L,IC)= L;
+    IDA = IDA + L;  CK_DA  ;  /* UPDATE POINTER IN DATA ARRAY */
+    ICD = L + 3;              /*                   CARD ARRAY */
+  JCL_CARD1:
+    /* WE HAVE A NEW LOGICAL CARD , INITIALIZE SWITCHES           */
+    $(DATA,IDA,8) = JCLSEQ ;           /* CARD SEQ NUMBER         */
+    CARD_PT(IC,4,1) = IDA ;            /* POINT TO SEQ # START    */
+    CARD_PT(IC,4,2) = 8 ;              /* LENGTH OF SEQ #         */
+    IDA = IDA + 8 ;  CK_DA ;           /* MOVE POINTER IN DATA    */
+    OPND_C , COMM_C , ANY_COMM =  FALSE  ;  COMM = '';
+    CALL SKIP_BLANKS ;
+    IF $(CARD,ICD,3) ='DD ' THEN GO TO DD_CARD;
+    IF $(CARD,ICD,5) ='EXEC ' THEN GO TO EXEC_CARD;
+    IF $(CARD,ICD,5) ='PROC ' THEN GO TO PROC_CARD;
+       IC =IC -1;   /*WE GOT AN ERROR,BACK UP THE CARD COUNTER  */
+    PUT  FILE (JCLOUT)EDIT ('***** BAD JCL CARD,IGNORED *****')(SKIP(1),
+            X(7),A) ;
+       LINE_CT = LINE_CT + 1;
+    GO TO READ;
+
+  EXEC_CARD:
+    IE = IE + 1;  CK_EX ;    /* INCREMENT EXEC COUNTER,TEST LIMIT */
+    EXEC_PT (IE) = IC; /* SAVE CURRENT CARD # IN EXEC POINTER TABLE */
+    ICD = ICD + 4;  CARD_TYPE = 'EXEC' ;   /* ICD IS LOC ON CARD */
+  OPND:                                    /*  BEING ANALYZED    */
+    $REF(OP,IC) = IDA ; $REF(OP_L,IC) = 0 ;/*POINT TO OPERAND LOC    */
+  OPND1:
+    CALL SKIP_BLANKS;
+    CALL FIND_BLANKS;                      /* FIND END OF OPERAND  */
+    L = ICE - ICD + 1;                     /*   L = LEN OF OPERAND */
+    $(DATA,IDA,L) = $(CARD,ICD,L);
+    CALL CONTINUE;                         /* CHECK FOR CONTINUATIONS*/
+    IDA = IDA + L; CK_DA  ;                /* LOOK FOR COMMENTS    */
+    ICD = ICD + L;
+    $REF(OP_L,IC)=$REF(OP_L,IC)+L; /* INCREMENT LENGTH CNTR         */
+  CONT_COMM:
+    CALL STOW_COMM;
+    IF OPND_C | COMM_C THEN GO TO READ;    /*  CONTINUATION CARD  */
+    IF ANY_COMM THEN DO;
+       L = $L(COMM);                     /* CONT COMMS ARE STOWED */
+       $(DATA,IDA,L) = COMM ;            /* IN COMM SO OPND CAN BE*/
+       $REF(CM,IC)=IDA ;                 /* STOW AS ONE PHYSICAL  */
+       OPND_C, COMM_C = FALSE ;          /* RECORD                */
+       IDA = IDA + L; $REF(CM_L,IC)=L; CK_DA  ;
+    END;
+    ELSE  CARD_PT (IC,3,*)=0;            /* NO COMMENTS           */
+    GO TO READ;
+
+  PROC_CARD:                             /* ADJUST POINTERS    */
+    IP =  IP + 1 ;  CK_PROC ;
+    PROC_PT (IP) = IC;
+    ICD = ICD + 4;
+    GO TO OPND;
+
+  DD_CARD:                     /* POINT THE DD TO CARD & EXEC   */
+    IDD = IDD + 1;  CK_DD ;    /*   AND ZERO DSID & CHAIN POINTERS */
+    DD_PT(IDD,1) = IC;   CARD_TYPE  = 'DD  ' ;
+    DD_PT(IDD,2) = IE;
+    DSID(IDD),CHAIN(IDD)= 0;
+    ICD = ICD + 2;
+    GO TO OPND;
+
+  NO_LABEL:
+    IF OPND_C THEN DO;   /* CHECK IF OPERANDS ARE CONTINUED */
+       ICD = 3;
+       CALL SKIP_BLANKS;
+       IF ICD <= 16 THEN GO TO OPND1; /* TEXT PAST COL16 IS COMMENT */
+       GO TO CONT_COMM;
+    END;
+    IF COMM_C  THEN DO;  /* CHECK IF COMMENTS ARE CONTINUED*/
+       ICD = 3;
+       GO TO CONT_COMM;
+    END;
+    IC =  IC + 1; CK_CD ;                      /*    NO LABEL   */
+    CARD_PT(IC,1,*) = 0 ;
+    ICD = 3;
+    GO TO JCL_CARD1;
+
+  COMM_CARD:                       /*    STORE COMMENT CARD     */
+    ICD = 4;
+    CALL SKIP_BLANKS;
+    IF ICD = 72 THEN GO TO READ;   /*   JCL SPACER CARD           */
+      ICD = 4 ; L = 64 ;   /* LEAVE BLANKS IN COMMENT CARD    */
+    $(DATA,IDA,L) = $(CARD,ICD,L);
+    IC = IC + 1; CK_CD ;
+    ICOM = ICOM + 1;  CK_COMM;           /* UPDATE  ALL POINTERS  */
+    COMM_PT(ICOM,1) = IC;
+    COMM_PT(ICOM,2) = IE;
+    CARD_PT(IC,*,*)= 0;
+    $REF(CM,IC)=IDA;  $REF(CM_L,IC) = L ;
+    IDA = IDA + L ; CK_DA  ;
+    IF CARD_TYPE = 'EXEC' THEN COMM_PT(ICOM,3) = 0;
+    IF CARD_TYPE = 'DD  ' THEN COMM_PT(ICOM,3) = IDD;
+    GO TO READ;
+
+  BOUNDS_CK: PUT FILE (JCLOUT) EDIT ('*** TRANSLATOR TABLES OVER',
+        'FLOWED ***') (PAGE,X(5),A,A);
+           DEBUGALL       /* DO NOT REMOVE  IT DUMPS TABLES IF THERE */
+       STOP ;             /*   IS AN OVERFLOW ,CALL FOR HELP!     */
+
+  EOF_INPUT:
+     IC_MAX = IC ; /* SAVE MAX VALUES OF ALL PTRS OR CNTRS          */
+     IDD_MAX = IDD ;
+     IE_MAX = IE ;
+     ICOM_MAX =  ICOM ;
+     IP_MAX = IP ;
+       /* JCL IS READ  AND POINTER ARRAYS BUILT. LIST MESSAGES
+               RE TRANSLATION      */
+     IDSN = 0  ;                     /* INITIALIZE DSID #'S TO ZERO */
+     CARD_PT (IC+1,*,*) = 0 ; /* ZERO DATA ARRAY BEYOND LAST ENTRY */
+     PUT FILE (JCLOUT) EDIT ('ANOMALIES,ERROR,ETC. ASSOCIATED WITH',
+              ' THIS VERSION LEVEL OF TRANSLATION')(PAGE,X(20),A,A);
+  PUT FILE (JCLOUT) EDIT (
+  'TRANSLATOR ASSUMES WORKING CATLG PROCS(BALANCED PARENTHESES,ETC)',
+  'SYMBOLIC VARIABLES REPLACE CCPROG STEPS UNLESS RUN TIME DEPENDENT',
+  'BR14 STEPS ELIMINATED WHERE ALL DD CARDS ARE MOD,OLD,OR SYSOUT',
+  'INSTREAM DATA SETS ASSUMED WHERE DDNAME= REFERENCE IS NOT FOUND',
+  'CONDITION CODE TESTS WITH NO REFERENCES, USES ''ANY'' TECHNIQUE',
+  'RESTARTS USING CCPROG CONTROLLED STEPS SHOULD BE REVIEWED FOR ',
+  'POSSIBLE USE OF STARTAT TECHNIQUE OF JOL',
+  'DSID W/SAME NUMBER BUT DIFF SUFFIX ARE DATA SETS ',
+  'W/SAME NAMES BUT W/DIFF ATTRIBUTES',
+  'LABEL ON PROG DCL ARE INTERNALLY GENERATED(I.E. 1-ST EXEC = PROG01)',
+  'LABELS IN RUN LOGIC PART OF JOL ARE STEP NAMES',
+  'CAN NOT TRANSLATE KEYWORDS THAT ARE SYMBOLIC PARMS',
+  'HARD CODED FOR 5 CCPROG STEPS')(
+  SKIP(2),X(10),A,SKIP,X(10),A,SKIP,X(10),A,SKIP,X(10),A,SKIP,X(10),
+   A,SKIP,X(10),A,A,SKIP,X(10),A,A,SKIP,X(10),A,SKIP,X(10),A,
+   SKIP,X(10),A,SKIP,X(10),A);
+
+
+ /* SEQUENCE NUMBERS ARE ASSIGNED TO THE DSIDS IN THE ORDER OF
+    APPEARANCE OF DD CARDS. LIKE DSNAMES ARE LINKED ON A FORWARD
+    CHAIN AND AHVE THE SAME DSID#. FOR EXAMPLE IF THE 7TH,9TH,14TH
+    17TH DD'S HAVE THE SAME DSN THEN 7 POINTS TO 9, 9 TO 14, 14 TO 17
+    AND 17 POINTS TO 7. THE POINTERS ARE IN CHAIN(I).
+    9998 IS A SWITCH INDICATING A DDNAME NOT A DSNAME AND THEREFORE NO
+    DSID IS CREATED FOR IT. */
+    DO I = 1 TO IDD_MAX; /* SCAN ALL DD'S */
+       IF CHAIN(I) = 9998 THEN GO TO DO_END_CHAIN;
+         J = DD_PT(I,1);       /*   J --> TO CARD                 */
+         CALL XTR_KEY (J,'DSN=|DSNAME=') ;
+         $IFLZ DO;                           /*    NO DSN         */
+             CALL XTR_KEY (J,'SYSOUT=') ;    /*  LOOK FOR SYSOUT  */
+             $IFLNZ DO;
+                 SAVE            /*  SAVE POINTERS SET BY XTR_KEY */
+                 /* SEARCH PREVIOUS DD'S FOR 'SYSOUTS' EQUAL TO THE
+                    ONE POINTED TO BY SAVE(K1,L1)                 */
+                 CALL FIND_DD_KEY(I-1,'SYSOUT=',M);
+                 /* SEARCH FOR STRING = SYSOUT
+                    M=0 IS A MISS ¬=0 IS A HIT */
+                 IF M ¬= 0 THEN DO;          /*  SYSOUT MATCH     */
+                     CALL CHAIN_PROC  (M,I) ; /* PUT ON CHAIN     */
+                     DSID(I) =  DSID(M) ; /* SET LINK OF CHAIN    */
+             END;
+                ELSE DO;
+                       IDSN = IDSN + 1 ; /* THIS IS THE DSID# CNTR */
+                       DSID(I) = IDSN ;
+                       CHAIN(I) = 0 ;
+            END;END;
+             ELSE DO;                    /*    NOT DSN OR SYSOUT     */
+                 CHAIN(I) = 0 ;          /*    NEW DSID              */
+                 IDSN = IDSN + 1;       /*  D.S. MAY BE DDNAME,NULLFIL*/
+                 DSID(I) = IDSN ;       /*  DUMMY OR BLANK(NO-NAME    */
+                 CALL XTR_KEY (J,'DDNAME=');      /* LOOK FOR DDNAME= */
+                 $IFLNZ DO ;
+     /* SYMBOLIC DDNAME,REFERENCE WILL FAIL,MUST GIVE WARNING   */
+                     IF $I($K,'%') ¬= 0 THEN DO ;
+                         DSID(I) = 0 ;  /* SWITCH FOR USE IN PROG DCL*/
+                         CHAIN(I) = 9995 ; /* STOP GEN OF DCL DS   */
+                         PUT FILE (JCLOUT) EDIT
+                         ('CANNOT TRANSLATE SYMBOLIC DDNAME ',
+                          'PLEASE REVIEW PROGRAM LOGIC FOR JOL ',
+                          'JCL SEQUENCE NUMBER ',$(DATA,CARD_PT(J,4,1),
+                          8))  (SKIP(2),X(2),A,A,A,A) ;
+                          GO TO DO_END_CHAIN;
+                     END;
+      L = 0 ; /* USED AS A SWITCH TO SEE IF WE GOT A FIND */
+                        SAVE
+
+  /* GOT A DDNAME=,NOW SEE IF IT HAS A DCB. IF SO TELL THE USER
+     IT AIN'T GOING TO GET TRANSLATED        */
+                             CALL XTR_KEY(J,'DCB=');
+                             $IFLNZ DO;
+   PUT FILE(JCLOUT)EDIT('DCB INFO FOR ',$(DATA,CARD_PT(EXEC_PT(DD_PT(I,2
+   )),1,1),CARD_PT(EXEC_PT(DD_PT(I,2)),1,2)),'.',$(DATA,$REF(DD_LAB,I),
+   $REF(DD_LAB_L,I)),' DD ',$(DATA,$REF(DD_OP,I),
+   MIN(25,$REF(DD_OP_L,I))),' ARE NOT INCLUDED IN JOL,',
+     'PLEASE REVIEW JCL') (SKIP(2),X(2),A,A(CARD_PT(EXEC_PT(DD_PT(I,2)),
+      1,2)),A(1),A($REF(DD_LAB_L,I)),A(4),A(MIN(25,$REF(DD_OP_L,I))),
+       A,A) ;
+                             END;
+                            RESTORE
+   /*     SEE IF THE DDNAME REFERRED TO BY $K EXISTS (SEARCH LABELS) */
+                    DOWHEN(K,IDD_MAX,DD_PT(K,2),DD_PT(I,2));
+                         IF $K=$(DATA,$REF(DD_LAB,K)
+                           ,$REF(DD_LAB_L,K)) THEN DO;
+                             L=1; /* WE GOT A FIND */
+          /* YES WE GOT A FIND ,EXCHANGE POINTERS AND VOID REF
+                       9998 IS VOID,     9997 IS INSTREAM DATA SET */
+                             /*SWITCH PNTRS OF KTH FOUND TO ITH    */
+                             $REF(DD_OP,I)=  $REF(DD_OP,K)  ;
+                             $REF(DD_OP_L,I)= $REF(DD_OP_L,K) ;
+                             CHAIN(I) = 0 ;     /* DENOTE VOID DD  */
+                              CHAIN(K) = 9998 ;
+                   END;END;
+                       IF L=0 THEN CHAIN(I)=9997; /* INSTREAM DATASET*/
+         END;END;END;
+         ELSE DO;                         /* DSN CASE              */
+               SAVE  /* SAVE BECAUSE BACK REF USES K1,L1           */
+             IF $(DATA,K1,1) = '*' THEN DO;    /* CK FOR BACK REF  */
+                 CALL BACK_REF(I,JJ); /*JJ RETURNED. ZER0 IS NO FIND */
+                 JJ = JJ ; /* ? */
+                 IF JJ = 0 THEN DO;
+                     PUT FILE (JCLOUT)EDIT('***** BACKWORDS REFERENCE',
+                       ' NOT FOUND FOR ',$K,' *****')
+                       (SKIP(1),X(5),A,A,A(L1),A) ;
+    CHAIN(I) = 9996;             /* TO PREVENT GENERATING JOL       */
+                 END;
+                 ELSE DO;
+                 CALL FIRST_CHAIN_EL(JJ,KK); /* LOCATE 1ST CHAIN   */
+                 CALL CHAIN_PROC (KK,I); /* ELEMENT & CHAIN ITH ONE*/
+                 DSID(I) =  DSID(KK);  /* PASS DSID OF HEAD ELEMENT*/
+             END;END;
+             ELSE DO;                          /* CK FOR SAME DSN  */
+                 CALL FIND_DD_KEY(I-1,'DSN=|DSNAME=',M);
+                 IF M ¬= 0 THEN DO;            /*    SAME DSN ?    */
+                     CALL CHAIN_PROC(M,I);
+                     DSID(I) = DSID(M);
+                 END;
+                 ELSE DO;                      /* GIVE NEW DSID#    */
+                     IDSN = IDSN + 1 ;
+                     DSID(I) = IDSN;
+                     CHAIN(I) = 0;
+
+      END;END;END;
+  DO_END_CHAIN:END;
+ /* AT THIS POINT THE DSID'S OF ALL PERTINENT DATASETS ARE NUMBERED.
+    DATASETS WITH THE SAME NAMES ARE CHAINED TOGETHER. THEY MAY NOT BE
+    THE SAME PHYSICAL DATASET THOUGH. THIS NEXT SECTION OF CODE SCANS
+    EACH CHAIN AND LOOKS FIRST AT DISPOSITION TO SEE IF THE CURRENT
+    DISP IS THE SAME AS THE PRECEDING (IN THE CHAIN ). IF A 'NEW' WAS
+    FOUND WHERE AN OLD IS NOW THEN THE CHAIN IS BROKEN. FOR EXAMPLE,
+    DSID4,7,9,11,15 ARE ALL CHAINED. IF THE DISP CHANGED AT 9 THE NEW
+    CHAINING WOULD BE 4 -> 7 -> 4   AND  9 -> 11 -> 15 -> 9       */
+
+
+    /*  DETERMINE IF DATA SETS IN DSID CHAIN ARE ACTUALLY THE SAME */
+    /*       PHYSICAL DATA SET  - MAKE  SUBCHAINS AND RENUMBER     */
+    /*       I CAN'T DESCRIBE THIS LOGIC   IT AIN'T NEAT,IT WORKS? */
+    DCL (LAST_SAME,LAST_DIFF,FIRST_SAME,FIRST_DIFF,CURRENT,
+         CHAIN_BEGIN) $FB; /* TO COMPARE ELEMENTS 6 INDEXES NEEDED  */
+  DO I = 1 TO IDD_MAX ;
+       IF CHAIN(I) = 9999 |   /* THESE CONDITIONS DONT NEED ANALYSIS*/
+          DD_PT(I,4) = 9998 | DD_PT(I,4) = 9996 | DD_PT(I,4) = 9995 |
+           CHAIN(I) = 9997 THEN GO TO DO_SUB_CHAIN;
+      IF CHAIN(I) ¬= 0  THEN DO;           /* TEST IF CHAINED       */
+          IF DSID(I)  < 10000  THEN DO;   /* ALREADY RENUMBERED #   */
+  /*   FOR NOW D.S. W/SAME NAMES HAV NUMBERS 1000X,1100X,ETC
+         LATER I'LL CHANGE THE 10000 TO A,11000 TO B,ETC*/
+              N = 10000 ;                 /* 1ST DS IN CHAIN        */
+               J = I;
+        CALL XTR_KEY(DD_PT(J,1),'SYSOUT=') ;
+        $IFLNZ DO ;                    /*  BREAK UP SYSOUT CHAIN   */
+  CHAIN_START:CHAIN_BEGIN = J;
+               FIRST_DIFF =0;
+
+  /*  CHAINS ARE BROKEN INTO SUBCHAINS ON DISP, VOL,UNIT INFO */
+                      LAST_SAME = J;
+              DSID(CHAIN_BEGIN) = DSID(CHAIN_BEGIN) + N;
+              CURRENT = CHAIN(CHAIN_BEGIN);
+      RETURN_TEST:CALL XTR_KEY(DD_PT(CHAIN_BEGIN,1),'SPACE=') ;
+               SAVE
+            CALL XTR_KEY(DD_PT(CURRENT,1),'SPACE=') ;
+            IF  $K ¬=  $(DATA,K2,L2) THEN GO TO DIFF_SYSOUT ;
+            CALL XTR_KEY(DD_PT(CHAIN_BEGIN,1),'UNIT=') ;
+                   SAVE
+            CALL XTR_KEY(DD_PT(CURRENT,1),'UNIT=') ;
+            IF  $K ¬=  $(DATA,K2,L2) THEN GOTO DIFF_SYSOUT;
+            CALL XTR_KEY(DD_PT(CHAIN_BEGIN,1),'DCB=') ;
+                  SAVE
+            CALL XTR_KEY(DD_PT(CURRENT,1),'DCB=') ;
+             IF $K ¬= $(DATA,K2,L2) THEN GO TO DIFF_SYSOUT;
+             DSID(CURRENT) = DSID(CHAIN_BEGIN);
+        LAST_SAME = CURRENT;
+        IF FIRST_DIFF ¬=0 THEN CHAIN(LAST_DIFF)=CHAIN(CURRENT);
+        J,CURRENT = CHAIN(CURRENT);
+        IF J ¬= CHAIN_BEGIN THEN GO TO RETURN_TEST;
+        IF FIRST_DIFF ¬=0 THEN DO;
+             J,CHAIN(LAST_DIFF)=FIRST_DIFF;
+             N = N + 1000;
+             GO TO CHAIN_START;
+          END;
+          GO TO DO_SUB_CHAIN;
+ DIFF_SYSOUT:IF FIRST_DIFF =0 THEN FIRST_DIFF = CURRENT;
+             LAST_DIFF = CURRENT;
+             J,CURRENT,CHAIN(LAST_SAME)=CHAIN(CURRENT);
+             IF J ¬= CHAIN_BEGIN THEN GO TO RETURN_TEST;
+             CHAIN(LAST_SAME) = CHAIN_BEGIN;
+             CHAIN(LAST_DIFF),J = FIRST_DIFF;
+             N = N + 1000; J = FIRST_DIFF;
+             GO TO CHAIN_START;
+           END;
+           ELSE DO;
+    BEGIN:       IBEGIN = J;             /* REMEMBER START OF CHAIN */
+    TEST:        DSID(J) =  DSID(J) + N;
+              CALL XTR_KEY(DD_PT(CHAIN(J),1),'DISP=') ;   /* FOR J+1*/
+              $IFLZ GOTO NEW_DS ;               /* NO DISP=  => NEW */
+              IF $(DATA,K1,2)= 'NE'  | $(DATA,K1,2)= '(N'  |
+                 $(DATA,K1,2)= '(,' THEN GO TO NEW_DS;
+              CALL XTR_KEY(DD_PT(CHAIN(J),1),'VOL=|VOLUME=') ; /*J+1*/
+              $IFLZ GOTO SAME_DS ;           /* DISP ¬=NEW &NO VOL  */
+              SAVE                       /* SAVE VOL INFO  FOR  J+1 */
+              CALL XTR_SUB_KEY('REF=') ;       /*     FOR J+1       */
+              IF KS1 = 0  THEN DO;             /* NO REF FOR J+1    */
+                  CALL XTR_SUB_KEY('SER=') ;      /*  SER= FOR J+1  */
+                  $IFLSZ GO TO SAME_DS ;       /*   NO SER=|REF=    */
+                  KS2 = KS1 ;              /* SAVE SER INFO FOR J+1 */
+                  LS2 = LS1 ;
+                  CALL XTR_KEY(DD_PT(J,1),'VOL=|VOLUME=') ;  /* FOR J */
+                  $IFLZ GO TO NEW_DS ;           /* J+1 VOL=, J NO VOL*/
+                  CALL XTR_SUB_KEY('SER=') ;     /*  GET SER FOR J    */
+                  $IFLSZ GO TO NEW_DS ;          /*  J+1 SER,J NO SER */
+                  IF $KS ¬= $(DATA,KS2,LS2)THEN GOTO NEW_DS;
+                  GO TO SAME_DS ;                /* SER'S NOT EQUAL   */
+              END;
+              ELSE DO;                          /* REF= CASE ON J+1   */
+                  KS2 = KS1 ;                /*  SAVE REF INFO J+1    */
+                  LS2 = LS1 ;
+                  CALL XTR_KEY(DD_PT(J,1),'VOL=|VOLUME=') ;  /* FOR J */
+                  IF  $(DATA,KS1,1) ¬= '*' THEN DO ;       /* FOR J+1 */
+                      $IFLZ GO TO NEW_DS ;                 /* FOR J   */
+                      CALL XTR_SUB_KEY('REF=') ;           /* FOR J   */
+                      IF $(DATA,KS2,LS2) = $KS THEN GOTO
+                         /* REF'S ARE = */ SAME_DS; GO TO NEW_DS;
+                  END;
+                  ELSE DO;                         /*  REF= *.  CASE */
+                  K1 = KS2 ;               /* REF INFO (*. #)FOR J+1 */
+                  L1 = LS2 ;
+                  CALL BACK_REF(CHAIN(J),K ) ;  /* J+1 POINTS TO K  */
+                  IF  K = J  THEN GO TO SAME_DS ; /* J+1 POINTS TO J  */
+                  CALL XTR_KEY(DD_PT(J,1),'VOL=|VOLUME=');  /* FOR J  */
+                  $IFLZ GO TO NEW_DS ;
+                  CALL XTR_SUB_KEY ('REF=') ; $IFLSZ GOTO NEW_DS;
+                  IF $(DATA,KS1,1) ¬= '*' THEN GO TO NEW_DS ;
+                  CALL BACK_REF( J ,KK) ;       /*  KK POINTS TO KK  */
+                  IF KK = K  THEN GO TO SAME_DS ;
+                  GO TO NEW_DS ;
+              END;END;
+  NEW_DS:  IENDS = J;
+           N = N + 1000;  J = CHAIN(J);
+           CHAIN(IENDS) = IBEGIN;
+           IF J < CHAIN(J) THEN GO TO BEGIN;
+           DSID(J) = DSID(J) + N; IBEGIN = J; GOTO OUTS;
+  SAME_DS: J = CHAIN(J);
+           IF J < CHAIN(J) THEN GO TO TEST;
+           DSID(J) = DSID(J) + N;
+  OUTS:    CHAIN(J) = IBEGIN;
+          END;
+      END;END;
+
+  DO_SUB_CHAIN:END;
+
+  /* DATA SETS IN SUB CHAINS HAVE DSID#'S OF 10000+I,11000+I,12000 +I*/
+
+  START_GEN :
+  /*  THIS GEN STUFF IS FAIRLY STRAIGHT FORWORD - IT IS THE SUBS
+           THAT GAVE ME TROUBLE.  NOTHING (PREPROCESSOR PASS)
+           CREATES A LINE OF BLANKS ON THE JOL OUTPUT  */
+  /*  GENERATE JOL BY PUMPING BUFF FULL OF A LOGICAL STATEMENT.
+       '?' IS USED AS A LOGICAL BREAK POINT AND THE JOL SUBROUTINE
+         BREAKS THE STATEMENTS INTO LINES OF LESS THAN 72-TAB BYTES */
+       P = ADDR(TIME_FORMAT) ; T_FORMAT = TIME ;
+       P = ADDR(DATE_FORMAT) ; D_FORMAT = DATE ;
+       PUT STRING (TIMEOUT) EDIT(HRS,':',MINS,':',SECS) (3 (A(2),A(1)));
+       PUT STRING (DATEOUT) EDIT(MO,'/',DAY,'/',YR) (3 (A(2),A(1)));
+       TAB = 2 ;
+           BUFF = '/**  JOL TRANSLATOR V3 11/77 CURRENT DATE ' AND
+               DATEOUT AND ' TIME ' AND TIMEOUT AND ' **/' ;
+       CALL JOL ;
+       NOTHING ;
+       DO I = 1 TO ICOM_MAX;
+            IF COMM_PT(I,2) = 0 THEN DO;
+          CALL  GEN_COMM(I);   /*  GENERATE COMMENTS PRECEEDING JOL   */
+           END;
+           ELSE I = ICOM_MAX + 1;
+      END;
+      IF IP_MAX ¬= 0 THEN DO;
+           NOTHING                                  /* SPACES OUTPUT */
+
+          TAB = 2;
+          BUFF= '/*  P R O C  D E F I N E D  S Y M B O L I C S   */';
+          CALL JOL;
+       NOTHING
+         TAB = 6;
+         K1 =  CARD_PT(PROC_PT(1),2,1); /* SAVE POINTERS TO PROC CARD*/
+         L1 =  CARD_PT(PROC_PT(1),2,2);
+
+  GEN_PROC:
+          DO WHILE(L1 >  0) ;
+              IEQ = $I($K,'=');
+              BUFF='DCL %'||$(DATA,K1,IEQ-1)||' INIT '''; /*  DCL %X */
+              L1 = L1 - IEQ ;
+              K1 = K1 + IEQ ;
+      DCL LEV_PAR,LEV_QUO $FB,PROC_CHAR CHAR(1);
+      LEV_PAR,LEV_QUO = 0;               /*BALANCE COUNTERS  0 OR 1 */
+      DO I = 1 TO L1;                    /*   DECODE PROC STM       */
+          PROC_CHAR = $(DATA,K1-1+I,1);
+          IF PROC_CHAR = '(' THEN LEV_PAR = LEV_PAR + 1;
+          IF PROC_CHAR = ')' THEN LEV_PAR = LEV_PAR - 1;
+          IF PROC_CHAR = '''' THEN DO;
+              IF LEV_QUO = 0 THEN LEV_QUO = 1;
+              ELSE DO;
+                  IF LEV_QUO = 1 &$(DATA,K1+I,1)='''' THEN I=I+1;
+                  ELSE LEV_QUO = 0;
+          END;END;
+          IF PROC_CHAR = ',' & LEV_QUO = 0 THEN DO;
+              IEQ,IEQP = I;  GO TO INIT_VAL;
+      END;END;
+      IEQ,IEQP = I ;
+         INIT_VAL:
+             IF $(DATA,K1,1) = '''' THEN DO; /* STRIP OFF QUOTES */
+                 K1 =K1 + 1;  IEQP = IEQP - 2;  IEQ = IEQ - 1;
+             END;
+      IF $I($(DATA,K1,IEQP-1),'''') ¬= 0 THEN DO;
+          K1P = K1;
+
+    TWO_QUO: N = $I($(DATA,K1P,IEQP-1),'''');       /*DOUBLE QUOTES*/
+             IF N ¬= 0 THEN DO;
+                 STOW $(DATA,K1P,N) AND '''';
+                 K1P = K1P + N;  IEQP = IEQP - N;
+                 GO TO TWO_QUO;
+             END;
+             STOW $(DATA,K1P,IEQP-1) AND ''' ;';
+      END;
+              ELSE STOW $(DATA,K1,IEQP-1) AND ''' ;';  /*  VALUE */
+              CALL JOL ;
+              K1 = K1 + IEQ ;
+              L1 = L1 - I;
+              GO TO GEN_PROC; /* ONE VALUE PROCESSED, GO DO THE NEXT */
+      END;END;
+ /* IF AN INSTALLATION HAS A PROGRAM WHICH JUST SETS CONDITION CODES
+    THAT ARE LATER TESTED IN ORDER TO BYPASS STEPS , A JOL SYMBOLIC
+    VARIABLE CAN BE USED RESOLVING THE STEPS TO BE RUN AT COMPILE TIME
+    AND THE STATMENTS TO RUN THE STEPS NEED NOT BE INCLUDED
+    THE PROGRAM IS INSTALLATION DEFINED AT PREPROCESSOR TIME */
+       IF PROG_NAME = 'NONE' THEN GO TO DCL_DS; /* 'NONE' IS DEFAULT */
+       DCL CCPROG_SW BIT(1);   CCPROG_SW =  FALSE ;  J = 0;
+       DCL CH CHAR(1),MULT $FB;
+       DCL C_T_SW BIT(1);                   /* COMPILE TIME SWITCH */
+      DO I = 1 TO IE_MAX ;
+          CALL XTR_KEY(EXEC_PT(I),'PGM=');
+          IF  $K = PROG_NAME THEN DO;      /*   FOUND PROG         */
+              N = 0;
+       C_T_SW =  FALSE ;
+       SAVE
+       CALL XTR_KEY(EXEC_PT(I),'COND=');
+       $IFLZ GO TO COMPILE_TIME_DEPEND;
+      /* FOR THIS VERSION GO TO BY_PASS. THIS VERSION DOES NOT
+         SUPPORT RUN TIME DEPENDENT CCPROGS   */
+          GO TO BY_PASS;
+       LEV , LCOM = 0;  STEP = '';
+       IF $(DATA,K1,2) = '((' THEN MULT = 1; ELSE MULT = 0;
+       DO K = K1 TO K1+ L1 -1;
+            CH = $(DATA,K,1);
+            IF CH ¬= '(' &CH  ¬= ',' &CH ¬= ')' THEN
+                    STEP = STEP AND CH;
+            IF CH = '(' THEN LEV = LEV + 1;
+            IF CH = ',' & (LEV - MULT = 0) THEN GO TO DO_END_CC;
+            IF CH = ',' & (LEV - MULT = 1) THEN DO;
+                 IF LCOM < 2 THEN DO;
+                      LCOM =LCOM + 1; STEP = ''; GOTO DO_END_CC;
+            END; END;
+            IF CH = ')' THEN DO;
+                LEV = LEV - 1;
+                DO L = 1 TO CCPROG1;
+                     IF CCPROG(L) ¬= 0 THEN DO;
+         IF STEP = $(DATA,$REF(EX_LAB,CCPROG(L)),
+             $REF(EX_LAB_L,CCPROG(L)) ) THEN GO TO
+                              MATCH_CC;
+                END; END;
+                GO TO RUN_TIME_DEPEND;
+  MATCH_CC:     IF LEV = 0 THEN GO TO COMPILE_TIME_DEPEND;
+                IF K = K1 + L1 - 2 THEN GO TO COMPILE_TIME_DEPEND;
+                STEP = '';  LCOM = 0;
+  DO_END_CC:END;END;
+
+  COMPILE_TIME_DEPEND:
+       IF CCPROG_SW =  FALSE  THEN DO;    /* PRINT HEADING ONCE */
+             NOTHING
+             TAB = 2;
+         BUFF='/*  P A R M C C  D E F I N E D  S Y M B O L I C S  */';
+         CALL JOL;
+       NOTHING
+       CCPROG_SW = TRUE ;
+          END;
+                  TAB = 6;
+           C_T_SW =  TRUE ;  J = J + 1;  CCPROG(J) = I;
+          IF J > CCPROG1 THEN GO TO BOUNDS_CK;
+       CALL GEN_IF (I,N);
+
+  RUN_TIME_DEPEND: TAB = 6;
+       IF N = 1 THEN DO;
+            TAB = 6;
+            CALL JOL;
+            TAB = 10;
+       END;
+       IF I < 10 THEN PUT STRING (TBUFF)EDIT('0',I)(A,F(1));
+       IF I > 9  THEN PUT STRING (TBUFF)EDIT(I) (F(2));
+       BUFF = 'DCL %CCPROG' AND TBUFF AND ' INIT ''';
+       CALL XTR_KEY(EXEC_PT(I),'PARM=');
+       STOW $K AND ''' ;';
+       IF C_T_SW THEN DO;
+            STOW '  %' AND $(DATA,$REF(EX_LAB,I),
+                 $REF(EX_LAB_L,I) ) AND ' = ''%CCPROG'
+                 AND TBUFF AND ''' ;? /* COMPILE TIME DEPENDENT */';
+       END;
+       ELSE STOW '  /*  RUN TIME DEPENDENT  */';
+       CALL JOL;
+       IF N = 1 THEN DO;
+            TAB = 6;
+            BUFF = 'END;';
+            CALL JOL;
+       END;
+     BY_PASS:
+  END;END;
+  DCL_DS:
+       NOTHING
+
+      TAB = 2;
+      BUFF = '/*  D E C L A R E   D A T A   S E T S           */' ;
+      CALL JOL;
+       NOTHING
+      DO I = 1 TO IDD_MAX;
+          IF CHAIN(I) ¬= 9999 & CHAIN(I) ¬= 9998 THEN DO;
+      TAB = 6;
+              CALL GEN_DD(I);              /* INDICATE THE DD HAS BEEN*/
+               CALL JOL;                   /*    PROCESSED            */
+               IF CHAIN (I) ¬= 0 & CHAIN(I) ¬= I & CHAIN(I) ¬= 9995
+               & CHAIN(I) ¬= 9997 & CHAIN(I) ¬= 9996 THEN DO;
+              J = I ;                      /* GENED FOR BY PREVIOUS   */
+              L = CHAIN(I);
+  LOOP:       K = CHAIN(J);                /*  DSID - SCAN AHEAD ON   */
+              CHAIN(J) = 9999 ;            /*  THE CHAIN              */
+              IF K > J THEN DO;
+                  J = K  ;                 /*  COMMENTS ARE PUT IN THE*/
+                  GO TO LOOP ;             /*  PROG DEF   OF JOL PROG */
+              END;
+              ELSE CHAIN(J) = 9999 ;
+              CHAIN(I) = L ;
+      END;END;END;
+           NOTHING
+
+      BUFF = '/*  D E C L A R E   P R O G R A M S             */' ;
+      TAB = 2;
+      CALL JOL;
+      NOTHING
+      DO  I = 1 TO IE_MAX;              /* GENERATE  PROG DCL'S  */
+           CALL GEN_PROG_DCL (I,6) ;
+      END;
+        NOTHING
+
+       TAB = 2;
+       BUFF = '/*  I F , R U N , C A T , E T C .               */';
+       CALL JOL;
+       NOTHING
+      DO  I = 1 TO IE_MAX ;                /* GENERATE IF LOGIC   */
+               INDENT,TAB = 6;
+           CALL GEN_IF (I,N_IF) ;
+           IF N_IF ¬= 0 THEN DO;
+               CALL JOL;
+               TAB,INDENT = 10;
+           END;
+           DOWHEN(J,ICOM_MAX,COMM_PT(J,2),I);
+               CALL GEN_COMM(J);         /*  GENERATE COMMENTS    */
+           END;
+           CALL GEN_CD_COMM(EXEC_PT(I));
+           IF N_IF = 0 THEN TAB = 6;
+           ELSE TAB,INDENT = 10;
+           CALL GEN_RUN (I,N_RUN);        /*  GENERATE RUN        */
+           IF N_RUN = 2 THEN GO TO CCPARM; /* SKIP IF NO CCPROG   */
+       IF N_RUN = 1 THEN DO;
+           BUFF = $(DATA,$REF(EX_LAB,I),$REF(EX_LAB_L,I) )
+                   AND ':';
+       END;
+           CALL JOL ;
+          IF N_IF = 0 THEN TAB = 6;
+            ELSE  TAB,INDENT = 10;
+           CALL DYNAM(I);
+           CALL GEN_DISP (I) ;               /* GENERATE CATLG MNG */
+    CCPARM:IF INDENT = 10 THEN DO;
+               BUFF = 'END;' ;
+               TAB =  6;
+               CALL JOL ;
+       END;
+       NOTHING
+       NOTHING
+         END;
+       NOTHING
+
+              TAB = 2;
+      BUFF = '/*   E N D    O F    G E N E R A T I O N        */' ;
+      CALL JOL;
+      IF LIST THEN DO ;
+          IF $I(PARAM,'SNAP') ¬= 0 THEN DO ; DEBUGALL ; END ;
+          CALL DSID_VS_DSN ;
+          CALL PROG_DCL_TABLE ;
+      END ;
+      STOP;
+  /*  FROM HERE ON IT IS SUBS. THEY NEST LOGICALLY BUT NOT
+         PHYSICALLY.  THEY ARE IN SOME WHAT THE ORDER THAT THEY ARE
+         NEEDED , SOMEWHAT IN THAT ORDER  */
+
+
+ DSID_VS_DSN : PROC ;
+    DCL (I,J) INT ;
+    PUT FILE (JOLLIST) EDIT('TABLE OF CORRESPONDENCE FOR JOL DSID' ||
+             ' AND DSNAMES','DSID','JCL SEQ NO','DSNAME',' ')
+             (PAGE,X(25),A,SKIP(2),X(6),A,X(3),A,X(5),A,SKIP(2),A) ;
+    DO I = 1 TO IDD_MAX ;
+     IF CHAIN(I) ¬= 9999 & CHAIN(I) ¬= 9998 THEN DO ;
+         CALL GEN_DSID(I) ;
+         DSBUFF =   $T(DSBUFF,'&','%') ;
+         J = CARD_PT(DD_PT(I,1),4,1) ;
+         CALL XTR_KEY(DD_PT(I,1),'DSN=|DSNAME=') ;
+        $IFLNZ DO ;
+             PUT FILE (JOLLIST) EDIT (DSBUFF,$(DATA,J,8),$K)
+                      (SKIP,X(5),A(6),X(3),A(8),X(3),A) ;
+         END;
+         CALL XTR_KEY (DD_PT(I,1),'SYSOUT=') ;
+        $IFLNZ DO ;
+             PUT FILE (JOLLIST) EDIT (DSBUFF,$(DATA,J,8),'SYSOUT=',$K)
+                      (SKIP,X(5),A(6),X(3),A(8),X(3),A(7),A) ;
+         END;
+     END;
+     IF CHAIN(I) = 9997 THEN DO ;
+         PUT FILE (JOLLIST) EDIT (DSBUFF,$(DATA,J,8),'IN STREAM DATA'||
+                  ' SET') (SKIP,X(5),A(7),X(2),A(8),X(2),A) ;
+     END ;
+ DO_I_END: END ;
+ END ; /* END OF DSID_VS_DSID PROC */
+ PROG_DCL_TABLE : PROC ;
+     DCL (IE,IC,J) INT ;
+     PUT FILE (JOLLIST) EDIT ('TABLE OF CORRESPONDENCE BETWEEN' ||
+              ' JOL PROGRAM DCL AND JCL SOURCE','PROG DCL',
+              'JCL SEQ NO','LABEL','PROGRAM',' ')
+           (PAGE,X(25),A,SKIP(2),X(4),A,X(3),A,X(5),A,X(7),A,SKIP(2),A);
+     DO IE = 1 TO IE_MAX ;
+         IC = EXEC_PT(IE) ;
+          J = CARD_PT(IC,4,1) ;
+         PUT STRING (BUFF) EDIT ('PROG',IE) (A,F(2)) ;
+         BUFF =   $T(BUFF,'0',' ') ;
+         CALL XTR_KEY(IC,'PGM=') ;
+         PUT FILE (JOLLIST) EDIT (BUFF,$(DATA,J,8),
+        $(DATA,$REF(LAB,IC),$REF(LAB_L,IC)),$K)
+                  (SKIP,X(5),A(6),X(5),A(8),X(5),A(8),X(5),A) ;
+      END;
+ END ; /* END OF PROG_DCL_TABLE PROC */
+
+ /* SKIP_BLANKS SCANS THE CARD IMAGE BEGINNING AT ICD, AND FINDS THE
+    FIRST NON-BLANK COLUMN AND SETS ICD EQUAL TO THAT VALUE.
+    ICD IS A GLOBAL VARIABLE . */
+
+  SKIP_BLANKS: PROC ;                    /* LOC FIRST NON BLANK */
+                 DCL I $FB INT;
+    DO I = ICD TO 71;                        /* ICD= CURR LOC IN CARD*/
+       IF $(CARD,I,1) ¬= ' ' THEN GO TO OUT;
+    END;
+    I = 72 ;                                          /* ALL BLANKS  */
+  OUT:  ICD = I;                        /* POINTS TO FIRST NON-BLANK */
+    END;
+
+
+ /* FIND_BLANKS SACNS THE CARD IMAGE, BEGINNING AT ICD AND FINDS
+    THE FIRST BLANK (NOT WITHIN A STRING OR QUOTES) AND SETS ICE  EQUAL
+    TO THE COLUMN OF THE LAST NON-BLANK CHARACTER I.E. ICE IS ONE
+    LESS THAN THE FIRST NON-BLANK FOUND */
+
+  FIND_BLANKS: PROC;                  /* LOC FIRST BLANK      */
+    DCL (I,LEV_PAR) INT,CH CHAR(1);
+    ICE = $I($(CARD,ICD,72-ICD),' ');
+    IF $I($(CARD,ICD,ICE),'''') ¬= 0 THEN DO;
+        LEV_PAR = 0;                  /*  DON'T WANT BLANKS INSIDE  */
+        DO I = 1 TO 72;               /*  A STRING, SO SEEK OUT     */
+            CH = $(CARD,ICD+I-1,1);
+            IF CH = '''' THEN DO;
+                IF LEV_PAR = 0 THEN LEV_PAR = 1;
+                ELSE LEV_PAR = 0;
+            END;
+            IF CH = ' ' & LEV_PAR = 0 THEN DO;
+                ICE = I;  I = 73;           /* LAST NON BLANK CHAR */
+    END;END;END;
+        IF ICE = 0 THEN ICE = 71;
+        ELSE  ICE = ICE + ICD - 2;
+    END;
+
+ /* CONTINUE LOOKS FOR A COMMA OR A CONTINUATION CHARACTER IN COL 72
+    AND SETS CONTINUE SWITCHES FOR OPERANDS AND COMMENTS IF NEEDED */
+
+
+  CONTINUE: PROC ;                         /* IS JCL CONTINUED?  */
+    IF $(CARD,ICE,1) = ',' THEN OPND_C =  TRUE ;
+    ELSE  OPND_C =  FALSE ;
+    IF $(CARD,72,1) = ' ' THEN COMM_C =  FALSE ;
+    ELSE COMM_C =  TRUE ;
+    END;
+
+ /* STOW_COMM SQUEEZES THE LEADING AND TRAILING BLANKS OFF COMMENTS
+    AND SAVES THEM IN A BUFFER CALLED COMM. */
+
+  STOW_COMM: PROC;                          /* COLLECT COMMENTS   */
+    CALL SKIP_BLANKS;
+    IF ICD = 72 THEN RETURN ;                   /* NO COMMENTS */
+    ANY_COMM =  TRUE ;
+    DO IBLK = 71 TO ICD BY -1;         /* DROP BLANKS ON END  */
+        IF $(CARD,IBLK,1) ¬= ' ' THEN DO;
+            L = IBLK - ICD + 1;
+            COMM = COMM AND $(CARD,ICD,L) AND ' ';
+            RETURN;
+    END;END;
+   END ;
+
+ /* XTR_KEY LOCATES A KEYWORD GIVEN BY KEY. IF FOUND , THE VALUE OF
+    THE KEYWORD IN ARRAY DATA IS POINTED TO BY K1 AND ITS LENGTH IS SET
+    IN L1. IC IS THE CARD # IN THE DATA ARRAY WHICH IS BEING SCANNED.
+    FOR EXAMPLE TO LOCATE A DATASET ONE CODES (CARD#,'DSN=|DSANME=) */
+
+  XTR_KEY: PROC (IC,KEY);     /*  CARD # , KEYWORD ,K1,L1 = POINTER TO*/
+                              /*  DATA , $L OF EXTRACTED DATA     */
+    DCL (I,I2,J,K,KL,LEV,LI,N) INTERNAL , (KEY,KEYI) CHAR
+           (20) VARYING , CAR CHAR (1) ;
+    DCL (QLEV,ONE) INT ;
+    K = 1 ;                     /* POS IN KEY ,INIT = 1             */
+    K1,L1= 0 ;                  /*  ASSUMES NO KEYWORD WILL BE FOUND */
+    I = $REF(OP,IC) ;           /* LOCATE OPERAND OF CARD# IC        */
+    LI= $REF(OP_L,IC) ;         /*  LEN OF OPERAND                   */
+    I2 =  I + LI - 1 ;                 /*  END OF OPERAND         */
+  XTR:
+    J =  $I( $(KEY,K),'=') + K - 1 ;
+    KEYI  = $ (KEY,K,J-K+1) ;           /* GET KEYWORD           */
+    KL = $I($(DATA,I,LI),KEYI) ;
+    IF KL = 0  THEN GO TO  NO_KEY ;
+    KL = KL + I -1 ; KL = $I($(DATA,KL),'=') + KL ;
+    LEV = 0 ;  QLEV = 0 ; /* LEVEL OF OPEN PARENTHESES , QUOTES*/
+    ONE = 1 ;             /* USED TO ADD/SUB FROM QLEV */
+    DO N = KL TO I2 ;
+       CAR =  $(DATA,N,1) ;
+       IF CAR = '('  THEN  LEV = LEV + 1;
+       IF CAR = ')'  THEN  LEV = LEV - 1;
+       IF CAR = '''' THEN DO ;             /* 1/78  */
+           QLEV = QLEV + ONE ;    /* CHANGE SIGN OF ONE TO ADD/ SUB */
+           ONE = -ONE ;           /* FROM QLEV ALTERNATELY          */
+       END ;                               /* 1/78  */
+       IF CAR = ',' & LEV = 0 & QLEV = 0 THEN GO TO FOUND ;
+    END;
+    N =  I2 + 1 ;
+  FOUND:
+    L1=  N - KL ;                     /* $L  OF  KEY DATA         */
+    K1 =  KL ;                       /*   LOC OF KEY DATA         */
+    N = $I($K,',') ;              /* CHECK FOR REDUNDANT ( ) AND  */
+    IF N ¬= 0 THEN RETURN ;           /* REMOVE  IF PRESENT      */
+    IF $(DATA,K1,1 ) = '('  THEN  DO;
+        K1 = K1 + 1 ; L1 = L1 - 2 ;
+    END;
+    RETURN ;
+  NO_KEY:
+    IF  J = $L (KEY) THEN RETURN ;
+    K = J + 2 ;
+    GO TO XTR ;
+  END;
+
+ /* FIND THE CARD# WITHIN THE FIRST I CARDS THAT HAS THE SAME VALUE AS
+    A PREVIOUSLY SPECIFIED KEYWORD VALUE. THE ROUTINES USES K1 AND L1
+    SO IT IS IMPLIED THAT THE PREVIOUS VALUES ARE SAVED IN K2 AND L2 */
+
+  FIND_DD_KEY: PROC ( I,KEY,N) ;   /* N=0 NO FIND, = POINTER ON FIND */
+      DCL (K,J) INTERNAL;
+      DCL KEY CHAR(20) VARYING ;
+      N = 0 ;
+      IF I = 0 THEN RETURN ;
+      DO K = 1 TO I ;
+          J = DD_PT(K,1);
+          CALL XTR_KEY (J,KEY);
+          IF K1 ¬= 0 THEN DO;           /* FOUND KEYWORD         */
+              IF L1 = L2  THEN DO;      /* MAY HAVE LIKE $KSUES    */
+                  IF $K = $(DATA,K2,L2) THEN DO ;
+                                N =K ;
+                                RETURN ;
+                             END;
+  END;END;END;END;
+
+ /* CHAIN ADDS THE CURRENT DD CARD # TO A CHAIN OF LIKE DD'S. THE
+    EXISTING CHAIN BEGINS WITH VALUE IFIRST  */
+                                      /* ADD CURRENT INDEX TO CHAIN   */
+  CHAIN_PROC : PROC (IFIRST,ICURR) ;    /* PARMS ARE DD CARD #'S      */
+      DCL (I) INTERNAL;                 /* CHAIN 1->2->N->1           */
+      I  = IFIRST ;
+  TEST:
+      IF CHAIN(I) ¬= 0 THEN DO;
+          IF CHAIN(I) <  CHAIN(CHAIN(I)) THEN DO;
+              I = CHAIN(I) ;
+              GO TO TEST;
+          END;
+          ELSE DO;
+              CHAIN(ICURR) = IFIRST;
+              CHAIN(CHAIN(I)) = ICURR;
+      END;END;
+      ELSE DO;
+          CHAIN(IFIRST) = ICURR;
+          CHAIN(ICURR) = IFIRST;
+  END;END;
+
+ /* FIRST_CHAIN_EL LOCATES THE FIRST ELEMENT OF A DD CHAIN WHEN
+    ENTERED AT ANY POINT N IN THE CHAIN */
+
+  FIRST_CHAIN_EL : PROC(N_EL,I1);    /* LOCATE CHAIN ELEM #1, SET I1= */
+      DCL  I INT;
+      I = N_EL;
+      IF  CHAIN(I) ¬= 0 THEN DO;
+        TEST:
+          IF CHAIN(I) < CHAIN(CHAIN(I)) THEN DO;
+              I = CHAIN(I);
+              GO TO TEST;
+          END;
+          ELSE I1 = CHAIN(CHAIN(I)) ;
+         END;
+      ELSE  I1 = I ;
+  END;
+
+ /* BACK_REF LOCATES THE CARD POINTED TO BY *.DDNAME
+    OR *.STEPNAME.DDNAME */
+
+  BACK_REF: PROC (I,J);  /* CURRENT CARD # ,  FOUND CARD # OF BACKREF */
+      DCL (K,LP,LL,LSN,LDDN,M,N,ISTR,IEND) INTERNAL ;
+      DCL (IF1,IF2,IF3,IF4,IF5,IF6)   $FB INTERNAL ;
+      DCL (FUDGE1,FUDGE2) CHAR(50) VARYING INTERNAL ;
+      J = 0;                                          /* NO FIND CASE */
+      IF1 = $I($(DATA,K1+2,L1-2),'.') ;
+      IF  IF1 = 0                        THEN DO;    /*  *.DD CASE    */
+          DO K  = I-1  TO 1 BY -1  ;
+            IF DD_PT(K,2) = DD_PT(I,2) THEN DO;
+              LP = $REF(DD_LAB,K) ;                  /* LABEL POINTER */
+              IF LP ¬= 0 THEN DO;
+                  LL = $REF(DD_LAB_L,K);                /* LABEL $L  */
+                  FUDGE1 = $(DATA,K1+2,L1-2) ; FUDGE2 = $(DATA,LP,LL) ;
+                  IF FUDGE1 = FUDGE2                  THEN  DO;/*FIND*/
+                    J = K; RETURN;
+                  END;
+      END;END;END;END;
+      ELSE DO;                            /*  *.STEP.DDN CASE       */
+          LSN= $I($(DATA,K1+2,L1-2),'.') - 1 ;  /* LEN OF STEP NAME */
+          LDDN=-$I($(DATA,K1+2,L1-2),'.')-2+L1;      /* LEN OF DDN  */
+          DO M = DD_PT(I,2)-1 TO 1 BY -1 ;      /* FIND STEP NAME   */
+              N = EXEC_PT( M) ;
+              IF1 = $REF(LAB,N) ;
+              FUDGE1 = $(DATA,K1+2,LSN) ;
+              FUDGE2 = $(DATA,$REF(LAB,N),$REF(LAB_L,N)) ;
+              IF IF1 ¬= 0  & FUDGE1 = FUDGE2
+                                    THEN GO TO STEP_FIND ;
+          END;
+          RETURN;
+  STEP_FIND:
+       DOWHEN(K,I-1,DD_PT(K,2),M);
+              LP = $REF(DD_LAB,K) ;
+              IF LP ¬= 0 THEN DO;
+                  LL = $REF(DD_LAB_L,K);
+                  FUDGE1 = $(DATA,K1+LSN+3,LDDN) ;
+                  FUDGE2 = $(DATA,LP,LL) ;
+                  IF FUDGE1 = FUDGE2      THEN DO;
+                  J =K ; RETURN ;
+  END;END;END;END;END;
+
+ /* XTR_SUB_KEY SCANS THE VALUE OF A KEYWORD (K1,L1) AND LOCATES ANY
+    SUBKEYWORDS AND POINTS TO THEIR VALUE BY SETTING KS1 AND SETS ITS
+    LENGTH TO LS1. FOR EXAMPLE, KEYWORD = DCB, SUBKEYWORD = LRECL */
+
+  XTR_SUB_KEY: PROC (KEY) ;      /*XTR KEY FROM RECORD AT 5U - LEN=L1 */
+      DCL (I,J,K,LEV) INT,    /* PUT POINTER IN KS1 & LS1 ,=0 N.G.    */
+           KEY CHAR(20) VARYING;
+      KS1,LS1= 0 ;
+      I = $I($K,KEY) ;
+      IF I = 0 THEN RETURN ;
+      J = K1 + I - 1 ; K = L1 - I + 1;
+      I = $I($(DATA,J,K),'=') ;   LEV = 0 ;  KS1 = J+I ;
+      DO  K =   KS1 TO K1+L1-1 ;
+          IF $(DATA,K,1) = '('  THEN LEV = LEV + 1;
+          IF $(DATA,K,1) = ')'  THEN LEV = LEV - 1;
+          IF LEV = -1  THEN GO TO FIND ;
+          IF $(DATA,K,1) = ',' & LEV = 0 THEN GO TO FIND ;
+      END;
+      LS1 = K1 + L1 - KS1 ;
+      GO TO REDUN ;
+  FIND:
+      LS1 = K - KS1 ;
+  REDUN:
+      I = $I($KS,',');
+      IF I ¬=0 THEN RETURN ;
+      IF $(DATA,KS1,1) = '(' THEN DO;
+          KS1 = KS1 + 1;  LS1 = LS1 - 2 ;
+      END;
+  END;
+
+
+  JOL: PROC ;  /* OUTPUT LINE IMAGE IN BUFF BEGIN AT TAB,? BREAK CHAR */
+    DCL  (L,MAX_L,I,N,LOC,J,LEV_PAR) INT  , CH CHAR(1);
+       DCL (TAB2,MAX_L_MAR) $FB INT , DSN INT CHAR(3) INIT ('NO ');
+             IF BUFF = '' THEN RETURN;
+       TAB2 = TAB + 11;
+       DCL TBUFF CHAR(72) VARYING;
+                 /*    CONVERT JCL DELIMITER '..' TO JOL EQUIVALENT  */
+       LOC = 1;
+   SEARCH: N = $I($(BUFF,LOC),'%');
+       IF N ¬= 0 THEN DO;
+           LOC = LOC + N;
+           N = $I($(BUFF,LOC,9),'.');
+           IF N ¬= 0 THEN DO;
+               IF $I($(BUFF,LOC,N-1),'+')=0  &
+                  $I($(BUFF,LOC,N-1),'-')=0 &
+                  $I($(BUFF,LOC,N-1),' ')=0 &
+                  $I($(BUFF,LOC,N-1),',')=0 THEN DO;
+                IF $(BUFF,LOC+N,1) = '.' | $(BUFF,LOC+N,1) = '('
+                 | $(BUFF,LOC+N,1) = '%' | $(BUFF,LOC+N,1) = ')'
+                 | $(BUFF,LOC+N,1) = ',' | $(BUFF,LOC+N,1) = ' '
+                THEN BUFF= $(BUFF,1,LOC+N-2) AND $(BUFF,LOC+N);
+                ELSE DO;
+                    BUFF=$(BUFF,1,LOC+N-2)AND'||'AND $(BUFF,LOC+N);
+                    NEXT_BLANK=$I($(BUFF,LOC+N),' ');  /* 1/78  */
+                    NEXT_PERIOD=$I($(BUFF,LOC+N),'.');
+                    IF NEXT_BLANK > NEXT_PERIOD
+                        THEN DO;      /* SYMBOLIC IS IN DSN   */
+                            DSN = 'YES'; GO TO END_DSN_TEST ;
+                        END;
+                    DO I = 1 TO 30 ;
+                        IF $(BUFF,LOC-I,1)=' ' THEN GO TO END_DSN_TEST;
+                        IF $(BUFF,LOC-I,1)='.' THEN DO; DSN='YES';
+                        GO TO END_DSN_TEST; END; END;
+                    END_DSN_TEST: IF DSN='YES' THEN DSN = 'NO ' ;
+                    ELSE BUFF = BUFF AND
+                        '?/* SYMBOLICS MAY NEED CONSOLIDATION  */';
+                END;                                     /* 1/78 */
+                LOC = LOC + N - 1;
+              END;END;
+              GO TO SEARCH;
+       END;
+  S:L =  $L(BUFF) ;
+   IF L >(MARGIN-TAB)  THEN DO; /* TOO BIG TO FIT BETWEEN TAB AND   */
+        MAX_L = 73 - TAB ;      /* MARGIN SO WE MUST BREAK IT UP    */
+        IF TAB < MARGIN THEN DO ;
+            MAX_L_MAR = MARGIN - TAB ;
+            DO I = MAX_L_MAR TO 1 BY -1 ;
+            IF    $(BUFF,I,1) = '?' THEN GO TO FIND ;
+            END ;
+        I = $I($(BUFF,MAX_L_MAR),'?'); /* FIND FIRST LOGICAL BREAK */
+        IF I ¬= 0 THEN DO ; /* WE HAVE ONE NOW COMPUTE ITS LENGTH  */
+            I = MAX_L_MAR + I-1 ;
+            IF I < MAX_L THEN GO TO FIND ;/* WE HAVE ENOUGH SPACE  */
+        END ;
+        END;
+        IF L <= (73-TAB) THEN GOTO ONE_LINE ;/*WILL IT FIT ON A LINE ?*/
+        DO I =  MAX_L TO 1 BY -1;
+            IF  $(BUFF,I,1) ='?' THEN GOTO FIND;  /* LOOK FOR ?  */
+        END;
+        DO I =  MAX_L TO 1 BY -1;
+            IF  $(BUFF,I,1) = ' ' THEN GOTO FIND; /* LOOK FOR BLANK   */
+        END;
+       I = MAX_L;  TAB2 = 1;
+  FIND:                             /* CHECK IF FIND IS IN A STRING  */
+       IF $I($(BUFF,1,I),'''') ¬= 0 THEN DO;
+           LEV_PAR = 0;
+           DO J = 1 TO I;
+               CH = $(BUFF,J,1);
+               IF CH = '''' THEN DO;
+                   IF LEV_PAR = 0 THEN LEV_PAR = 1;
+                   ELSE LEV_PAR = 0;
+           END;END;
+           IF LEV_PAR = 0 THEN GO TO FIND2;
+           I = MAX_L;  TAB2 = 1;
+       END;
+    FIND2:
+    %DCL PRE_JOL CHAR;                     /* LOCAL PREPROSSER PROC  */
+  % PRE_JOL =
+       'TBUFF = $T($(BUFF,1,I),'' '',''?'');    /* BLANK BREAK CHAR */
+        IF TBUFF ¬= '' '' THEN DO;
+        ISEQ = ISEQ + 100 ;
+        JOLSEQ = ISEQ ;
+           IF LIST THEN DO;
+        PUT FILE (JOLLIST) EDIT (TBUFF,JOLSEQ) (SKIP(1),COL(TAB),A,
+          COL(73),A(8)) ;
+       END;
+           IF DECK THEN DO;
+      PUT FILE (JOLCODE) EDIT(TBUFF,JOLSEQ) (SKIP,COL(TAB),A,
+               COL(73),A(8));
+       END;  END;';
+       PRE_JOL;
+        BUFF =  $(BUFF,I+1) ;
+        TAB = TAB2;
+        GO TO S ;
+    END;
+    ONE_LINE: I = L ;
+    PRE_JOL;
+         BUFF = '';
+    RETURN ;
+  END;
+
+ /* LIST THE CARD IMAGE ON FILE JCLOUT */
+
+  LIST_JCL: PROC ;
+           LINE_CT = LINE_CT + 1;
+           IF LINE_CT > MAX_LINES THEN DO;
+          PUT FILE (JCLOUT) EDIT ('CATALOGUE PROCEDURE ',CAT_NO,'PAGE',
+               PAGE_NO) (PAGE,X(5),A,A(8),COL(90),A,F(6),SKIP(1));
+          LINE_CT = 4;
+          PAGE_NO = PAGE_NO + 1 ;
+      END;
+      PUT FILE (JCLOUT) EDIT (CARD) (SKIP(1),X(10),A(80));
+  END;
+
+ /* GEN_DSID GENERATES A DSID IN AN AREA DSBUFF. IT DECODES THE FIELD
+    3 OF ARRAY DD_PT. EXAMPLES ARE 0003 BECOMES DS003. FOR CHAINED
+    DATASETS (LIKE DSNAMES & ATTRIBUTES) 10005 BECOMES DS005A,
+    11005 BECOMES DS005B, 12005 IS DS005C AND SO ON. */
+
+  GEN_DSID: PROC(I);     /* GENERATE DSID  FROM DSID# IN  DSID(I)  */
+      DCL (IS,IP) INT;
+      IF DSID(I) > 10000 THEN DO;        /* CHAINED DS             */
+          IS =  MOD (DSID(I),1000) ;     /* STRIP OFF SUFFIX IS    */
+          IP =         ((DSID(I)-IS) / 1000 ) - 9 ;  /* PREFIX CONV*/
+          PUT STRING (DSPBUF) EDIT ( IS ) (F(3)) ;
+          DSPBUF  = $T (DSPBUF,'0',' ') ;        /* ZERO FILL     */
+          DSBUFF  = 'DS' AND DSPBUF AND  $(ALPHABET,IP,1) ;
+      END;
+      ELSE DO ;
+          PUT STRING (DSPBUF) EDIT (DSID(I)) (F(3));
+          DSPBUF = $T (DSPBUF,'0',' ');
+          DSBUFF = 'DS' AND DSPBUF AND ' ' ;
+  END;END;
+
+                                  /* GEN FROM FULL LINE COMMENTS     */
+  GEN_COMM: PROC (I) ;            /*  I= $I OF I-TH COMMENT CARD     */
+        IF  NOCOMM  THEN RETURN;
+        IF I > ICOM_MAX THEN RETURN;
+      DCL  (L,K1,L1)  INT;
+      DCL ISAVE_TAB INT;
+      ISAVE_TAB = TAB ;
+      TAB = 2;
+      K1  =  $REF(CM_CM,I);
+      L1  =  $REF(CM_CM_L,I);
+      L1  =  MIN (64,L1);
+      BUFF = '/* ' AND $K AND ' */';               /* MAY TRUNCATE*/
+      CALL JOL ;
+      TAB = ISAVE_TAB ;
+  END;
+
+                                    /* GEN PARTIAL LINE COMMENT    */
+  GEN_CD_COMM: PROC (I) ;       /* I= $I OF CARD_PT  W/ COMMENTS   */
+      DCL (ISAVE_TAB,K1,L1,J) INT;
+       IF  NOCOMM  THEN RETURN;
+      K1 =  $REF(CM,I);
+      L1 =  $REF(CM_L,I);
+       $IFLZ RETURN;
+       ISAVE_TAB = TAB;
+       TAB = 36;
+   T: IF  L1 > 30 THEN DO ;
+          BUFF  = '/* ' AND $(DATA,K1,30) AND ' */';   /* TRUNCATES*/
+                DO J = K1 TO K1 + 29;
+                    IF $(DATA,J,1) ¬= ' ' THEN DO;
+                         CALL JOL;  J = K1 + 30;
+                    END;
+                END;
+          K1=K1 + 30; L1 = L1 - 30; GO TO T;
+      END;
+      BUFF = '/* ' AND $K AND ' */' ;
+       DO J = K1 TO K1 +L1 - 1;
+           IF $(DATA,J,1) ¬= ' ' THEN DO;
+                CALL JOL;  J = K1 + L1;
+       END;END;
+      TAB = ISAVE_TAB ;
+      END;
+
+ /* SCAN THE IC-TH CARD AND LOCATE A KEYWORD. SET K1 TO POINT TO THE
+    KEYWORD AND L1 TO IT'S LENGTH. THIS DIFFERS FROM XTR_KEY IN
+    THAT WE DONT WANT THE KEYWORD VALUE WE JUST WANT THE KEYWORD */
+
+ XTR_KEYWORD: PROC (IC,KEY);
+       DCL KEY CHAR(20) VARYING;
+       DCL (I,L,IND) $FB;
+       K1,L1 = 0;
+       I = $REF(OP,IC);
+       L = $REF(OP_L,IC);
+       IND = $I($(DATA,I,L),KEY);
+       IF IND = 0 THEN RETURN;
+       K1 = I + IND -1;
+       L1 = $L(KEY);
+     END;
+
+ /* KEYWORD TAKES THE FROM JCL-FROM WORD AND CHANGES IT TO THE JOL-TO
+    WORD. FOR EXAMPLE JCL-PASSWORD TRANSLATES TO JOL-PROTECT */
+
+  KEYWORD: PROC (FROM,TO,N);                /* LOC KEYWORD(FROM-LIST  */
+                 DCL (I,J) $FB INT;
+      DCL (J1,K,M1) $FB,                    /* AND STORE CORRESPONDING*/
+          KEY CHAR(20) VARYING, A CHAR(1),  /* WORD IN TO-LIST INTO   */
+          (FROM,TO) CHAR(40) VARYING ;      /* BUFFER                 */
+                                            /* LIST SYNTAX USES OR AS */
+      N = 0 ; J1 = 1;                       /* WORD SEPARATORS AND ?  */
+      DO I = 1 TO 40 ;             /* WORD COUNTER  A LIST DELIMITER  */
+          KEY = '';                         /* N=0 NO FIND,N=1 GOT ONE*/
+          DO J = J1 TO 40;                  /* DO LOOP TO OBTAIN KEY  */
+          A = $(FROM,J,1);
+          IF A = '|' THEN GO TO SEARCH;
+          IF A = '?' THEN RETURN;
+          KEY = KEY  AND A ;
+          END;
+  SEARCH: J1 = J + 1;                       /* HAVING KEY SEARCH REAL */
+          K  =  $I($K,KEY);                 /* DATA FOR KEYWORD       */
+          IF K = 0 THEN GO TO DO_I;         /* NO KEYWORD,TRY NEXT ONE*/
+          K = 0 ;                           /* GOT ONE                */
+          DO M = 1 TO I ;                   /* SYNCHRONIZE FROM & TO  */
+              M1 = K + 1;  K = $I($(TO,M1),'|') + M1 -1;
+          END;
+          N  =  1; STOW $(TO,M1,K-M1);       /*   MOVE 'EM OUT        */
+          RETURN;
+  DO_I:END;END;
+
+
+  XTR_PARM: PROC (N) ;   /* EXTRACT THE N-TH PARAMETER  OF OPRAND     */
+       DCL (I,IND,L1P,K1P) $FB;
+       KS1,LS1 = 0; K1P = K1; L1P = L1;
+       IF $(DATA,K1,1) = '(' THEN DO;
+           K1P = K1P + 1; L1P = L1P - 2;
+       END;
+       IND = 0;
+       DO I = 1 TO N;
+           K1P = K1P + IND; L1P = L1P - IND;
+           IND = $I($(DATA,K1P,L1P),',');
+           IF IND = 0 THEN GOTO EXIT;
+       END;
+   EXIT:IF I< N THEN RETURN;
+        IF IND =1 THEN RETURN;
+          IF IND ¬= 0 THEN L1P = IND - 1;
+        IF $(DATA,K1P,1) = '(' THEN DO;
+             K1P = K1P + 1; L1P = L1P - 1;
+        END;
+        IF $(DATA,K1P+L1P-1,1) = ')' THEN L1P=L1P-1;
+        IF L1P <= 0 THEN RETURN;
+          IF $I($(DATA,K1P,L1P),'=') ¬= 0 THEN RETURN;
+        KS1 = K1P;  LS1 = L1P;
+  END;
+
+
+  GEN_DD: PROC (DD# ); /* GEN IN BUFF  A DATA SET DCL  FOR DD CARD    */
+      DCL (IC,KS1P,LS1P,LPAR,LEN,I,K,L,IND,N,IBACK) INT;
+       DCL  DD# FIXED BINARY;
+       DCL BLKSIZE_SW BIT(1),BLOCK_SIZE CHAR(10) VARYING;
+       DCL EX_SW BIT(1) ;
+          TBUFF = '';
+    DCL VREF CHAR(10) VARYING;
+              BUFF,VREF = '';
+      IC = DD_PT(DD#,1);
+      IF $I($(DATA,$REF(OP,IC),$REF(OP_L,IC)),'DYNAM') ¬= 0
+          THEN RETURN; /* CHECK FOR DD DYNAM CARD */
+ /*9996 INDICATES A BAD BACK REF, 9995 IS A SYMBOLIC DDNAME       */
+      IF CHAIN(DD#) = 9996 | CHAIN(DD#) = 9995 THEN DO ;
+          ERROR
+          CALL JOL_ERR('BACK REF FAILED OR DDNAME SYMBOLIC',IC,'DD');
+          RETURN;
+      END;
+      CALL GEN_DSID (DD#) ;
+      BUFF  =   'DCL ' AND DSBUFF  ;
+ /*9997 SIGNALS AN INLINE DATASET FROM A JCL CARD WITH DDNAME= ON IT*/
+      IF CHAIN(DD#)=  9997 THEN DO;
+          ERROR
+          STOW ' * ; ';
+          CALL JOL_ERR('AN INSTREAM DATA SET IS ASSUMED',IC,'DD');
+          RETURN ;
+      END;
+
+      IC = DD_PT(DD#,1);
+          CALL XTR_KEY (IC,'SYSOUT=') ; /* PROCESS PARAMETERS OF A */
+          $IFLNZ DO ;                   /* SYSOUT DATA SET         */
+              CALL XTR_PARM (1) ;
+              STOW ' SYSOUT ' AND $KS AND ' ' ;
+              CALL XTR_PARM (2) ;
+              $IFLSNZ STOW 'PROG ' AND $KS ;
+              CALL XTR_PARM (3) ;
+              $IFLSNZ STOW  'FORM ' AND $KS ;
+              SWAP
+              CALL XTR_KEY(IC,'OUTLIM=') ;
+              $IFLNZ DO;
+                  STOW ' OUTLIM ' AND $K ;
+                  SWAP
+              END;
+          END;
+          ELSE DO;                             /*  NOT   SYSOUT   */
+      CALL XTR_KEY(IC,'DSN=|DSNAME=');         /* TEST FOR DSN    */
+      $IFLZ DO;                                /*   NO  DSN       */
+             STOW ' DS';
+          CALL XTR_KEYWORD(IC,'DUMMY');        /* IS IT A DUMMY   */
+          $IFLZ  STOW  '  NODSN?';             /* NO NOTHING      */
+             ELSE STOW  ' DUMMY?';
+      END;
+      ELSE DO;  STOW ' DS?' ;                    /* GOT THE DSN-PROCES*/
+          IF $(DATA,K1,1) = '*' THEN DO;         /* BACK REF     */
+              CALL BACK_REF (DD#,IBACK) ;
+              CALL XTR_KEY (DD_PT(IBACK,1),'DSN=|DSNAME=');/* GET DSN */
+          END;
+          IND = $I($K,'.') ;                     /* SEE IF MULT LEVEL*/
+          IF IND = 0  THEN STOW  '  DSN' ;       /* NEED DSN KEYWORD */
+          IF $(DATA,K1,2) = '%%' THEN DO;       /* DROP %% ,TEMP DSN */
+       $(DATA,K1,2) = '&&';
+          END;
+          STOW  ' ' AND $K AND '?' ;
+          SWAP
+      END;END;   /*  END NOT INDENTED RIGHT  - MATCHES ELSE DO SYSOUT */
+
+      BLOCK_SIZE = '';
+      BLKSIZE_SW =  FALSE ;
+      CALL XTR_KEY (IC,'DCB=') ;            /*  DCB PROCESSING   */
+      $IFLNZ DO;
+
+          CALL XTR_PARM (1);                /*  CK FOR LIST + 2ND REF */
+       $IFLSNZ DO;
+            IF $(DATA,KS1,1) = '*' THEN DO;
+                 IF $I($K,'=') = 0 THEN DO;
+                      CALL BACK_REF(DD#,IBACK); /* DCB */
+                      CALL XTR_KEY(DD_PT(IBACK,1),'DCB=');
+                 END;
+                 ELSE DO;
+                      CALL JOL_ERR(' DCB FROM 2 SOURCES',IC,'DD');
+                      /* PREPROCESSOR MACRO TO GEN *** ON JOL OUTPUT */
+                      ERROR
+                 END; END;
+                 ELSE DO;
+ /* THE MODEL DCB NAME IS SET IN PREPROCESSOR PHASE */
+                      IF $KS ¬= MODEL_DCB THEN DO;
+                          CALL JOL_ERR('MODEL DCB NOT STANDARD',
+                                IC,'DD');
+                                ERROR
+             END;END; END;
+ /* DCB INFO KEPT IN A TEMP BUFFER SO A FORWARD SCAN IS POSSIBLE */
+          TBUFF = '';
+          CALL XTR_SUB_KEY ('RECFM=') ;
+          $IFLSNZ DO;
+              TBUFF = ' ' AND $KS;
+              CALL XTR_SUB_KEY('LRECL=');
+              $IFLSNZ DO;
+                  TBUFF = TBUFF AND ' ' AND $KS;
+                  CALL XTR_SUB_KEY('BLKSIZE=');
+                  $IFLSNZ DO;
+                      TBUFF = TBUFF AND ',' AND $KS;
+                      BLOCK_SIZE = $KS;
+                      BLKSIZE_SW =  TRUE ; /* SWITCH IS NEEDED BECAUSE*/
+              END;END;/* BLKSIZE COULD BE OBTAINED FROM THE SPACE PARM*/
+              ELSE DO;
+                  CALL XTR_SUB_KEY('BLKSIZE=');
+                  $IFLSNZ DO;
+                      TBUFF = TBUFF AND ' BLKSIZE ' AND $KS;
+                      BLOCK_SIZE = $KS;
+                      BLKSIZE_SW =  TRUE ;
+          END;END;END;
+          ELSE DO;
+              CALL XTR_SUB_KEY('LRECL=');
+              $IFLSNZ TBUFF = ' LRECL ' AND $KS;
+              CALL XTR_SUB_KEY('BLKSIZE=');
+              $IFLSNZ DO;
+                  TBUFF = TBUFF AND ' BLKSIZE ' AND $KS;
+                  BLOCK_SIZE = $KS;
+                  BLKSIZE_SW =  TRUE ;
+          END;END;
+
+       STOW TBUFF AND '?' ; /* MOVE TBUFF INFO TO BUFF */
+          CALL XTR_SUB_KEY ('BUFL=') ;
+          $IFLSNZ STOW ' BUFL ' AND $KS ;
+          CALL XTR_SUB_KEY ('BUFNO=') ;
+          $IFLSNZ STOW ' BUFNO ' AND $KS AND '?';
+          CALL XTR_SUB_KEY ('DEN=') ;
+          $IFLSNZ DO;
+              IF $KS = 2 THEN STOW ' 800 BPI?';
+              IF $KS = 3 THEN STOW ' 1600 BPI?';
+          END;
+          CALL XTR_SUB_KEY ('DSORG=');
+          $IFLSNZ STOW ' ' AND  $KS AND '?';
+          CALL XTR_SUB_KEY ('EROPT=') ;
+          $IFLSNZ DO;
+              IF $KS = 'ACC' THEN STOW ' ACCEPT ERRORS?' ;
+              IF $KS = 'SKP' THEN STOW ' SKIP ERRORS?' ;
+          END;
+          CALL XTR_SUB_KEY ('KEYLEN=') ;
+          $IFLSNZ DO;
+              STOW  ' KEYLEN ' AND $KS ;
+              CALL XTR_SUB_KEY ('RKP=') ;
+              STOW ' KEYPOS ' AND $KS AND '?' ;
+          END;
+          CALL XTR_SUB_KEY ('OPTCD=') ;
+         $IFLSNZ STOW  ' OPTCD ' AND $KS AND '?';
+             EX_SW =  FALSE ;  TBUFF = '';
+
+       CALL EXTRA('BFALN='); /* THE FOLLOWING HANDLES PARMS THAT     */
+       CALL EXTRA('BFTEK='); /* UP IN THE JOL DCBEXTRA KEYWORD       */
+       CALL EXTRA('BUFIN=');
+       CALL EXTRA('BUFMAX=');
+       CALL EXTRA('BUFOFF=');
+       CALL EXTRA('BUFOUT=');
+       CALL EXTRA('BUFRQ=');
+       CALL EXTRA('BUFSIZE=');
+       CALL EXTRA('CODE=');
+       CALL EXTRA('CPRI=');
+       CALL EXTRA('CYLOFL=');
+       CALL EXTRA('DIAGNS=');
+       CALL EXTRA('FUNC=');
+       CALL EXTRA('GNCP=');
+       CALL EXTRA('HIARCHY=');
+       CALL EXTRA('INTVL=');
+       CALL EXTRA('LIMCT=');
+       CALL EXTRA('MODE=');
+       CALL EXTRA('NCP=');
+       CALL EXTRA('NTM=');
+       CALL EXTRA('PCI=');
+       CALL EXTRA('PRTSP=');
+       CALL EXTRA('RESERVE=');
+       CALL EXTRA('SOWA=');
+       CALL EXTRA('STACK=');
+       CALL EXTRA('THRESH=');
+       CALL EXTRA('TRTCH=');
+             IF EX_SW THEN STOW TBUFF AND '''';
+             SWAP
+             STOW '?' ;
+      END;
+
+      CALL XTR_KEY (IC,'SPACE=') ;
+      $IFLNZ DO;
+      N = $I($K,'ABSTR'); /* DONT WANT TO ALLOCATE SPACE IN ABSOLUTE */
+      IF N ¬= 0 THEN DO;
+          CALL JOL_ERR('SPACE ALLOC IN ABSOLUTE',IC,'DD');
+          GO TO GEN_DD_LABEL;
+      END;
+       LPAR = $I($(DATA,K1+1,L1-1),'(');
+       IF LPAR = 0 THEN DO;
+            CALL XTR_PARM(2);
+            STOW ' '||$KS;
+       END;
+       ELSE DO;
+            LEN = $I($(DATA,K1+LPAR,L1-LPAR),')');
+            LPAR = LPAR +K1;
+             SAVE
+            K1 = LPAR;  L1 = LEN;
+            CALL XTR_PARM(1);
+          STOW '  ' AND $KS ;
+          CALL XTR_PARM (2) ;
+          $IFLSNZ STOW ',' AND $KS ;
+          ELSE  DO;
+              CALL XTR_PARM (3) ;
+              $IFLSNZ STOW',,' AND $KS ;
+          END;
+          CALL XTR_PARM (3) ;
+          $IFLSNZ STOW ',' AND $KS ;
+             RESTORE
+           END;
+          CALL KEYWORD ('TRK|CYL|?',' TRKS| CYLS|?',N) ;
+          IF N = 0  THEN DO;
+              CALL XTR_PARM(1) ;
+              N = $I($KS,'%') ;
+              IF N ¬= 0 THEN DO ;
+              /* SPACE PARAMETER SYMBOLIC     */
+                  SAVE
+                  CALL XTR_SYM(KS1+N-1) ;
+                  SYM = $(SYM,2) AND '=' ;
+                  N = PROC_PT(1) ;
+                  CALL XTR_KEY(N,SYM) ;
+                  ERROR
+                  IF $I($K,'CYL') ¬= 0 THEN STOW ' CYLS' ;
+                  IF $I($K,'TRK') ¬= 0 THEN STOW ' TRKS' ;
+                  IF $I($K,'CYL') =0 & $I($K,'TRK') = 0
+                  THEN STOW ' BLOCKS' ;
+                  CALL JOL_ERR (
+                  'FIRST SPACE PARAMETER SYMBOLIC,NOTE ASSUMED GEN ',
+                  IC,'DD') ;
+                  RESTORE
+                  SWAP
+                  GO TO GEN_DD_LABEL ;
+              END ;
+              STOW ' BLKS?';
+              CALL XTR_PARM(1);
+              IF BLKSIZE_SW THEN DO; /*BLKSIZE GIVEN */
+                  IF $KS ¬= BLOCK_SIZE THEN DO;
+                CALL JOL_ERR('SPACE BASED ON DCB BLKSIZE',IC,'DD');
+                ERROR
+            END;
+              END;
+              ELSE DO;
+                 STOW ' BLKSIZE ' AND $KS;
+                 CALL JOL_ERR('NO DCB BLKSIZE ,ASSUMED'||
+                     ' = TO THAT IN SPACE PARAM',IC,'DD');
+              ERROR
+              END;
+           END;
+          CALL KEYWORD ('CONTIG|MXIG|ALX|?',
+                ' CONTIG| MIXG| ALX|?',N);
+         CALL KEYWORD('ROUND|?',' ROUND|?',N);
+          N = $I($K,'RLSE') ;
+          IF N = 0 THEN STOW  ' NORLSE?';
+          SWAP
+      END;
+
+      GEN_DD_LABEL:
+          TBUFF = '';
+          CALL XTR_KEY (IC,'LABEL=') ;
+          $IFLNZ DO;
+              CALL XTR_PARM (1) ;
+              $IFLSNZ TBUFF = ' ' AND $KS;
+              CALL XTR_PARM (2) ;
+              $IFLSNZ  TBUFF = TBUFF AND ' ' AND $KS;
+              CALL KEYWORD  ('PASSWORD|NOPWREAD|?',' PROTECT| READONLY|?
+             ',N);
+              CALL XTR_SUB_KEY ('EXPDT=') ;
+              $IFLSNZ STOW  ' RETAIN UNTIL ' AND $KS AND '?';
+              ELSE DO;
+                  CALL XTR_SUB_KEY ('RETPD=') ;
+                  $IFLSNZ STOW ' RETAIN FOR ' AND $KS AND ' DAYS?';
+              END;
+            IF TBUFF ¬= '' THEN STOW ' LABEL' AND TBUFF;
+            SWAP
+          END;
+
+          CALL XTR_KEY (IC,'UNIT=') ;
+          $IFLNZ DO;
+              CALL XTR_SUB_KEY('AFF=');
+              $IFLSZ DO;
+              CALL XTR_PARM (1) ;
+              $IFLSNZ DO;
+       STOW ' UNIT ' AND $KS ;
+          CALL XTR_PARM(2);
+          $IFLSNZ STOW ',' AND $KS AND '?';
+         END;
+         ELSE DO;
+            CALL XTR_PARM(2);
+            STOW ' UCOUNT ' AND $KS AND '?';
+         END;
+                  SWAP
+          END;END;
+
+          CALL  XTR_KEY (IC,'VOL=|VOLUME=') ;
+          $IFLNZ DO ;
+              CALL XTR_SUB_KEY ('REF=');
+              $IFLSNZ DO;
+                  IF  $(DATA,KS1,1) ¬= '*' THEN DO ;
+                      STOW ' VOLREF ''' AND $(DATA,KS1,LS1) AND '''';
+                  END;
+                  ELSE DO;         /* BACK REF   */
+                    SAVE
+                      K1 = KS1 ;L1 = LS1;     /*  MOVE POINTERS-BACREF*/
+                      CALL BACK_REF (DD#,IBACK) ;
+                         IF IBACK =0 THEN DO;
+           PUT FILE (JCLOUT) EDIT ('**** BACK REF NOT FOUND FOR',
+              $K,'****')(SKIP(2),X(5),A,A(L1),A);
+                         END;
+                         ELSE DO;
+  FIND:               CALL GEN_DSID (IBACK) ;    RESTORE
+                      STOW  '  VOLREF=' AND DSBUFF AND '?' ;
+                               END;
+                      RESTORE
+              END;END;
+              ELSE DO;
+                  CALL XTR_SUB_KEY ('SER=');
+                  $IFLSNZ STOW  '  VOL ' AND $KS AND '?' ;
+              END;
+              CALL XTR_PARM (3) ;
+              $IFLSNZ STOW  ' VOLSEQ ' AND $KS AND '?';
+                CALL XTR_PARM(4);
+                $IFLSNZ STOW ' VOLCOUNT ' AND $KS AND '?';
+              CALL KEYWORD ('PRIVATE|?',' PRIVATE|?',N) ;
+              END;
+              CALL XTR_KEY(IC,'VOL=|VOLUME=');
+              $IFLNZ SWAP
+              K1 = $REF(OP,IC);
+              L1 = $REF(OP_L,IC);
+              N = $I($K,'%') ;       /* SEARCH FOR %     */
+              IF N ¬= 0 THEN DO ;
+                  DO I = N+1 TO N+10 ;
+                      IF $I('., =()',$($K,I,1)) ¬= 0 THEN DO ;
+                           STOW ' ' AND $($K,N,I-N) ;
+                      END;
+                  END;
+                  $K = $T($K,'%','?');
+                  CALL JOL_ERR('UNIDENTIFIED SYMBOLIC PARM',IC,'DD');
+                  ERROR
+              END;
+              STOW ' ;';
+              $K = $T($K,'%','?');
+              CALL XTR_KEY (IC,'SPLIT=');
+              $IFLNZ DO;
+                  CALL JOL_ERR('SPLIT NOT SUPPORTED',IC,'DD');
+              END;
+              CALL XTR_KEY(IC,'SUBALLOC=');
+              $IFLNZ DO;
+                  CALL JOL_ERR('SUBALLOC NOT SUPPORTED',IC,'DD');
+              END;
+          END;
+
+
+  EXTRA: PROC(KEY);                  /* HANDLE THE EXTRA DCB STUFF  */
+    DCL KEY CHAR(12) VARYING;
+    CALL XTR_SUB_KEY(KEY);
+    $IFLSNZ DO;                /* GOT ONE ,SEE IF IT'S THE FIRST   */
+         IF EX_SW THEN TBUFF = TBUFF AND ',' AND KEY AND $KS;
+         ELSE DO;  EX_SW =  TRUE ;  TBUFF = ' DCBEXTRA=''' AND
+                KEY AND $KS;
+  END;END;END;
+
+  GEN_DDN: PROC (DD#) ;  /* GEN THE DDN READS DSID LINE  OF A PROG DCL*/
+      DCL DD# FIXED BINARY;
+      DCL (IC,I,N,IDD,ISTR,IEND) INT,         CAT CHAR(4) VARYING ;
+      IF CHAIN(DD#) = 9998 | CHAIN(DD#) = 9996  THEN DO;
+           BUFF = '';  RETURN;
+      END;
+      IDD = DD#;
+      IC = DD_PT(IDD,1);
+      IF $REF(LAB_L,IC) = 0 THEN RETURN;/*NO LABEL => PROCESSED*/
+      IF $I($(DATA,$REF(OP,IC),$REF(OP_L,IC)),'DYNAM') ¬= 0
+          THEN DO;   /* CHECK FOR DD DYNAM CARD  */
+          BUFF = ''; /* NULL OUT BUFFER          */
+          RETURN;
+      END;
+       IF CHAIN(DD#) = 9997 THEN DO;
+           IC = DD_PT(DD#,1);
+           BUFF = $(DATA,$REF(LAB,IC),$REF(LAB_L,IC));
+           N = 8 - $L(BUFF);
+           BUFF = BUFF AND $('         ',1,N);
+           CALL GEN_DSID(DD#);
+           STOW ' READS    ' AND DSBUFF;
+           STOW ' ?/* ASSUMES INSTREAM DATA ,CHECK */?';
+           RETURN;
+       END;
+      CAT =  ' ' ;  BUFF = '';
+      BUFF = $(DATA,$REF(LAB,IC),$REF(LAB_L,IC));  /* LABEL->BUFF */
+      N = 8 - $L(BUFF);
+      BUFF = BUFF AND $('         ',1,N);
+      CALL XTR_KEY (IC,'UNIT=');
+      $IFLNZ DO;
+           CALL KEYWORD ('DEFER|?',' MAY|?',N); /* IF DEFER JOL USES */
+       IF N ¬= 0 THEN DO;                       /* 'MAY' IN PROG DCL */
+            CALL XTR_KEY(IC,'DISP=');
+            $IFLZ STOW ' WRITE';
+            ELSE DO;
+                 CALL KEYWORD('NEW|OLD|SHR|MOD|?',
+                       ' WRITE| UPDATE| READ| MOD|?',N);
+                    IF N = 0 THEN STOW ' WRITE';
+            END;
+            GO TO CON1;   END;  /*  END NOT IN LINE  */
+      END;
+      /*   TO HANDLE A DDNAME THAT IS SYMBOLIC   */
+      IF DSID(DD#) = 0 THEN DO ;
+          ERROR
+          STOW '/* SYMBOLIC DDNAME CANNOT BE TRANSLATED  */';
+          RETURN ;  END;
+      CALL XTR_KEY (IC,'DISP=');
+      $IFLZ STOW ' WRITES';
+      ELSE DO;
+          CALL KEYWORD ('NEW|OLD|SHR|MOD|?',' WRITES| UPDATES| READS'
+            AND '| MODS|?',N) ;  IF N=0 THEN STOW ' WRITES';
+      END;
+    CON1:
+      N = MAX(16-$L(BUFF),0);                    /*  ALIGN DSIDS */
+      BUFF = BUFF AND $('        ',1,N);
+  CON:CALL GEN_DSID(IDD);
+      STOW CAT AND ' ' AND DSBUFF ;
+      CALL XTR_KEY (IC,'UNIT=') ;          /* LOOK FOR UNIT=AFF  */
+      $IFLNZ DO;
+          CALL XTR_SUB_KEY ('AFF=');
+          $IFLSNZ STOW ' UNITAFF ' AND $KS AND '?';
+      END;
+      IDD = IDD + 1;     /* LOOK AHEAD FOR CONCATINATION         */
+      IF IDD > IDD_MAX THEN RETURN;
+      IC = DD_PT(IDD,1);
+      IF $REF(LAB_L,IC) ¬= 0 THEN RETURN ;
+      CAT = ' || ' ;
+      GO TO CON ;
+  END;
+
+
+  JOL_ERR: PROC (MESS,IC,CT); /* GEN ERR MESSAGE,LIST ASSOC JCL CARD  */
+      DCL MESS CHAR(60) VARYING,CT CHAR(4) VARYING,(L,NSEQ,LL) INT;
+      DCL TBUFF CHAR(80) VARYING ;
+      DCL LABEL CHAR(8) VARYING, LABEL_LENGTH INT ;
+      DCL SEQNU CHAR(8) INT ;
+      DCL SLASH2 CHAR(2) INIT('//') INT ;
+      LL = MIN(50,$REF(OP_L,IC));
+      TBUFF = $T($(DATA,$REF(OP,IC),
+                  LL),'&','%');
+      TBUFF = $T(TBUFF,'&','?') ;
+      L = $L(MESS);
+      $(DATA,$REF(OP,IC),$REF(OP_L,IC))=
+                $T($(DATA,$REF(OP,IC),$REF(OP_L,IC)),'&','?') ;
+      PUT FILE  (JOLLIST) EDIT ('****  WARNING, ',MESS)
+                (SKIP(2),X(1),A,A(L));
+      IF  IC = 0 THEN RETURN ;
+      L = $L(CT) ;
+      SEQNU = $(DATA,CARD_PT(IC,4,1),8) ;
+      LABEL_LENGTH = CARD_PT(IC,1,2) ;
+      LABEL = $(DATA,CARD_PT(IC,1,1),LABEL_LENGTH) ;
+    PUT FILE (JOLLIST) EDIT (SEQNU,SLASH2,LABEL,CT,TBUFF)
+    (SKIP,X(7),A(8),X(1),A(2),A(LABEL_LENGTH),X(1),A(L),X(1),A(LL)) ;
+  END;
+
+
+  GEN_EXEC: PROC (IE);          /* GENERATE JOL FOR EXEC CARD # IE  */
+      DCL (TIME,IC,I,ISTR,IEND)  $FB INT, TIME_ALPHA CHAR(5);
+      TIME = 0;
+      IC  = EXEC_PT(IE) ;
+      IF IE<10 THEN PUT STRING(BUFF)EDIT('PROG0',IE,': DCL ')(A,F(1),A);
+      IF IE>9  THEN PUT STRING(BUFF)EDIT('PROG', IE,': DCL ')(A,F(2),A);
+      CALL XTR_KEY (IC,'PGM=') ;
+       SAVE
+      IF $(DATA,K1,1 ) = '*' THEN DO ;
+           CALL JOL_ERR ('PROGRAM REFERENCE TO A PDS(MEM)',IC,'EXEC');
+            RETURN;
+      END;
+            IF $K = 'IEFBR14' THEN DO; /* AN IEFBR14 WILL NOT BE IN  */
+               SAVE /* OBJECT CODE IF ALL DSN'S ARE OLD,MOD,OR SYSOUT*/
+       DOWHEN(I,IDD_MAX,DD_PT(I,2),IE);
+               CALL XTR_KEY(DD_PT(I,1),'DISP=');
+               $IFLZ GO TO TEST;
+               IF $I($K,'OLD')¬=0 THEN GO TO DO_END;
+               IF $I($K,'MOD')¬=0 THEN GO TO DO_END;
+          TEST: CALL XTR_KEY(DD_PT(I,1),'SYSOUT=');
+               $IFLNZ GO TO DO_END;
+               GO TO CONTINUE;
+  DO_END:END;
+             BUFF = '';
+             RETURN;
+            END;
+              RESTORE
+            IF $K = PROG_NAME THEN DO;
+                 SAVE
+ /* STEPS THAT SET CONDITION CODES THAT CAN BE HANDLED BY SYMBOLIC
+    VARIABLES AND RESOLVED AT JOL COMPILE TIME ARE NOT GENERATED   */
+                 DO I = 1 TO CCPROG1;
+                     IF CCPROG(I) = IE THEN DO;
+                       BUFF = '';
+                             RESTORE
+                       RETURN;
+                         END;END;
+                        RESTORE
+                       END;
+      CONTINUE:  RESTORE
+                       STOW $K;
+                        STOW ' PROG ';
+      CALL XTR_KEY (IC,'REGION=');
+      $IFLNZ DO ;
+          IF $I($K,'%') ¬= 0      /* FIND PROPER REGION PARAM     1/78*/
+              THEN DO;
+                  IF $I($K,'.K') ¬= 0
+                      THEN STOW ' ' AND $($K,1,$L($K)-2) AND ' K' ;
+                      ELSE DO;
+                          STOW ' ' AND $($K,1,$L($K)) AND ' K' ;
+                          CALL JOL_ERR
+                          ('SYMBOLIC REGION PARM. DELETE K FROM' ||
+                          ' SYMBOLIC DECLARE. ',IC,'EXEC');
+      ERROR RETURN ; END ;
+              END ;
+              ELSE STOW ' ' AND $($K,1,$L($K)-1) AND ' K' ;   /*  1/78*/
+      END;
+      CALL XTR_KEY (IC,'TIME=') ;
+      $IFLNZ DO;
+          I = $I($K,'%');
+ /* CANT CONVERT TIME IF SYMBOLIC. WE DONT KNOW IF MINS OR SECS USED */
+          IF I ¬= 0 THEN DO;
+              CALL XTR_SYM(K1+I-1) ;
+              STOW ' ' AND SYM AND ' MIN?';
+              CALL JOL_ERR
+              ('SYMBOLIC TIME PARAMETER. JOL GENERATED AS %$MIN',
+              IC,'EXEC') ;
+              ERROR
+              RETURN;
+          END;
+          CALL XTR_PARM (1) ;
+          $IFLSNZ TIME = TIME + 60 * $KS ;
+          CALL XTR_PARM (2) ;
+          $IFLSNZ  TIME = TIME + $KS ;
+          PUT STRING (TIME_ALPHA) EDIT (TIME) (F(5));
+          STOW  TIME_ALPHA AND ' SEC' ;
+  END;END;
+
+
+  GEN_PROG_DCL: PROC (IE,INDENT);          /* GENERATE PROGRAMDCL  */
+                       DCL (I,ISTR,IEND,J)  INT;
+      CALL GEN_EXEC(IE) ;
+             IF BUFF = '' THEN RETURN;
+      TAB = INDENT ;
+      CALL JOL ;
+          TAB = INDENT + 4 ;
+       DOWHEN(I,IDD_MAX,DD_PT(I,2),IE);
+          CALL GEN_DDN (I) ;
+          TAB = INDENT + 4;
+          CALL JOL ;
+          CALL GEN_CD_COMM ( DD_PT(I,1)) ;
+          DO J = 1 TO ICOM_MAX;
+              IF COMM_PT(J,3) = I THEN DO;
+                  CALL GEN_COMM(J);
+          END;END;
+      END;
+        /*  NEEDED A SEMICOLON ON THE LAST STATEMENT,BUT IT IS TOO
+                 LATE NOW.  SO I'LL SNEAK ONE IN WITH A COMMENT
+                  MIGHT BE WORTH SOME EFFORT SOME DAY   */
+      BUFF  =    '/*             END OF PROG DCL              */ ;';
+      TAB = 14;
+      CALL JOL;
+       NOTHING
+  END;
+
+ /* THIS ROUTINE HANDLES THE GENERATION OF DISPOSITIONS . IF AN MVT
+    RECATALOG IS USED IT EQUATES TO A JOL CATALOG ALWAYS */
+
+  GEN_DISP: PROC (IE) ;                /* GENERATE  CAT,UNCAT,ETC.  */
+      DCL (I,ISTR,IEND) INT,         SEP CHAR(1),VERB CHAR(7) VARYING;
+            /* GATHER TOGETHER ALL CATS,DELETES,ETC RATHER THAN A CAT,A
+                         DELETE, ANOTHER CAT ,ETC.      */
+       BUFF = 'CATLG ALWAYS';
+       SEP = ' ';
+       VERB = 'RECAT';
+       ISTR = 1;   IEND = 0;
+      DO I = 1 TO IDD_MAX;
+          IF DD_PT(I,2) < IE THEN ISTR = I+1 ;
+          IF DD_PT(I,2) = IE THEN IEND = I   ;
+          IF DD_PT(I,2) > IE THEN GOTO RECAT_LOOP  ;
+      END;
+       SEP = ' ';  GO TO RECAT_LOOP;
+  NEXT:BUFF = VERB ;
+  RECAT_LOOP:
+      DO I = ISTR TO IEND;
+           CALL XTR_KEY(DD_PT(I,1),'DISP=');
+           $IFLNZ DO ;
+               CALL XTR_PARM(2);
+               $IFLSNZ DO;
+                   IF $KS = VERB THEN DO;
+                       CALL GEN_DSID(I);
+                       STOW SEP AND DSBUFF ;
+                       SEP = '?' ;
+               END;END;
+               ELSE DO;
+                   CALL XTR_PARM(1);
+                   $IFLSNZ DO;
+                       IF VERB='DELETE' & $KS='NEW' THEN DO;
+                           CALL GEN_DSID(I);
+                           STOW SEP AND DSBUFF;
+                           SEP = '?';
+                       END;
+               END;END;
+       END;END;
+       IF SEP = '?' THEN DO;
+            STOW ';' ;
+            CALL JOL ;
+            SEP = ' ';
+       END;
+
+ /* ALL DATASETS ARE SCANNED FOR EACH VERB SO THEY CAN BE LISTED IN
+    ONE GROUP. THIS SWITCHING MECHANISM IS THE REVERSE ORDER OF
+    GENERATION. CATALOG ALWAYS IS FIRST , CATLG IS LAST */
+
+       IF VERB = 'CATLG' THEN RETURN;
+       IF VERB = 'DELETE' THEN VERB = 'CATLG';
+       IF VERB = 'KEEP' THEN VERB = 'DELETE';
+       IF VERB = 'UNCATLG' THEN VERB = 'KEEP' ;
+       IF VERB = 'RECATLG' THEN VERB = 'UNCATLG';
+       IF VERB = 'RECAT' THEN DO ;
+           VERB = 'RECATLG' ;
+           BUFF = 'CATLG ALWAYS' ;
+           SEP  = ' ' ;
+           GO TO RECAT_LOOP ;
+       END ;
+       GO TO NEXT;
+                        /* MESSAGE FOR 3RD DISP NOT IN VERSION ZERO  */
+ THIRD_PARM:DO I = ISTR TO IEND;
+                  CALL XTR_KEY(DD_PT(I,1),'DISP=');
+                  $IFLNZ DO;
+                       CALL XTR_PARM(3);
+                       $IFLSNZ DO;
+                            CALL GEN_DSID(I);
+   BUFF ='/* *** DSID ' AND DSBUFF AND ' HAS 3RD DISPOSITION,'
+          AND 'CHECK LOGIC OF JOB */'; TAB=3;CALL JOL;
+      END;END;END;
+  END;
+
+
+  GEN_IF: PROC (IE,N);   /* GEN IF LOGIC FROM COND=, N=1=>IF,N=0=>NO  */
+         /*  ANALYZED CHAR BY CHAR, STEP ISA CONVIENT TEMPORARY BUFFER,
+                    ICON COUNTS FOR THE INTERNAL COMMAS   */
+      DCL (MULT,I,J,IC,IEND,LPAR,LCON,IND) INT,   CH CHAR(1) INT;
+      N = 0;
+      TAB = 6;
+      IC  = EXEC_PT(IE);
+      CALL XTR_KEY (IC,'COND=');
+      $IFLZ RETURN;
+      IF $($K,1,1) = '%' THEN DO ;
+          CALL JOL_ERR('CONDITION CODE IS SYMBOLIC',IC,'EXEC') ;
+          RETURN ;
+      END;
+      IND = $I ($K,'ONLY');
+      IF IND ¬= 0 THEN DO;
+          CALL JOL_ERR ('CONDITION = ONLY NOT SUPPORTED',IC,'EXEC');
+          ERROR
+          RETURN;
+      END;
+      IND = $I ($K,'EVEN');
+      IF IND ¬= 0 THEN DO;
+          CALL JOL_ERR ('CONDITION = EVEN NOT SUPPORTED',IC,'EXEC');
+          ERROR
+          RETURN;
+      END;
+      N = 1;
+      BUFF = 'IF ';  LPAR = 0;
+      DO I = K1 TO K1 +L1 -1;
+          CH = $(DATA,I,1);
+          IF CH = '(' THEN DO;
+              STOW '(';  LPAR = LPAR + 1;
+              IF $(DATA,I+1,1) = '(' THEN DO;
+                  I = I + 1;  LPAR = LPAR + 1;
+                  STOW '(';
+              END;
+              CALL NUM_OP_STEP(I,IC,J);
+              I = J;                      /*  STEP UP INDEX TO )   */
+              GO TO STEP_TEST;
+          END;
+          IF CH = ',' THEN DO;
+                STOW ' &?';  GO TO DO_END;
+            END;
+            IF CH = ')' THEN DO;
+                 STOW ') THEN DO;';
+                 RETURN;
+            END;
+        STEP_TEST:
+                 IF STEP = '' THEN STEP = 'ANY';
+            IF CCPROG(1) ¬= 0 THEN DO;
+                 DO J = 1 TO CCPROG1;
+                      IF STEP = $(DATA,$REF(EX_LAB,CCPROG(J)),
+                         $REF(EX_LAB_L,CCPROG(J)))
+                         THEN STEP='%' AND STEP;
+            END; END;
+            IND = $I('EQNEGTGELTLE%$',OP);
+            OP = $('¬= =>= ><= <%$',IND,2);
+            STOW STEP AND OP AND NUM AND ')';
+       LPAR = LPAR - 1;
+            IF LPAR = 0 THEN DO;
+                  STOW ' THEN DO;';  RETURN;
+                 END;
+     DO_END: END;
+        END;
+
+
+ NUM_OP_STEP: PROC(LOCIN,IC,LOCOUT);          /*  DECODE COND SET()  */
+    DCL (I,LCOM,IND) INT,CH CHAR(1)INT;
+    LCOM = 0;   NUM,OP,STEP = '';
+    DO I = LOCIN TO LOCIN + 25;
+        CH = $(DATA,I,1);
+        IF CH ¬= '(' & CH ¬= ',' & CH ¬= ')' THEN
+                   STEP  = STEP AND CH;
+        IF CH = ',' THEN DO;
+            IF LCOM = 1 THEN DO;
+                LCOM = 2;  OP = STEP;  STEP = '';
+            END;
+            IF LCOM = 0 THEN DO;
+                LCOM = 1;  NUM = STEP;  STEP = '';
+        END;END;
+        IF CH = ')' THEN DO;
+            IF LCOM = 1 THEN DO;
+                OP = STEP;  STEP = '';
+            END;
+            LOCOUT = I;
+            IF $I(OP,'%') ¬= 0 THEN DO;
+                 CALL JOL_ERR('CONDITION CODE CONTAINS A '
+                        ||'SYMBOLIC PARM,CAN NOT TRANSLATE',IC,'EXEC');
+             OP = '%$' ; ERROR
+            END;
+            RETURN;
+  END;END;END;
+
+
+  GEN_RUN: PROC (IE,N);  /*  GEN THE RUN STATEMENT FOR EXEC,N¬0=>NOGEN*/
+      DCL (IC,I,ISTR,J,IEND) INT, CH CHAR(2) VARYING, PARM_SUB CHAR(1);
+      N=0; TBUFF ='';
+      IC = EXEC_PT(IE);
+      CALL XTR_KEY (IC,'PGM=');
+      IF $K ='IEFBR14' THEN DO;
+       SAVE
+       DOWHEN(I,IDD_MAX,DD_PT(I,2),IE);
+            CALL XTR_KEY(DD_PT(I,1),'DISP=');
+            $IFLZ GO TO TEST;
+            IF $I($K,'OLD') ¬= 0 THEN GO TO DO_END;
+            IF $I($K,'MOD') ¬= 0 THEN GO TO DO_END;
+   TEST:   CALL XTR_KEY(DD_PT(I,1),'SYSOUT=');
+            $IFLNZ GO TO DO_END;
+            GO TO CONTINUE;
+   DO_END: END;
+           N = 1;  RETURN;
+       END;
+      IF $K = PROG_NAME  THEN DO;
+               SAVE
+       DO I = 1 TO CCPROG1;
+           IF CCPROG(I) = IE THEN DO;
+                         N = 2;  RESTORE RETURN;
+                 END;END;
+                     RESTORE
+      END;
+  CONTINUE:  RESTORE
+      BUFF = $(DATA,$REF(LAB,IC),$REF(LAB_L,IC)) AND ': RUN PROG';
+      IF IE<10 THEN PUT STRING(CH)EDIT('0',IE) (A,F(1));
+      IF IE>9  THEN PUT STRING(CH)EDIT (IE)  (F(2)) ;
+      STOW CH ;
+      CALL XTR_KEY(IC,'PARM=');
+      $IFLNZ DO;
+           IF $(DATA,K1,1) = '''' | $(DATA,K1,1) = '(' THEN DO ;
+               K1 = K1 + 1 ;  L1 = L1 - 2 ;
+           END;
+           IF $(DATA,K1,1) = '(' THEN DO ;      /* 1/78     */
+               K1 = K1 + 1 ;  L1 = L1 - 2 ;
+           END;
+           TBUFF = '' ;
+           DO J = 1 TO L1 ;          /* PUT DOUBLE INTERIOR QUOTES*/
+               PARM_SUB = $($K,J,1) ;  /* IN PARM                 */
+              IF PARM_SUB = '''' THEN TBUFF = TBUFF || '''''' ;
+                                  ELSE TBUFF = TBUFF || PARM_SUB ;
+           END ;
+           STOW '?PARM ''' AND TBUFF AND '''' ;
+      END;
+        STOW  ';';
+       END;
+    DYNAM: PROC (IE); /* PUT A DYNAM AFTER RUN */
+      DCL I   $FB  INT;
+    DOWHEN(I,IDD_MAX,DD_PT(I,2),IE);
+    IF $I($(DATA,$REF(DD_OP,I),$REF(DD_OP_L,I)),'DYNAM') ¬= 0
+        THEN DO;
+        BUFF = 'DYNAM FOR ' AND $(DATA,$REF(DD_LAB,I),$REF(DD_LAB_L,
+        I)) AND ' ;';
+        CALL JOL;
+        END;
+    END; END;
+
+    /* EXTRACT SYMBOL FROM DATA BEGINNING AT LOC I     */
+    XTR_SYM : PROC (I) ; /* PLACE IN SYMBOL */
+    DCL J $FB INT ;
+    DO J = I+1 TO I+9 ;
+        IF $I('(, ).%',$(DATA,J,1)) ¬= 0 THEN DO ;
+            SYM = $(DATA,I,J-I) ;
+            RETURN ;
+        END ;
+    END;
+    SYM = '' ;
+      END; END;

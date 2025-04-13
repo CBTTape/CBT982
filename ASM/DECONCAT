@@ -1,0 +1,26 @@
+         TITLE '&TITLE DYNAMIC DECONCATENATION SUBROUTINE'
+DECONC   STM   R02,R14,DCONCRGS    SAVE RETURN ADDRESS
+         LA    R01,ADDNAME
+         BAL   R14,SCHTIOT         Q... DDNAME ALLOCATED?
+         BNE   DNC090              A... NO
+         SLR   R00,R00
+         IC    R00,24(,R15)        LENGTH OF THIS DD ENTRY
+         AR    R15,R00             ADDRESS OF THE NEXT
+         CLC   =C'        ',28(R15)
+         BNE   DNC090              IS NOT CONCATENATED
+         BAL   R14,INITS99R        INITIALISE THE REQ BLK
+         MVI   S99VERB,X'04'       INDICATE DECONCATENATION
+         MVC   TUDDN(6),=X'000100010008' BUILD TEXT UNIT
+         MVC   TUDDN+6(8),0(R01)
+         LA    R00,TUDDN           BUILD TEXT UNIT LIST
+         ST    R00,S99TUPL
+         MVI   S99TUPL,X'80'       MARK ITS END
+         LA    R01,S99RBPTR
+SVC99C   SVC   99                  ISSUE THE REQUEST
+         LTR   R15,R15             Q... OK?
+         BZ    DNC090              A... YES
+         BAL   R14,S99MSG          ISSUE AN ERROR MSG
+DNC090   DS    0H
+         LM    R02,R14,DCONCRGS
+         BR    R14
+         LTORG

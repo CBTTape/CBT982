@@ -1,0 +1,24 @@
+  LIBETAP:MACRO( TO );
+   IF %TO=0 THEN %TO=1;
+     Declare  PARM1 INIT '';
+     Declare  PARM2 INIT '';
+     Declare  PROG  INIT 'Libe';
+     Declare PRINTFIL Printer NODCB ;
+     Declare DUMMYIN DS DUMMY ;
+     IF %TO=1 THEN %PARM1 = 1 ;
+     ELSE %PARM1 = %TO -1 ;
+     IF %PARM1 < 1 THEN
+        SIGNAL ERROR 4,'''FROM'' DATA SET MISSING';
+     %TO = %TO +1 ;
+       Declare INPUT * REPLACE ;
+/  BACKUP  +,IN=SYSUT1,OUT=SYSUT2
+/  FIN
+EOF;
+     Libe: Declare %PROG PROG
+           sysut1 reads  %LIST(%PARM1)
+           sysut2 writes %LIST(%TO)
+           coin reads INPUT
+           print writes PRINTFIL
+           list writes PRINTFIL ;
+     RUN Libe;
+  END   /*LIBETAP COMMAND  */ ;

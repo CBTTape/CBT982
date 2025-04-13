@@ -1,0 +1,30 @@
+         PRINT OFF
+         COPY  JOLCOM
+         PRINT ON,DATA
+         EJECT
+         JOLSAVE CSECT=UJP60REA
+         USING TKNX,R3
+* THIS ROUTINE SPLITS PARAMETERS UP AND PLACES THEM IN A RETURN
+* LIST ACCORDING TO OTHER PARAMETERS.
+*    SPLIT RECEIVE-NAME,LENGTH OTHERS;
+         MVC      ICOMMAND,=CL8'MACRO' MAKE ASSIGN BETTER.
+         GETTKN   2                    GET NAME OF SYMBOLIC VALUE
+*                                      TO BE RETURNED TO.
+         MVC      SYMBOLIC,TKN         STORE IN SYMBOLIC NAME FIELD
+         GETTKN   3                    CHECK FOR ERRORS.
+         CLI      TKN,C' '             ANY MORE TOKENS??
+         BE       P60OK1
+         JOLERR   301,'TOO MANY SYMBOLS ON READ STATEMENT'
+P60OK1   LA       R1,WORK              GET RECEIVE AREA
+         TGET     (1),L'WORK
+         STH      R1,#WORK
+         B        P60STR
+P60STR   OC       WORK(256),=CL256' '  CONVERT TO UPPER CASE
+         FIX 'PROGRAM A PROPPER LOOP TO CONVER ALL THE CHARACTERS READ'
+         $CALL UJP85ASN
+         JOLRETN
+         DC    S(*,*,*,*)              ZAP SPACE IF REQUIRED
+         DC    S(*,*,*,*)              ZAP SPACE IF REQUIRED
+         DC    S(*,*,*,*)              ZAP SPACE IF REQUIRED
+         DC    S(*,*,*,*)              ZAP SPACE IF REQUIRED
+         END

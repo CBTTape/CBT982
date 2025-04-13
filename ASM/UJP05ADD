@@ -1,0 +1,230 @@
+UJP05ADD TITLE 'DBFADD - JOL ADD DATA SET RECORD TO DATA BASE'
+* JOL COPYRIGHT CCS-JOL 1992
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-JOL
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+         PUNCH ' PAGE UJP05ADD '
+         PRINT OFF
+         COPY JOLCOM
+         PRINT ON
+JOLCOM   DSECT
+         ORG   #WORK
+#DSN     DS    H
+DSN      DS    CL44
+         ORG   WORK+100
+MBRNAME  DS    CL8
+         ORG
+P05WORK  DSECT                                                    J50
+P05SAV   DS    18F                                                J50
+P05FLAG1 DS    X                                                  J50
+P05FOUND DS    X                                                  J50
+P05F1MDL EQU   X'80'                                              J50
+         DS    3X                                                 J50
+P05MODEL DS    CL12              MODEL NAME                       J50
+CMDCPY   DS    CL8               ICOMMAND COPIED HERE             J52
+         DS    0D                                                 J52
+*                                                                 J51
+* DATA BASE RECORD IS READ HERE                                   J51
+*                                                                 J51
+P05DBREC DS    CL256             RECORD READ HERE FROM DATA BASE  J50
+P05VSAMP DS    CL256             VSAM INFO MAY FOLLOW             J52
+         DS    CL100             SPARE                            J52
+         DS    0D                                                 J52
+*                                                                 J51
+* UJC03DS DECODES DECLARE, AND LEAVES INFO HERE                   J52
+*                                                                 J52
+TRANSTMP DS    CL256             USED FOR DECODE OF DSID          J52
+P05VSAM2 DS    CL256             VSAM INFO MAY FOLLOW             J52
+         DS    CL100             SPARE                            J52
+P05WSIZ  EQU   *-P05WORK                                          J50
+         SPACE 3
+* ON ENTRY TO THIS ROUTINE R1 POINTS TO NOTHING OF NOTE
+         SPACE 3
+         JOLSAVE CSECT=UJP05ADD,BASE=(11,12),                          .
+               SIZE=P05WSIZ                                       J50
+         USING P05WORK,R13                                        J50
+         CLEAR TRANSTMP                                           J52
+         MVC   CMDCPY,ICOMMAND                                    J52
+         MVI   P05FLAG1,P05F1MDL                                  J50
+         SETVAR 'LASTCC',12
+         GETTKN 2
+         CLC   =C'MODEL ',TKN                                     J50
+         BE    P05#10                                             J50
+         CLC   =C'PRINTER ',TKN                                   J50
+         BE    P05#10                                             J50
+         XI    P05FLAG1,P05F1MDL                                  J50
+         CLC   =C'DS ',TKN                                        J50
+         BE    P05#10                                             J50
+         CLC   =C'DATASET ',TKN                                   J50
+         BE    P05#10                                             J50
+         JOLERR 300,'INVALID KEYWORD ',#TKN,RC=12                 J50
+P05#10   DS    0H
+         GETTKN 3
+C00CALL  DS    0H
+         MVC   ICOMMAND,=CL8'DBFADD'                              J52
+         MVC   TKNSTRG(5),=C'DBF DS' FIX FOR UJC03DS              J52
+         $CALL UJSPLIT                                            J52
+         CLEAR TRANSTMP                                           J52
+         $CALL UJC03DS,(JOLCOM,TKNX,TRANSTMP)
+         MVC   ICOMMAND,CMDCPY                                    J52
+         MVC   P05DBREC,TRANSTMP                                  J52
+         MVC   P05VSAMP,TRANSTMP+256                              J52
+         LA    R8,P05DBREC                                        J52
+         USING DDDSNDET,R8                                        J52
+         CLC   =C'DD  ',DDDSID   MODEL NOT CODED?                 J52
+         BE    MODLCLR                                            J52
+         CLC   =C'DL  ',DDDSID   MODEL NOT CODED?                 J52
+         BE    MODLCLR                                            J52
+         B     NQUOTED                                            J52
+MODLCLR  MVC   DDDSID(12),BLANKS CLEAR THE MODEL AREA             J52
+         LA    R8,TRANSTMP       CLEAR THE COPY TOO.              J52
+         MVC   DDDSID(12),BLANKS CLEAR THE MODEL AREA             J52
+         LA    R8,P05DBREC       RESET REGISTER 8                 J52
+*        CLI   TKN,C''''
+*        BNE   NQUOTED
+*        TM    P05FLAG1,P05F1MDL                                  J50
+*        BZ    NQUOTED
+*        JOLERR 306,'MODEL NAME SHOULD NOT BE IN QUOTES'
+*        JOLRETN
+NQUOTED  DS    0H
+*        GETTKN 3
+P05DSN3  DS    0H
+* OPEN FOR INPUT                                                  J52
+         L     R6,VSAMCBS                                         J50
+         TM    UJFLAG1,UF1DBOPN+UF1DBERR                          J50
+         BNZ   P05DOOP           OPENED, OR IN ERROR              J50
+         USING VSAMINFO,R6                                        J50
+         VSOPEN (JOLDSDB,INPUT),                                       .
+               MF=(E,CALLAREA),NRETURN=P05INXX
+         OI    UJFLAG1,UF1DBERR                                   J50
+         JOLERR 307,'ERROR ',CALLAREA,' OPENING JOL DS DB',RC=16
+P05INXX  DS    0H                                                 J50
+         OI    UJFLAG1,UF1DBOPN+UF1DBINP OPEN TO READ             J50
+P05DOOP  DS    0H                                                 J50
+         L     R6,VSAMCBS                                         J50
+         TM    UJFLAG2,UF1DBOPN+UF1DBERR                          J50
+         BNZ   P05XX             OPENED, OR IN ERROR              J50
+         USING VSAMINFO,R6                                        J50
+         VSOPEN (JOLDSDBO,UPDAT),                                      .
+               MF=(E,CALLAREA),NRETURN=P05XX
+         OI    UJFLAG2,UF1DBERR                                   J50
+         JOLERR 302,'ERROR ',CALLAREA,' OPENING JOL DS DB',RC=16
+P05XX    DS    0H                                                 J50
+         MVI   UJFLAG2,UF1DBOPN          OPENED FOR OUTPUT        J50
+* NOW CHECK IF 'DCB-EXTRA' WAS CODED.                             J52
+*        SET LENGTH IF SO.                                        J52
+         CLC   DDOSVB,=AL2(DDLEN)  LONGER THAN USUAL ?            J52
+         BH    C03LEXTR            YES,LEAVE EXTRA                J52
+         LA    R8,TRANSTMP                                        J52
+         MVC   DDOSVB,=AL2(DDLEN) SET RECORD LENGTH TO EXCLUDE IT J52
+         MVC   DDEXTRA,BLANKS      JUST FOR SAFETY!               J52
+C03LEXTR EQU   *                                                  J52
+*        MVC   P05VSAMP(2),ZERO  SET VSAM RECORD PART LENGTH TO 0.J52
+         FINDTKN 'VSAMTXT='      VSAM CONTROL INFORMATION         J50
+         LTR   R15,R15                                            J52
+         B     P05OPDS                                            J50
+         BZ    P05ZVSAM          YES, SET UP VSAM INFORMATION     J50
+         B     P05OPDS                                            J50
+P05ZVSAM DS    0H                                                 J50
+         GETTKN (R1)             GET THE VSAM CONTROL INFORMATION J50
+         MVC   DDOSVB,=H'494'    SET MAX RECORD LENGTH            J50
+         MVC   P05VSAMP(256),#TKN COPY VSAM PARMS + LENGTH TO WORKJ50
+P05OPDS  DS    0H                                                 J50
+         LA    R8,P05DBREC                                        J52
+* CHECK IF ALREADY THERE                                          J52
+         MVI   P05FOUND,0        SET INDICATOR FIRST              J52
+         MVC   DSN,DDDSNAME      SAVE THE NAME                    J52
+         VSIO  GETFIRST,JOLDSDBO,DDDSNDET,ERRET=P05NOTHR
+P05FND30 DS    0H                                                 J52
+         CLC   DSN,DDDSNAME      GENERIC KEYS, REMEMBER ?         J52
+         BNE   P05NOTHR                                           J52
+         MVI   P05FOUND,1        SET INDICATOR TO SAY IS THERE    J52
+P05NOTHR DS    0H                                                 J52
+         MVC   P05DBREC,TRANSTMP                                  J52
+         CLEAR DDAEXTRA                                           J50
+         CLC   ICOMMAND,=CL8'DBFDEL'                              J50
+         BE    ZDEL                                               J50
+         CLC   ICOMMAND,=CL8'DBFADD'                              J50
+         BE    ZADD                                               J50
+         CLC   ICOMMAND,=CL8'DBFUPD'                              J50
+         BE    ZUPD                                               J50
+         B     ZADD              CVC XXXX                         J50
+         JOLERR 406,ICOMMAND,' IS NOT IMPLEMENTED YET'            J50
+         B     ERRCLS                                             J52
+ZUPD     DS    0H                                                 J50
+         CLI   P05FOUND,1        IS RECORD THERE ALREADY ?        J52
+         BNE   ZADD              NOT, SO JUST ADD IT.             J52
+*        VSIO  GETFIRST,JOLDSDBO,DDDSNDET,ERRET=DELERR
+         VSIO  DELETE,JOLDSDBO,DDDSNDET,NRETURN=ZADD
+*FAILS!! VSIO  UPDATE,JOLDSDBO,DDDSNDET,NRETURN=P05OK
+         OI    UJFLAG2,UF1DBERR                                   J50
+      JOLERR 308,'VSAM UPDATE ERROR ON JOLDSDB: PROCESSING CANCELLED'
+         B     ERRCLS                                             J52
+*        LA    R8,TRANSTMP                                        J50
+ZADD     LA    R8,TRANSTMP       SWITCH BACK TO PROPER RECORD     J52
+         VSIO  INSERT,JOLDSDBO,DDDSNDET,NRETURN=P05OK
+         OI    UJFLAG2,UF1DBERR                                   J50
+ZADDER   DS    0H                                                 J50
+      JOLERR 310,'VSAM INSERT ERROR ON JOLDSDB: PROCESSING CANCELLED'
+         B     ERRCLS                                             J52
+ZDEL     DS    0H                                                 J50
+         CLI   P05FOUND,1        IS RECORD THERE ALREADY ?        J52
+         BE    ZDEL2             NOT, SO JUST ADD IT.             J52
+      JOLERR 312,'CANNOT DELETE ''',DDDSNAME,''':- NOT IN DBF'
+         B     P05OK                                              J52
+ZDEL2    DS    0H                                                 J50
+*        VSIO  GETFIRST,JOLDSDBO,DDDSNDET,ERRET=DELERR
+         VSIO  DELETE,JOLDSDBO,DDDSNDET,NRETURN=P05OK
+DELERR   DS    0H                                                 J52
+         OI    UJFLAG2,UF1DBERR                                   J50
+      JOLERR 311,'VSAM DELETE ERROR ON JOLDSDB: PROCESSING CANCELLED'
+ERRCLS   DS    0H                                                 J52
+         VSCLOSE (JOLDSDBO,UPDAT),                                     .
+               MF=(E,CALLAREA),NRETURN=P05CLS1
+         OI    UJFLAG2,UF1DBERR                                   J50
+         JOLERR 519,'ERROR ',CALLAREA,' CLOSING JOL DS DB'
+P05CLS1  DS    0H                                                 J50
+         MVI   UJFLAG2,0         NOT OPENED                       J52
+         JOLRETN RC=16                                            J52
+*        B     P05ERR                                             J50
+P05OK    DS    0H                                                 J52
+         VSCLOSE (JOLDSDBO,UPDAT),                                     .
+               MF=(E,CALLAREA),NRETURN=P05CLSD
+         OI    UJFLAG2,UF1DBERR                                   J50
+         JOLERR 517,'ERROR ',CALLAREA,' CLOSING JOL DS DB',RC=16
+P05CLSD  DS    0H                                                 J50
+         MVI   UJFLAG2,0         NOT OPENED                       J52
+         JOLRETN RC=0                                             J52
+P05OPN   DS    0H                                                 J50
+         SETVAR 'LASTCC',4
+         DC    60S(*)
+         DS    0D
+         JOLSAVE CSECT=UJP05UPD
+         CALL    UJP05ADD
+         JOLRETN RC=(R15)
+         DC    10S(*)
+         JOLSAVE CSECT=UJP05DEL
+         GETTKN  2                GET DSNAME TO BE DELETED        J52
+         MVC   TKNSTRG(20),=C'DBFDEL  DS   DSN=   '               J52
+         MVC   TKNSTRG+18(44+10),TKN   MOVE A BIT MORE            J52
+         MVC   #TKNSTRG,=H'64'                                    J52
+         CALL    UJP05ADD
+         JOLRETN RC=(R15)
+         DC    10S(*)
+         LTORG
+         END

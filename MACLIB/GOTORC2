@@ -1,0 +1,36 @@
+         MACRO
+&L       GOTORC &LINE,&COL,&STR
+.* This macro expects several parameters.
+.* It calls a subroutine with parameters below:
+.*
+.* R1 points at a VARYING string (ie a HALFWORD containing
+.* the length of a string to go to the terminal).
+.*
+.* R0 contains the ROW and COLUMN number
+.*
+.* R0 (Hi side) has the ROW and the least significant part has
+.*    the column.
+&L       DS    0H             Debugger Label
+*        MVI   MSGBA,SBA      SET BUFFER ADDR
+         AIF   ('&LINE'(1,1) EQ  '(').LLR
+         AIF   (T'&LINE EQ 'H').LLH
+         L     R0,&LINE       LOAD LINE NUMBER
+         AGO   .COL
+.LLH     LH    R0,&LINE       LOAD LINE NUMBER
+         AGO   .COL
+.LLR     AIF   ('&LINE' EQ '(1)' OR '&LINE' EQ '(R1)').COL
+         LR    R0,&LINE(1)   LOAD LINE NUMBER
+.COL     ANOP
+         SLL   R0,16         PREPARE FOR COLUMN NUMBER
+         AIF   ('&COL'(1,1) EQ  '(').LCR
+         AIF   (T'&COL EQ 'H').LCH
+         A     R0,&COL        LOAD COLUMN NUMBERS
+         AGO   .ECOL
+.LCH     AH    R0,&COL        LOAD COLUMN NUMBER
+         AGO   .ECOL
+.LCR     AIF   ('&COL' EQ '(14)' OR '&COL' EQ '(R14)').ECOL
+         AR    R0,&COL(1)     LOAD COLUMN NUMBER
+.ECOL    ANOP
+         LA    R1,&STR
+         CALL$ GOTORCSR
+         MEND

@@ -1,0 +1,11 @@
+         GBLA  &JOLCOM
+         GBLB  &F4,&X8,&MVS,&MVSXA,&XA,&VS1,&MVSESA
+         GBLB  &OSVS           OS/VS1, OS/VS2, OR OSIV/F4         88036
+         GBLB  &DEBUG          OS/VS1, OS/VS2, OR OSIV/F4         88036
+         GBLC  &TYPE
+         GBLC  &VERSION,&MODID
+         GBLC  &JOLOS,&DDPRT,&DDINST
+         GBLC  &DFAIL          NAME OF DAIRFAIL ROUTINE
+         GBLA  &RSVDRC,&RETNSIZ
+         GBLC  &SECTTYP        SECTION TYPE FOR SCHEDULER (CSECT/DSECT)
+&SECTTYP SETC  'DSECT'          SET DEFAULT VALUE

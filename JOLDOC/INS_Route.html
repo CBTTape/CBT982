@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="Generator" content="Mozilla SeaMonkey">
+  <title>Route</title>
+  <meta content="(C) Clement Clarke" name="author">
+  <meta content="Jol Instructions" name="description">
+</head>
+<body
+ style="background-color: rgb(255, 255, 255); font-family: Helvetica,Arial,sans-serif;">
+<table border="0" bordercolor="#000000" cellpadding="5" cellspacing="0">
+  <tbody>
+    <tr>
+      <td align="left" valign="top" width="136"> <br>
+      </td>
+      <td align="right" valign="top" width="496">
+      <h1 class="western" style="widows: 0; orphans: 0;" align="right"><font
+ size="5"><u>ROUTE</u></font><font size="5"><u><span
+ style="font-weight: normal;"> </span></u></font><u>- </u><font
+ size="5"><i><u><span style="font-weight: normal;">Execute Command</span></u></i></font></h1>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Purpose</h4>
+      </td>
+      <td align="left" valign="top">The <span
+ style="font-weight: bold;">LIST</span> Command will print all, or part
+of, a data set in character, and/or hexadecimal format.&nbsp; Record
+numbers will be printed with each record, and each set of eight
+characters will be separated from the next by two blanks.<br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top"><br>
+      </td>
+      <td style="background-color: rgb(204, 204, 204);" align="left"
+ valign="top">
+      <p><b>&nbsp;<br>
+      </b></p>
+      <div style="margin-left: 80px;"><b>ROUTE&nbsp;&nbsp; {
+PRINT&nbsp; | PUNCH }<br>
+      <br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; [TO]&nbsp;&nbsp;&nbsp; <br>
+      <br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; { LOCAL&nbsp; |&nbsp; RMT<sub>n</sub>&nbsp;&nbsp;
+|&nbsp;
+PRINTER<sub>n</sub>&nbsp; |&nbsp; PUNCH<sub>n</sub>&nbsp; }<br>
+      </b><b>&nbsp; &nbsp;&nbsp; &nbsp; </b></div>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><br>
+      </td>
+      <td style="vertical-align: top;"><br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Routing Output to Different Locations</h4>
+      </td>
+      <td align="left" valign="top">
+      <p>The <span style="font-weight: bold;">ROUTE</span> command is
+used to alter the default routing of your job's output.&nbsp; If you
+submit work from a remote terminal your printed results will normally
+be returned to that terminal; the <span style="font-weight: bold;">ROUTE</span>
+command allows you to alter the location at which the printing or
+punching will occur.<br>
+      <br>
+Similarly, you may be submitting work from the Central location, and
+wish it to be printed at a Remote Terminal.&nbsp; Again, the <span
+ style="font-weight: bold;">ROUTE</span> command will facilitate this.<br>
+      <br>
+Your installation manager will be able to tell you the names and
+locations of any Remote Terminals you have.<br>
+      <br>
+For VS users, the <span style="font-weight: bold;">DEST</span>
+parameter on the <span style="font-weight: bold;">PRINT</span>er
+definition may be used to direct part of your job's output to a Remote
+Terminal or Centrally, as the case may be.<br>
+      <br>
+      </p>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Notes</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+        <li><span style="font-weight: normal;">This command creates a <span
+ style="font-weight: bold;">ROUTE</span> card for <span
+ style="font-weight: bold;">HASP</span> or <span
+ style="font-weight: bold;">JES2</span>, and a <span
+ style="font-weight: bold;">FORMAT</span> card for <span
+ style="font-weight: bold;">ASP</span> or <span
+ style="font-weight: bold;">JES3</span>.</span></li>
+        <li><span style="font-weight: normal;">The names <span
+ style="font-weight: bold;">RMT<sub>n,</sub></span> <span
+ style="font-weight: bold;">PRINTER<sub>n</sub></span>, <span
+ style="font-weight: bold;">PRINTER<sub>n</sub></span> and <span
+ style="font-weight: bold;">PUNCH<sub>n</sub></span> are installation
+defined.</span></li>
+      </ol>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td align="left" valign="top">
+      <h4>Examples</h4>
+      </td>
+      <td style="font-weight: bold;" align="left" valign="top">
+      <ol>
+      </ol>
+      <ol>
+        <li>ROUTE PRINT TO LOCAL;</li>
+      </ol>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+
+
+      <span style="font-weight: bold;">ROUTE</span> command instructs
+the Operating System to print all the results <span
+ style="font-weight: bold;">LOCA</span>Lly.</span><br
+ style="font-weight: normal;">
+      </div>
+      <br>
+      <ol start="2">
+        <li>ROUTE PRINT TO RMT3;</li>
+      </ol>
+      <div style="margin-left: 40px;"><span style="font-weight: normal;">The
+
+
+      <span style="font-weight: bold;">ROUTE</span> command directs the
+Operating System to print all the results at the destination known to
+it as <span style="font-weight: bold;">RMT3</span>.</span><br>
+      </div>
+      <br>
+      <br>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" rowspan="1" style="vertical-align: top;"><span
+ style="font-weight: bold;"><br>
+      </span>
+      <div style="text-align: center;"><span style="font-weight: bold;">---000---</span><br>
+      </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p><br>
+</p>
+<p><br>
+</p>
+</body>
+</html>

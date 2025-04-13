@@ -1,0 +1,60 @@
+.X8400   ANOP
+         TITLE 'UJE94CLN:CLEANUP ROUTINE'
+         JOLSAVE CSECT=UJE94CLN
+         MVC   STMT,=C'99999'
+*        JOLERR 102,'CLEAN UP CALLED'
+         JOLRETN
+E94#010  DS    0H
+         L     R4,ATCB      TCB ADDRESS
+         L     R4,TCBJSCB-TCB(,R4)  ADDRESS MY JSCB
+         ICM   R4,7,JSCBFCTA-JSCB(R4)
+         BZ    E94DONE
+         USING FCT,R4
+         SPACE 2
+*  FOUND THE START OF THE FCT CHAIN: NOW SCAN CHAIN FOR A FILE TO FREE
+         SPACE 2
+E94NXTF  DS    0H
+         CLC   =C'$JOL',FCTACSN  Q... ONE I MARKED?
+         BNE   E94NXTF1          A... NO
+         BAL   R14,E94FREE
+         B     E94#010
+E94NXTF1 DS    0H
+         ICM   R4,7,FCTNFCTA   ADDRESS THE NEXT
+         BNZ   E94NXTF
+E94DONE  DS    0H
+         B     RETN0
+         SPACE 4
+E94FREE  DS    0H
+         ST    R14,CALLAREA+12
+         XC    CALLAREA(12),CALLAREA
+         MVI   CALLAREA,C'F'   FREE FILE
+         MVI   CALLAREA+1,12   TABLE SIZE
+         MVC   CALLAREA+4(8),FCTACSN ACCESS NAME
+         MVC   STEPLBDD,FCTACSN FOR MESSAGES B LOW
+         FREEFL MF=(E,CALLAREA)
+         LTR   R1,R15
+         BZ    E94FREE5
+         CVD   R15,DBL
+         CALL  UJS46FER
+         MVC   TASKSSI(4),=X'40202120'
+         ED    TASKSSI,DBL+6
+         JOLERR 102,'DDNAME ',                                         .
+               STEPLBDD,' NOT UNALLOCATED DUE TO RETURN CODE',         .
+               TASKSSI
+         B     E94FREE9
+E94FREE5 DS    0H
+         JOLERR 001,'DDNAME ',                                         .
+               STEPLBDD,' UNALLOCATED'
+E94FREE9 DS    0H                  RETURN
+         L     R14,CALLAREA+12
+         BR    R14
+         JOLSAVE CSECT=UJE97SPC
+           TM  PRINT+48,X'10'
+           BZ  E97RET
+           WRITE E97DECB,SF,PRINT,E97SPC
+           CHECK E97DECB
+E97RET     JOLRETN
+E97SPC   DC   AL2(L'E97SPCC+8,0)
+         DC   AL2(L'E97SPCC+4,0)
+E97SPCC  DC   C'                    '
+         LTORG

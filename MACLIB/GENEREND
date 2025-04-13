@@ -1,0 +1,17 @@
+           MACRO                                                        1001 A01
+&NAME      GENEREND                                                     1002 700
+           GBLC &CSECTS(100)                                            1003 800
+           GBLA &#CSECTS                                                1004 900
+           LCLA &THIS                                                   1005 000
+&NAME      DS  0F                                                       1006 100
+* GENERATE LM CONSTANTS                                                 1007 200
+           DC  A(ERRMODS)                                               1008 300
+           DC  A(8)                                                     1009 400
+           DC  A(ERRMODS+(&#CSECTS*8)-8)                                1010 500
+&THIS      SETA 1                                                       1011 600
+ERRMODS    EQU *                                                        1012 700
+.LOOP      ANOP                                                         1013 800
+           DC  CL4'&CSECTS(&THIS)',A(&CSECTS(&THIS))                    1014 900
+&THIS      SETA &THIS+1                                                 1015 000
+           AIF (&THIS LE &#CSECTS).LOOP                                 1016 100
+           MEND                                                         9999 200

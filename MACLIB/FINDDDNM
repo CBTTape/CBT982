@@ -1,0 +1,12 @@
+         MACRO
+&NAME    FINDDDNM &DDLOC,&A
+.*       FINDDDNM
+         AIF   ('&DDLOC' EQ '').E1
+         AIF   ('&A' EQ '').E2
+&NAME    IHBINNRA &DDLOC,&A
+         $CALL FINDDDNM
+         MEXIT
+.E1      SYSERMAC 2
+         MEXIT
+.E2      SYSERMAC 3
+         MEND

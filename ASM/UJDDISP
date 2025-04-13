@@ -1,0 +1,683 @@
+         TITLE 'UJE05CAT:CATALOG DATA SET'
+         JOLSAVE CSECT=UJE05CAT
+* THIS ROUTINE DOES THE CATALOGUING
+*
+* NOW:- WE FACE MANY PROBLEMS WHEN DOING A 'CATLG' (OR A KEEP)
+* FIRST, WE SHALL CALL THE TALLOC ROUTINE WHICH READS THE ODD
+*     JFCB,FIXES VOLUME LISTS ETC
+         CLI   ICOMMAND,C'U'   UNCATALOG CALLING ME TO PRINT
+*                              ERROR MESSAGES ?
+*        BNE   E05DOCAT
+         BE    E05PRNTE
+         CLI   ICOMMAND,C'D'   DELETE CALLING ME TO PRINT ERR?
+         BE    E05PRNTE
+E05DOCAT DS    0H
+         SPACE 3
+         CALL  UJE48TAL      TEST IF THE DATA SET IS ALLOCATED TO US
+         LTR   R15,R15
+         BZ    E05TVOLS      YES, IT WAS ALLOCATED TO US
+         BNE   E05KEEPE      NO,THERE WAS A REAL ERROR
+         JOLRETN RC=4
+E05KEEPE LA  R2,32
+E05UNSUC DS    0H
+          JOLERR 202,                                                  *
+               'DSID ''',DDDSID,''' DSNAME ''',#DSNAME,''' KEPT ON VOL(*
+               S) ',#VOL,' BUT NOT CATALOGED BECAUSE:-'           74365
+         B     E05PRNTE
+E05TVOLS DS    0H
+         CALL  UJE49VOL      GET DATA SET VOLUMES
+* NOW TEST RE-CATLG FUNCTION
+         IFNULL DDLABTYP,E05NALWA
+* ALWAYS HERE
+         MVI E05CAT,X'54'  TURN ON RE-CATLG BIT                   75311
+E05NALWA DS    0H
+E05FREE  DYNPARM DSN=(44,#DSN),ID=E05CAT,DDNAME=(8,#DDNAME),      ******
+               VRB=UN,DISP=(CATLG) DEBUG=YES
+         LTR     R15,R15   DID WE RECATLG IT?                     75311
+         BZ   E05SUCES YES                                        75311
+* NOW RECATLG FAILED, SO ATTEMPT STRAIGHT CATLG THEN              75311
+         MVI   E05CAT,X'64'                                       75311
+E05NALWA DS    0H
+         CATALOG E05CAT                  DO THE CATALOG
+         LTR R15,R15
+         BNZ E05ERR
+E05SUCES DS   0H
+* NOW WE MUST CHECK AGAIN FOR GREATER THAN 5 VOLUMES BECAUSE       DASD
+* ALL OF THE VOLUMES MIGHT NOT FIT ON 1 MESSAGE                    DASD
+         LH    R14,E05#VOLS         LOAD VOL COUNT                 DASD
+         XC    E05#VOLS,E05#VOLS    CLEAR VOL COUNT                DASD
+         CH    R14,=H'5'            > 5 VOLUMES                    DASD
+         BNH   E05SUCE2             NO   LETS DOIT THE OLD WAY     DASD
+         SH    R14,=H'5'            SUBTRACT 5                     DASD
+         STH   R14,E05#VOLS         STORE BACK FOR LATER           DASD
+         MVI   DDVOLUME,C' '        MOVE IN JUST THE 1ST FIVE      DASD
+         MVC   DDVOLUME+1(L'DDVOLUME-1),DDVOLUME                   DASD
+         MVC   DDVOLUME(L'JFCBVOLS),JFCBVOLS                       DASD
+         BAL   R14,E00FXVOL         MOVE TO #VOL,VOL EDITTED       DASD
+         L     R15,=A(E05UNIT+60)   POINT TO 6TH VOLSER IN CAMLST  DASD
+         ST    R15,E05START         SAVE FOR LATER                 DASD
+E05SUCE2 DS    0H                                                  DASD
+         JOLERR 101,'DSID ''',DDDSID,''' DSNAME ''',                   *
+               #DSNAME,''' CATALOGED ON VOL(S) ',#VOL             74365
+          LH    R14,E05#VOLS        LOAD NUMBER OF VOLS LEFT       DASD
+          LTR   R14,R14             ALL DONE                       DASD
+          BZ    E05GOODR            YES SIR LETS GO                DASD
+E05LMSGS DS    0H                                                  DASD
+          L     R15,E05START        POINT TO NEXT AREA             DASD
+          MVI   DDVOLUME,C' '       CLEAR CONSTRUCT AREA           DASD
+          MVC   DDVOLUME+1(L'DDVOLUME-1),DDVOLUME                  DASD
+          LA    R1,DDVOLUME         POINT TO CONSTRUCT AREA        DASD
+          LA    R2,5                LETS STOP AFTER 5              DASD
+E05LMSG   MVC   0(6,R1),4(R15)      MOVE IN NEXT VOLUME SERIAL     DASD
+          LA    R1,6(R1)            BUMP DDVOLUME BY 6             DASD
+          LA    R15,12(R15)         BUMP CAMLST BY 12              DASD
+          SH    R14,=H'1'           BACKOFF VOL COUNT BY 1         DASD
+          BZ    E05LMSGD            IF ALL DONE GET OUT EARLY      DASD
+          BCT   R2,E05LMSG          RETURN FOR THE REST            DASD
+E05LMSGD DS    0H                                                  DASD
+          STH   R14,E05#VOLS        SAVE # OF VOLS LEFT            DASD
+          ST    R15,E05START        STORE NEXT AREA ADDRESS        DASD
+          BAL   R14,E00FXVOL        MOVE TO #VOL,VOL EDITTED       DASD
+          B     E05SUCE2            GO PRINT THE  MESSAGE          DASD
+E05GOODR DS    0H                                                  DASD
+          JOLRETN
+E05ERR     LR  R2,R15
+           B   E05UNSUC
+           SPACE 3
+E05PRNTE DS    0H
+           B  E05RETNC(R2)
+E05RETNC   B   E05SUCES
+           B   E05RET4
+           B   E05RET8
+           B   E05RET12
+           B   E05RET16
+           B   E05RET20
+           B   E05RET24
+           B   E05RET28
+           B   E05RET32
+           B   E05RET36
+E05RET4    JOLERR 203,'CATALOG VOLUME NOT MOUNTED'
+           B  E05RETN0
+         FIX  'NOTE R0=0 IF C AND ALREADY CATLGD'           FIX-X 76200
+         FIX  'NOTE R0=60 IF U/D AND YSAM'                  FIX-X 76200
+E05RET8    JOLERR 204,'DATA SET NAME FOUND AT LOWER LEVEL'
+           B  E05RETN0
+E05RET12 DS    0H
+           JOLERR 205,'CATLG RETN''D 12'
+           B  E05RETN0
+E05RET16   JOLERR 206,'NO INDEX LEVEL FOR DATA SET'
+           B  E05RETN0
+E05RET20   JOLERR 407,'CATALOG DATA SET IS FULL'
+           B  E05RETN0
+E05RET24   JOLERR 208,'INVALID GENERATION NAME'
+           B  E05RETN0
+E05RET28   JOLERR 409,'PERMANENT I/O ERROR ON CATALOG DATA SET'
+           B  E05RETN0
+E05RET32   JOLERR 210,'KEEP FAILED FOR DATA SET'
+           B  E05RETN0
+E05RET36   JOLERR 211,'NO VOLUMES WERE SUPPLIED'
+E05RETN0   B    RETN0
+E05CAT     CAMLST CAT,0,,E05VOLS
+         SPACE 3
+* WHILE HERE, COPY THE VOLUME SERIAL NUMBERS TO RESOLVE FUTURE VOLREFS
+         SPACE 2
+         CLEAR DDVOLUME
+         CALL  UJE49VOL             GET THE DATA SET VOLUMES
+         SPACE 2
+E05CVC9  BAL   R14,E00FXVOL         COPY VOLS TO #VOLS
+         SPACE
+         UJE22UPD DDDSNAME,DDVOLUME FIX FUTURE VOLUME REFERENCES
+         MVI   DDDISP+1,C'L' LAST USE                                  .
+                                (A LIE OF COURSE, BUT HE WON'T KNOW)
+*        MVC   DDDDNAME,FCTACSN    ENSURE HE USES THE CORRECT DDNAME
+*        CALL  UJE14FRE            FREE THE DATASET
+         B     RETN0
+E05NVCT  JOLERR 212,                                                   .
+               'DSID ',DDDSID,' NOT CATALOGED, HAS NO VOLUMES  '
+         B     RETN0
+.NX8220  ANOP
+E05RETN0 B     RETN0
+E05NOFCT CLC   DDVOLUME,=C'     '     DOES IT HAVE A VOLUME
+         BNE   E05CVC9                YES
+         JOLERR 213,                                                   .
+               'DSID ',DDDSID,' NOT CATALOGED, IS NOT ALLOCATED'
+         B     RETN0
+         LTORG                                                     DASD
+         DC    80S(*)                                              DASD
+         AIF   (&X8).X8240
+JFCXDECB DC    F'0'                                                DASD
+          LA       R1,JFCBXTTR                                     DASD
+          SPACE 3                                                  DASD
+          EYEBALL  JFCX                                            DASD
+          IEFJFCBX                                                 DASD
+JFCBETTR  DC       F'0' JFCB EXTENSION POINTER                     DASD
+E05START  DC       F'0' AREA ADDRESS WORK AREA                     DASD
+.X8240   ANOP
+          ENTRY E05VOLS                                            DASD
+E05VOLS   DS 0D
+E05#VOLS  DS H
+E05UNIT   DS CL4
+E05VOLX   DS CL6
+E05LABEL  DS CL2
+          PRINT NODATA SAVE SOME PAPER
+          DC    254CL12' '          EXTENDED WORK AREA FOR 255 VOLUDASD
+          PRINT DATA WASTE MORE PAPER FOR CLEM
+E05ETBL   EQU   E05VOLS+100                                        DASD
+*RECAT B'0001'
+*CAT   B'0010'
+*UNACT B'00001000'
+*BLD   B'0100'
+*DELETE INDEXES B'00001100'
+********* ALL THE ABOVE APPLY TO BYTE 0
+*  +2  (3RD) B'00000001'=VSAM
+* .X8240   ANOP
+           LTORG
+           TITLE 'UJE06UNC:UNCATALOG DATA SET'
+           JOLSAVE CSECT=UJE06UNC
+*        AIF   (&X8).X8260
+         CALL  UJE48TAL      TEST IF THE DATA SET IS ALLOCATED TO US
+         LTR   R15,R15
+         FIX   '*****************'
+*        BZ    E05TVOLS      YES, IT WAS ALLOCATED TO US
+         LA    R1,DSNAME
+         ST    R1,E06REMUV+4
+         ST    R1,E06REMDT+4   REMOVE INDEXES,TOO
+****************************************************************   DASD
+* NEW 8-1-77 "UNCATLG GDGALL"   NO JCL NEED   ITS ALL DONE HERE*   DASD
+****************************************************************   DASD
+         CLI   DDCATLGS,104    UNCAT GDG ALL ?                     DASD
+         BE    E06GDGAL        GO DO IT                            DASD
+         CLI   DDMBR,C'+'      GDG ?
+         BE    E06NODLT        YES,DON'T DELETE INDEX
+         CLI   DDMBR,C'('      GDG ?
+         BE    E06NODLT        YES,DON'T DELETE INDEX
+         CATALOG E06REMDT    DO THE UNCATALOG AND REMOVE INDEXES
+         LTR   R15,R15         ERROR ?
+         BNZ   E06FAIL         YES,PRINT ERROR MESSAGES
+         B     E06SUCES
+E06NODLT DS    0H
+         CATALOG E06REMUV
+         LTR   R15,R15
+          BNZ E06FAIL
+E06SUCES  DS    0H
+         JOLERR 101,'DSID ''',DDDSID,''' DSNAME ''',                   *
+               #DSNAME,''' UNCATALOGED'
+          B    E06RETN
+E06FAIL  DS    0H
+           LR  R2,R15          SAVE UNCATLG RETURN CODE
+           JOLERR 202,                                                 *
+               'UNCATLG FOR DSID ''',DDDSID,                           *
+               ''' NAME ''',#DSNAME,''' FAILED BECAUSE:-'
+         CALL UJE05CAT       LET IT PRINT WHY
+E06RETN  JOLRETN   RC=0                                            DASD
+E06GDGAL L     R15,=V(E05VOLS)         LOAD CAMLIST ADDRESS        DASD
+         ST    R15,E06LOCAT+12         POINT TO LOCATE AREA        DASD
+         MVC   #DSNAME(2),=H'44'       SET DSNAME TO THE BIGGIE    DASD
+         LA    R6,300(R15)             GO UP A FEW AND SAVE POINTERDASD
+         LA    R1,DSNAME               POINT TO DSNAME             DASD
+         LA    R15,43(R1)              POINT TO END OF DSNAME      DASD
+         LA    R14,1                   INCR BY 1                   DASD
+E06FIND  CLI   0(R1),C' '              END OF DSNAME YET           DASD
+         BE    *+8                     YEP LETS MOVE               DASD
+         BXLE  R1,R14,E06FIND          RETURN                      DASD
+         MVC   0(3,R1),=C'(0)'         LOOK FOR RELATIVE GDG 0     DASD
+         MVC   0(44,R6),DSNAME         MOVE TO LOCATE AREA         DASD
+E06LOOK  MVC   DSNAME,0(R6)            MOVE DSNAME IN              DASD
+         LOCATE E06LOCAT                                           DASD
+         LTR   R15,R15                 DID LOACTE FIND ANYTHING ?? DASD
+         BNZ   E06RETN                 NOPE THAT ALL               DASD
+         CATALOG E06REMUV                                          DASD
+         LTR   R15,R15                 DID THIS WORK OK            DASD
+         BNZ   E06FAIL                 NOPE SOMETHINGS WRONG       DASD
+         JOLERR 103,'DSID ''',DDDSID,''' DSNAME ''',                   *
+               #DSNAME,''' GDGALL UNCATALOGED'                     DASD
+         B     E06LOOK                 RETURN TO LOOK FOR MORE GDGADASD
+E06LOCAT CAMLST NAME,DSNAME,,0                                     DASD
+E06REMUV   CAMLST UNCAT,0
+E06REMDT   CAMLST UCATDX,0     UNCATLG,REMOVE INDEXES
+.X8260    ANOP
+         JOLRETN
+         SPACE 2
+         DC    80S(*)
+           LTORG
+           TITLE 'UJE07KEE:KEEP DATA SET'
+           JOLSAVE CSECT=UJE07KEE
+* A KEEP INSTRUCTION IS TO BE EXECUTED.
+*        AIF   (&X8).X8280
+* THE KEEP IS A PRETTY EASY INSTRUCTION TO DO, AS BASICALLY
+*    ALL WE HAVE TO DO IS FREE IT WILL KEEP.
+*
+* THE ONLY COMPLICATION THAT CAN ARISE IS THAT WE WOULD (ON OCCASIONS)
+*    LIKE THE VOLUME TO BE UNLOADED(OR SET INTO AN UN-LOADABLE
+*    STATUS
+*
+* PERMANENT,RETAINED,'JOL PREFERRED' ETC VOLUMES DO NOT HAVE TO
+*    HAVE THEIR STATUS SET SO THEY MAY BE UNLOADED AND THIS IS
+*    LEFT TO THE OPERATORS DISCRETION.
+* IF IT IS A TAPE OR A NON-PREFERRED,(PRIVATE IN OTHER WORDS)
+*    VOLUME AND IT IS NOT RETAINED,IT SHOULD BE DISMOUNTED.
+          CLC DDDSNAME,=C'*DUMMY  '
+          BNE  E07NOTDM                           74365
+          JOLERR 206,'DSID ''',DDDSID,''' DSNAME ''',#DSN,             *
+               ''' NOT KEPT:- DUMMY DATA SET'                    75003
+          JOLRETN RC=16
+E07NOTDM DS    0H
+         CALL  UJE48TAL      TEST IF THE DATA SET IS ALLOCATED TO US
+         LTR   R15,R15
+         BZ    E07ISALL      YES, IT WAS ALLOCATED TO US
+           CLI ICOMMAND,C'K'   KEEP ?
+           BE  E07ERR1         YES,FLAG IT AS AN ERROR THEN
+           CLC =C'*.',DDVOLUME VOLUME REFERENCE SPECIFIED,BUT DATA SET
+* NOT CREATED ? THIS CAN OCCUR IF THE CREATING STEP WAS BYPASSED
+           BE  E07ERR1         GO FLAG AS AN ERROR
+           CLI DDVOLUME,C' '   VOL SPECIFIED ?
+           BE  E07RETNF        NO,SO ERROR
+           CLI DDUNITYP,C' '   UNIT SPECIFIED ?
+           BE  E07RETNF        NO,ERROR TOO
+* WELL A UNIT AND VOLUME WERE SPECIFIED,SO WE SHALL CONVERT
+*     THE UNIT TO AN IBM TYPE OF NAME AND GENTLY RETURN
+* (THE USER CODED 'CATLG DSN X UNIT Y VOL Z')
+          SPACE
+E07FIXU   DS    0H
+           B  E07RETN0
+E07ERR1  DS    0H
+           JOLERR 204,'DSID ''',DDDSID,''' DSNAME ''',#DSN,            *
+               '''',                                                   *
+               ' NOT YET CREATED:-KEEP IGNORED'
+E07RETNF DS    0H
+           JOLRETN RC=16
+           SPACE 3
+E07ISALL DS    0H
+E07FREE  DYNPARM DSN=(44,#DSN),ID=E07KEEP,                        ******
+               VRB=UN,DISP=KEEP DEBUG=YES
+*                                                           FIX-X 76200
+* THE NEXT FEW LINES ARE NEW IN 3.1 AND ARE CODED IN        FIX-X 76200
+*  THE HOPE THAT WE CAN HAVE THE OPERATING SYSTEM UNLOAD    FIX-X 76200
+*  THE VOLUME FOR US AT STEP TERM.                          FIX-X 76200
+* IN ADDITION, THE DSNAME SHOULD BE TAKEN OFF THE PASSED    FIX-X 76200
+*  DATA SET QUEUE. CURRENTLY, AT JOB TERMINATION, A NUMBER  FIX-X 76200
+*  OF UNNECESSARY MESSAGES ARE DISPLAYED INDICATING THAT    FIX-X 76200
+*  DATA SETS HAVE BEEN KEPT. THESE SHOULD NO LONGER OCCUR.  FIX-X 76200
+*                                                           FIX-X 76200
+*                                                           FIX-X 76200
+         CLI   DDDISP+1,C'L'  LAST USE OF DATA SET ?        FIX-X 76200
+*                             IF WE CAN LET OS UNLOAD ?     FIX-X 76200
+*        BNE   E07NLAST       NOT LAST USE                  FIX-X 76200
+* MARK SIOT AND LET IT THINK WE HAVE FINISHED WITH          FIX-X 76200
+*  THE DATASET (WHICH WE HAVE, OF COURSE).                  FIX-X 76200
+E07NLAST DS    0H                                           FIX-X 76200
+           SPACE 3
+           MVC DDVOLUME,JFCBVOLS
+           BAL R14,E00FXVOL    SET UP VOLUME(S) IN #VOL           74365
+E07TUNIT DS    0H
+         SPACE 3
+E07RETN0  DS    0H
+           CLI ICOMMAND,C'K'   IS THIS A KEEP INSTRUCTION?        74365
+           BNE E07RETNO W      NO,SO NO MESSAGE,JUST RETURN       74365
+           JOLERR 101,'DSID ''',DDDSID,''' DSNAME ''',#DSN,            *
+               ''' KEPT ON VOL(S) ',#VOL                          74365
+E07RETNO  DS    0H
+E07RTN     JOLRETN RC=0                                            DASD
+E07LETOS DS    0H
+           JOLRETN RC=4
+           SPACE 3
+E07DELET DS    0H
+           JOLERR 203,'DSID ''',DDDSID,''' DSNAME ',                   *
+               ''' PREVIOUSLY DELETED :- KEEP IGNORED'
+           JOLRETN RC=16
+E07NOKPT DS    0H   NO ENTRIES MARKED KEEP
+         JOLERR 202,'DSID ',DDDSID,' NOT KEPT, IS NOT ALLOCATED'
+         B     RETN0
+         SPACE 3
+         DC    80S(*)
+           LTORG
+         TITLE 'UJE08SCR:SCRATCH DATA SET'
+         JOLSAVE CSECT=UJE08SCR
+* SCRATCH INSTRUCTION IS TO BE EXECUTED.
+*        AIF   (&X8).X8300
+*    NOW IF IT IS A DISC,WE ISSUE A SCRATCH.
+*          IF THE VOLUME IS NOT MOUNTED,WE MOUNT IT AND SCRATCH IT.
+           SPACE
+*    IF IT IS A TAPE,AND IT CAN BE FREED NOW (NOT RETAINED)
+*          IT MUST BE GIVEN A DISPOSITION OF DELETE
+*
+*    IF IT IS RETAINED,THE PDQ IS MARKED DELETE,UNLESS WE HAVE
+*          TIOT ENTRY,IN WHICH CASE IT IS MARKED DELETE,AND OS WILL
+*          PROBABLY REMOVE THE VOLUME.
+           SPACE 3
+* PUT INTO LOGICAL TERMS,THE CODE COES LIKE THIS:-
+*
+*          IF ALLOCATED
+*          THEN DO;
+*              FREE WITH SCRATCH (DELETE).
+*          END;
+*  /* NOT ALLOCATED */
+*
+*          IF VOL & UNIT ¬=''
+*          THEN DO;
+*              ALLOCATE IT.
+*              FREE WITH SCRATCH (DELETE).
+*          END;
+* NOT_HERE?:
+*
+*
+*          IF IS MAG TAPE THEN GO TO E08MAGTP
+* /* DISC HERE */
+*          SCRATCH;
+*          RETURN;
+* E08MAGTP:
+*          MARK DELETE; /* IF OLD,MARK NEW,DELETE*/
+*          IF VOLUME TO BE RETAINED
+*          THEN RETURN;
+*          GO TO LETOS;        /*UNLESS IN THIS STEP*/
+*
+*
+* THE SITUATION THEN BASICALLY MEANS THAT IF A SCRATCH IS ISSUED
+*    FOR A DISC,AND THE DISC/IS NOT MOUNTED, MOUNT IT.
+*
+* IF A TAPE IS TO BE SCRATCHED,AND IT CAN BE UNLOADED (IE OTHER
+*    DATA SETS ARE STILL BEING USED ON IT) NO REAL ACTION OCCURRS
+*    BUT IF IT CAN BE UNLOADED A NEW OS STEP IS INITIATED.
+           SPACE 3
+* NOW IF THE NAME IS A TEMPORARY DSNAME,WE MUST FIDDLE AROUND UNTIL WE
+*    HAVE THE PART OF THE NAME THAT OS PUT IN FRONT OF OURS,AND PUT
+*    OURS AT THE BACK. THIS THEN GIVES US A REAL DSNAME WHICH SHOULD
+*    BE IN THE PASSED DATA SET QUEUE.
+*                                                        JOL30112 76200
+* IF THE CATLG INDICATOR HAS 104,IT MEANS THAT THE       JOL30112 76200
+* COMPILER FOUND GDGALL.
+*
+*                                                        JOL30112 76200
+         CLI   DDCATLGS,104   GDGALL ?                   JOL30112 76200
+         BNE   E08TTEMP       NO,TEST TEMPORARY THEN     JOL30112 76200
+           JOLERR 112,'DSID ',DDDSID,' DSNAME ',#DSN,                  *
+               ' IS GDGALL, THE OPERATING SYSTEM WILL DELETE IT'
+         JOLRETN RC=4                                    JOL30112 76200
+E08TTEMP CLI   DDDSNAME,C'&&' TEMPORARY ?                JOL30112 76200
+           BNE E08NTEMP        NO,SO FORGET THIS BIT OF PROCESSING
+*                                                        JOL30116 76200
+* NOW READ THE JFCB OF THE $$INST FILE AND               JOL30116 76200
+* FIND OUT WHAT DSN HAS BEEN GIVEN TO                    JOL30116 76200
+* TEMPORARY DATA SETS                                    JOL30116 76200
+*                                                        JOL30116 76200
+         LA    R1,TEMPDCB
+         USING IHADCB,R1
+         MVC   DCBDDNAM,=CL8'&DDINST'
+         DROP  R1
+         RDJFCB TEMPDCB       GET DSNAME                 JOL30116 76200
+* NOW FIND LAST DOT,AND SHIFT IN OUR TEMP NAME (&&WORK000I FOR EXAMPLE)
+         LA    R15,JFCBDSNM+43 GET END OF DSNAME         JOL30116 76200
+E08FSTOP   CLI 0(R15),C'.'     GOT THE LAST '.' ?
+           BE  E08GOTST        YES
+           BCT R15,E08FSTOP    FIND STOP LOOP
+           JOLERR 508,'INTERNAL ERROR:NO ''.'' IN TEMP DSN'
+           SPACE
+E08GOTST CLI   DDDSNAME+1,C'&&' DOUBLE & CODED ?         JOL30116 76200
+         BNE   E08ONEA                                   JOL30116 76200
+         MVC   DDDSNAME+1(8),DDDSNAME+2 DROP 2ND         JOL30116 76200
+E08ONEA  MVC   1(8,R15),DDDSNAME+1 SET UP REAL DSNAME    JOL30116 76200
+         MVC   DDDSNAME,JFCBDSNM   SHIFT BACK            JOL30116 76200
+E08NTEMP DS    0H
+         CALL  UJE48TAL      TEST IF THE DATA SET IS ALLOCATED TO US
+         LTR   R15,R15
+           BNZ E08NOTHR        NOT IN PDQ
+* NOW IT WAS ALLOCATED
+*    GO TO THE SCRATCH ROUTINES.
+          CALL UJE49VOL
+         NI DDUNITYP,B'10011111'
+           B   E08NOSTP        DO THE SCRATCH ETC
+E08NOTHR DS   0H
+           JOLERR 209,'DSID ''',DDDSID,''' DSNAME ''',#DSN,''' NOT ALLO*
+               CATED, SCRATCH IGNORED'
+         JOLRETN
+E08ERR2  DS    0H              NOT IN PDQ AND NO VOL/UNIT SPECIFIED
+           JOLERR 215,'DSID ''',DDDSID,''' DSNAME ''',#DSN,''' ALREADY *
+               SCRATCHED'
+           JOLRETN RC=16
+           SPACE 3
+E08NOSTP DS    0H              NOT USED IN THIS STEP
+* NOW THIS SITUATION IS JUST A FRACTION MORE DIFFICULT THAN THE
+*    OTHERS.
+* IF THE DATA SET IS ON DISK,ISSUE A SCRATCH
+           CLI SCTUTYPE+2,X'80' MAG TAPE ?
+           BE  E08MAGTP
+* DISK,LETS ISSUE THE SCRATCH AFTER SETTING THINGS UP
+           BAL R14,E00FXVOL    SET UP VOLUME LIST IN #VOL         74365
+           SR  R0,R0
+           MVI   E08SCRA+2,X'40'  RESET SCRATCH (LAST ALWAYS?)
+           IFNULL DDLABTYP,E08NALWA
+* ALWAYS
+           MVI   E08SCRA+2,X'50'  OVER-RIDE PURGE DATE
+E08NALWA DS    0H
+*          SCRATCH E08SCRA
+E08FREE  DYNPARM DSN=(44,#DSN),ID=E08SCR,DDNAME=(8,#DDNAME),      ******
+               VRB=UN,DISP=(DELETE) DEBUG=YES
+           LTR R15,R15
+           BNZ E08WHAT
+           JOLERR 101,'DSID ''',DDDSID,''' DSNAME ''',#DSN,            *
+               ''' SCRATCHED FROM ',#VOL                          74365
+E08MAGTP DS    0H
+           JOLRETN
+           SPACE 3
+E08WHAT  DS    0H
+* SCRATCH FAILED
+* WHY ??
+         AGO .SKIPSCR
+         CH   R15,=H'8'  DID WE BUILD A BAD CAMLIST ENTRY ??       DASD
+         BH   E08BADCM   BETTER TELL SOMEONE ABOUT THIS            DASD
+           SPACE 2
+* IF FAILURE OCCURRED BECAUSE THE VOLUMES WEREN'T MOUNTED,
+*    I KNOW THAT THERE IS A JCL STEP BELOW WHICH WILL MOUNT
+*    THE VOLUMES AND PERFORM THE SCRATCHES,SO LETS GO.
+           LA  R1,E08SEQ+1+(0*(L'E08UNIT+L'E08VOL+L'E08SEQ))
+           BAL R2,E08ERR
+           LA  R1,E08SEQ+1+(1*(L'E08UNIT+L'E08VOL+L'E08SEQ))
+           BAL R2,E08ERR
+           LA  R1,E08SEQ+1+(2*(L'E08UNIT+L'E08VOL+L'E08SEQ))
+           BAL R2,E08ERR
+           LA  R1,E08SEQ+1+(3*(L'E08UNIT+L'E08VOL+L'E08SEQ))
+           BAL R2,E08ERR
+           LA  R1,E08SEQ+1+(4*(L'E08UNIT+L'E08VOL+L'E08SEQ))
+           BAL R2,E08ERR
+           B   E08RETNF
+E08ERR   DS    0H
+* CALLED BECAUSE WE HAVE TO ANALYSE THE REASON WHY A SCRATCH FAILED
+           CLI 0(R1),0         IS THIS ONE A ZERO ?
+           BE  0(R2)           YES,SO JUST RETURN TO CALLER.
+           CLI 0(R1),5         UNABLE TO MOUNT COS NO DEVICE ?
+           BE  E08NPACK        LET OS DO SCRATCH (STEP DOWN TO RIGHDASD
+*                              STEP)
+           CLI 0(R1),6         DIDN'T OPERATOR WANT TO MOUNT VOL ?
+           BE  E08NPACK                                            DASD
+           CLI 0(R1),1         NOT IN VTOC ?
+         BNE   E08TRET2                                     FIX-X 76200
+           JOLERR 204,'DSID ''',DDDSID,''' DSNAME ''',                 *
+               #DSN,''' NOT FOUND IN VOLUME :-SCRATCH IGNORED'
+           BR  R2
+E08TRET2 CLI   0(R1),2                                      FIX-X 76200
+         BNE   E08TRET3                                     FIX-X 76200
+         JOLERR 410,'DSID ''',DDDSID,''' DSNAME ''',#DSN,   FIX-X 76200*
+               ''' IS A VSAM DATA SPACE OR ',               FIX-X 76200*
+               'INCORRECT PASSWORD SUPPLIED'                FIX-X 76200
+         BR    R2                                           FIX-X 76200
+E08TRET3   CLI 0(R1),3         RETENTION PERIOD ?
+           BNE E08TRET4
+           JOLERR 205,'DSID ''',DDDSID,''' DSNAME ''',#DSN,            *
+               ''' NOT SCRATCHED,CONTAINS RETENTION DATE'
+         BR    R2                                           FIX-X 76200
+E08TRET4   CLI 0(R1),4         I/O ERROR ?
+         BNE   E08TRET7                                     FIX-X 76200
+           JOLERR 406,'DSID ''',DDDSID,''' DSNAME ''',#DSN,            *
+               ''' NOT SCRATCHED,I/O ERROR ON VTOC'
+         BR    R2                                           FIX-X 76200
+E08TRET7 CLI   0(R1),7                                      FIX-X 76200
+         BNE   E08ERRXY                                     FIX-X 76200
+         JOLERR 411,'DSID ''',DDDSID,''' DSNAME ''',#DSN,   FIX-X 76200*
+               ''' IS BEING USED BY SOMEONE ELSE:-'         FIX-X 76200*
+               'TRY AGAIN LATER'                            FIX-X 76200
+         BR    R2                                           FIX-X 76200
+E08ERRXY SR    R2,R2                                        FIX-X 76200
+         IC    R2,0(R1)                                     FIX-X 76200
+         JOLERR 507,'SCRATCH RETURNED INVALID CODE;SEE REG 2'   X 76200
+E08BADCM DS    0H                                                  DASD
+         JOLERR 213,'DSID ''',DDDSID,'''DSNAME ''',#DSN,               *
+               ''' ON VOLS ',#VOL,' NOT SCRATCHED',                    *
+               'CATALOGE INVALID DEVICE UNIT=',                        *
+               DDUNIT                                              DASD
+          B   E08LETOS                                             DASD
+E08NPACK  DS    0H                                                 DASD
+         JOLERR 214,'DSID ''',DDDSID,'''DSNAME ''',#DSN,               *
+               ''' ON VOLS ',#VOL,' NOT SCRATCHED',                    *
+               'PACK NOT MOUNTED, UNIT=',                              *
+               DDUNIT                                              DASD
+           SPACE 3
+.SKIPSCR  ANOP
+E08LETOS  DS    0H
+* IT HAS BEEN DECIDED THAT,FOR NO DOUBT AN EXTREMELY GOOD REASON,
+*    WE MUST STEP DOWN TO THE STEP THAT SHOULD BE THERE TO
+*    HAVE THE VOLUME MOUNTED SO THE SCRATCH MAY BE PERFORMED.
+           JOLRETN RC=4
+E08RETNF  DS    0H JOLRETN RC=16                                   DASD
+*******************************************************            DASD
+*    PDQ RECORDS NOT DELETED IF SCRATCH FAILS         *            DASD
+*******************************************************            DASD
+* WHEN A PROGRAMMER SAYS TO DELETE A DATASET BEFORE   *            DASD
+* THE FIRST STEP OF THE JOB,  JOL WILL GENERATE A STEP*            DASD
+* WITH A DDCARD REFERENCE TO THE DATASET TO BE DELETED*            DASD
+* IF THE DATASET IS CATALOGED BUT NOT ON THE PACK THE *            DASD
+* THIS SCRATCH ROUTINE WILL RETURN WITHOUT REMOVING   *            DASD
+* THE PDQ RECORD.     ANY REFERENCE TO THIS DATASET   *            DASD
+* LATER ON WILL ADD NEW PDQ RECORDS BUT WILL POINT    *            DASD
+* TO THE FIRST ENTRY RESULTING IN ABEND=213           *            DASD
+*******************************************************            DASD
+E08NFRPQ JOLRETN RC=16                                             DASD
+****************************************************************   DASD
+* IF DOING A DELETE CHECK THE CATALOGE  TO SEE IF THE DATASET  *   DASD
+* IS CATALOGED AND IF SO RETURN TO THE SCRATCH                 *   DASD
+*                                                              *   DASD
+* THE FOLLOWING MESSSAGE IS ONLY ISSUED WHEN THE DATASET       *   DASD
+* IS NOT ON THE PDQ                                            *   DASD
+*                                                              *   DASD
+* HERE AT STANDARD OIL A MODIFICATION EXISTS WHERE IF THE      *   DASD
+* SCRATCH FAILED THE UNCATLG WILL STILL RUNS                   *   DASD
+****************************************************************   DASD
+E08NOPDQ NOP   E08PDQMG    TURN THIS ON TO SHUT OFF THIS CODE      DASD
+         CLI   ICOMMAND,C'D'     DELETE STMT ?                     DASD
+         BNE   E08PDQMG          NO---ISSUE THE MESSAGE            DASD
+         CALL  UJELOCAT          CALL LOCATE MODULE                DASD
+         LTR   R15,R15           ARE WE IN LUCK ?                  DASD
+         BNZ   E08PDQMG          NOPE NOT TODAY                    DASD
+         MVC   JFCBDSNM,DSNAME  COPY DATA SET NAME TO JFCB         DASD
+         L     R15,=V(E05VOLS)  POINT TO CAMLST                    DASD
+         USING VOLINFO,R15       GET SOME ADDDRESSILITY            DASD
+         MVC   JFCBNVOL,NOVOLS+1 # VOLUMES                         DASD
+         MVC   SCTUTYPE,CATDEV   UNIT TYPE                         DASD
+         LH    R1,NOVOLS         # VOLUMES AGAIN                   DASD
+         CH    R1,=H'5'          MORE THAN WE CAN HANDLE ?         DASD
+         BNH   *+8               NO                                DASD
+         LA    R1,5              ADJUST # VOLUMES FOR US           DASD
+         LA    R14,JFCBVOLS      MOVE TO HERE                      DASD
+         MVI   JFCBVOLS,C' '                                       DASD
+         MVC   JFCBVOLS+1(L'JFCBVOLS-1),JFCBVOLS   CLEAR JFCB      DASD
+E08LPVOL DS    0H                                                  DASD
+         MVC   0(6,R14),CATVOL   MOVE VOL SER                      DASD
+         LA    R15,12(R15)       POINT TO NEW CAMLST ENTRY         DASD
+         LA    R14,6(R14)        UP TO NEXTBUCKET IN JFCB          DASD
+         BCT   R1,E08LPVOL       GET ALL OF THE VOLUMES            DASD
+         B     E08NOSTP          LETS DO THE SCRATCH AGAIN         DASD
+         DROP  R15                                                 DASD
+E08PDQMG   JOLERR 203,'DSID ''',DDDSID,''' DSNAME ''',#DSN,            *
+               ''' NOT YET CREATED:-SCRATCH IGNORED'
+           B  E08RETNF
+           SPACE 3
+E08SCRA    CAMLST SCRATCH,JFCBDSNM,,E08NOVOL
+E08NOVOL   DS  H
+E08UNIT    DS  CL4
+E08VOL     DS  CL6
+E08SEQ     DS  H
+         DS  ((L'JFCBVOLS/6)*12)C
+E08SCREN DS    0H
+E08RETN0 DS    0H
+         B     RETN0
+E08NOKPT DS    0H   NO ENTRIES MARKED
+         SPACE 3
+* IT SEEMS WE NEED TO ALLOCATE THE DATASET
+         SPACE 1
+         TM    DDUNITYP,X'80'  IF IT'S A TAPE, FORGET IT
+         BZ    E08NOSCR
+         SPACE 1
+         MVC   DDDDNAME,=C'JOL00000' HOPE NOBODY ELSE USES THIS
+         OI    E21FLAG,E21CONT       TELL ALLOC NOT TO ABEND US
+         CALL  UJE21ALL              ALLOC THE DATASET
+         LTR   R15,R15
+         BZ    E08ALLOK             IT WENT WELL
+         JOLERR 316,'DATASET ',#DSN,' IS NOT SCRATCHED'
+         B     E08NOSCR
+E08ALLOK DS    0H
+         B     E08FREE              NOW IT'S ALLOCATED, GO BACK
+*                                    AND FREE IT WITH DELETE
+E08NOSCR DS    0H
+         B     RETN0
+         SPACE 3
+         AGO .NX8300
+E08FFCT  DS    0H    FOUND AN FCT TO "FIX"
+         $TELL (R4)
+         MODESET  KEY=ZERO
+         OI    FCTSTS1,FCTS1DLT            TURN DELETE ON
+         OI    FCTFDST1,X'FF'-FCTFSNFD      "    "    "
+         NI    FCTFLG2,X'FF'-FCTF2KEP      TURN KEEP OFF
+*        OI    FCTFLG3,FCTF3UCT+FCTF3CTR   UNCAT + CAT REF
+         NI    FCTFLG3,X'FF'-FCTF3CAT      SINCE WE ARE SCRATCHING,
+*                                           DON'T CATALOG IT
+         SPACE 2
+*  WELL, THAT SHOULD BE ALL
+         SPACE
+         MODESET KEY=NZERO    BACK TO MY USUAL PROTECT KEY
+         BR    R2             GO AND SEE IF THERE AREA ANY MORE
+         SPACE 3
+.NX8300  ANOP
+         SPACE 3
+         DC    80S(*)
+         TITLE 'UJE09DEL:DELETE DATA SET'
+         AIF   (&X8).X8320
+JSCBOFFS   EQU 180
+CVT        EQU 16
+JCTTTRA    EQU 261
+.X8320   ANOP
+           LTORG
+         JOLSAVE CSECT=UJE09DEL
+         CALL  UJE08SCR
+         LTR   R15,R15
+         BZ    E09UNCAT  O.K. GUYS THE SCRATCH WORKED KEEP GOING   DASD
+* STANDARD OIL REQUESTED THIS MOD                                  DASD
+* THEY WANTED THE UNCATLG TO ALWAYS RUN EVEN IF THE SCRATCH FAILED DASD
+         CLI   DDCATLGS,104   GDGALL ?                             DASD
+         BNE   E09UNCAT   LET THE UNCATLG RUN THEN                 DASD
+         JOLRETN RC=(15)
+E09UNCAT DS    0H                                                 76200
+*        CLI   #DSN+2,C'&&'   TEMPORARY DATA SET ?                76200
+*        BE    E09RETN0                                           76200
+         CLI   DDTYPE,DDREALDS    Q... TEMPORARY DATASET?
+         BL    E09RETN0           A... YES
+         CALL  UJE06UNC                                           76200
+E09RETN0 B     RETN0                                              76200
+         LTORG
+         JOLSAVE CSECT=UJE48TAL
+*        JOLERR 199,'TESTING ALLOCATION FOR ',#DSN
+         CALL  SRCHQDB,(DDDSNAME,DDDDNAME)
+         MVC   DDNAME,DDDDNAME
+         LTR   R15,R15
+         BZ    RETN0                                              76200
+         GENRETN RC=4                                             76200
+         LTORG
+         JOLSAVE CSECT=UJE49VOL
+*        JOLERR 199,'GETTING JFCB FOR ',DDDDNAME
+         LA    R1,TEMPDCB
+         USING IHADCB,R1
+         MVC   DCBDDNAM,DDDDNAME
+         DROP  R1
+         RDJFCB TEMPDCB       GET DSNAME                 JOL30116 76200
+         MVC   DDVOLUME(L'JFCBVOLS),JFCBVOLS
+         BAL   R14,E00FXVOL    SET UP VOLUME LIST IN #VOL         74365
+         SR    R15,R15
+         B     RETN0                                              76200

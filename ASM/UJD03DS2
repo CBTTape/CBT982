@@ -1,0 +1,44 @@
+.*  CHECK TO SEE IF ERRORS OCCURED.
+.*
+         ST    R15,S99CVCRT             SAVE DYNALLOC RETURN CODE
+         LTR   R15,R15
+         BNZ   D03ERR                RETURN CODE ZERO
+         CLC   S99ERROR(4),=XL4'00'  TEST ERR AND INFO CODE
+         BE    D0399OK
+D03ERR   EQU   *
+         L     R15,=V(DYNDUMP)          GET DUMP ROUTINE
+         LA    R1,S99RB                 REQUEST BLOCK POINTER
+         BALR  R14,R15                  GO TO IT
+         SPACE  3
+         L     R1,S99ERR0R
+         L     R0,S99CVCRT             ADDR OF ERROR AND INFO CODES
+         O     R1,=XL4'40F0'        (CONVERT
+         C     R15,=F'12'            CODES
+         BNE   *+8                      TO
+         LH    R1,=X'F1F2'                EBCDIC
+         STH   R1,D03MSGH                   FOR
+         UNPK  D03MSGH(9),S99ERROR            THE
+         NC    D03MSGH(8),=8X'0F'                ERROR
+         TR    D03MSGH(8),=C'0123456789ABCDEF'     MESSAGE)
+         LA    R1,D03MSG
+         SVC   35               WTO, ROUTCDE=11
+         LINK  EP=IKJEFF18,PARAM=(CALLAREA,S99CVCRT,TSOADR,TSOADR+4)
+         LA    R0,D03MSGL
+         LA    R1,D03MSG
+         SVC   93               TPUT MESSAGE
+*        L     R1,&CPPL          GET CPPL ADDRESS
+.* NOW LINK TO TSO ERROR MESSAGE ROUTINE
+*.RT1    LINK  EP=IKJEFF18,PARAM=(CALLAREA,S99CVCRT,TSOADR,        **
+*              TSOADR+4,&C)
+D03MSG   EQU   *
+         DC    AL2(D03MSGL),X'8000'    LENGTH AND FLAGS
+         DC    C' DYNALLOC RETURN CODE '
+D03MSGH  DS    H
+         DC    C', ERROR AND INFO CODE '
+D03MSGI  DS    XL8                 SPACE FOR ERROR AND INFO CODES
+D03MSGL  EQU   *-D03MSG            LENGTH OF MESSAGE
+         DC    XL4'20'      ROUTING CODE
+TSOADR   DC    F'0'                DON'T KNOW ADDR OF IKJEFF02
+         DC    X'80'      '80' WANT WTO, '00' WANT PUTLINE
+         DC    X'32'      '32' IF SVC99 USED, '01' IF DAIR USED
+D0399OK  L     R15,S99CVCRT         RESTORE DYNALLOC RETURN CODE

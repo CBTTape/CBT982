@@ -1,0 +1,5 @@
+         MACRO
+&L       DEVTYPE
+&L       SLR   15,15
+ FIX 'DO SOMETHING ABOUT THIS DEVTYPE'
+.END     MEND

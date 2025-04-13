@@ -1,0 +1,8 @@
+         MACRO
+&NAME    $LOAD &A
+         AIF   ('&A' EQ '').LOAD
+&NAME    MVC   CALLAREA(8),=CL8'&A'
+.LOAD    LR    0,2           LOAD ADDRESS OF CALLAREA
+         L     1,AJOLLOAD
+         SVC   8             LOAD THE ROUTINE
+         MEND

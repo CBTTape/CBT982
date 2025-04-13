@@ -1,0 +1,7 @@
+         MACRO
+&NAME    MEMUPR  &A,&C
+** THIS Macro converts a string to upper case.   OC var, BLANKS
+** doesn't work with the ASCII Character set.
+&NAME    DS    0H
+         OC    &A.(&C),BLANKS
+         MEND

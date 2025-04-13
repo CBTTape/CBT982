@@ -1,0 +1,6 @@
+         MACRO                                                   88036
+&L       $POINT &DAMCB,&DAMREC                                   88036
+         IHBINNRA &DAMCB,&DAMREC                                 88036
+         L     15,X'024'(,1)   LOAD ADDRESS OF POINT ROUTINE     88036
+         BALR  14,15           BRANCH TO IT                      88036
+         MEND                                                    88036

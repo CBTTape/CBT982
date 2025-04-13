@@ -1,0 +1,309 @@
+//CLARKEF  JOB A,CLARKE,NOTIFY=EDU199,MSGLEVEL=1,
+// MSGCLASS=X
+//COMP1 EXEC CCALG,CVPARM='-WV /I /V',
+// LKPARM='LIST,XREF,TEST'
+//CV.SRC DD *
+char string2 @<@> = "abc";
+/* YOU CAN ALTER THE DEFINES BELOW TO GET AN IDEA OF TIMES FOR
+   DIFFERENT LENGTH STRINGS.
+
+   DO ALTER THE COUNT TO SUIT THE SPEED OF YOUR CPU!!!!         */
+
+
+#DEFINE   COPYLEN    66
+#DEFINE   COUNT      300000
+
+
+/* THIS CODE DEMONSTRATES THAT C DESPERATELY NEEDS PROPER STRING
+   HANDLINg BUILT INTO THE LANGUAGE.
+
+   IF C HAD STRING HANDLING BUILTIN, ALL STRING COPIES AND COMPARES COUL
+D
+   BE SPED UP BY ABOUT 20 (YES, REPEAT TWENTY) TIMES.
+
+   CAN YOU IMAGINE HOW MUCH FASTER COMPILERS, SORTS, AND PERHAPS EVEN
+   UNIX ITSELF COULD BE SPED UP?
+
+
+
+   WHY IS C STRING HANDLING SO SLOW?
+   ---------------------------------
+
+   BECAUSE C USES A BINARY 0 AT THE END OF EACH STRING, WHEN YOU COPY A
+   STRING TO ANOTHER STRING (OR COMPARE ONE STRING WITH ANOTHER), C MUST
+   EITHER FIND OUT HOW MUCH DATA TO COPY OR COMPARE, OR IT MUST LOOK FOR
+   THE BINARY 0 AS IT IS COPYING.
+
+   MANY MACHINES SUCH AS THE IBM PC WITH 8086 CHIPS OR EQUIVALENT, AND I
+BM
+   MAINFRAMES LIKE THE 370 SERIES OF COMPUTERS HAVE INSTRUCTIONS (OR GRO
+UPS
+   OF INSTRUCTIONS) FOR MOVING AND COMPARING DATA QUICKLY.  FOR EXAMPLE:
+
+        8086       REP MOVSW AND REP MOVSB
+        370        MVC, CLC ETC.
+
+   EVEN Z80'S HAD INSTRUCTIONS FOR MOVING DATA QUICKLY, AND I ASSUME THA
+T
+   THE 68000 ALSO HAS SIMILAR INSTRUCTIONS.
+
+   THIS MEANS THAT MOST OF THE COMPUTERS IN THE WORLD (USING C) ARE
+   UNDERUTILISED BECAUSE THE C LANGUAGE DOES NOT HAVE SUPPORT FOR STRING
+S
+   BUILTIN.
+
+
+
+
+
+        (C)  1989
+             CLEMENT V. CLARKE,
+             PO BOX 475,
+             TOORAK,
+             AUSTRALIA, 3142
+
+             TEL (61)-3-241-2289
+
+
+
+*/
+
+
+#INCLUDE "STDIO.H"
+#INCLUDE "STRING.H"
+#INCLUDE "DOS.H"
+#INCLUDE "TIME.H"
+
+
+  /* THIS CODE CAN ONLY BE USED
+     IF THE LENGTH OS THE STRING IS
+     KNOWN AT COMPILE TIME (TC ONLY) */
+
+#IF DEFINED(__TURBOC__)
+#DEFINE CPYDTA_TC_ONLY(DEST,SRC,LEN) \
+      _SI=SRC; \
+      _DI=DEST;\
+      _CX=LEN/2; \
+      __EMIT__(0XF3,0XA5);          /* REP MOVSW                 */ \
+      IF (LEN & 1)                  /* MOVE ONE MORE BYTE ?      */ \
+      {__EMIT__(0XA4);}             /* MOVSB                     */ \
+      __EMIT__(0X88,0X0D);          /* MOV 0¢DI|,CL              */
+
+#ENDIF
+
+#IF DEFINED(__TURBOC__)
+#DEFINE CPYDTA(DEST,SRC,LEN) \
+      _SI=SRC; \
+      _DI=DEST;\
+      _CX=LEN; \
+      __EMIT__(0XD1,0XE9);          /* SHR CX,1                  */ \
+      __EMIT__(0XF3,0XA5);          /* REP MOVSW                 */ \
+      __EMIT__(0X13,0XC9);          /* ADC CX,CX                 */ \
+      __EMIT__(0XF3,0XA4);          /* REP MOVSB                 */ \
+      __EMIT__(0X88,0X0D);          /* MOV 0¢DI|,CL              */
+
+#ELIF DEFINED(_QC)
+#DEFINE CPYDTA(DEST,SRC,LEN) _ASM \
+      { \
+      _ASM LEA SI,SRC \
+      _ASM LEA DI,DEST \
+      _ASM MOV CX,LEN \
+      _ASM SHR CX,1 \
+      _ASM REP MOVSW \
+      _ASM ADC CX,CX \
+      _ASM REP MOVSB \
+      _ASM MOV 0¢DI|,CL}
+
+#ELIF DEFINED(_370)                /* THIS CODE HAS NOT BEEN TESTED !!!
+*/ \
+#DEFINE CPYDTA(DEST,SRC,LEN) _ASM \
+      { \
+      _ASM MVC DEST(LEN),SRC \
+      }
+
+#ELSE
+
+#ERROR MUST BE TC 2.0 OR QC 2.0 FOR THIS PARTICULAR TEST.
+
+#ENDIF
+
+
+LONG INT I;
+INT J;
+
+FLOAT DUMMYTIME;                /* TIME FOR DUMMY  LOOP SAVED HERE */
+FLOAT LONGESTTIME;              /* TIME FOR INCR LOOP - DUMMYTIME  */
+FLOAT INCRNOREGTIME;            /* TIME FOR INCR1  LOOP SAVED HERE */
+FLOAT INCRREGTIME;              /* TIME FOR INCR2  LOOP SAVED HERE */
+FLOAT STRCPYTIME;               /* TIME FOR STRCPY LOOP SAVED HERE */
+FLOAT MEMCPYTIME;               /* TIME FOR MEMCPY LOOP SAVED HERE */
+FLOAT ASMCPYTIME;               /* TIME FOR ASMCPY LOOP SAVED HERE */
+
+INT   FORCEALLIGN1;
+CHAR  SRC @<COPYLEN+1@>;          /* DEFINE STRING AREAS             */
+INT   FORCEALLIGN2;
+CHAR  DEST@<COPYLEN+1@>;
+INT   SRC_LEN;
+
+TIME_T START,
+FINISH;
+
+MAIN()
+{
+
+/*  INITIALIZE A STRING FOR OUR TIMING TEST                        */
+
+    MEMSET(SRC,'X',COPYLEN);
+    SRC_LEN=STRLEN(SRC);
+    PRINTF("\N\NLENGTH=%D\N\N",SRC_LEN);
+
+
+/*  TAKE THE TIME FOR A DUMMY LOOP.  THIS WILL BE SUBTRACTED FROM THE
+    ELAPSED TIME TO GIVE THE ACTUAL TIME FOR THE COPIES.           */
+
+
+    TIME(&START);
+    FOR (I=0; I<COUNT; I++)
+    {
+    ;                                   /* DUMMY LOOP */
+    }
+
+    DUMMYTIME=PRT_ELAP_TIME("DUMMY");
+
+/*  COPY THE DATA USING THE ASSEMBLER MOVE ROUTINES.
+    THIS IS THE FASTEST WAY TO DO IT, AND IF C HAD BUILTIN STRING HANDLI
+NG,
+    THE C COMPILERS COULD GENERATE FAST CODE AUTOMATICALLY!       */
+
+    TIME(&START);
+    FOR (I=0; I<COUNT; I++)
+    {
+         CPYDTA(DEST,SRC,COPYLEN);      /* FIXED LENGTH STRING TO FIXED
+*/
+    }
+
+    ASMCPYTIME=PRT_ELAP_TIME("ASM");
+
+    TIME(&START);
+    FOR (I=0; I<COUNT; I++)
+    {
+         MEMCPY(DEST,SRC,SRC_LEN);
+    }
+
+
+    MEMCPYTIME=PRT_ELAP_TIME("MEMCPY");
+
+    TIME(&START);
+    FOR (I=0; I<COUNT; I++)
+    {
+         STRCPY(DEST,SRC);
+    }
+
+
+    STRCPYTIME=PRT_ELAP_TIME("STRCPY");
+
+    INCR_CPY();
+
+    INCR_CPY_REGVAR();
+
+
+    PRINTF("\NCOPYING A %D BYTE LENGTH STRING %D TIMES",COPYLEN,COUNT);
+    PRINTF("\N===============================================\N");
+
+    PRINTF("\NINCRCPY (STATIC   POINTERS)  %5.2F  %5.2F  %5.2F  %F",
+           INCRNOREGTIME,DUMMYTIME,INCRNOREGTIME-DUMMYTIME,1.00);
+        LONGESTTIME=INCRNOREGTIME-DUMMYTIME;
+    PRINTF("\NINCRCPY (REGISTER POINTERS)  %5.2F  %5.2F  %5.2F  %F",
+           INCRREGTIME,DUMMYTIME,INCRREGTIME-DUMMYTIME,
+           LONGESTTIME/(INCRREGTIME-DUMMYTIME));
+    PRINTF("\NSTRCPY                       %5.2F  %5.2F  %5.2F  %F",
+           STRCPYTIME,DUMMYTIME,STRCPYTIME-DUMMYTIME,
+           LONGESTTIME/(STRCPYTIME-DUMMYTIME));
+    PRINTF("\NMEMCPY                       %5.2F  %5.2F  %5.2F  %F",
+           MEMCPYTIME,DUMMYTIME,MEMCPYTIME-DUMMYTIME,
+           LONGESTTIME/(MEMCPYTIME-DUMMYTIME));
+    PRINTF("\NASM                          %5.2F  %5.2F  %5.2F  %F",
+           ASMCPYTIME,DUMMYTIME,ASMCPYTIME-DUMMYTIME,
+           LONGESTTIME/(ASMCPYTIME-DUMMYTIME));
+
+ }
+
+
+INCR_CPY(){
+STATIC  CHAR *TEMPSRC;
+STATIC  CHAR *TEMPDEST;
+
+    TIME(&START);
+    FOR (I=0; I<COUNT; I++)
+      { TEMPSRC=SRC;
+        TEMPDEST=DEST;
+        WHILE (*TEMPDEST++=*TEMPSRC++);
+      }
+
+
+    INCRNOREGTIME=PRT_ELAP_TIME("INCRCPY (SLOWEST)");
+}
+
+
+INCR_CPY_REGVAR(){
+REGISTER CHAR *TEMPSRC;
+REGISTER CHAR *TEMPDEST;
+
+    TIME(&START);
+    FOR (I=0; I<COUNT; I++)
+      { TEMPSRC=SRC;
+        TEMPDEST=DEST;
+        WHILE (*TEMPDEST++=*TEMPSRC++);
+      }
+
+
+    INCRREGTIME=PRT_ELAP_TIME("INCRCPY (USING REGISTER VARS)");
+}
+
+INT PRT_ELAP_TIME(CHAR * WHICHLOOP)
+{
+
+    TIME(&FINISH);
+    PRINTF("ELAPSED TIME FOR %S CPY IS %5.2F\N\N",WHICHLOOP,
+            DIFFTIME(FINISH,START));
+
+    RETURN DIFFTIME(FINISH,START);
+}
+char     string ;
+enum {type_str=2};
+ main() {
+    printf ("Hello There");
+ /*
+#asmgen   mvc  x,a
+    xyz    mvc string,string;
+    asm (mvc string,string);
+    asm 'mvc string,string';
+    asm "mvc string,string";
+#endasm
+  */
+         if (type_str==2) printf("Type=2");
+         if (type_str==0) printf("Type=0");
+         strcpy(string,"zzz");
+         if (lstrlen(string)==0)printf("L=0");
+         if (strcmp("abc","zzz")==0) printf("equal");
+ }
+/*
+         int j;
+         fred( )
+         {
+         int i;
+            i=9* 8;
+            j=9* 8;
+            j=j+9* 8;
+         }
+ /*
+         strcmp(lhs,rhs)
+  int lhs;
+  int rhs;
+         {
+         int i;
+            i=9* 8;
+            j=9* 8;
+            j=j+9* 8;
+         }
+//LKED.SYSLMOD DD DSN=CLARKE.JOL40.LOAD(CC2),DISP=SHR

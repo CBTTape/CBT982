@@ -1,0 +1,25 @@
+* LET'S ESTABLISH A BIT OF ADDRESSALITY.
+           LM  R2,R4,0(R1)     LOAD PARAMETER LIST
+           USING JOLCOM,R2
+           USING TKNX,R3
+           USING DDDSNDET,R4
+           USING C03SAVE,R13                                      75128
+           SPACE
+         CLEAR C03DEXT,C03DLIKE,DDSPECTP,DDSPECT2,                75128*
+               DDCANCEL,DDLABEL,DDUNITNO,DDPRIM,DDSEC,DDDIRECT,   80290*
+               DDBLKSZE,DDLRECL,DDSIZE,DDSIZE2,DDAVREC,DDBUFNO,   80290*
+               DDBUFND,DDBUFNI,                                   82300*
+               DDBUFL,DDRKP,DDKEYLEN,DDOVERFL,DDVOLSEQ,DDMAXVOL,  80290*
+               DDUNITQU
+         CLEAR DDAEXTRA,DDLENXTR,DDLENXTR+2,#DDSUBS,#DDVOL,       87150*
+               DDSUBS,DDLONGVL                                    87150
+           MVI DDDD1,C'D'                      SET RECORD TYPE TO'D'
+           MVC DDSTMT,STMT                     MOVE STMT NO IN FOR
+*                                              ERRORS LATER
+           MVC DDLEVEL,LEVEL+1
+           MVC DDNEST,NEST+1
+           MVC DDOSVB,=AL2(DDLEN)
+           GETTKN NO=2                         GET THE 2ND TOKEN
+           MVC DDDSID,TKN                      MOVE THE DSIDENTIFIER
+*                                              IN
+           SPACE 3

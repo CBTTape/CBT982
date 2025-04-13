@@ -1,0 +1,925 @@
+* JOL COPYRIGHT CLARKE COMPUTER SOFTWARE 1971,1972,1973,1974
+* REFER TO INSTRUCTIONS ON COPYRIGHT NOTICE FORM NO CCS-E001.
+           SPACE 3
+*                   J             000000            L
+*                   J            0      0           L
+*                   J           0        0          L
+*                   J          0          0         L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*                   J         0            0        L
+*        J          J         0            0        L
+*         J        J           0          0         L
+*          J      J             0        0          L
+*           J    J               0      0           L
+*            JJJJ                 000000            LLLLLLLLLLL
+           SPACE 3
+           SPACE 3
+           MACRO
+           EYEBALL &A
+           DS  0D
+           DC  8CL4'&A'                                           75311
+           DS  0D
+           MEND
+           SPACE 3
+         MACRO
+ IEFJFCBN
+***********************************************************************
+*
+*                  JFCB
+*
+***********************************************************************
+INFMJFCB EQU   *
+JFCBDSNM DS    CL44                         DATA SET NAME
+JFCBELNM DS    CL8                          ELEMENT NAME OR VERSION
+JFCBTSDM DS    CL1                          TASK SCHEDULER - DATA
+*                                           MANAGEMENT INTERFACE BYTE
+JFCBSYSC DS    CL13                         SYSTEM CODE
+JFCBLTYP DS    CL1                          LABEL TYPE AND USER'S-LABEL
+*                                           INDICATOR
+         DS    CL1                          NOT USED
+JFCBFLSQ DS    CL2                          FILE SEQUENCE NUMBER
+JFCBVLSQ DS    CL2                          VOLUME SEQUENCE NUMBER
+JFCBMASK DS    CL8                          DATA MANAGEMENT MASK
+JFCBCRDT DS    CL3                          DATA SET CREATION DATE
+JFCBXPDT DS    CL3                          DATA SET EXPIRATION DATE
+JFCBIND1 DS    CL1                          INDICATOR BYTE 1
+JFCBRLSE EQU   64                            BITS 0 AND 1 - EXTERNAL
+*                                            STORAGE RELEASE INDICATOR
+JFCBLOCT EQU   16                            BITS 2 AND 3 - DATA SET
+*                                            HAS BEEN LOCATED
+JFCBNEWV EQU   4                             BITS 4 AND 5 - NEW VOLUME
+*                                            ADDED TO DATA SET
+JFCBPMEM EQU   1                             BITS 6 AND 7 - DATA SET IS
+*                                            A MEMBER OF A PODS OR GDG
+JFCBIND2 DS    CL1                          INDICATOR BYTE 2
+JFCBSTAT EQU   64                            BITS 0 AND 1 - DATA SET
+*                                            STATUS (NEW, OLD, OR MOD)
+JFCBSCTY EQU   16                            BITS 2 AND 3 - DATA SET
+*                                            SECURITY INDICATOR
+JFCBUFNO DS    0AL1
+JFCBUFRQ DS    AL1
+JFCBFTEK DS    0BL1
+JFCBFALN DS    BL1
+JFCBUFL  DS    AL2
+JFCEROPT DS    BL1
+JFCTRTCH DS    0BL1
+JFCKEYLE DS    0AL1
+JFCMODE  DS    0BL1
+JFCCODE  DS    0BL1
+JFCSTACK  DS   0BL1
+JFCPRTSP DS    BL1
+JFCDEN   DS    BL1
+JFCLIMCT DS    AL3
+JFCDSORG DS    BL2
+JFCRECFM DS    BL1
+JFCOPTCD DS    BL1
+JFCBLKSI DS    AL2
+JFCLRECL DS    AL2
+JFCNCP   DS    AL1
+JFCNTM   DS    AL1
+JFCRKP   DS    AL2
+JFCCYLOF DS    AL1
+JFCDBUFN DS    AL1
+JFCINTVL DS    AL1
+JFCCPRI  DS    BL1
+JFCSOWA  DS    AL2
+JFCBNTCS DS    CL1                          NUMBER OF OVERFLOW TRACKS
+JFCBNVOL DS    CL1                          NUMBER OF VOLUME SERIAL
+*                                           NUMBERS
+JFCBVOLS DS    CL30                         VOLUME SERIAL NUMBERS (THE
+*                                           FIRST FIVE)
+JFCBEXTL DS    CL1                          LENGTH OF BLOCK OF EXTRA
+*                                           VOLUME SERIAL NUMBERS
+*                                           (BEYOND FIVE)
+JFCBEXAD DS    CL3                          TRACK ADDRESS OF BLOCK OF
+*                                           EXTRA VOLUME SERIAL NUMBERS
+JFCBPQTY DS    CL3                          PRIMARY QUANTITY OF D.A.
+*                                           STORAGE REQUIRED
+JFCBCTRI DS    CL1                          INDICATES WHETHER CYLINDERS
+*                                           TRACKS, OR RECORDS ARE
+*                                           SPECIFIED IN JFCBPQTY AND
+*                                           JFCBSQTY
+JFCBSQTY DS    CL3                          SECONDARY QUANTITY OF D.A.
+*                                           STORAGE REQUIRED
+JFCBIND3 DS    CL1                          INDICATOR BYTE 3
+JFCBCNTG EQU   64                            BITS 0 AND 1 - CONTIGUOUS
+*                                            STORAGE INDICATOR
+JFCBMXIG EQU   16                           BITS 2 AND 3 - MAXIMUM
+*                                            AVAILABLE EXTENT INDICATOR
+JFCBALXI EQU   4                             BITS 4 AND 5 - ALL EXTENTS
+*                                            INDICATOR
+JFCBRNDC EQU   1                             BITS 6 AND 7 - ROUND
+*                                            CYLINDER INDICATOR
+JFCBDQTY DS    CL3                          QUANTITY OF D.A. STORAGE
+*                                           REQUIRED FOR A DIRECTORY
+JFCBSPNM DS    CL3                          CORE ADDRESS OF THE JFCB
+*                                           WITH WHICH CYLINDERS ARE
+*                                           SPLIT
+JFCBABST DS    CL2                          RELATIVE ADDRESS OF FIRST
+*                                           TRACK TO BE ALLOCATED
+JFCBSBNM DS    CL3                          CORE ADDRESS OF THE JFCB
+*                                           FROM WHICH SPACE IS TO BE
+*                                           SUBALLOCATED
+JFCBDRLH DS    CL3                          AVERAGE DATA RECORD LENGTH
+JFCBVLCT DS    CL1                          VOLUME COUNT
+JFCBSPTN DS    CL1                          NUMBER OF TRACKS PER
+*                                           CYLINDER TO BE USED BY THIS
+*                                           DATA SET WHEN SPLIT
+*                                           CYLINDERS IS INDICATED
+JFCBLGTH EQU 176                       LENGTH OF JFCB
+JFCBEND  EQU   *
+         MEND
+           SPACE 3
+           MACRO
+&NAME      JOLERR &STMT=STMT
+.* THIS MACRO WILL PUT INTO A LOCATION A STRING OF CHARACTERS
+.* THE STRING MAY BE IN A BUFFER OR JOL MAY ITSELF CONTROL
+.*   THE WHERE-ABOUTS OF THE ERROR MESSAGE.
+.*
+.* SYSLIST(1) IS TAKEN TO BE THE ERROR SEVERITY AND ALSO THE
+.*   ERROR NUMBER.
+           LCLA &LITPOSN,&LITLEN
+           LCLC &CSECT,&ERRNO
+           LCLC &JOLERR,&CHAR1
+           LCLA &LENGTH,&THIS,&NOVAR,&POSN,&L,&K,&STMTLEN
+&STMTLEN   SETA 4
+&CSECT     SETC '&SYSECT'(3,3)
+&ERRNO     SETC '&SYSLIST(1)'(2,2)
+&CHAR1     SETC '&SYSLIST(1)'(1,1)
+           AIF ('&STMT' EQ 'STMT').ORDSTMT
+           MVC S23STMT,&STMT MOVE NON-STANDARD STATEMENT NUMBER IN
+.ORDSTMT   ANOP
+&NAME      BAL 14,UJS23EP&CHAR1 LINK TO APPROPRIATE ERROR POINT
+&JOLERR    SETC '&CSECT-&ERRNO'
+ER&CSECT&ERRNO MVC 0(7,1),=CL7'&JOLERR' ERROR CODE IN CROSS-REF LIST
+&THIS      SETA  2
+.LUP4      ANOP
+           AIF (&THIS GT N'&SYSLIST).END
+           AIF ('&SYSLIST(&THIS)'(1,1) EQ '#').VAR2
+           AIF ('&SYSLIST(&THIS)'(1,1) EQ '''').LIT2
+.* HERE IT SHOULD BE A CHAR VARIABLE
+&L         SETA L'&SYSLIST(&THIS)
+           MVC 0(&L,1),&SYSLIST(&THIS)         FIXED CHAR STRING
+           AGO .ADD3
+.LIT2      ANOP
+.* NOW LOOK FOR DOUBLE QUOTES IN STRING TO CALCULATE THE CORRECT
+.*   LENGTH
+&LITPOSN   SETA 2                              START AFTER 1ST QOTE
+&LITLEN    SETA K'&SYSLIST(&THIS)
+&LITLEN    SETA &LITLEN-2
+.TQUOTE2   AIF ('&SYSLIST(&THIS)'(&LITPOSN,2) NE '''''').NOTDBL2
+&LITPOSN   SETA &LITPOSN+1
+&LITLEN    SETA &LITLEN-1
+.NOTDBL2   ANOP
+&LITPOSN   SETA &LITPOSN+1
+           AIF (&LITPOSN LT K'&SYSLIST(&THIS)).TQUOTE2
+&K         SETA &LITLEN
+           MVC 0(&K,1),=C&SYSLIST(&THIS)       MOVE LITERAL STRING
+&POSN      SETA  &POSN+&K
+           AGO .ADD3
+.VAR2      ANOP
+           LA 15,&SYSLIST(&THIS)           LOAD ADDRESS VARYING STRING
+.ADD3      ANOP
+&THIS      SETA &THIS+1
+           AGO .LUP4
+.END       DC  H'0'                            END LIST
+           MEND
+           SPACE 3
+           MACRO
+&NAME      JOLRETN &RC=0
+&NAME      L   R13,4(R13)      RESET SAVE ADDRESS
+           AIF ('&SYSLIST(1)' EQ '').R1412
+           RETURN &SYSLIST(1),T,RC=&RC
+           MEXIT
+.R1412     RETURN (14,12),T,RC=&RC
+           MEND
+           SPACE 3
+           MACRO
+&NAME      JOLSAVE &AREA=,&CSECT=,&BASE=11
+           GBLA &REGEQU
+.* SEE IF EQUATES SET UP FOR THIS RUN YET OR NOT
+           AIF (&REGEQU NE 0).NOEQU
+&CSECT     START 0
+R0         EQU 0
+R1         EQU 1
+R2         EQU 2
+R3         EQU 3
+R4         EQU 4
+R5         EQU 5
+R6         EQU 6
+R7         EQU 7
+R8         EQU 8
+R9         EQU 9
+R10        EQU 10
+R11        EQU 11
+R12        EQU 12
+R13        EQU 13
+R14        EQU 14
+R15        EQU 15
+&REGEQU    SETA 1
+           AGO .NOCSECT
+.NOEQU     ANOP
+           AIF ('&CSECT' EQ '').NOCSECT
+           LTORG
+&CSECT     CSECT
+.NOCSECT   ANOP
+&NAME      SAVE (14,12),,*
+           AIF (N'&BASE EQ 1).ONEBASE
+           USING  &CSECT,&BASE(1),&BASE(2)
+           LR  &BASE(1),15
+           LA  &BASE(2),2048(15)
+           LA  &BASE(2),2048(&BASE(2))
+           AGO .HOUSE
+.ONEBASE   ANOP
+           USING  &CSECT,&BASE
+           LR  &BASE,15
+.HOUSE     AIF ('&AREA' EQ '').GENAREA
+           MNOTE 12,'AREA NOW UNSUPPORTED'
+           AGO .HOUSE2
+.GENAREA   CNOP 0,4
+           BAL 15,*+76         BRANCH AROUND SAVE AREA
+           DC  18F'0'
+.HOUSE2    ST  15,8(,13)
+           ST  13,4(,15)
+           LR  13,15
+           MEND
+           SPACE 3
+JSHD   TITLE 'JOL TRANSIENT SCHEDULER AND INSTRUCTION HANDLER'
+           SPACE 3
+* THESE NEXT TWO MACROS ARE USED FOR READING AND WRITING JOBQ.
+*    IF THE SYSTEM IS VS,THE VS JOBQ ROUTINES ARE CALLED,OTHERWISE
+*    A STRAIGHT READ OR WRITE OPERATION IS PERFORMED.
+           MACRO
+&NAME      GETJOBQ &DECB,&TTR
+&NAME      LA  R0,&DECB        LOAD 0 WITH DECB ADDRESS
+           L   R1,&TTR         LOAD ADDRESS OF AREA WITH TTR FOR POINT
+           BAL R14,GETJOBQ     BRANCH AND LINK TO POINT,READ,CHECK RTN
+           MEND
+           SPACE
+           MACRO
+&NAME      PUTJOBQ &DECB,&TTR
+           LA  R0,&DECB        LOAD 0 WITH DECB ADDRESS
+           AIF ('&TTR' EQ '').NOTTR
+           L   R1,&TTR         LOAD R1 WITH TTR REQUIRED
+           AGO .BAL
+.NOTTR     SR  R1,R1           NO TTR,CLEAR REGISTER 1
+.BAL       BAL R14,PUTJOBQ     BRANCH AND LINK TO POINT,WRITE CHECK RTN
+           MEND
+         MACRO
+&NAME    SETLR &A,&B
+         L     R1,&A.(R10)     LOAD OFFSET
+         LA    R1,0(R1)       DROP HIGH ORDER BYTE
+         L     R14,16         CVT POINTER
+         L     R6,164(R14)    HIGHEST ADDRESS
+         LA    R6,0(R6)
+         CR    R1,R6
+         BNL   L&SYSNDX
+         ST    R1,&B+8        STORE START ADDRESS
+         L     R15,=A(&B.WKSP)
+         MVC 0(256,R15),0(R1)      SHIFT TO WORK AREA
+         MVC 256(256,R15),256(R1)
+         ST    R15,&B+16
+         LA    R15,512(R15)
+         ST    R15,&B+20
+         LA    R1,512(R1)     SET STOP ADDRESS
+         ST    R1,&B+12       STORE IN LIST
+L&SYSNDX  EQU  *
+         MEND
+     TITLE 'TESTJOBQ :- SNAP REGS ON ENTRY :- READ/WRITE SYSTEM JOBQ'
+           PRINT DATA                                             75311
+           SPACE
+           JOLSAVE CSECT=UJE01TS,BASE=12
+           L  R3,=A(PARMAREA)
+           USING PARMAREA,R3
+           USING  TABLES,R5
+           L  R5,=A(TABLES)
+*HAVING SAVED THE REGISTERS, WE NOW WANT TO LIST 500 BYTES ONWARDS
+* FROM THEIR CONTENTS ON ENTRY.
+         OPEN  (SNAP,(OUTPUT))
+         SNAP  DCB=SNAP,ID=10,PDATA=(ALL),SDATA=(SWA)
+*NOW FORM UP LIST FROM OLD REGISTERS
+   B ZZZZ
+         L     R10,4(R13)     LOAD ADDRESS OF OLD SAVE AREA
+         SETLR 20,REG0
+         SETLR 24,REG1
+         SETLR 28,REG2
+         SETLR 32,REG3
+         SETLR 34,REG4
+         SETLR 40,REG5
+         SETLR 44,REG6
+         SETLR 48,REG7
+         SETLR 52,REG8
+         SETLR 56,REG9
+         SETLR 60,REGA
+         SETLR 64,REGB
+         SETLR 68,REGC
+         MVI   REGC+16,X'80'   STOP LIST
+         SNAP  DCB=SNAP,ID=20,LIST=REG
+ZZZZ EQU *
+         SPACE 3
+* ADDRESS FROM R4 IS IMPORTANT COS STANDARD ASSURE ME THAT IT POINTS
+* TO THE ALL IMPORTANT LCT
+         SPACE 3
+E00VSSTR   EQU  *                                                 74365
+         CALL UJE98INI         INITIALISE ROUTINES
+E00FINDS  EQU *
+           MVI SCTASCT+3,0     ***** SET Z=0 (OK,ONLY READ)
+           CLC SCTASCT,=A(0)   LAST STEP IN JOB ? (THE NEXT ONE*****)
+            BNE E00PNT         NOT EOF ON JOBQ
+         B     ENDSCT
+           SPACE 3
+E00PNT     EQU *
+           GETJOBQ SCTDECB,SCTASCT READ THE SCT,AFTER POINTING
+         SNAP  DCB=SNAP,ID=60,STORAGE=(SCT-32,SCT+256)
+           PUTJOBQ SCTDECB
+           B E00FINDS
+           SPACE 3
+ENDSCT EQU  *
+*          SNAP  DCB=SNAP,ID=10,PDATA=(ALL)
+         PUTJOBQ   JCTDECB
+           JOLRETN RC=0        UJEMON WILL LOOK AT 'VS' TOO.      75311
+*
+* THE FOLLOWING LOCATIONS ARE USED FOR READING AND WRITING
+*  THE SYSTEM JOBQ
+*
+* LOCN 1 CONTAINS THE TTR OF THE RECORD WRITTEN
+* LOCN 2 CONTAINS THE ADDRESS (IN DISPACEMENT FORM) OF THE AREA
+*  TO BE USED AS THE READ/WRITE AREA
+*
+JCTDECB  DC    F'0'
+         LA    R1,JCT         EXECUTED ***
+         SPACE
+SCTDECB  DC    F'0'
+         LA    R1,SCT
+         SPACE
+PDQDECB2 DC    F'0'
+         LA    R1,PDQ
+         SPACE
+SIOTDECB DC    F'0'
+         LA    R1,SIOT
+         SPACE
+JFCBDECB DC    F'0'
+         LA    R1,INFMJFCB
+         SPACE
+PDQDECB  DC    F'0'
+         LA    R1,PDQBLK
+           SPACE 3
+* GET/PUT JOBQ ROUTINES CALLED BY GETJOBQ/PUTJOBQ MACROS
+* ON ENTRY R0-> CONTROL AREA CONTAINING TTR SAVE SPACE, AND A(AREA)5128
+*          R1-> TTR REQUIRED                                      74365
+*
+* A SEPERATELY ASSEMBLED CSECT CALLED UJEJOBQ IS RESPONIBLE
+*  FOR ACTUALLY CALLING THE IBM MODULE 'IEFQMRAW' TO DO THE
+*  JOBQ TRANSFERS
+*
+*  THE PARAMETERS 'UJEJOBQ' WANTS ARE :-
+*  R1-> :-
+*     1. A(RECEIVE/WRITE AREA)
+*     2. A(TTR POINTER)
+*     3. TRANSFR TYPE 4=READ ETC
+*     4. A(IEFQMRAW)               IBM ROUTINE
+*
+GETJOBQ    MVI CALLAREA+11,4   READ INDICATOR TO PUT IN IEFQMRAW
+           B   E00JOBQ
+PUTJOBQ  MVI   CALLAREA+11,X'03'  WRITE INDICATOR FOR QM          75128
+         LR  R15,R0        GET CONTROL AREA ADDRESS
+         L   R1,0(R15)     GET TTR FROM SAVED AREA
+E00JOBQ  LR    R15,R0         LOAD R15 A(CONTROL BLOCK)           75128
+         ST    R1,0(R15)      STORE TTR REQD IN CONTROL BLOCK     75128
+         ST    R1,CALLAREA+4  AND IN PARM FOR UJEJOBQ             75128
+         EX    R0,4(R15)      EXECUTE LA INSTRUCTION TO FIND      75128
+*                             ADDRESS OF AREA TO READ/WRITE       75128
+         ST    R1,CALLAREA    SET PARM(1)                         75128
+         MVC   CALLAREA+12(4),AQMRAW SHIFT A(IEFQMRAW)            75128
+           B  *+4    ******************************************
+           B  *+4    ******************************************
+           ST  R14,IEFQRETN    SAVE RETURN ADDRESS
+         LA    R1,CALLAREA    SET R1 UP PROPERLY                  75128
+         L     R15,=V(UJEJOBQ) LOAD JOL'S INTERFACE TO IEFQMRAW   75128
+         BALR  R14,R15         AND BRANCH TO IT                   75128
+         LTR   R2,R15         DID WE MANAGE FUNCTION ?            75128
+           BZ E00RMODE
+           SPACE
+E00RMODE EQU   *                                                  75128
+*        UNSUP      LA R1,X'24' SVC 107                           75128
+         L     R1,CALLAREA+4  RELOAD TTR FOR CALLER IN CASE HE WANT5128
+           L   R14,IEFQRETN    LOAD RETURN ADDRESS
+           BR  R14             AND GO BACK
+UJ00ANS    DS 3F
+UJE00DDM    DC CL8'$$PRNT'
+JSCBA    DC    A(JSCBHDR,JSCBHDR+128,0,0,0,0)
+REG      DC    A(REG0,RG0C)
+REG0     DC    A(RG0C,RG0C+128,0,0,0,0)
+REG1     DC    A(RG1C,RG1C+128,0,0,0,0)
+REG2     DC    A(RG2C,RG2C+128,0,0,0,0)
+REG3     DC    A(RG3C,RG3C+128,0,0,0,0)
+REG4     DC    A(RG4C,RG4C+128,0,0,0,0)
+REG5     DC    A(RG5C,RG5C+128,0,0,0,0)
+REG6     DC    A(RG6C,RG6C+128,0,0,0,0)
+REG7     DC    A(RG7C,RG7C+128,0,0,0,0)
+REG8     DC    A(RG8C,RG8C+128,0,0,0,0)
+REG9     DC    A(RG9C,RG9C+128,0,0,0,0)
+REGA     DC    A(RGAC,RGAC+128,0,0,0,0)
+REGB     DC    A(RGBC,RGBC+128,0,0,0,0)
+REGC     DC    A(RGCC,RGCC+128,0,0,0,0)
+         CNOP 0,8
+RG0C     DC    CL128'                CONTENTS OF 0R% L(256)'
+RG1C     DC    CL128'                CONTENTS OF 1R% L(256)'
+RG2C     DC    CL128'                CONTENTS OF 2R% L(256)'
+RG3C     DC    CL128'                CONTENTS OF 3R% L(256)'
+RG4C     DC    CL128'                CONTENTS OF 4R% L(256)'
+RG5C     DC    CL128'                CONTENTS OF 5R% L(256)'
+RG6C     DC    CL128'                CONTENTS OF 6R% L(256)'
+RG7C     DC    CL128'                CONTENTS OF 7R% L(256)'
+RG8C     DC    CL128'                CONTENTS OF 8R% L(256)'
+RG9C     DC    CL128'                CONTENTS OF 9R% L(256)'
+RGAC     DC    CL128'                CONTENTS OF 10R% L(256)'
+RGBC     DC    CL128'                CONTENTS OF 11R% L(256)'
+RGCC     DC    CL128'                CONTENTS OF 12R% L(256)'
+JSCBHDR  DC    CL128'                CONTENTS OF JSCB'
+           PRINT NOGEN
+ATIOT      DS  A
+ATCB       DS  A               ADDRESS OF TCB
+AQMRAW   DS    A(0)           IEFQMRAW JOB Q RTN ADDRESS          75128
+           SPACE 3
+           PRINT GEN
+           SPACE 3
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           DC S(*),S(*),S(*),S(*)
+           LTORG
+WORKXXX  CSECT
+REG0WKSP DS CL512
+REG1WKSP DS CL512
+REG2WKSP DS CL512
+REG3WKSP DS CL512
+REG4WKSP DS CL512
+REG5WKSP DS CL512
+REG6WKSP DS CL512
+REG7WKSP DS CL512
+REG8WKSP DS CL512
+REG9WKSP DS CL512
+REGAWKSP DS CL512
+REGBWKSP DS CL512
+REGCWKSP DS CL512
+JSWK      DS CL512
+           SPACE 3
+TABLES CSECT
+           LTORG
+           EYEBALL JCT
+           DS  0D
+JCT        DS  CL176
+           ORG JCT+8
+JCTJOBNM   DS  CL8             JOB-NAME
+           ORG JCT+24
+JCTAPDQ    DS  A               QUEUE ADDRESS OF THE PDQ
+JCTAGDG    DS  A               QUEUE ADDRESS OF THE GDG BIAS TABLE
+JCTASCT1   DS  A               QUEUE ADDRESS OF THE FIRST SCT
+JCTASMB1   DS  A               QUEUE ADDRESS OF THE FIRST SMB
+JCTAPCT    DS  A               QUEUE ADDRESS OF THE JOB ACCT
+JCTASCD1   DS  A               QUEUE ADDRESS OF THE FIRST SCD
+JCTADSB    DS  A               QUEUE ADDRESS OF THE LAST DSB
+           ORG JCT+88
+JCTADSN    DS  A               QUEUE ADDRESS OF DSENQ TABLE.
+JCTREGN    DS  AL2
+JCTQID     DS  AL1
+JCTCSTEP   DS 0AL1
+JCT#STPS   DS  AL1             NO OF STEPS
+           ORG JCT#STPS
+JCTSTEP    DS  AL1
+           ORG JCT+107
+JCT#TRKS   DS  AL1             NUMBER TRKS OF JOBQ USED THIS JOB
+           ORG JCT+112
+JCTCSCT    DS  A               QUEUE ADDRESS OF CURRENT (I.E NOW
+*                              EXECUTING) SCT
+           DS CL60
+           EYEBALL SCT
+           DS  0D
+SCT        DS  CL176
+           ORG SCT+12
+SCTASIOT   DS  CL3             QUEUE ADDRESS OF NEXT SIOT
+           ORG SCT+20
+SCTASCT    DS  AL3             TTR OF NEXT SCT
+           ORG SCT+36
+SCTAVOLT   DS  AL3             TTR OF VOLT
+           ORG SCT+44
+SCTPROC    DS CL8
+SCTSTEP    DS CL8
+           ORG SCT+64
+SCT#SIOT   DS  AL1             NO OF SIOTS IN THIS STEP
+           ORG SCT+108
+SCTPROG    DS CL8              PROGRAM NAME
+           ORG SCT+121
+SCTCOND1   DS  AL2             COND 1
+SCTOP1     DS  AL1             OPERATOR 1
+SCTACON1   DS  AL3             ADDRESS OF SCT REFERRED TO BY COND
+           ORG SCT+160
+SCTCOND8   DS  AL2             ABEND (OR EIGHTH) COND CODE
+SCTOP8     DS  AL1
+SCTACON8   DS  AL3
+           EYEBALL SIOT
+SIOT       DS  CL176
+           ORG SIOT+4
+SIOTDDNM   DS  CL8             DDNAME IN SIOT
+           ORG SIOT+28
+SIOTASIO   DS  A               ADDRESS OF NEXT SIOT
+SIOTAJFC   DS  A               ADDRESS OF CORRESPONDING JFCB TO THIS
+*                              SIOT
+           ORG SIOT+49
+SIOT#VOT   DS  AL1             NUMBER OF VOLS IN THIS STEPS VOLT
+SIOTRELV   DS  AL2             RELATIVE POINTER TO VOL TBL ENTRY
+SIOTDDNO   DS  AL1             INTERNAL DD NUMBER
+SIOT#UNI   DS  AL1             #OF UNITS FOR THIS DATA SET
+SIOT#VOL   DS  AL1             #OF VOLS
+SIOTDISP   DS  AL1             BIT 0-RESERVED
+*                              BIT 1 RETAIN VOLUME
+*                              BIT 2 PRIVATE VOLUME
+*                              BIT 3 PASS DATA SET
+*                              BIT 4 KEEP DATA SET
+*                              BIT 5 DELETE DATA SET
+*                              BIT 6 CATALOG DATA SET
+*                              BIT 7 UNCATLG DATA SET
+           ORG SIOT+58
+SIOTIND3   DS  AL1
+*                              BIT 0 VREF TO DSNAME
+*                              BIT 3 VREF IN STEP
+*                              BIT 4 SYSOUT SPECIFIED
+*                              BIT 5 NEW DATA SET
+*                              BIT 6 MOD DATA SET
+*                              BIT 7 OLD OR SHR DATA SET
+           ORG SIOT+59
+SIOTIND4   DS  AL1
+*                              BIT 2 NO PDQ PROCESSING
+*                              BIT 6 DSN IS IN PDQ
+*                              BIT 7 OLD OR MOD DATA SET =0
+*                              BIT 7 NEW DATA SET = 1
+           ORG SIOT+60
+SIOTUNIT   DS CL8
+           ORG SIOT+84
+SIOTADSB   DS  AL3,CL1         QUEUE ADDRESS OF DSB IF SYSOUT SPECIFIED
+SIOTNDSB   DS  AL4             QUEUE ADDRESS OF NEXT DSB
+           ORG SIOT+92
+SIOTCDSP   DS  AL1             CONDITIONAL DISPOSITIONS
+*                              BIT 3 DD IS NOT PRIVATE
+*                              BIT 4 KEEP
+*                              BIT 5 DELETE
+*                              BIT 6 CATLG
+*                              BIT 7 UNCATLG
+SIOTLPDQ   DS  AL3             ADDRESS OF LAST SIOT TO PASS DATA SET
+           ORG
+           EYEBALL PDQ
+           DS  0D
+PDQ        DS CL176
+           ORG PDQ
+PDQDSN1    DS  CL44            DSNAME 1 IN PASSED DATA SET QUEUE
+PDQDSN2    DS  CL44            DSNAME 2 IN PASSED DATA SET QUEUE
+PDQDSN3    DS  CL44            DSNAME 3 IN PASSED DATA SET QUEUE
+PDQENTRY   DS  CL1             NUMBER OF ENTRIES IN THIS PDQ
+PDQRESD    DS  CL35            JUNK OR SOMETHING
+PDQABLK    DS  CL3,CL1         ADDRESS OF ASSOCIATED PDQ BLOCK
+PDQNPDQ    DS  CL3,CL1         ADDRESS OF NEXT PDQ DIRECTORY
+           ORG
+           EYEBALL PDQBLOCK
+           DS  0D
+PDQBLK     DS   CL176          PASSED DATA SET QUEUE BLOCK
+           ORG PDQBLK
+PDQCSTEP   DS  CL1             CURRENT STEP NUMBER (OR LAST USE
+*                              OF THIS DATA SET)
+PDQDDNO    DS  CL1             CURRENT DD NUMBER
+PDQTERM    DS  CL1             PDQ TERMINATION WORK AREA
+*    IF PDQTERM=B'0010' DD-CARD SAID NEW,PASS
+*    IF PDQTERM=B'0100' DD-CARD SAID OLD,KEEP (IE NOT PASSED NOW)
+*    IF PDQTERM=B'1110' DD-CARD SAID OLD,PASS (OLD,CURRENT STATUS=OLD)
+*    IF PDQTERM=B'1010' DD-CARD SAID OLD,DELETE (OLD,NOT PASSED)
+* IT APPEARS THAT ONCE THE CURRENT STATUS BIT IS 0,ANY REFERENCE
+*    TO THE DATA SET NAME IS IGNORED (I.E AS THOUGH NEVER ON PDQ).
+*
+*
+PDQ#UCB    DS  CL1             NUMBER OF UCB'S
+PDQAJFCB   DS  CL3,CL1         QUEUE ADDRESS OF THIS JFCB
+PDQASIOT   DS  CL3             QUEUE ADDRESS OF THIS SIOT
+PDQSSTEP   DS  CL1             CURRENT STEP NUMBER (WHICH APPEARS
+*                              TO BE ALWAYS THE SAME AS PDQCSTEP ABOVE)
+PDQUCBS    DS  CL40
+PDQUACBO   DS  CL3,CL1         ADDRESS OF PDQ OVERFLOW BLOCK
+PDQBLKLN   EQU *-PDQBLK
+* THE ABOVE FIELDS ARE REPEATED TWICE (IE 3 DATA SET DETAILS ALLOWED)
+           ORG
+           SPACE 3
+           EYEBALL JFCB
+           IEFJFCBN
+QMPA       DS  0D              USED FOR VS CURRENTLY
+QMPAJOB    DS  CL8             JOB NAME OR NO-WORK-CHAIN ELEMENT
+QMPAFUNC   DS  CL1             FUNCTION CODE
+QMPAFLTR   DS  CL2             NN OF 1ST LOGL TRACK ASSIGNED TO ENTRY
+QMPANOTR   DS  CL1             NUMBER OF RECORDS ASSIGNED IN THIS TRACK
+QMPANXTL   DS  CL2             NN OF NEXT LOGICAL TRACK
+QMPANOLT   DS  CL1             NUMBER OF LOGICAL TRACKS ASSIGNED
+QMPAJBCD   DS  CL1             JOB TYPE CODE
+QMPAJBST   DS  CL1             JOB STATUS CODE
+QMPAPRTY   DS  CL1             JOB PRIORITY
+QMPANXTQ   DS  CL2             NN OF NEXT QUEUE ENTRY
+QMPAQID    DS  CL2             QUEUE ENTRY IDENTIFICATION
+QMPAORCL   DS  CL1             ORIGIN CLASS ID
+QMPARES1   DS  CL1             RESERVED
+QMPATRKS   DS  A               ADDRESS TRACK STACKING PARM LIST
+QMPAIND    DS  CL1
+           ORG QMPAIND
+QMPAAECB   DS  A               ADDRESS OF USERS ECB/IOB
+QMPANORC   DS  CL1             1ST 4 BITS=NO OF RECORDS TO ASSIGN
+*                              2ND 4 BITS=NO OF RECORDS TO READ/WRITE
+QMPAAEXT   DS  AL3             ADDRESS OF EXTERNAL PARAMETER AREA
+IEFQATCB   DS  A               ADDRESS OF TCB
+IEFQAREC   DS  A               ADDRESS OF RECORD BUFFER
+IEFQAQMP   DC  A(QMPA)         ADDRESS OF QMPA
+IEFQTTR    DS  A               TTR OF REQUESTED RECORD
+IEFQRCLN   DC AL2(176)
+IEFQFUNC   DC AL2(0)
+IEFQDECB   DS  A               WORK AREA(NOT REQUIRED BY IEFQMMAC)
+IEFQRETN   DS  A               RETURN ADDRESS
+           DS 0D
+PARMAREA    CSECT
+TASKLABL   DC  CL8' '          STEP-NAME (I.E LABEL IN JOL TERMINOLOGY)
+TASKNAME   DC  CL8' '          NAME OF PROGRAM BEING EXECUTED AS A
+*                              SUBTASK
+APARM      DS A
+ATASKPRM   DS  A               ADDRESS OF GOTTEN STORAGE FOR PARAMETERS
+TASKSSI    DC  CL4' '          SSI OF THE SUB-TASK
+TASKRETN   DC  F'0'            RETURN CODE FROM TASK
+TASKECB    DC  F'0'            EVENT CONTROL BLOCK FOR TASK
+TASKIND    DC  C' '            SET TO 1 AFTER SCHEDULER CALLED
+*                              THE FIRST TIME.
+GOBACK     DC  C' '            NOT BLANK MEANS RETURN TO OS NOW
+*                                                           ***
+INSTREOF   DC  C' '            SET TO 1 ON EOF WHEN READING
+*                              INSTRUCTIONS.
+VS         DC  CL1' '          ¬='' IF VS SYSTEM                  75311
+DBL        DS  D               WORK AREA ONLY
+CALLAREA   DS  10F             WORK AREA ONLY FOR PARAMETERS BASICALLY
+SNAP DCB DDNAME=SNAP,DSORG=PS,RECFM=VBA,MACRF=W,BLKSIZE=882,LRECL=125
+PRINT DCB DDNAME=XYZ,DSORG=PS,RECFM=VBA,MACRF=W,BLKSIZE=882,LRECL=125
+RETN  DCB DDNAME=$$RETN,DSORG=PS,RECFM=FB,LRECL=80,BLKSIZE=80,MACRF=W
+INSTRUCT  DCB DDNAME=$$RETN,DSORG=PS,RECFM=FB,LRECL=80,BLKSIZE=80,     *
+               MACRF=W
+JOBQ DCB DDNAME=$$JOBQ,DSORG=PS,DEVD=DA,MACRF=(RP,WP)
+               ENTRY SNAP,PRINT,RETN,INSTRUCT,JOBQ
+IBMRTN     DC  CL8' '
+JCTTTR     DC  A(0)
+           TITLE 'UJE98INI:INITIALISATION ROUTINES'
+           JOLSAVE CSECT=UJE98INI
+* BETTER SET UP THE JOBNAME ETC
+           LA  R4,CALLAREA
+           EXTRACT (4),'S',FIELDS=(TIOT)
+           L   R1,CALLAREA
+           ST  R1,ATIOT        SAVE ADDRESS OF TIOT
+* NOW READ IN JCT AND SCT
+*    FIRST WE MUST DO A LITTLE WANDERING AROUND STORAGE TO FIND
+*    THE TTR ADDRESSES WE REQUIRE.
+           SPACE
+*    THE CVT POINTS TO THE TCB
+*    THE TCB POINTS TO THE JSCB
+*    THE JSCB POINTS TO THE TTR OF THE JCT
+*    AND SO ON
+*
+CVT    EQU   16
+JSCBOFFS EQU  180
+           L   R15,CVT         CVT POINTER
+           L   R15,0(R15)      TCB POINTER
+           L   R15,4(R15)      MY TCB
+           ST  R15,ATCB
+           L   R15,JSCBOFFS(R15) ->JSCB
+         LR    R14,R15
+         ST    R14,JSCBA+8
+         LA    R14,512(R14)
+         ST    R14,JSCBA+12
+         L     R14,=A(JSWK)
+         MVC   0(256,R14),0(R15)
+         MVC   256(256,R14),256(R15)
+         ST    R14,JSCBA+16
+         LA    R14,512(R14)
+         ST    R14,JSCBA+20
+         MVI   JSCBA+16,X'80'
+         SNAP  DCB=SNAP,ID=80,LIST=JSCBA
+           CALL UJE70OPN,(AQMRAW,IBMRTN,INSTRUCT,PRINT,RETN,JOBQ,      *
+               JCTTTR,VS,ATCB)
+           SPACE 1
+E98NOVS    EQU  *                                                 74365
+           GETJOBQ JCTDECB,JCTTTR
+         SNAP  DCB=SNAP,ID=40,STORAGE=(JCT-32,JCT+256)
+           MVC CALLAREA(3),JCTCSCT  POINT TO CURRENT SCT
+E80RDSCT   MVI CALLAREA+3,0
+           GETJOBQ SCTDECB,CALLAREA
+           ST R1,CALLAREA
+           MVC  JCTCSCT(3),CALLAREA
+         SNAP  DCB=SNAP,ID=40,STORAGE=(SCT-32,SCT+256)
+*****************************************************************
+* NOW BECAUSE RUDDY OS DOES NOT UPDATE THE RUDDY JCT CURRENT
+*     SCT POINTER AFTER A STEP HAS BEEN BYPASSED,I MUST
+*     CHECK THAT THE SCT I'VE JUST READ IN IS THE RIGHT ONE
+*     FOR THIS OS STEP.
+*     IF ITS NOT,I STEP ON TO THE CORRECT ONE.
+* ALSO THE CURRENT OS STEP COUNTER MUST BE UPDATED COS I USE
+*     IT IN THE SCRATCH ROUTINE
+******************************************************************
+* WE'LL USE THE TIOT STEP NUMBER,COS THAT MUST BE RIGHT ?????
+           SPACE
+* NOW CHECK THAT THE STEPS ARE RIGHT
+           L R1,ATIOT          GET TIOT ADDTRESS
+           CLC SCTSTEP,8(R1)   RIGHT STEP ?
+           BE E98T1ST          TEST IF 1ST TIME IN THIS OS STEP
+* OK THEN,STEP ON TO READ NEXT SCT,AND ADD 1 TO CURRENT
+*     JCT STEP COUNTER
+           SR R1,R1
+           IC R1,JCTCSTEP
+           LA R1,1(R1)
+           STC R1,JCTCSTEP
+           MVC CALLAREA(4),SCTASCT  NEXT SCT ADDRESS
+           B  E80RDSCT
+E98T1ST    EQU  *
+         JOLRETN              RC=0
+           SPACE 3
+           SPACE 3
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           LTORG
+         AGO .SKIPX
+           TITLE 'UJS23ER:WTP,WTO ERROR MESSAGES'
+UJS23ER    CSECT
+           USING *,R15
+           STM R14,R12,12(R13)
+           LA  R0,SAVEAREA
+           ST  R0,8(R13)
+           ST  R13,SAVEAREA+4
+           BAL R13,STARTERR
+SAVEAREA   DS  18F
+STARTERR   EQU *
+           DROP R15
+           USING SAVEAREA,R13
+* R14 IS THE RETURN ADDRESS BUT IT ALSO POINTS TO A LIST OF INSTRUCTION
+*    S WHICH ARE TO BE EXECUTED
+* THEY CAN BE :-
+*    MVC   CONSTANT
+*    LA    VARYING STRING
+           CLEAR S23MSSG       CLEAR MESSAGE AREA
+* NEW, END DEC 1974. IF AN ERROR MESSAGE IS BEING ISSUED, THEN OFFSET
+*    THE MESSAGE AND PUT '***' IN IT.
+           LA  R1,S23MSSG                                         74365
+           CLI S23SEV,2        TEST SEVERITY LESS THAN 2          74365
+           BL S23START         NO '***'                           74365
+           CLC =C'TYPE ',ICOMMAND IS IT A 'TYPE' COMMAND?         74365
+           BE S23START         YES,SO NO '***' PLEASE             74365
+           MVC 0(3,R1),=C'***' SHIFT IN '***'                     74365
+           LA  R1,4(R1)        SKIP '*** '                        74365
+S23START   MVC 0(3,R1),=C'JOL' SHIFT IN 'JOL'                     74365
+           LA  R1,3(R1)        SKIP OVER IT SO WE WON'T OVER-WRITE IT
+S23LUP1    EQU *
+           CLI 0(R14),X'D2'    MOVE ?
+           BE  S23MUV1
+           CLI 0(R14),X'41'    LA ?
+           BE  S23LA1
+           B   S23END1         SHOULD BE '00'
+           SPACE
+S23MUV1    EX  0,0(R14)        EXECUTE THE MOVE
+           SR  0,0
+           IC  R0,1(R14)       LENGTH MOVED
+           AR  R1,R0           ADD TO OUTPUT POSN
+           LA  R1,1(R1)        COS ASSMBLR REMOVED 1
+           LA  R14,6(R14)      SKIP MVC
+           B   S23LUP1
+           SPACE
+S23LA1     EQU *
+           EX  0,0(R14)        EXECUTE THE LA R15,VARYING STRING
+           ST  R14,0(R13)      SAVE REGISTER 14 IN SAVE AREA
+           LH  R14,0(R15)      LOAD LENGTH OF THE STRING
+           LTR  R14,R14        SEE IF STRING LENGTH = 0
+           BZ  RESET14         NO DATA TO MOVE
+           BCTR R14,0
+           EX  R14,ERRMUV
+           LA  R1,1(R14,R1)    STEP 1 SO NEXT MOVE GOES ONTO RIGHT
+*                              SPOT IN BUFFER
+RESET14    EQU  *
+           L   R14,0(R13)      RELOAD R14
+           LA  R14,4(R14)      STEP OVER THE LA
+           B   S23LUP1
+OOPS       WTO 'JOLE00-99 CANNOT ALLOCATE ERROR AREA'
+           ABEND 16,DUMP,STEP
+ERRMUV     MVC 0(*-*,R1),2(R15) **** EXECUTED
+           SPACE
+S23END1    EQU *
+           LA  R14,2(R14)      BRANCH AROUND '0' AT END OF LIST
+           L  R15,4(R13)       LOAD OLD SAVE ADDRESS
+           ST  R14,12(R15)     RESET OLD RETURN ADDRESS
+           MVC 0(3,R1),=C' AT'  SHIFT IN 'AT'
+           MVC 4(4,R1),S23STMT                                    75003
+           CLI S23STMT,X'00'
+           BNE S23SETL
+           MVC 4(4,R1),STMT                                       75003
+S23SETL    LA  R14,S23MSSG-12 THE -8 IS FOR THE 'AT STMT'         75128
+S23TEST0   CLI 4(R1),C'0'     LEADING ZERO?                      75003
+           BNE S23SR          -> NO                              75003
+           MVC 4(4,R1),5(R1)  DROP ZERO                          75003
+           BCT R1,S23TEST0                                       75003
+S23SR      EQU *                                                 75003
+           SR  R1,R14
+           STH R1,#S23LREC
+           LA  R1,4(R1)
+           STH R1,#S23BLKS
+           XC S23STMT,S23STMT
+* GREAT,NOW WHERE ARE WE GOING TO PUT THIS FANTASTIC PIECE OF
+*    INFORMATION ?
+           TM  PRINT+48,X'10'
+           BZ  S23WTO
+           WRITE S23DECB,SF,PRINT,#S23BLKS
+           CHECK S23DECB
+S23WTO     EQU *
+* NOW IF THE SEVERITY IS >=12 THE MESSAGE IS TYPED ON THE CONSOLE,
+*    OTHERWISE A WTO WITH ROUTCDE=11 IS QUITE SATISFACTORY,UNLESS
+*    WE HAVE A PRINT DD CARD,IF WHICH CASE WE CAN RETURN NOW
+           CLI S23SEV,3
+           BL  S23TPRNT
+* HERE A REAL WTO IS REQUIRED,SO SET UP ROUTE-CODES 2 & 11
+           MVC #S23MSSG,=XL2'8000'
+           LH  R15,#S23LREC
+           LA  R15,#S23LREC(R15)
+           MVC 0(4,R15),=X'04004020' DESC 6 RTE 11,2              75311
+           LA  R1,#S23LREC
+           SVC SVC35
+           B  S23GOBAK
+           SPACE 3
+S23TPRNT   EQU *                                                  75311
+* SET UP A WTO WITH ROUTCDE=11
+           MVC #S23MSSG,=XL2'8000'
+           LH  R15,#S23LREC
+           LA  R15,#S23LREC(R15)
+           MVC 0(4,R15),=X'00000020' ROUTCODE   11                75128
+           LA  R1,#S23LREC
+           SVC SVC35
+S23GOBAK    EQU  *
+           CLI S23SEV,5           JOL TERMINAL ERROR ?
+           BNE  S23LMRET
+           ABEND 1,DUMP,STEP
+           XC  S23STMT,S23STMT
+S23LMRET   EQU  *
+           JOLRETN
+           LTORG
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+           DC   S(*),S(*),S(*),S(*)
+.SKIPX   ANOP
+           END

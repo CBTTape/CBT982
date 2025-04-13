@@ -1,0 +1,92 @@
+         TITLE 'UJE14FRE:FREE (MARK NOT IN USE) DATASETS'
+         JOLSAVE CSECT=UJE14FRE
+         CLI   DDTYPE,DDPUNCH   Q... SYSIN, SYSOUT OF SOME KIND?
+         BNH   E14FREE          A... YES, FREE IT NOW
+         TM    DDUNITYP,X'80'  IF IT'S A TAPE, FREE FILE ALWAYS
+         BO    E14TDISP
+* PROPOGATE THE TAPE VOLUME NOW, AS IT MAY BE USED LATER
+*  IN VOLUME REFERENECES OR CATALOGUE STATEMENTS.
+         CALL  UJE30VOL       PROPOGATE VOLS DOWN JOL 'JOBQ'
+         B     E14FREE                    FREE IT NOW
+*        CLI   DDDISP+1,C'L'  LAST USE?
+E14TDISP CLI   DDDISP+1,C'P'  LAST USE?
+         BE    E14DISUS        NO, JUST MAKE MARKS
+E14FREE  DS    0H
+         XC    CALLAREA(12),CALLAREA   CLEAR PARAMETER AREA
+         MVI   CALLAREA,C'F'   INDICATE FREEFILE
+         MVI   CALLAREA+1,12   TABLE SIZE
+         MVC   CALLAREA+4(8),DDDDNAME  DDNAME TO THE AREA
+         FREEFL MF=(E,CALLAREA)
+         LTR   R1,R15
+         BZ    E14FREED
+         CVD   R15,DBL
+         CALL  UJS46FER
+         MVC   TASKSSI(4),=X'40202120'
+         ED    TASKSSI,DBL+6
+         JOLERR 102,'DSID ',DDDSID,''',DDNAME ',                       .
+               DDDDNAME,' NOT UNALLOCATED DUE TO RETURN CODE ',        .
+               TASKSSI
+         B     E14RETN
+E14FREED DS    0H
+         JOLERR 003,'DSID ',DDDSID,' DDNAME ',                         .
+               DDDDNAME,' UNALLOCATED'
+E14RETN  DS    0H
+         B     RETN0
+E14DISUS DS    0H    MARK DATASET NOT IN USE
+         L     R4,ATCB              ADDRESS MY TCB
+         L     R4,TCBJSCB-TCB(,R4)          MY JSCB
+         ICM   R4,7,JSCBFCTA-JSCB(R4)         FIRST FCT
+         BZ    E14NOFCT              EXIT IF NONE ?!! & SSSSSSSSS
+         CLC   =CL8' ',DDDDNAME      Q... CONCATENATED FILE?
+         BE    E14NXFCT              A... YES
+         MVC   SAVEDD,DDDDNAME       COPY THE DDNAME
+         SPACE
+*   FOUND THE FCT CHAIN. NOW FIND THE DATASET ENTRY
+         SPACE
+         USING FCT,R4
+E14NXFCT DS    0H
+         CLC   FCTACSN,SAVEDD        Q... IS THIS IT?
+         BE    E14FFCT               A... YES, GO AND FIX IT
+         ICM   R4,7,FCTNFCTA         NEXT FCT
+         BNZ   E14NXFCT              BR IF THERE IS ONE
+E14NOFCT JOLERR 104,                                                   .
+               'DSID ',DDDSID,                                         .
+               ' DDNAME ',DDDDNAME,                                    .
+               ' NOT MARKED NOT IN USE: NO FCT FOUND'
+         B     RETN0
+E14FFCT  DS    0H    FOUND AN FCT TO "FIX"
+         AP    DDCTR,=P'1'          ADD TO MY COUNTER
+         $TELL (R4)
+         MODESET  KEY=ZERO
+*        NI    FCTACSN,X'BF'        MAKE MY MARK FOR "NOT IN USE"
+         MVC   FCTACSN(4),=C'$JOL'  MAKE MY MARK FOR "NOT IN USE"
+         UNPK  FCTACSN+4(4),DDCTR
+         SPACE
+* WHILE I AM HERE, LET'S HAVE A LOOK AT SOME OTHER BITS
+         SPACE
+         LR    R2,R4                 SAVE THIS ADDRESS
+         TM    FCTFLG6,FCTF6CF       Q... CONCATENATED?
+         BZ    E14NOCAT              A... NO
+         NI    FCTFLG6,X'FF'-FCTF6CF TURN THAT OFF
+E14NXTCF DS    0H
+         L     R1,FCTCFNO            ADDRESS NEXT IN THIS CHAIN
+         XC    FCTCFNO(4),FCTCFNO    CLEAR THIS FIELD
+         LA    R4,0(,R1)             CLEAR THE HIGH ORDER BYTE
+         LTR   R4,R4                 Q... ANYTHING THERE?
+         BZ    E14NOCAT              A... NO
+         CLC   FCTACSN,DDDDNAME      CHECK THIS, JUST IN CASE
+         BNE   E14NOCAT              UM, ER, I'LL SEE YOU LATER
+         NI    FCTFLG6,X'FF'-FCTF6CF TURN OFF CONCAT FLAG
+         B     E14NXTCF              LET'S PLAY WITH THE NEXT ONE TOO
+E14NOCAT DS    0H
+         LR    R4,R2                 ADDRESS OF THE ORIGINAL
+         SPACE 2
+*  WELL, THAT SHOULD BE ALL
+         SPACE
+         MODESET KEY=NZERO    BACK TO MY USUAL PROTECT KEY
+         SPACE 3
+         JOLERR 005,                                                   .
+               'DSID ',DDDSID,                                         .
+               ' DDNAME ',DDDDNAME,                                    .
+               ' MARKED NOT IN USE'
+         B     RETN0
